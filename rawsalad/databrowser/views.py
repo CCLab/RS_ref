@@ -1,23 +1,61 @@
 # -*- coding: utf-8 -*-
-
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
+from django.shortcuts import render_to_response
 from django.template import Context, loader
 from django.utils import simplejson as json
 from django.core.mail import send_mail
 
 import rsdbapi as rsdb
 import csv, codecs, cStringIO
-import re
-from time import time
-
 from StringIO import StringIO
 from zipfile import ZipFile
+import re
+from time import time
 
 from operator import attrgetter
 
 
+# url: /
+def app_page( request ):
+    # TODO handle more then three browsers, FFS!
+    old_browser_marks = [ 'MSIE 7', 'MSIE 6', 'Firefox/3' ]
+    browser = request.META.get( 'HTTP_USER_AGENT', '' )
+
+    # TODO is there some filter function in python?!
+    if len([x for x in old_browser_marks if x in browser]) > 0:
+        return render_to_response( 'old_browser.html', {} )
+
+    # TODO why is it implemented this way? can't they be proper ajax urls?!
+    action = request.GET.get( 'action', '' )
+    if action != '':
+        return func_dict[ action ]( data )
+    else:
+        # TODO change get_meta_tree() to return pure object w/o meta_data key
+        return render_to_response( 'app.html', { 'meta': get_meta_tree() })
+
+
+
+# get the metadata tree (i.e. all datasets, views, issues)
+def get_meta_tree():
+    # sort comparator
+    def dataset_compare( d1, d2 ):
+        return d1['idef'] - d2['idef']
+
+    db  = rsdb.DBconnect( "mongodb" ).dbconnect
+    nav = rsdb.Navtree()
+
+    # get metadata tree and sort it by dataset idef
+    meta_tree = nav.get_meta_tree( db )
+    meta_tree.sort( cmp=dataset_compare )
+
+    # TODO no extra key needed
+    #      return json.dumps( meta_tree )
+    return { 'meta_data': json.dumps( meta_tree ) }
+
+
+###########################################################################
 # to be removed soon
 def choose_collection( data ):
     # getting data from db using col_nr
@@ -278,8 +316,9 @@ def store_state( request ):
 # init application prepared to handle restore data
 def init_restore( request, idef ):
     template = loader.get_template( "app.html" )
+    # TODO change get_meta_tree() to return pure object w/o meta_data key
     context = Context({
-        'meta': get_ms_nav(),
+        'meta': get_meta_tree(),
         'idef': idef
     })
 
@@ -345,49 +384,12 @@ def restore_state( request ):
     return HttpResponse( json.dumps(data) )
 
 
-# list of possible ajax calls
-func_dict = {
-    # get a list of perspectives after choosing a certain collection
-    "choose_collection": choose_collection,
-
-    # get data from DB when the first time a perspective is chosen
-    "get_init_data": get_init_data,
-
-    # get a sub-level data from DB
-    "get_node": get_node,
-
-    # to be implemented
-    }
 
 
 
-def get_page( request ):
-    template = loader.get_template( "app.html" )
-
-    context = Context({
-        'meta': get_ms_nav()
-    })
-    return HttpResponse( template.render( context ))
 
 
-def app_page( request ):
-    old_browser_marks = ['MSIE 7', 'MSIE 6', 'Firefox/3']
-    browser = request.META.get('HTTP_USER_AGENT', '')
-    
-    if len([x for x in old_browser_marks if x in browser]) > 0:
-        return HttpResponseRedirect('/old_browser')
-        
-    data = request.GET
-    if data == {} or data.get('lang','') == 'en':
-        return get_page( request )
-    else:
-        function_id = data['action']
-        return func_dict[function_id]( data )
 
-def old_browser_page( request ):
-    template = loader.get_template( "old_browser.html" )
-    context = Context({})
-    return HttpResponse( template.render( context ))
 
 def redirect( request ):
     return HttpResponseRedirect('/')
@@ -454,18 +456,26 @@ def download_data( request ):
 
     return response
 
-def dataset_compare(d1, d2):
-    return d1['idef'] - d2['idef']
 
-def get_ms_nav():
-    db= rsdb.DBconnect("mongodb").dbconnect
-    nav_full= rsdb.Navtree().get_nav_full(db)
 
-    nav_full = sorted(nav_full, cmp=dataset_compare)
 
-    out= { 'meta_data': json.dumps( nav_full ) }
-    return out
 
+
+
+# list of possible ajax calls
+func_dict = {
+    # get a list of perspectives after choosing a certain collection
+    "choose_collection": choose_collection,
+    # get data from DB when the first time a perspective is chosen
+    "get_init_data": get_init_data,
+    # get a sub-level data from DB
+    "get_node": get_node,
+    # TODO implement redirect to 404 function
+    #"f404": f404
+}
+
+
+# TODO move that to external module!!
 class UnicodeWriter:
     """
     A CSV writer which will write rows to CSV file "f",
@@ -495,10 +505,3 @@ class UnicodeWriter:
         for row in rows:
             self.writerow(row)
 
-
-
-janek_lubi_czarne_jagody = '''
-{
-    
-}
-'''

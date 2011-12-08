@@ -131,7 +131,7 @@ class DBconnect:
             self.host= cfg.get(db_type,'host')
             self.port= cfg.getint(db_type,'port')
             self.database= cfg.get(db_type,'database')
-            self.username= cfg.get(db_type,'username')            
+            self.username= cfg.get(db_type,'username')
             try:
                 pssw= cfg.get(db_type,'password')
             except:
@@ -156,17 +156,17 @@ class Navtree:
     def __del__(self):
         pass
 
-    def get_nav_full(self, datasrc):
+    def get_meta_tree(self, datasrc):
         out= []
 
         self.request= 'navigator'
 
-        nav_fields= {'_id':0} # _id is never returned
+        nav_fields= { '_id': 0 } # _id is never returned
         nav_fields.update(self.fields)
 
         query= {} # query conditions
         query.update(self.query) # additional query, depends on the call
-        
+
         cursor_data= datasrc[nav_schema].find(query, nav_fields)
         if cursor_data is not None:
             self.response= Response().get_response(0)
@@ -238,8 +238,8 @@ class Navtree:
         elif dataset_idef is not None and view_idef is None: # views count
             element_list= self.get_view(datasrc, dataset_idef)
         else: # issues count
-            element_list= self.get_issue(datasrc, dataset_idef, view_idef)        
-            
+            element_list= self.get_issue(datasrc, dataset_idef, view_idef)
+
         if self.response['httpresp'] == 200:
             count= len(element_list)
         else:
@@ -424,7 +424,7 @@ class Collection:
                 self.response['descr']= ' '.join([ self.response['descr'], str(e) ])
 
         return self.response
-        
+
 
     def get_data(self, datasrc, dataset_id, view_id, issue):
         data= []
@@ -531,7 +531,7 @@ class Collection:
             out.update(root_elt)
         else: # error - no such data!
             out= None
-        
+
         return out
 
     def _get_children_recurse(self, parent, coll, curr_query, columns, srt):
@@ -595,7 +595,7 @@ class Collection:
         check if there are user defined fields
         that are not listed in metadata
         """
-        warning_list= [] 
+        warning_list= []
         for fld in self.raw_usrdef_fields:
             if fld not in field_names_list:
                 warning_list.append( fld )
@@ -614,7 +614,7 @@ class State:
     """
     def __init__(self):
         self.response= Response().get_response(0) # CollectionState class is optimistic
-        
+
     def __del__(self):
         pass
 
@@ -718,7 +718,7 @@ class Search:
           (see str.endswith and startswith)
         - search in 'info' keys (???)
         """
-        
+
         ns_list= [] # list of results
         error_list= []
         found_num= 0 # number of records found
@@ -763,7 +763,7 @@ class Search:
                                     self.found[sc]= []
                                 if found_elt['idef'] not in self.found[sc]:
                                     self.found[sc].append(found_elt['idef'])
-                                
+
                                     curr_coll_dict['data'].append({
                                         'key': fld['key'],
                                         'text': found_elt[str(fld['key'])],
@@ -778,7 +778,7 @@ class Search:
         out_dict= { 'records_found': found_num, 'result': ns_list }
         if len(error_list) > 0:
             out_dict['errors']= error_list
-        
+
         return out_dict
 
 
