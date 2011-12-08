@@ -194,15 +194,15 @@ var _db = (function () {
     that.get_init_data = function (col_id) {
         // ajax call data object
         var init_data_info = {
-            "action": "get_init_data",
+            //"action": "get_init_data",
             "dataset": col_id.dataset,
-            "perspective": col_id.view,
+            "view": col_id.view,
             "issue": col_id.issue
         };
 
         _utils.create_preloader( translation['js_loading_data'] );
         $.ajax({
-            url: '/',
+            url: '/get_init_data/',
             data: init_data_info,
             dataType: "json",
             success: function( received_data ) {
@@ -237,15 +237,15 @@ var _db = (function () {
     that.download_node = function ( parent_id ) {
         // ajax call data object
         var download_data = {
-            action: 'get_node',
+            //action: 'get_node',
             dataset: _store.dataset(),
-            perspective: _store.view(),
+            view: _store.view(),
             issue: _store.issue(),
-            parent: parent_id,
+            idef: parent_id,
         };
 
         $.ajax({
-            url: '/',
+            url: '/get_children/',
             data: download_data,
             dataType: 'json',
             success: function( received_data ) {

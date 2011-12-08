@@ -582,7 +582,7 @@
     </div>
  </div>
 
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+  <script src="/site_media/js/jquery-1.7.1.min.js"></script>
   <!-- minification area: /site_media/js/ -->
   <script src="/site_media/js/hide.js"></script>
   <script src="/site_media/js/assert.js"></script>
@@ -632,7 +632,7 @@
       }; 
       (function () {
         // new template
-        _store.meta_data( {{ meta.meta_data|safe }} );
+        _store.meta_data( {{ meta|safe }} );
         {% if idef %}
         _gui.init_gui( true );
         _gui.restore_session( {{ idef }} );

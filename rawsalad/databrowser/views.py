@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# TODO move imports used only in one function to this function's body
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
@@ -23,18 +24,10 @@ def app_page( request ):
     old_browser_marks = [ 'MSIE 7', 'MSIE 6', 'Firefox/3' ]
     browser = request.META.get( 'HTTP_USER_AGENT', '' )
 
-    # TODO is there some filter function in python?!
-    if len([x for x in old_browser_marks if x in browser]) > 0:
-        return render_to_response( 'old_browser.html', {} )
+    if len( [x for x in old_browser_marks if x in browser] ) > 0:
+        return render_to_response( 'old_browser.html' )
 
-    # TODO why is it implemented this way? can't they be proper ajax urls?!
-    action = request.GET.get( 'action', '' )
-    if action != '':
-        return func_dict[ action ]( data )
-    else:
-        # TODO change get_meta_tree() to return pure object w/o meta_data key
-        return render_to_response( 'app.html', { 'meta': get_meta_tree() })
-
+    return render_to_response( 'app.html', { 'meta': get_meta_tree() })
 
 
 # get the metadata tree (i.e. all datasets, views, issues)
@@ -43,6 +36,9 @@ def get_meta_tree():
     def dataset_compare( d1, d2 ):
         return d1['idef'] - d2['idef']
 
+    # TODO can we store the connection in the session?
+    # TODO can we use some kind of singleton pattern here?!
+    # TODO make it explicit function call instead of field retrieval
     db  = rsdb.DBconnect( "mongodb" ).dbconnect
     nav = rsdb.Navtree()
 
@@ -50,46 +46,66 @@ def get_meta_tree():
     meta_tree = nav.get_meta_tree( db )
     meta_tree.sort( cmp=dataset_compare )
 
-    # TODO no extra key needed
-    #      return json.dumps( meta_tree )
-    return { 'meta_data': json.dumps( meta_tree ) }
+    return json.dumps( meta_tree )
+
+
+# url: /get_init_data/
+# get top-level data of the collection
+def get_init_data( req ):
+    d = req.GET.get( 'dataset', None )
+    v = req.GET.get( 'view', None )
+    i = req.GET.get( 'issue', None )
+
+    # TODO in the session?
+    db  = rsdb.DBconnect("mongodb").dbconnect
+    # TODO change Collection constructor to parametrized!
+    # TODO move queries from views!! Make it resource-based!!
+    col = rsdb.Collection( query={ 'level': 'a' } )
+
+    data = {}
+    data['rows'] = col.get_data( db, d, v, i )
+    # TODO change it to explicit function call!
+    # TODO change parameter name from perspective to view
+    data['perspective']= col.metadata_complete
+
+    return HttpResponse( json.dumps( data ) )
+
+
+# url: /get_children/
+# get children of the node
+def get_children( req ):
+    d = req.GET.get( 'dataset', None )
+    v = req.GET.get( 'view', None )
+    i = req.GET.get( 'issue', None )
+    idef = req.GET.get( 'idef', None )
+
+    # TODO session!!
+    db  = rsdb.DBconnect("mongodb").dbconnect
+    # TODO constructor
+    # TODO move queries out
+    col = rsdb.Collection( query = { 'parent': idef })
+
+    data = col.get_data( db, d, v, i )
+
+    return HttpResponse( json.dumps( data ) )
+
+
+# TODO can POST forms be handeled better?!
+@csrf_exempt
+def feedback_email( request ):
+    e_from    = request.POST.get( 'email', 'NO EMAIL PROVIDED' )
+    e_message = request.POST.get( 'message', 'MESSAGE LEFT EMPTY' )
+
+    send_mail( 'Raw Salad Feedback',
+                e_message,
+                e_from,
+                ['ktrzewiczek@centrumcyfrowe.pl'] )
+
+    return HttpResponse( 'Email sent' )
 
 
 ###########################################################################
-# to be removed soon
-def choose_collection( data ):
-    # getting data from db using col_nr
-    return_data = get_perspectives( data['col_nr'] )
-    json_data = json.dumps( return_data )
-    return HttpResponse( json_data )
 
-# get the basic, top-level view of some issue
-def get_init_data( data ):
-    db= rsdb.DBconnect("mongodb").dbconnect
-    coll= rsdb.Collection(query= { 'level': 'a' })
-
-    return_data = {}
-    return_data['rows']= coll.get_data(
-        db, data['dataset'], data['perspective'], data['issue']
-        )
-    return_data['perspective']= coll.metadata_complete
-    json_data = json.dumps( return_data )
-    print 'SSSSSSSSSSSSSSSSSSSSSSSSSSS'
-    print coll.metadata_complete
-    return HttpResponse( json_data )
-
-# get the subtree of the next level
-def get_node( data ):
-    db= rsdb.DBconnect("mongodb").dbconnect
-    coll= rsdb.Collection(query= { 'parent': data['parent'] })
-
-    return_data= coll.get_data(
-        db, data['dataset'], data['perspective'], data['issue']
-        )
-
-    json_data = json.dumps( return_data )
-
-    return HttpResponse(json_data)
 
 def build_regexp(searchline, strictsearch):
     """ construct regexp for search """
@@ -315,14 +331,14 @@ def store_state( request ):
 
 # init application prepared to handle restore data
 def init_restore( request, idef ):
-    template = loader.get_template( "app.html" )
-    # TODO change get_meta_tree() to return pure object w/o meta_data key
-    context = Context({
-        'meta': get_meta_tree(),
-        'idef': idef
-    })
+#    template = loader.get_template( "app.html" )
+#    context = Context({
+#        'meta': get_meta_tree(),
+#        'idef': idef
+#    })
 
-    return HttpResponse( template.render( context ))
+    return render_to_response( 'app.html', { 'meta': get_meta_tree(), 'idef': idef } )
+#    return HttpResponse( template.render( context ))
 
 #restore front-end state from mongo
 def restore_state( request ):
@@ -386,30 +402,6 @@ def restore_state( request ):
 
 
 
-
-
-
-
-
-def redirect( request ):
-    return HttpResponseRedirect('/')
-
-def redirect_en( request ):
-    return HttpResponseRedirect('/?lang=en')
-
-@csrf_exempt
-def feedback_email( request ):
-    from_email = request.POST.get( 'email', 'NO EMAIL PROVIDED' )
-    message = request.POST.get( 'message', 'MESSAGE LEFT EMPTY' )
-
-    send_mail( 'Raw Salad Feedback',
-                message,
-                from_email,
-                ['ktrzewiczek@centrumcyfrowe.pl'] )
-
-    return HttpResponse( 'Email sent' )
-
-
 @csrf_exempt
 def download_data( request ):
     response = HttpResponse()
@@ -462,17 +454,6 @@ def download_data( request ):
 
 
 
-# list of possible ajax calls
-func_dict = {
-    # get a list of perspectives after choosing a certain collection
-    "choose_collection": choose_collection,
-    # get data from DB when the first time a perspective is chosen
-    "get_init_data": get_init_data,
-    # get a sub-level data from DB
-    "get_node": get_node,
-    # TODO implement redirect to 404 function
-    #"f404": f404
-}
 
 
 # TODO move that to external module!!
