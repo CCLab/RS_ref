@@ -585,7 +585,7 @@ var _gui = (function () {
 
                 if( ( group_num === active_group ) && ( sheet_num === active_sheet ) ) {
                     var group_name = _store.active_group_name();
-                    close_sheet = $( '<div class="close-sheet-button button" >x</div>' );
+                    close_sheet = $( '<div class="app-tb-close-sheet button" >x</div>' );
                     if( !( groups.length === 1 && group['sheets'].length === 1 ) ) {
                         new_snap
                             .append( close_sheet
