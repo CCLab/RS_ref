@@ -9,9 +9,6 @@ from django.utils import simplejson as json
 from django.core.mail import send_mail
 
 import rsdbapi as rsdb
-import csv, codecs, cStringIO
-from StringIO import StringIO
-from zipfile import ZipFile
 import re
 from time import time
 
@@ -90,6 +87,32 @@ def get_children( req ):
     return HttpResponse( json.dumps( data ) )
 
 
+# url: /download/
+# TODO can POST forms be handeled better?!
+@csrf_exempt
+def download_data( request ):
+    from downloader import single_file
+    from downloader import multiple_files
+
+    response = HttpResponse()
+    # TODO check if this is the only way to create a sheets download!
+    files = request.POST.get( 'csv_string' ).split( '--file--' )[:-1]
+
+    # CSV for a single file and ZIP for multiple files
+    if len( files ) == 1:
+        response['Content-Type'] = 'text/csv'
+        response['Content-Disposition'] = 'attachment; filename=data.csv'
+
+        response.write( single_file( files.pop() ) )
+    else:
+        response['Content-Type'] = 'application/zip'
+        response['Content-Disposition'] = "attachment; filename=collected_data.zip"
+
+        response.write( multiple_files( files ) )
+
+    return response
+
+
 # TODO can POST forms be handeled better?!
 @csrf_exempt
 def feedback_email( request ):
@@ -127,9 +150,6 @@ def init_restore( request, idef ):
         'idef': idef
     }
     return render_to_response( 'app.html', data )
-
-
-###########################################################################
 
 
 # url: /restore_state/
@@ -176,7 +196,8 @@ def restore_state( request ):
                 col.set_query({ 'idef': find_query })
                 data = col.get_data( db, d, v, i )
 
-                # TODO how does it really work?!
+                # TODO make sheet['rows'], sheet['breadcrumbs'] and data be sorted the same way!!
+                # TODO re-code it one sipmle for over zip( data, sheet['breeadcrumbs'] )
                 if sheet['filtered']:
                     for filtered_row in data:
                         for j, rw in enumerate( sheet['rows'] ):
@@ -184,10 +205,10 @@ def restore_state( request ):
                                 filtered_row.update({ 'breadcrumb': sheet['breadcrumbs'][j] })
                                 break
 
-                if len( data ) is not None:
-                    sheet['rows'] = data
-
     return HttpResponse( json.dumps( groups ) )
+
+###########################################################################
+
 
 
 
@@ -381,92 +402,4 @@ def get_searched_data( request ):
     return_data['perspective']= coll.metadata_complete
 
     return HttpResponse( json.dumps(return_data) )
-
-
-
-
-
-@csrf_exempt
-def download_data( request ):
-    response = HttpResponse()
-    files = request.POST.get( 'csv_string' ).split( '--file--' )[:-1]
-
-    # send one sheet as CSV and collection of sheets as ZIP
-    if len( files ) == 1:
-        f = files[0]
-        response['Content-Type'] = 'text/csv'
-        response['Content-Disposition'] = 'attachment; filename=data.csv'
-
-        if '.csv' in f:
-            response.write( open( 'site_media/csv/' + f ).read() )
-        else:
-            data = f.split( '|' )[:-1]
-
-            writer = UnicodeWriter( response )
-            for row in data:
-                writer.writerow( row.split(';') )
-
-    else:
-        in_memory = StringIO()
-        zip = ZipFile( in_memory, 'a' )
-
-        for i, f in enumerate( files ):
-            if '.csv' in f:
-                csv_string = open( 'site_media/csv/' + f ).read()
-            else:
-                csv_string = f.replace( '|', '\n' ).encode( 'utf-8' )
-
-            zip.writestr( 'data-'+str(i)+'.csv', csv_string )
-
-        # fix for Linux zip files read in Windows
-        for file in zip.filelist:
-            file.create_system = 0
-
-        zip.close()
-
-        response['Content-Type'] = 'application/zip'
-        response['Content-Disposition'] = "attachment; filename=collected_data.zip"
-
-        in_memory.seek( 0 )
-        response.write( in_memory.read() )
-
-    return response
-
-
-
-
-
-
-
-
-
-# TODO move that to external module!!
-class UnicodeWriter:
-    """
-    A CSV writer which will write rows to CSV file "f",
-    which is encoded in the given encoding.
-    """
-
-    def __init__(self, f, dialect=csv.excel, encoding="utf-8", **kwds):
-        # Redirect output to a queue
-        self.queue = cStringIO.StringIO()
-        self.writer = csv.writer(self.queue, dialect=dialect, delimiter=';', **kwds)
-        self.stream = f
-        self.encoder = codecs.getincrementalencoder(encoding)()
-
-    def writerow(self, row):
-        self.writer.writerow([s.encode("utf-8") for s in row])
-        # Fetch UTF-8 output from the queue ...
-        data = self.queue.getvalue()
-        data = data.decode("utf-8")
-        # ... and reencode it into the target encoding
-        data = self.encoder.encode(data)
-        # write to the target stream
-        self.stream.write(data)
-        # empty queue
-        self.queue.truncate(0)
-
-    def writerows(self, rows):
-        for row in rows:
-            self.writerow(row)
 
