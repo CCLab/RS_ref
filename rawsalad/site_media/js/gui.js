@@ -491,7 +491,7 @@ var _gui = (function () {
 
         $.ajax({
             url: '/restore_state/',
-            data: { idef: idef },
+            data: { permalink_id: idef },
             dataType: 'json',
             success: function ( received_data ) {
                 var active_group;

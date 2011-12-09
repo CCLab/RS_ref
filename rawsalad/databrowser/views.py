@@ -104,7 +104,91 @@ def feedback_email( request ):
     return HttpResponse( 'Email sent' )
 
 
+# url: /store_state/
+# store front-end state as a permalink in mongo
+# TODO can POST forms be handeled better?!
+@csrf_exempt
+def store_state( request ):
+    data  = request.GET.get( 'state', '' )
+    # TODO move it to session
+    db    = rsdb.DBconnect("mongodb").dbconnect
+    state = rsdb.State()
+
+    permalink_id = state.save_state( json.loads( data ), db )
+
+    return HttpResponse( json.dumps({ 'id': permalink_id }) )
+
+
+# url: /\d+
+# init application prepared to handle restore data
+def init_restore( request, idef ):
+    data = {
+        'meta': get_meta_tree(),
+        'idef': idef
+    }
+    return render_to_response( 'app.html', data )
+
+
 ###########################################################################
+
+
+# url: /restore_state/
+#restore front-end state from mongo
+def restore_state( request ):
+    db    = rsdb.DBconnect("mongodb").dbconnect
+    state = rsdb.State()
+
+    permalink_id = request.GET.get( 'permalink_id', None )
+    # TODO unify the parameter lists of rsdb module making db first param
+    groups = state.get_state( int( permalink_id ), db )
+
+    # TODO make it handling http errors properly!!
+    if state.response['httpresp'] != 200: # ERROR!
+        groups= state.response # {'descr': <str - error description>, 'httpresp': <int - http status>}
+    # TODO hide db logic --> move this to db interface and give me a ready-to-use resource!!
+    else:
+        # now substitute list of open idefs with actual data:
+        # level 'a' + open branches
+        col = rsdb.Collection()
+        for group in groups:
+            d = int( group['dataset'] )
+            v = int( group['view'] )
+            i = str( group['issue'] )
+            # TODO are columns complete metadata? If not -> change the name of method
+            # TODO make db a first parameter of all db methods
+            metadata= col.get_complete_metadata( d, v, i, db )
+            group['columns']= metadata['columns']
+
+            for sheet in group['sheets']:
+                open_elements= []
+                for cur_idef in sheet['rows']:
+                    # artificially moving focus to one level deeper,
+                    # as build_query looks for siblings, not parents
+                    # TODO query should look for children not siblings!!
+                    open_elements.append( "-".join( [cur_idef, '1'] ))
+
+                # TODO move these queries into db interface FGS!!
+                if sheet['filtered']:
+                    find_query= { '$in': sheet['rows'] }
+                else:
+                    find_query= { '$regex': build_query( open_elements ) }
+
+                col.set_query({ 'idef': find_query })
+                data = col.get_data( db, d, v, i )
+
+                # TODO how does it really work?!
+                if sheet['filtered']:
+                    for filtered_row in data:
+                        for j, rw in enumerate( sheet['rows'] ):
+                            if filtered_row['idef'] == rw:
+                                filtered_row.update({ 'breadcrumb': sheet['breadcrumbs'][j] })
+                                break
+
+                if len( data ) is not None:
+                    sheet['rows'] = data
+
+    return HttpResponse( json.dumps( groups ) )
+
 
 
 def build_regexp(searchline, strictsearch):
@@ -298,106 +382,6 @@ def get_searched_data( request ):
 
     return HttpResponse( json.dumps(return_data) )
 
-# store front-end state as a permalink in mongo
-@csrf_exempt
-def store_state( request ):
-    data= request.GET.get( 'state', '' ) # data is a unicode string
-    data= data.replace('true', 'True').replace('false', 'False').encode('utf-8')
-
-    success= True
-
-    data_list= []
-    try:
-        data_list= eval(data)
-    except Exception, e:
-        print e
-        success= False
-
-    if success:
-        try: # checking if it is json serializable
-            json.dumps(data_list)
-        except Exception, e:
-            print e
-            success= False
-
-    if success:
-        db= rsdb.DBconnect("mongodb").dbconnect
-        state= rsdb.State()
-        curr_state_id= state.save_state(data_list, db)
-    else:
-        curr_state_id= None
-
-    return HttpResponse( json.dumps({'id': curr_state_id}) )
-
-# init application prepared to handle restore data
-def init_restore( request, idef ):
-#    template = loader.get_template( "app.html" )
-#    context = Context({
-#        'meta': get_meta_tree(),
-#        'idef': idef
-#    })
-
-    return render_to_response( 'app.html', { 'meta': get_meta_tree(), 'idef': idef } )
-#    return HttpResponse( template.render( context ))
-
-#restore front-end state from mongo
-def restore_state( request ):
-    idef = request.GET.get( 'idef', '-1' )
-
-    data= []
-    if idef != -1:
-        db= rsdb.DBconnect("mongodb").dbconnect
-        state= rsdb.State()
-
-        data= state.get_state(int(idef), db)
-
-        if state.response['httpresp'] != 200: # ERROR!
-            data= state.response # {'descr': <str - error description>, 'httpresp': <int - http status>}
-        else: # everything is OK
-            # now substitute list of open idefs with actual data:
-            # level 'a' + open branches
-            coll= rsdb.Collection()
-            for elt in data:
-                ds_id= int(elt['dataset'])
-                vw_id= int(elt['view'])
-                iss= str(elt['issue'])
-                md_complete= coll.get_complete_metadata( ds_id, vw_id, iss, db )
-
-                elt['columns']= md_complete['columns']
-
-                for elt_item in elt['sheets']:
-                    open_elements= []
-                    for curr_idef in elt_item['rows']:
-                        # artificially moving focus to one level deeper,
-                        # as build_query looks for siblings, not parents
-                        open_elements.append("-".join([curr_idef, '1']))
-
-                    if elt_item['filtered']:
-                        find_query= { '$in': elt_item['rows'] }
-                    else:
-                        find_query= { '$regex': build_query( open_elements ) }
-
-                    coll.set_query({ 'idef': find_query })
-
-                    curr_data = []
-                    try:
-                        curr_data= coll.get_data(db, ds_id, vw_id, iss)
-                    except:
-                        pass
-
-                    if elt_item['filtered']:
-                        for curr_doc in curr_data:
-                            j= 0
-                            for rw in elt_item['rows']:
-                                if curr_doc['idef'] == rw:
-                                    curr_doc.update({ 'breadcrumb': elt_item['breadcrumbs'][j] })
-                                    break
-                                j+=1
-
-                    if len(curr_data) is not None:
-                        elt_item['rows']= curr_data
-
-    return HttpResponse( json.dumps(data) )
 
 
 
