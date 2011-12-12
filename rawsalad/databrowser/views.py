@@ -9,7 +9,6 @@ from django.utils import simplejson as json
 from django.core.mail import send_mail
 
 import rsdbapi as rsdb
-import re
 from time import time
 
 from operator import attrgetter
@@ -164,7 +163,7 @@ def restore_state( request ):
 
     # TODO make it handling http errors properly!!
     if state.response['httpresp'] != 200: # ERROR!
-        groups= state.response # {'descr': <str - error description>, 'httpresp': <int - http status>}
+        groups = state.response # {'descr': <str - error description>, 'httpresp': <int - http status>}
     # TODO hide db logic --> move this to db interface and give me a ready-to-use resource!!
     else:
         # now substitute list of open idefs with actual data:
@@ -207,8 +206,98 @@ def restore_state( request ):
 
     return HttpResponse( json.dumps( groups ) )
 
-###########################################################################
 
+def search_data( request ):
+    """Search engine enter point"""
+    import re
+
+    # TODO move it to session
+    db  = rsdb.DBconnect('mongodb').dbconnect
+    res = rsdb.Search()
+
+    query  = request.GET.get( 'query', '' )
+    scope  = request.GET.get( 'scope', '' ).split(',')
+    # TODO it's not used right now - the search always comes as strict: false
+    strict = False
+
+    # clean up multiple spaces from the query
+    query  = re.sub( '\s+', ' ', query.strip() )
+    result = res.search_text( db, query, scope, False )
+
+    if result['result']:
+        # rebuild { data: [ { idef: idef1 }, ..., { idef: idefN } ] }
+        # into    { data: [ idef1, ..., idefN ] }
+        # TODO why it doesn't come in a proper way? Use resources instead of data!
+        for collection in result['result']:
+            collection['data'] = map( lambda i: i['idef'], collection['data'] )
+
+    return HttpResponse( json.dumps( result ))
+
+
+# get initial_data + subtrees to searched nodes
+def get_searched_data( req ):
+    d   = req.GET.get( 'dataset', None )
+    v   = req.GET.get( 'view', None )
+    i   = req.GET.get( 'issue', None )
+    ids = req.GET.get( 'ids', None ).split(',')
+
+    find_query = build_query( ids )
+
+    # TODO move it to session
+    db = rsdb.DBconnect("mongodb").dbconnect
+    # TODO change Collection constructor to parametrized!
+    # TODO move queries from views!! Make it resource-based!!
+    col = rsdb.Collection( query = { 'idef': { '$regex': find_query }} )
+
+    # TODO after making it explicit calls, fullfill the object js-style
+    found_data = {}
+    found_data['rows'] = col.get_data( db, d, v, i )
+    # TODO change it to explicit function call!
+    # TODO change parameter name from perspective to view
+    found_data['perspective'] = col.metadata_complete
+
+    return HttpResponse( json.dumps( found_data ) )
+
+
+def build_query( idef_list):
+    '''Build regex for mongo query'''
+    # TODO understand why it's limited
+    # TODO in long term - get rid of this limit
+    results_limit = 275
+
+    if len( idef_list ) < results_limit:
+        lookup = ''.join( [ r'(%s)|' % build_idef_regexp( idef ) for idef in idef_list ] )
+        # cutting the last symbol | in case it's the end of list
+        lookup = lookup[:-1]
+
+    return lookup
+
+
+###########################################################################
+def build_idef_regexp( curr_idef ):
+    """ build regexp quering collection """
+    level_num= curr_idef.count('-')
+
+    # build regexp for the given idef plus it's context (siblings and full parental branch)
+    if level_num > 0: # deeper than 'a'
+        idef_srch= curr_idef.rsplit('-', 1)[0]
+        lookup_idef= r'^%s\-([A-Z]|\d)+$' % idef_srch
+        curr_idef= idef_srch
+        level= 1
+        while level < level_num:
+            idef_srch= curr_idef.rsplit('-', 1)[0]
+            lookup_idef += r'|^%s\-([A-Z]|\d)+$' % idef_srch
+            curr_idef= idef_srch
+            level += 1
+        lookup_idef += r'|^([A-Z]|\d)+$'
+
+    else: # simply query the highest level
+        lookup_idef= r'^([A-Z]|\d)+$'
+
+    return lookup_idef
+
+
+###########################################################################
 
 
 
@@ -280,126 +369,7 @@ def do_search(scope_list, regx, dbconn):
 
     return { 'stat': stat_dict, 'result': ns_list }
 
-def search_data( request ):
-    """
-    search engine enter point
-    """
-    usrqry = request.GET.get( 'query', '' )
-    scope = request.GET.get( 'scope', '' )
-    strict = request.GET.get( 'strict', 'false' )
-    # converting scope and strict to objects
-    scope_list= scope.split(',')
-    if strict == 'false':
-        strict= False
-    else:
-        strict= True
-
-    usrqry= usrqry.strip() # cleaning user query
-    query_str= re.sub('\s+', ' ', usrqry) # cleaning multiple spaces
-
-    db= rsdb.DBconnect('mongodb').dbconnect
-    res= rsdb.Search()
-
-    # WARNING!
-    # rsdb.Search().search_data(...) - old way of search (through text keys)
-    # rsdb.Search().search_text(...) - new way of search (through _keywords)
-
-    # result= res.search_data( db, qrystr= query_str, scope= scope_list, strict= strict )
-    fld_list= ['idef'] # on the first stage return only idefs
-    result= res.search_text( db, qrystr= query_str, scope= scope_list, display= fld_list, strict= strict )
-    if len(result['result']) > 0:
-
-        # rebuild { data: [ { idef: idef1 }, ..., { idef: idefN } ] }
-        # into { data: [ idef1, ..., idefN ] }
-        for res_persp in result['result']:
-            new_data= []
-            for doc in res_persp['data']:
-                new_data.append(doc['idef'])
-            res_persp['data']= new_data
-
-    return HttpResponse( json.dumps( result ))
-
-def string2list( in_str ):
-    """ converts comma separated string to the list """
-    out_list= []
-    try:
-        for elm in in_str.split(','):
-            if '[' in elm:
-                elm= elm.replace('[', '')
-            if ']' in elm:
-                elm= elm.replace(']', '')
-            out_list.append( elm.strip().encode('utf-8') )
-    except:
-        pass
-
-    return out_list
-
-def build_idef_regexp( curr_idef ):
-    """ build regexp quering collection """
-    level_num= curr_idef.count('-')
-
-    # build regexp for the given idef plus it's context (siblings and full parental branch)
-    if level_num > 0: # deeper than 'a'
-        idef_srch= curr_idef.rsplit('-', 1)[0]
-        lookup_idef= r'^%s\-([A-Z]|\d)+$' % idef_srch
-        curr_idef= idef_srch
-        level= 1
-        while level < level_num:
-            idef_srch= curr_idef.rsplit('-', 1)[0]
-            lookup_idef += r'|^%s\-([A-Z]|\d)+$' % idef_srch
-            curr_idef= idef_srch
-            level += 1
-        lookup_idef += r'|^([A-Z]|\d)+$'
-
-    else: # simply query the highest level
-        lookup_idef= r'^([A-Z]|\d)+$'
-
-    return lookup_idef
-
-def build_query( idef_list):
-    lookup, i= '', 0
-
-    result_limit= 275 # WARNING! Limiting number of idefs here with a constant
-    if len(idef_list) > result_limit:
-        idef_list= idef_list[:result_limit]
-
-    if len(idef_list) > 0:
-        for idef in idef_list:
-            i += 1
-
-            lookup_idef= build_idef_regexp( idef )
-
-            lookup += r'(%s)|' % lookup_idef
-            if i == len(idef_list):
-                lookup= lookup[:-1] # cutting the last symbol | in case it's the end of list
-
-    else: # in cases there're no 'open' nodes in the view
-        lookup= build_idef_regexp( '0' ) # this returns regexp for getting level 'a' only
-
-    return lookup
 
 
-# get initial_data + subtrees to searched nodes
-def get_searched_data( request ):
-    response_dict = {
-        'dataset': int( request.GET.get( 'dataset', -1 ) ),
-        'view': int( request.GET.get( 'view', -1 ) ),
-        'issue': request.GET.get( 'issue', '' ).encode('utf-8'),
-        'idef': string2list( request.GET.get( 'idef', '' ) ),
-        'regexp': True
-    }
 
-    find_query= build_query( response_dict['idef'] )
-
-    db= rsdb.DBconnect("mongodb").dbconnect
-    coll= rsdb.Collection(query= { 'idef': { '$regex': find_query} })
-
-    return_data = {}
-    return_data['rows']= coll.get_data(
-        db, response_dict['dataset'], response_dict['view'], response_dict['issue']
-        )
-
-    return_data['perspective']= coll.metadata_complete
-
-    return HttpResponse( json.dumps(return_data) )
 

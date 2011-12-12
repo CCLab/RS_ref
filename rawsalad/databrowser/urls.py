@@ -10,8 +10,6 @@ urlpatterns = patterns( 'databrowser.views',
     ( r'^(?P<idef>\d+)/$', 'init_restore' ),
     ( r'^restore_state/$', 'restore_state' ),
 
-    # TODO this url is probably not used
-    ( r'^prepare_data/$',  'prepare_data' ),
     ( r'^download/$',      'download_data' ),
     ( r'^feedback/$',      'feedback_email' ),
 

@@ -847,7 +847,7 @@ class Search:
 
         return out
 
-    def search_text(self, datasrc, qrystr, scope, strict, display= None):
+    def search_text( self, datasrc, qrystr, scope, strict, display=['idef'] ):
         self.set_query(qrystr)
         self.set_scope(scope)
         self.switch_strict(strict)

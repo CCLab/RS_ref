@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import pymongo
 from ConfigParser import ConfigParser
 

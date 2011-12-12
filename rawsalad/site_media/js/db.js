@@ -102,11 +102,11 @@ var _db = (function () {
                             single_row
                                 .click( function () {
                                     that.add_search_data({
-                                        dataset: collection['dataset'].toString(),
-                                        view: collection['view'].toString(),
-                                        issue: collection['issue'].toString(),
-                                        idef: collection['data'].toString(),
-                                        query: query
+                                        dataset : collection['dataset'].toString(),
+                                        view    : collection['view'].toString(),
+                                        issue   : collection['issue'].toString(),
+                                        ids     : collection['data'].toString(),
+                                        query   : query
                                     });
                                 })
                                 .find( '.pl-sr-results-name' )
