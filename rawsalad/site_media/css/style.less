@@ -1,7 +1,62 @@
 /*  L E S S  J S  */
   /*V A R I A B L E S */
     /* COLORS */
-    /* TODO - refactor colors names */
+      /* COLORS NAMES */ 
+      @gray:                            #8b8b8b;
+      @lighter-gray:                     #c1c1c1;
+      @light-gray:                      #dedede;
+      @very-light-gray:                 #e3e3e3;
+      @dark-gray:                       #5b5b5b;
+      @very-dark-gray:                  #3b3b3b;
+      @blue:                            #1ea3e8;
+      @light-blue:                      #4cbceb;
+      @white:                           #fff;
+      @creamy-white:                    #fffffa;
+      
+      /* COLORS RULES */
+      @background:                      @gray;
+      @links:                           @blue;
+      @hover-links:                     @white;
+      @visited-links:                   @blue;
+      @textinput-background:            @white;
+      @textinput-border:                @light-blue;
+
+      @header-background:               @very-dark-gray;
+      
+      @most-top-background:             @very-dark-gray;
+      @preloader-background:            @creamy-white;
+      @preloader-text:                  @dark-gray;
+      @preolader-text-hover:            @gray;
+      @preloader-border:                @dark-gray;
+      
+      @meta-menu-background:            @dark-gray;
+      @panel-background:                @white;
+      @panel-title-background:          @very-dark-gray;
+      @panel-title-text-color:          @white; 
+      @panel-main-background:           @very-light-gray;
+      
+      @close-bar-text:                  @white;
+      @buttons-background:              @blue;
+      @buttons-text:                    @white;
+      @buttons-top-border:              @blue;
+      
+      @close-bar-hover-background:      @white; 
+      @close-bar-hover-text:            @light-blue;
+      
+      @choose-view-background:          @light-gray;
+      @chose-header-border:             @gray;
+
+      @search-more-background:          @very-light-gray; 
+      @search-more-text:                @blue;  
+      @search-more-hover-background:    @blue;      
+      @search-more-hover-text:          @white;
+      @search-num-separator:            @lighter-gray;
+      @search-res-button-background:    @light-gray;
+      
+      @app-background:                  @white;
+      @app-header-background:           @gray;
+
+
       @background-gray: #8b8b8b;
       @links-blue: #1ea3e8;
       @buttons-blue: #1ea3e8;
@@ -12,7 +67,6 @@
       @border-dark-gray: #5b5b5b;
       @dark-gray: #5b5b5b;
       @buttons-blue2: #4cbceb;
-      @header-background: #3b3b3b;
       @background-light-gray: #e3e3e3;
 
 /*  G E N E R A L   H T M L   T A G S  */
@@ -20,7 +74,7 @@ body {
   margin: 0px;
   padding: 0px;
 
-  background-color: @background-gray;
+  background-color: @background;
   font-family: Arial,sans-serif;
   font-size: 11px;
 
@@ -28,7 +82,7 @@ body {
 }
 
 a {
-  color: @links-blue;
+  color: @links;
   text-decoration: none;
 
   .hoverable {
@@ -41,12 +95,12 @@ a {
   }  
 
   &:hover {
-  color: @text-white;
+  color: @hover-links;
   text-decoration: underline;
   }
   
   &:visited {
-  color: @links-blue;
+  color: @visited-links;
   text-decoration: none;  
   }
 }
@@ -88,11 +142,11 @@ textarea {
   margin-top: 5px;
   padding: 3px 5px;
 
-  background-color: a;
+  background-color: @textinput-background;
 
   font-family: Arial,sans-serif;
   font-size: 12px;
-  border: 1px solid @buttons-blue2;
+  border: 1px solid @textinput-border;
 
   border-radius: 5px;
   -moz-border-radius: 5px;
@@ -101,7 +155,7 @@ textarea {
 }
 
 #most-top {
-  background-color: @header-background;
+  background-color: @most-top-background;
 }
 
 #wrapper {
@@ -123,22 +177,22 @@ textarea {
   height: 20px;
   padding: 20px;
 
-  color: @text-dark-gray;
-  background-color: #fffffa;
+  color: @preloader-text;
+  background-color: @preloader-background;
   text-align: center;
   font-weight: bold;
   font-size: 14px;
 
-  border-left: 3px solid @border-dark-gray;
-  border-right: 3px solid @border-dark-gray;
-  border-bottom: 3px solid @border-dark-gray;
+  border-left: 3px solid @preloader-border;
+  border-right: 3px solid @preloader-border;
+  border-bottom: 3px solid @preloader-border;
   border-radius: 0px 0px 5px 5px;
   -moz-border-radius: 0px 0px 5px 5px;
   -webkit-border-radius: 0px 0px 5px 5px;
   -o-border-radius: 0px 0px 5px 5px;
   
   a:hover {
-    color: @background-gray;
+    color: @preolader-text-hover;
   }
 }  
 
@@ -198,7 +252,7 @@ textarea {
     margin-top: 4px;
     padding: 2px 5px !important;
 
-    background-color: @dark-gray;
+    background-color: @meta-menu-background;
 
     border-radius: 5px 5px 5px 5px;
     -moz-border-radius: 5px 5px 5px 5px;
@@ -217,7 +271,7 @@ textarea {
     overflow: hidden;
     margin-top: 10px;
   
-    background-color: @panel-background-white;
+    background-color: @panel-background;
   
     > header {
       overflow: auto;
@@ -247,8 +301,8 @@ textarea {
     margin-top: 5px;
     padding: 5px;
 
-    color: @text-white;
-    background-color: @header-background;
+    color: @panel-title-text-color;
+    background-color: @panel-title-background;
 
     border-radius: 5px 5px 0px 0px;
     -moz-border-radius: 5px 5px 0px 0px;
@@ -274,7 +328,7 @@ textarea {
     padding: 5px;
     clear: both;
     
-    background-color: @background-light-gray;
+    background-color: @panel-main-background;
     
     border-radius: 5px;
     -moz-border-radius: 5px;
@@ -335,12 +389,12 @@ textarea {
       padding: 10px;
     
       &:hover {
-        background-color: #dedede;
+        background-color: @choose-view-background;
       }
     }
     
     header {
-      border-bottom: 1px solid #919191;
+      border-bottom: 1px solid @chose-header-border;
     }
     
     .button+.button {
@@ -391,8 +445,8 @@ textarea {
     margin-bottom: 5px;
     padding: 5px;
 
-    background-color: #e1e1e1;
-    color: @buttons-blue;
+    background-color: @search-more-background;
+    color: @search-more-text;
 
     border-radius: 0px 0px 5px 5px;
     -moz-border-radius: 0px 0px 5px 5px;
@@ -400,8 +454,8 @@ textarea {
     -o-border-radius: 0px 0px 5px 5px;
     
     &:hover {
-      background-color: @buttons-blue;
-      color: @panel-background-white;
+      background-color: @search-more-hover-background;
+      color: @search-more-hover-text;
     }
   }
 
@@ -413,7 +467,7 @@ textarea {
     width: 50px; 
     vertical-align: top; 
     padding-right: 15px; 
-    border-right: 1px solid #c1c1c1; 
+    border-right: 1px solid @search-num-separator; 
     text-align: right;
   }
 
@@ -428,7 +482,7 @@ textarea {
     color: @text-white; 
     margin-left: 10px; 
   
-    background-color: #c1c1c1; 
+    background-color: @search-res-button-background; 
 
     border-radius: 3px;    
     -moz-border-radius: 3px;    
@@ -446,14 +500,15 @@ textarea {
   padding-bottom: 5px;
   position: relative;
 
-  background-color: @panel-background-white;
+  background-color: @app-background;
 
   > header {
     overflow: auto;
-    background-color: @background-gray; 
+    background-color: @app-header-background; 
   }
 }
- 
+
+// TODO colors from here 
   #app-tabs {
     margin-left: 5px;
     
