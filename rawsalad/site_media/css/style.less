@@ -229,6 +229,17 @@ textarea {
         float: left;
       }
     }
+    
+    .button {
+      float: right;
+
+      padding: 5px;
+
+      border-radius: 5px;
+      -moz-border-radius: 5px;
+      -webkit-border-radius: 5px;
+      -o-border-radius: 5px;
+    }
   }
     
   .panel-title {
@@ -273,17 +284,6 @@ textarea {
     img {
       margin-left: 5px;
     }
-
-    .button {
-      float: right;
-
-      padding: 5px;
-
-      border-radius: 5px;
-      -moz-border-radius: 5px;
-      -webkit-border-radius: 5px;
-      -o-border-radius: 5px;
-     }
    }
   
   .pl-bt-container {
@@ -474,61 +474,64 @@ textarea {
       -moz-border-radius: 5px 5px 0px 0px;
       -webkit-border-radius: 5px 5px 0px 0px;
       -o-border-radius: 5px 5px 0px 0px;
+    }  
       
-      .active {
-        margin-top: 4px;
-        padding-bottom: 8px;
+    li.active {
+      margin-top: 4px;
+      padding-bottom: 8px;
 
-        background-color: @panel-background-white;
-        font-weight: bold;
+      background-color: @panel-background-white;
+      font-weight: bold;
 
-        border-bottom: 1px solid #fff;
-      }
+      border-bottom: 1px solid #fff;
     }
   }
-   //TODO  finish nested rules for less from here 
+
+
   /* APPLICATION TABLE */
-  #app-table > .panel-main {
-  }
-
-  #app-table header li {
-    float: left;
-
-    padding: 4px 5px;
-    margin: 9px 3px;
-    margin-bottom: 0px;
-
-    background-color: @element-white;
-    border: 1px solid #c8c8c8;
-    border-bottom: 1px solid @buttons-blue;
+  #app-table {
     
-    border-radius: 3px 3px 0px 0px;
-    -moz-border-radius: 3px 3px 0px 0px;
-    -webkit-border-radius: 3px 3px 0px 0px;
-    -o-border-radius: 3px 3px 0px 0px;
-  }
+    > .main-panel {
+      overflow: visible;
+    }
+  
+    header { 
+      li {
+        float: left;
 
-  #app-table header li:hover {
-    border: 1px solid @links-blue;
-    background-color: @links-blue;
-  }
+        padding: 4px 5px;
+        margin: 9px 3px;
+        margin-bottom: 0px;
 
-  #app-table header li.active {
-    padding: 6px 5px;
-    margin: 5px 3px;
-    margin-bottom: 0px;
+        background-color: @element-white;
+        border: 1px solid #c8c8c8;
+        border-bottom: 1px solid @buttons-blue;
+    
+        border-radius: 3px 3px 0px 0px;
+        -moz-border-radius: 3px 3px 0px 0px;
+        -webkit-border-radius: 3px 3px 0px 0px;
+        -o-border-radius: 3px 3px 0px 0px;
+        
+        &:hover {
+          border: 1px solid @links-blue;
+          background-color: @links-blue;
+        }
+      }
+      
+      li.active {
+        padding: 6px 5px;
+        margin: 5px 3px;
+        margin-bottom: 0px;
 
-    background-color: #e1e1e1;
-    border-bottom: 1px solid #e1e1e1;
-  }
-
-  #app-table header li.active:hover {
-    border: 1px solid #c8c8c8;
-    border-bottom: 1px solid #e1e1e1;
-  }
-
-  #app-table > .main-panel {
-    overflow: visible;
+        background-color: #e1e1e1;
+        border-bottom: 1px solid #e1e1e1;
+      
+        &:hover {
+          border: 1px solid #c8c8c8;
+          border-bottom: 1px solid #e1e1e1;
+        }      
+      }    
+    }
   }
 
   #app-tb-tools > section {
@@ -559,11 +562,11 @@ textarea {
     -moz-border-radius: 3px;
     -webkit-border-radius: 3px;
     -o-border-radius: 3px;
-  }
-
-  #app-tb-tl-rename-button:hover {
-    color: @text-white;
-    background-color: #4abff7;
+    
+    &:hover {
+      color: @text-white;
+      background-color: #4abff7;
+    }
   }
 
   #app-tb-tl-bt-container > div {
@@ -571,11 +574,11 @@ textarea {
 
     color: @buttons-blue2;
     background-color: @element-white;
-  }
-
-  #app-tb-tl-bt-container > div:hover {
-    color: @text-white;
-    background-color: #b7b7b7;
+    
+    &:hover {
+      color: @text-white;
+      background-color: #b7b7b7;
+    }
   }
 
   #app-tb-tl-clear-button {
@@ -603,24 +606,27 @@ textarea {
     -o-border-radius: 0px 3px 3px 0px;
   }
 
-  #app-tb-tl-srft-forms > form > *  {
-    float: left;
-    margin-right: 5px;
-  }
+  #app-tb-tl-srft-forms{
+  
+    > form > *  {
+      float: left;
+      margin-right: 5px;
+    }
 
-  #app-tb-tl-srft-forms > table td {
-    vertical-align: top;
-    padding: 0px 5px;
-  }
+    > table td {
+      vertical-align: top;
+      padding: 0px 5px;
+    }
 
-  #app-tb-tl-srft-forms .button {
-    margin-top: 25px;
-    padding: 5px;
+    .button {
+      margin-top: 25px;
+      padding: 5px;
 
-    border-radius: 5px;
-    -moz-border-radius: 5px;
-    -webkit-border-radius: 5px;
-    -o-border-radius: 5px;
+      border-radius: 5px;
+      -moz-border-radius: 5px;
+      -webkit-border-radius: 5px;
+      -o-border-radius: 5px;
+    }
   }
 
   .column-button-underline{
@@ -646,45 +652,45 @@ textarea {
     -moz-border-radius: 5px 5px 0px 0px;
     -webkit-border-radius: 5px 5px 0px 0px;
     -o-border-radius: 5px 5px 0px 0px;
+    
+    &:hover {
+      color: @text-white;
+    }
   }
   
-  #app-tb-tl-columns-button:hover {
-    color: @text-white;
-  }
-
   #app-tb-tl-columns-list {
     position: relative;
-  }
+    
+    form {
+      position: absolute;
+      z-index: 30;
+      width: 330px;
+      right: 0px;
+      padding: 5px;
 
-  #app-tb-tl-columns-list form {
-    position: absolute;
-    z-index: 30;
-    width: 330px;
-    right: 0px;
-    padding: 5px;
+      background-color: @element-white;
 
-    background-color: @element-white;
+      border: 2px solid #000;
 
-    border: 2px solid #000;
+      border-radius: 5px 0px 5px 5px;
+      -moz-border-radius: 5px 0px 5px 5px;
+      -webkit-border-radius: 5px 0px 5px 5px;
+      -o-border-radius: 5px 0px 5px 5px;
+    }
+    
+    td {
+      padding: 0px;
+    }
+    
+    .button {
+      padding: 5px;
+      margin-right: 5px;
 
-    border-radius: 5px 0px 5px 5px;
-    -moz-border-radius: 5px 0px 5px 5px;
-    -webkit-border-radius: 5px 0px 5px 5px;
-    -o-border-radius: 5px 0px 5px 5px;
-  }
-
-  #app-tb-tl-columns-list td {
-    padding: 0px;
-  }
-
-  #app-tb-tl-columns-list .button {
-    padding: 5px;
-    margin-right: 5px;
-
-    border-radius: 5px;
-    -moz-border-radius: 5px;
-    -webkit-border-radius: 5px;
-    -o-border-radius: 5px;
+      border-radius: 5px;
+      -moz-border-radius: 5px;
+      -webkit-border-radius: 5px;
+      -o-border-radius: 5px;
+    }    
   }
 
   #app-tb-tl-old-title {
@@ -759,12 +765,12 @@ textarea {
     border-radius: 7px;
     -moz-border-radius: 7px;
     -webkit-border-radius: 7px;
-    -o-border-radius: 7px;    
-  }
-
-  #app-tb-in-con-button-x:hover {
-    color: white;
-    background-color: @background-gray;
+    -o-border-radius: 7px;
+    
+    &:hover {
+      color: white;
+      background-color: @background-gray;
+    }    
   }
 
   .app-tb-close-sheet {
@@ -781,11 +787,11 @@ textarea {
     -moz-border-radius: 3px;    
     -webkit-border-radius: 3px;    
     -o-border-radius: 3px;    
-  }
-
-  .app-tb-close-sheet:hover {
-    color: @text-dark-gray;
-    background-color: #b6b6b6;
+    
+    &:hover {
+      color: @text-dark-gray;
+      background-color: #b6b6b6;
+    }
   }
 
   .app-tb-result {
@@ -801,26 +807,31 @@ textarea {
   }
   
     /* APPLICATION FILTERED */
-    #app-tb-filteredtable tr {
-      border: 1px solid #a3a3a3;
-    }
+    #app-tb-filteredtable {
+      width: 100%;
+      border-collapse: collapse;
+          
+      tr {
+        border: 1px solid #a3a3a3;
+      }
 
-    #app-tb-filteredtable th {
-      background-color: #d4d4d4;
-      text-align: left;
-      border: 1px solid #a3a3a3;
+      th {
+        background-color: #d4d4d4;
+        text-align: left;
+        border: 1px solid #a3a3a3;
+      }
     }
        
     .filtered-breadcrumb {
       border-left: #e4e4e4 !important;
       border-right: #e4e4e4 !important;
-    }
 
-    .filtered-breadcrumb td {
-      color: @text-dark-gray;
-      padding-top: 15px;
-      padding-left: 5px;
-      font-size: 9px;
+      td {
+        color: @text-dark-gray;
+        padding-top: 15px;
+        padding-left: 5px;
+        font-size: 9px;
+      }
     }
  
     .filtered-data td {
@@ -850,17 +861,17 @@ footer {
   padding: 0px 15px;
   border-top: 1px solid #ddd;
   border-bottom: 1px solid #ddd;
-}
 
-footer > section {
-  padding: 10px 0px;
-  line-height: 1.7em;
-  float: left;
-  margin-right: 1%;
-}
-
-footer a:hover {
-  color: @background-gray;
+  > section {
+    padding: 10px 0px;
+    line-height: 1.7em;
+    float: left;
+    margin-right: 1%;
+  }
+  
+  a:hover {
+    color: @background-gray;
+  }
 }
 
 .last {

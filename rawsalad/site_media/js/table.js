@@ -385,7 +385,7 @@ var _table = (function () {
         var functions_map = {
             '0': generate_text_for_budzet,
             '2': generate_text_for_fundusze_zad,
-            '3': generate_text_for_nfz
+            '1': generate_text_for_nfz
         };
         var text_generator = functions_map[ _store.dataset() ];
         var visible_attrs = prepare_visible_attributes();
