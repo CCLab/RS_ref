@@ -1,37 +1,125 @@
+/*  L E S S  J S  */
+  /*V A R I A B L E S */
+    /* COLORS */
+      /* COLORS NAMES */ 
+      @black:                                   #000000;
+      @blue:                                    #1ea3e8;
+      @light-black:                             #2b2b2b;      
+      @very-dark-gray:                          #3b3b3b;
+      @light-blue:                              #4cbceb;
+      @dark-gray:                               #5b5b5b;
+      @gray:                                    #8b8b8b;
+      @green :                                  #98d39f;
+      @small-lighter-gray:                      #ababab; // TODO refactor gray and add to style
+      @lighter-gray:                            #c1c1c1;
+      @light-gray:                              #dedede;
+      @very-light-gray:                         #e3e3e3;
+      @creamy-white:                            #fffffa;
+      @white:                                   #fff;
+      
+      /* COLORS RULES */
+      @datatable-thead-row-background:          @light-black;
+      @datatable-thead-row-text:                @black;
+      @datatable-row-border:                    @dark-gray;
+      @datatable-cell-separator:                @gray;
+      @datatable-hover-row:                     @green;
+      @datatable-dim-row:                       @small-lighter-gray;
+      
+      @table-header-background:                 @white;
+      @table-header-border:                     @lighter-gray;
+      @table-header-bottom-border:              @blue;
+      @table-header-active-background:          @very-light-gray;
+      @table-header-active-border-bottom:       @very-light-gray; 
+      @table-header-active-hover-border-bottom: @very-light-gray;
+      @table-header-active-hover-border:        @lighter-gray; 
+           
+      @table-header-hover-background:           @blue;
+      @table-header-hover-border:               @blue;
+      
+      @table-rename-background:                 @white;
+      @table-rename-text:                       @light-blue;
+      @table-rename-hover-background:           @light-blue;
+      @table-rename-hover-text:                 @white;
+
+      @table-buttons-text:                      @light-blue;
+      @table-buttons-background:                @white;
+      @table-buttons-hover-text:                @white;
+      @table-buttons-hover-background:          @lighter-gray;
+        
+      @table-buttons-separator:                 @black;
+
+      @table-columns-button-text:               @light-blue;
+      @table-columns-button-background:         @black;
+      @table-columns-button-hover-text:         @white;
+      
+      @table-columns-list-background:           @white;
+      @table-columns-list-border:               @black;
+      
+      @table-old-title-text:                    @gray;
+      @table-info-background:                   @very-light-gray;
+      @table-info-text:                         @black;
+      @table-info-border:                       @black;
+      @table-info-shadow:                       @gray;
+      
+      @table-info-button-x-text:                @gray;
+      @table-info-button-x-background:          @white;           
+      @table-info-button-x-hover-text:          @white;
+      @table-info-button-x-hover-background:    @gray;
+      
+      @table-close-sheet-text:                  @white;
+      @table-close-sheet-background:            @gray;
+      @table-close-sheet-hover-text:            @dark-gray;
+      @table-close-sheet-hover-background:      @lighter-gray;
+      
+      @filtered-head-cell-background:           @light-gray;
+      @filtered-head-cell-border:               @gray;
+      @filtered-row-border:                     @gray;
+      @filtered-breadcrumb-border:              @very-light-gray;
+      @filtered-breadcrumb-text:                @dark-gray;
+      @filtered-data-cell-background:           @white;
+      @filtered-data-cell-border:               @gray;
+
+// TODO add color rules and change order       
+/* D A T A T A B L E */
 #app-tb-datatable {
-  width: 940px;
+  width: 100%;
   border-collapse: collapse;
+
+  thead > tr {
+    background-color: @datatable-thead-row-background;
+    color: @datatable-thead-row-text;
+  }
+
+  tr {
+    border-right: 2px solid @datatable-row-border;
+    border-left: 2px solid @datatable-row-border;
+  }
+  
+  td {
+    cursor: default;
+    vertical-align: top;
+    padding: 5px;
+  }
+  
+  td+td {
+    border-left: 1px solid @datatable-cell-separator;
+  }
+
+  tbody {
+  
+    > tr:hover {
+      background-color: @datatable-hover-row;
+    }
+
+    > tr.dim {
+      border-right: 2px solid @datatable-dim-row;
+      border-left: 2px solid @datatable-dim-row;
+    }
+  }
 }
 
-#app-tb-datatable thead > tr {
-  background-color: #2b2b2b;
-  color: #fff;
-}
 
-#app-tb-datatable tr {
-  border-right: 2px solid #5b5b5b;
-  border-left: 2px solid #5b5b5b;
-}
-
-#app-tb-datatable tbody > tr:hover {
-  background-color: #98d39f;
-}
-
-#app-tb-datatable tbody > tr.dim {
-  border-right: 2px solid #ababab;
-  border-left: 2px solid #ababab;
-}
-
-#app-tb-datatable td {
-  cursor: default;
-  vertical-align: top;
-  padding: 5px;
-}
-
-#app-tb-datatable td+td {
-  border-left: 1px solid #8b8b8b;
-}
-
+/* G E N E R A L   T A B L E */
 .odd {
   background-color: #fff;
 }
@@ -117,6 +205,354 @@
   text-align: right;
 }
 
+  /* APPLICATION TABLE */
+  #app-table {
+    
+    > .main-panel {
+      overflow: visible;
+    }
+  
+    header { 
+      li {
+        float: left;
+
+        padding: 4px 5px;
+        margin: 9px 3px;
+        margin-bottom: 0px;
+
+        background-color: @table-header-background;
+        border: 1px solid @table-header-border;
+        border-bottom: 1px solid @table-header-bottom-border;
+    
+        border-radius: 3px 3px 0px 0px;
+        -moz-border-radius: 3px 3px 0px 0px;
+        -webkit-border-radius: 3px 3px 0px 0px;
+        -o-border-radius: 3px 3px 0px 0px;
+        
+        &:hover {
+          border: 1px solid @table-header-hover-border;
+          background-color: @table-header-hover-background;
+        }
+      }
+      
+      li.active {
+        padding: 6px 5px;
+        margin: 5px 3px;
+        margin-bottom: 0px;
+
+        background-color: @table-header-active-background;
+        border-bottom: 1px solid @table-header-active-border-bottom;
+      
+        &:hover {
+          border: 1px solid @table-header-active-hover-border;
+          border-bottom: 1px solid @table-header-active-hover-border-bottom;
+        }      
+      }    
+    }
+  }
+
+  #app-tb-tools > section {
+    clear: both;
+    padding: 10px;
+    padding-bottom: 0px;
+  }
+
+  #app-tb-save-sheet {
+    margin: 9px;
+    margin-bottom: 0px;
+    padding: 3px;
+
+    border-radius: 3px;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    -o-border-radius: 3px;
+  }
+  
+  #app-tb-tl-rename-button {
+    margin-left: 5px;
+    padding: 2px 4px;
+
+    color: @table-rename-text;
+    background-color: @table-rename-background;
+
+    border-radius: 3px;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    -o-border-radius: 3px;
+    
+    &:hover {
+      color: @table-rename-hover-text;
+      background-color: @table-rename-hover-background;
+    }
+  }
+
+  #app-tb-tl-bt-container > div {
+    padding: 3px 10px;
+
+    color: @table-buttons-text;
+    background-color: @table-buttons-background;
+    
+    &:hover {
+      color: @table-buttons-hover-text;
+      background-color: @table-buttons-hover-background;
+    }
+  }
+
+  #app-tb-tl-clear-button {
+    margin-right: 10px;
+
+    border-radius: 3px;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    -o-border-radius: 3px;
+  }
+
+  #app-tb-tl-sort-button {
+    border-radius: 3px 0px 0px 3px;
+    -moz-border-radius: 3px 0px 0px 3px;
+    -webkit-border-radius: 3px 0px 0px 3px;
+    -o-border-radius: 3px 0px 0px 3px;
+  }
+
+  #app-tb-tl-filter-button {
+    border-left: 1px solid @table-buttons-separator;
+
+    border-radius: 0px 3px 3px 0px;
+    -moz-border-radius: 0px 3px 3px 0px;
+    -webkit-border-radius: 0px 3px 3px 0px;
+    -o-border-radius: 0px 3px 3px 0px;
+  }
+
+  #app-tb-tl-srft-forms{
+  
+    > form > *  {
+      float: left;
+      margin-right: 5px;
+    }
+
+    > table td {
+      vertical-align: top;
+      padding: 0px 5px;
+    }
+
+    .button {
+      margin-top: 25px;
+      padding: 5px;
+
+      border-radius: 5px;
+      -moz-border-radius: 5px;
+      -webkit-border-radius: 5px;
+      -o-border-radius: 5px;
+    }
+  }
+   
+  #app-tb-tl-col-button-wrapper {
+    float: right;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  #app-tb-tl-columns-button {
+    padding: 5px 10px;
+    color: @table-columns-button-text;
+    background-color: @table-columns-button-background;
+
+    border-radius: 5px 5px 0px 0px;
+    -moz-border-radius: 5px 5px 0px 0px;
+    -webkit-border-radius: 5px 5px 0px 0px;
+    -o-border-radius: 5px 5px 0px 0px;
+    
+    &:hover {
+      color: @table-columns-button-hover-text;
+    }
+  }
+  
+  #app-tb-tl-columns-list {
+    position: relative;
+    
+    form {
+      position: absolute;
+      z-index: 30;
+      width: 330px;
+      right: 0px;
+      padding: 5px;
+
+      background-color: @table-columns-list-background;
+
+      border: 2px solid @table-columns-list-border;
+
+      border-radius: 5px 0px 5px 5px;
+      -moz-border-radius: 5px 0px 5px 5px;
+      -webkit-border-radius: 5px 0px 5px 5px;
+      -o-border-radius: 5px 0px 5px 5px;
+    }
+    
+    td {
+      padding: 0px;
+    }
+    
+    .button {
+      padding: 5px;
+      margin-right: 5px;
+
+      border-radius: 5px;
+      -moz-border-radius: 5px;
+      -webkit-border-radius: 5px;
+      -o-border-radius: 5px;
+    }    
+  }
+
+  #app-tb-tl-old-title {
+    margin-top: 2px;
+    margin-left: 5px;
+    color: @table-old-title-text;
+  }
+
+  #app-tb-info {
+    position: absolute;
+    z-index: 1;
+    left: 0px;
+    width: 100%;
+    height: 0px;       
+    
+    text-align: center;
+  }
+
+  #app-tb-in-table{
+    display: table;
+
+    margin-left: auto;
+    margin-right: auto;
+  }  
+
+  #app-tb-in-content {
+    display: none;
+    width: 690px;
+    top: 10px;
+    left: 5px;
+
+    margin: 0px;
+    margin-left: auto;
+    margin-right: auto;
+  	padding: 10px;
+    padding-left: 30px;
+    padding-right: 30px;
+
+    background-color: @table-info-background;
+    color: @table-info-text;
+    text-align: left;
+    font-weight: normal;
+
+  	border: 2px solid @table-info-border;
+    border-radius: 5px;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    -o-border-radius: 5px;
+
+    -moz-box-shadow: 0px 0px 50px @table-info-shadow;
+    -webkit-box-shadow: 0px 0px 50px @table-info-shadow;
+    box-shadow: 0px 0px 50px @table-info-shadow;
+  }
+
+  .app-tb-info-button {
+    display: inline;
+    position: relative;
+  }
+
+  #app-tb-in-con-button-x {
+    float: right;
+    height: 14px;
+    width: 14px;
+
+    margin-right: -20px;
+    margin-top: -5px;
+
+    color: @table-info-button-x-text;
+    background-color: @table-info-button-x-background;
+    text-align: center;
+
+    border-radius: 7px;
+    -moz-border-radius: 7px;
+    -webkit-border-radius: 7px;
+    -o-border-radius: 7px;
+    
+    &:hover {
+      color: @table-info-button-x-hover-text;
+      background-color: @table-info-button-x-hover-background;
+    }    
+  }
+
+  .app-tb-close-sheet {
+    float: right;
+    margin: -2px -2px;
+    margin-left: 5px;
+    padding: 1px 3px;
+
+    font-weight: bold;
+    background-color: @table-close-sheet-background;
+    color: @table-close-sheet-text;
+
+    border-radius: 3px;    
+    -moz-border-radius: 3px;    
+    -webkit-border-radius: 3px;    
+    -o-border-radius: 3px;    
+    
+    &:hover {
+      color: @table-close-sheet-hover-text;
+      background-color: @table-close-sheet-hover-background;
+    }
+  }
+
+  .app-tb-result {
+    float: left;
+    width: 940px;
+    border-collapse: collapse;
+  }  
+  
+  .app-result-table{  
+    float: left;
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+    /* APPLICATION FILTERED */
+    #app-tb-filteredtable {
+      width: 100%;
+      border-collapse: collapse;
+          
+      tr {
+        border: 1px solid @filtered-row-border;
+      }
+
+      th {
+        background-color: @filtered-head-cell-background;
+        text-align: left;
+        border: 1px solid @filtered-head-cell-border;
+      }
+    }
+       
+    .filtered-breadcrumb {
+      border-left: @filtered-breadcrumb-border !important;
+      border-right: @filtered-breadcrumb-border !important;
+
+      td {
+        color: @filtered-breadcrumb-text;
+        padding-top: 15px;
+        padding-left: 5px;
+        font-size: 9px;
+      }
+    }
+ 
+    .filtered-data td {
+      padding: 5px;
+      background-color: @filtered-data-cell-background;
+      border: 1px solid @filtered-data-cell-border;
+    }
+
+
+
+
+/* TABLE INFO PANEL */
   #app-tb-in-con-table1 {
       border-top: 1px solid #8B8B8B;
       border-bottom: 1px solid #8B8B8B;
@@ -125,18 +561,22 @@
       width: 680px;
   }
 
-  #app-tb-in-content > table > tbody > tr:hover {
-  background-color: #E3E3E3;
-  }
-  
-  #app-tb-in-content td {
-    padding: 0px;
-    padding-right: 25px;
-  }
+  #app-tb-in-content {
+ 
+    td {
+      padding: 0px;
+      padding-right: 25px;
+    }
 
-  #app-tb-in-content td+td {
-    border-left: none;
-    padding: 0px;
+    td+td {
+      border-left: none;
+      padding: 0px;
+    }
+
+
+    > table > tbody > tr:hover {
+      background-color: #E3E3E3;
+    }
   }
 
   .app-tb-in-con-type {
