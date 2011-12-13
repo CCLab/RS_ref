@@ -2,72 +2,124 @@
   /*V A R I A B L E S */
     /* COLORS */
       /* COLORS NAMES */ 
-      @gray:                            #8b8b8b;
-      @lighter-gray:                    #c1c1c1;
-      @light-gray:                      #dedede;
-      @very-light-gray:                 #e3e3e3;
-      @dark-gray:                       #5b5b5b;
-      @very-dark-gray:                  #3b3b3b;
-      @blue:                            #1ea3e8;
-      @light-blue:                      #4cbceb;
-      @white:                           #fff;
-      @creamy-white:                    #fffffa;
+      @gray:                                    #8b8b8b;
+      @lighter-gray:                            #c1c1c1;
+      @light-gray:                              #dedede;
+      @very-light-gray:                         #e3e3e3;
+      @dark-gray:                               #5b5b5b;
+      @very-dark-gray:                          #3b3b3b;
+      @blue:                                    #1ea3e8;
+      @light-blue:                              #4cbceb;
+      @white:                                   #fff;
+      @creamy-white:                            #fffffa;
+      @black:                                   #000000;
       
       /* COLORS RULES */
-      @background:                      @gray;
-      @links:                           @blue;
-      @hover-links:                     @white;
-      @visited-links:                   @blue;
-      @textinput-background:            @white;
-      @textinput-border:                @light-blue;
+      @background:                              @gray;
+      @links:                                   @blue;
+      @hover-links:                             @white;
+      @visited-links:                           @blue;
+      @textinput-background:                    @white;
+      @textinput-border:                        @light-blue;
 
-      @header-background:               @very-dark-gray;
+      @header-background:                       @very-dark-gray;
+        
+      @most-top-background:                     @very-dark-gray;
+      @preloader-background:                    @creamy-white;
+      @preloader-text:                          @dark-gray;
+      @preolader-text-hover:                    @gray;
+      @preloader-border:                        @dark-gray;
       
-      @most-top-background:             @very-dark-gray;
-      @preloader-background:            @creamy-white;
-      @preloader-text:                  @dark-gray;
-      @preolader-text-hover:            @gray;
-      @preloader-border:                @dark-gray;
+      @meta-menu-background:                    @dark-gray;
+      @panel-background:                        @white;
+      @panel-title-background:                  @very-dark-gray;
+      @panel-title-text-color:                  @white; 
+      @panel-main-background:                   @very-light-gray;
       
-      @meta-menu-background:            @dark-gray;
-      @panel-background:                @white;
-      @panel-title-background:          @very-dark-gray;
-      @panel-title-text-color:          @white; 
-      @panel-main-background:           @very-light-gray;
+      @panel-close-bar-text:                    @white;
+      @panel-close-bar-background:              @blue;
+      @panel-close-bar-top-border:              @blue;
       
-      @close-bar-text:                  @white;
-      @buttons-background:              @blue;
-      @buttons-text:                    @white;
-      @buttons-top-border:              @blue;
+      @panel-close-bar-hover-background:        @white; 
+      @panel-close-bar-hover-text:                    @blue;
       
-      @close-bar-hover-background:      @white; 
-      @close-bar-hover-text:            @light-blue;
-      
-      @choose-view-background:          @light-gray;
-      @chose-header-border:             @gray;
+      @choose-view-background:                  @light-gray;
+      @chose-header-border:                     @gray;
 
-      @search-more-background:          @very-light-gray; 
-      @search-more-text:                @blue;  
-      @search-more-hover-background:    @blue;      
-      @search-more-hover-text:          @white;
-      @search-num-separator:            @lighter-gray;
-      @search-res-button-background:    @light-gray;
+      @search-more-background:                  @very-light-gray; 
+      @search-more-text:                        @blue;  
+      @search-more-hover-background:            @blue;      
+      @search-more-hover-text:                  @white;
+      @search-num-separator:                    @lighter-gray;
+      @search-res-button-background:            @light-gray;
+      @search-res-button-text:                  @white;
+        
+      @app-background:                          @white;
+      @app-header-background:                   @gray;
+      @tabs-bottom-border:                      @blue;
+      @tabs-active-background:                  @white;
+      @tabs-active-bottom-border:               @white;
+            
+      @table-header-background:                 @white;
+      @table-header-border:                     @lighter-gray;
+      @table-header-bottom-border:              @blue;
+      @table-header-active-background:          @very-light-gray;
+      @table-header-active-border-bottom:       @very-light-gray; 
+      @table-header-active-hover-border-bottom: @very-light-gray;
+      @table-header-active-hover-border:        @lighter-gray; 
+           
+      @table-header-hover-background:           @blue;
+      @table-header-hover-border:               @blue;
       
-      @app-background:                  @white;
-      @app-header-background:           @gray;
+      @table-rename-background:                 @white;
+      @table-rename-text:                       @light-blue;
+      @table-rename-hover-background:           @light-blue;
+      @table-rename-hover-text:                 @white;
 
+      @table-buttons-text:                      @light-blue;
+      @table-buttons-background:                @white;
+      @table-buttons-hover-text:                @white;
+      @table-buttons-hover-background:          @lighter-gray;
+        
+      @table-buttons-separator:                 @black;
 
-      @background-gray: #8b8b8b;
-      @links-blue: #1ea3e8;
-      @buttons-blue: #1ea3e8;
-      @panel-background-white: #fff;
-      @text-white: #fff;
-      @element-white: #fff;
-      @text-dark-gray: #5b5b5b;
-      @border-dark-gray: #5b5b5b;
-      @dark-gray: #5b5b5b;
-      @buttons-blue2: #4cbceb;
-      @background-light-gray: #e3e3e3;
+      @table-columns-button-text:               @light-blue;
+      @table-columns-button-background:         @black;
+      @table-columns-button-hover-text:         @white;
+      
+      @table-columns-list-background:           @white;
+      @table-columns-list-border:               @black;
+      
+      @table-old-title-text:                    @gray;
+      @table-info-background:                   @very-light-gray;
+      @table-info-text:                         @black;
+      @table-info-border:                       @black;
+      @table-info-shadow:                       @gray;
+      
+      @table-info-button-x-text:                @gray;
+      @table-info-button-x-background:          @white;           
+      @table-info-button-x-hover-text:          @white;
+      @table-info-button-x-hover-background:    @gray;
+      
+      @table-close-sheet-text:                  @white;
+      @table-close-sheet-background:            @gray;
+      @table-close-sheet-hover-text:            @dark-gray;
+      @table-close-sheet-hover-background:      @lighter-gray;
+      
+      @filtered-head-cell-background:           @light-gray;
+      @filtered-head-cell-border:               @gray;
+      @filtered-row-border:                     @gray;
+      @filtered-breadcrumb-border:              @very-light-gray;
+      @filtered-breadcrumb-text:                @dark-gray;
+      @filtered-data-cell-background:           @white;
+      @filtered-data-cell-border:               @gray;
+      
+      @app-permalink-background:                @very-light-gray;
+      @app-permalink-text:                      @blue; 
+      
+      @footer-border:                           @light-gray;
+      @footer-hover-links:                      @gray;     
+
 
 /*  G E N E R A L   H T M L   T A G S  */
 body {
@@ -111,7 +163,7 @@ ul {
   float: left;
   padding: 0px;
   margin: 0px;
-
+  
   list-style-type: none;
 }
 
@@ -351,18 +403,18 @@ textarea {
     padding: 3px 0px;
     margin-bottom: 10px;
 
-    color: @text-white;
-    background-color: @buttons-blue;
+    color: @panel-close-bar-text;
+    background-color: @panel-close-bar-background;
 
     text-align: center;
     font-size: 12px;
     font-weight: bold;
     
-    border-top: 1px solid @buttons-blue;
+    border-top: 1px solid @panel-close-bar-top-border;
   
     &:hover {
-      background-color: @panel-background-white;
-      color: @buttons-blue;
+      background-color: @panel-close-bar-hover-background;
+      color: @panel-close-bar-hover-text;
     }
   }
 
@@ -479,7 +531,7 @@ textarea {
 
   .pl-sr-results-button {
     padding: 0px 5px; 
-    color: @text-white; 
+    color: @search-res-button-text; 
     margin-left: 10px; 
   
     background-color: @search-res-button-background; 
@@ -508,7 +560,6 @@ textarea {
   }
 }
 
-// TODO colors from here 
   #app-tabs {
     margin-left: 5px;
     
@@ -523,7 +574,7 @@ textarea {
       font-size: 12px;
       text-align: center;
 
-      border-bottom: 1px solid @buttons-blue;
+      border-bottom: 1px solid @tabs-bottom-border;
 
       border-radius: 5px 5px 0px 0px;
       -moz-border-radius: 5px 5px 0px 0px;
@@ -535,10 +586,10 @@ textarea {
       margin-top: 4px;
       padding-bottom: 8px;
 
-      background-color: @panel-background-white;
+      background-color: @tabs-active-background;
       font-weight: bold;
 
-      border-bottom: 1px solid #fff;
+      border-bottom: 1px solid @tabs-active-bottom-border;
     }
   }
 
@@ -558,9 +609,9 @@ textarea {
         margin: 9px 3px;
         margin-bottom: 0px;
 
-        background-color: @element-white;
-        border: 1px solid #c8c8c8;
-        border-bottom: 1px solid @buttons-blue;
+        background-color: @table-header-background;
+        border: 1px solid @table-header-border;
+        border-bottom: 1px solid @table-header-bottom-border;
     
         border-radius: 3px 3px 0px 0px;
         -moz-border-radius: 3px 3px 0px 0px;
@@ -568,8 +619,8 @@ textarea {
         -o-border-radius: 3px 3px 0px 0px;
         
         &:hover {
-          border: 1px solid @links-blue;
-          background-color: @links-blue;
+          border: 1px solid @table-header-hover-border;
+          background-color: @table-header-hover-background;
         }
       }
       
@@ -578,12 +629,12 @@ textarea {
         margin: 5px 3px;
         margin-bottom: 0px;
 
-        background-color: #e1e1e1;
-        border-bottom: 1px solid #e1e1e1;
+        background-color: @table-header-active-background;
+        border-bottom: 1px solid @table-header-active-border-bottom;
       
         &:hover {
-          border: 1px solid #c8c8c8;
-          border-bottom: 1px solid #e1e1e1;
+          border: 1px solid @table-header-active-hover-border;
+          border-bottom: 1px solid @table-header-active-hover-border-bottom;
         }      
       }    
     }
@@ -610,8 +661,8 @@ textarea {
     margin-left: 5px;
     padding: 2px 4px;
 
-    color: #4abff7;
-    background-color: @element-white;
+    color: @table-rename-text;
+    background-color: @table-rename-background;
 
     border-radius: 3px;
     -moz-border-radius: 3px;
@@ -619,20 +670,20 @@ textarea {
     -o-border-radius: 3px;
     
     &:hover {
-      color: @text-white;
-      background-color: #4abff7;
+      color: @table-rename-hover-text;
+      background-color: @table-rename-hover-background;
     }
   }
 
   #app-tb-tl-bt-container > div {
     padding: 3px 10px;
 
-    color: @buttons-blue2;
-    background-color: @element-white;
+    color: @table-buttons-text;
+    background-color: @table-buttons-background;
     
     &:hover {
-      color: @text-white;
-      background-color: #b7b7b7;
+      color: @table-buttons-hover-text;
+      background-color: @table-buttons-hover-background;
     }
   }
 
@@ -653,7 +704,7 @@ textarea {
   }
 
   #app-tb-tl-filter-button {
-    border-left: 1px solid #000;
+    border-left: 1px solid @table-buttons-separator;
 
     border-radius: 0px 3px 3px 0px;
     -moz-border-radius: 0px 3px 3px 0px;
@@ -683,14 +734,6 @@ textarea {
       -o-border-radius: 5px;
     }
   }
-
-  .column-button-underline{
-    margin-right: -10px; 
- 
-    border-bottom-color: #808080;
-    border-bottom-style: solid;
-    border-bottom-width: 1px; 
-  }
    
   #app-tb-tl-col-button-wrapper {
     float: right;
@@ -700,8 +743,8 @@ textarea {
 
   #app-tb-tl-columns-button {
     padding: 5px 10px;
-    color: @buttons-blue2;
-    background-color: #000;
+    color: @table-columns-button-text;
+    background-color: @table-columns-button-background;
 
     border-radius: 5px 5px 0px 0px;
     -moz-border-radius: 5px 5px 0px 0px;
@@ -709,7 +752,7 @@ textarea {
     -o-border-radius: 5px 5px 0px 0px;
     
     &:hover {
-      color: @text-white;
+      color: @table-columns-button-hover-text;
     }
   }
   
@@ -723,9 +766,9 @@ textarea {
       right: 0px;
       padding: 5px;
 
-      background-color: @element-white;
+      background-color: @table-columns-list-background;
 
-      border: 2px solid #000;
+      border: 2px solid @table-columns-list-border;
 
       border-radius: 5px 0px 5px 5px;
       -moz-border-radius: 5px 0px 5px 5px;
@@ -751,7 +794,7 @@ textarea {
   #app-tb-tl-old-title {
     margin-top: 2px;
     margin-left: 5px;
-    color: @background-gray;
+    color: @table-old-title-text;
   }
 
   #app-tb-info {
@@ -784,20 +827,20 @@ textarea {
     padding-left: 30px;
     padding-right: 30px;
 
-    background-color: @background-light-gray;
-    color: black;
+    background-color: @table-info-background;
+    color: @table-info-text;
     text-align: left;
     font-weight: normal;
 
-  	border: 2px solid #000000;
+  	border: 2px solid @table-info-border;
     border-radius: 5px;
     -moz-border-radius: 5px;
     -webkit-border-radius: 5px;
     -o-border-radius: 5px;
 
-    -moz-box-shadow: 0px 0px 50px #888;
-    -webkit-box-shadow: 0px 0px 50px #888;
-    box-shadow: 0px 0px 50px #888;
+    -moz-box-shadow: 0px 0px 50px @table-info-shadow;
+    -webkit-box-shadow: 0px 0px 50px @table-info-shadow;
+    box-shadow: 0px 0px 50px @table-info-shadow;
   }
 
   .app-tb-info-button {
@@ -813,8 +856,8 @@ textarea {
     margin-right: -20px;
     margin-top: -5px;
 
-    color: @background-gray;
-    background-color: white;
+    color: @table-info-button-x-text;
+    background-color: @table-info-button-x-background;
     text-align: center;
 
     border-radius: 7px;
@@ -823,8 +866,8 @@ textarea {
     -o-border-radius: 7px;
     
     &:hover {
-      color: white;
-      background-color: @background-gray;
+      color: @table-info-button-x-hover-text;
+      background-color: @table-info-button-x-hover-background;
     }    
   }
 
@@ -835,8 +878,8 @@ textarea {
     padding: 1px 3px;
 
     font-weight: bold;
-    background-color: #969696;
-    color: @text-white;
+    background-color: @table-close-sheet-background;
+    color: @table-close-sheet-text;
 
     border-radius: 3px;    
     -moz-border-radius: 3px;    
@@ -844,8 +887,8 @@ textarea {
     -o-border-radius: 3px;    
     
     &:hover {
-      color: @text-dark-gray;
-      background-color: #b6b6b6;
+      color: @table-close-sheet-hover-text;
+      background-color: @table-close-sheet-hover-background;
     }
   }
 
@@ -867,22 +910,22 @@ textarea {
       border-collapse: collapse;
           
       tr {
-        border: 1px solid #a3a3a3;
+        border: 1px solid @filtered-row-border;
       }
 
       th {
-        background-color: #d4d4d4;
+        background-color: @filtered-head-cell-background;
         text-align: left;
-        border: 1px solid #a3a3a3;
+        border: 1px solid @filtered-head-cell-border;
       }
     }
        
     .filtered-breadcrumb {
-      border-left: #e4e4e4 !important;
-      border-right: #e4e4e4 !important;
+      border-left: @filtered-breadcrumb-border !important;
+      border-right: @filtered-breadcrumb-border !important;
 
       td {
-        color: @text-dark-gray;
+        color: @filtered-breadcrumb-text;
         padding-top: 15px;
         padding-left: 5px;
         font-size: 9px;
@@ -891,8 +934,8 @@ textarea {
  
     .filtered-data td {
       padding: 5px;
-      background-color: @element-white;
-      border: 1px solid #a3a3a3;
+      background-color: @filtered-data-cell-background;
+      border: 1px solid @filtered-data-cell-border;
     }
 
   /* APPLICATION SHARE */
@@ -901,8 +944,8 @@ textarea {
     margin-bottom: 5px;
     padding: 5px;
 
-    background-color: #e1e1e1;
-    color: @links-blue;
+    background-color: @app-permalink-background;
+    color: @app-permalink-text;
 
     border-radius: 0px 0px 5px 5px;
     -moz-border-radius: 0px 0px 5px 5px;
@@ -914,8 +957,8 @@ textarea {
 footer {
   margin-top: 150px;
   padding: 0px 15px;
-  border-top: 1px solid #ddd;
-  border-bottom: 1px solid #ddd;
+  border-top: 1px solid @footer-border;
+  border-bottom: 1px solid @footer-border;
 
   > section {
     padding: 10px 0px;
@@ -925,7 +968,7 @@ footer {
   }
   
   a:hover {
-    color: @background-gray;
+    color: @footer-hover-links;
   }
 }
 
@@ -935,15 +978,4 @@ footer {
 
 #goto-app:hover {
   cursor: pointer;
-}
-
-/* P O R T A L */
-.main-site {
-  line-height: 1.8em;
-  margin: 0px;
-  background-color: #e8e8e8;
-}
-
-#ms-help img {
-  border: 3px solid #8b8b8b;
 }
