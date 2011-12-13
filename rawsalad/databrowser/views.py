@@ -17,10 +17,10 @@ from operator import attrgetter
 # url: /
 def app_page( request ):
     # TODO handle more then three browsers, FFS!
-    old_browser_marks = [ 'MSIE 7', 'MSIE 6', 'Firefox/3' ]
+    old_browsers = [ 'MSIE 7', 'MSIE 6', 'Firefox/3' ]
     browser = request.META.get( 'HTTP_USER_AGENT', '' )
 
-    if len( [x for x in old_browser_marks if x in browser] ) > 0:
+    if browser in old_browsers:
         return render_to_response( 'old_browser.html' )
 
     return render_to_response( 'app.html', { 'meta': get_meta_tree() })
@@ -298,7 +298,7 @@ def build_idef_regexp( idef ):
     return lookup
 
 
-def do_search( scope, regx, dbconn ):
+def do_search( scope, regex, db ):
     """
     TO-DO:
     - search with automatic substitution of specific polish letters
@@ -313,50 +313,56 @@ def do_search( scope, regx, dbconn ):
     found_count = 0
 
     # don't search through these fields
-    exclude_fields = ['idef', 'idef_sort', 'parent', 'parent_sort', 'level']
-    coll = rsdb.Collection( fields=["perspective", "ns", "columns"] )
+    excluded_fields = ['idef', 'idef_sort', 'parent', 'parent_sort', 'level']
+    col = rsdb.Collection( fields=["perspective", "ns", "columns"] )
 
     # TODO change name of sc
     for sc in scope:
-        sc_list= sc.split('-')
+        sc_list = sc.split('-')
         d = int( sc_list[0] )
         v = int( sc_list[1] )
         i = str( sc_list[2] )
 
-        metadata= coll.get_complete_metadata(dataset, idef, issue, dbconn)
+        # TODO make DB interface unified, db first!!
+        # TODO is there an uncomplete version of metadata?!
+        metadata = col.get_complete_metadata( d, v, i, db )
+        # in case of unexisting collection - report error and try the next one
         if metadata is None:
-            statistics['errors'].append('collection not found %s' % sc)
-        else:
-            curr_coll_dict= {
-                'perspective': metadata['perspective'],
-                'dataset': dataset,
-                'view': idef,
-                'issue': issue,
-                'data': []
-                }
+            statistics['errors'].append( 'collection not found %s' % sc )
+            continue
 
+        current_collection = {
+            'perspective' : metadata['perspective'],
+            'dataset'     : d,
+            'view'        : v,
+            'issue'       : i,
+            'data'        : []
+        }
 
-            coll.set_fields(None) # for search we need all fields, except for exclude_fields
-            for fld in metadata['columns']:
-                if 'processable' in fld:
-                    check_str= fld['type'] == 'string'
-                    check_excl= fld['key'] not in exclude_fields
-                    if fld['processable'] and check_str and check_excl:
-                        search_query= { fld['key']: regx }
-                        coll.set_query(search_query)
-                        found= coll.get_data(dbconn, dataset, idef, issue)
-                        if len(found) > 0:
-                            for found_elt in found:
-                                curr_coll_dict['data'].append({
-                                    'key': fld['key'],
-                                    'text': found_elt[str(fld['key'])],
-                                    'idef': found_elt['idef'],
-                                    'parent': found_elt['parent']
-                                    })
-                                found_num += 1
-            if len(curr_coll_dict['data']) > 0:
-                results.append(curr_coll_dict)
+        # for search we need all fields, except for excluded_fields
+        col.set_fields( None )
+        for field in metadata['columns']:
+            # TODO why keeping excluded_fields if there is processable field?
+            if 'processable' in field:
+                is_string    = field['type'] == 'string'
+                not_excluded = field['key'] not in excluded_fields
 
-    statistics.update( { 'records_found': found_num } )
+                if field['processable'] and is_string and not_excluded:
+                    col.set_query({ field['key']: regex })
+                    # TODO make DB interface unified, db first!!
+                    for found_elem in col.get_data( db, d, v, i ):
+                        current_collection['data'].append({
+                            'key'    : field['key'],
+                            # TODO is possible that field['key'] is not string?
+                            'text'   : found_elem[ str( field['key'] ) ],
+                            'idef'   : found_elem['idef'],
+                            'parent' : found_elem['parent']
+                        })
+                        found_count += 1
+
+        if len( current_collection['data'] ) > 0:
+            results.append( current_collection )
+
+    statistics.update({ 'records_found': found_count })
 
     return { 'stat': statistics, 'result': results }
