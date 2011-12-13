@@ -236,6 +236,7 @@ def search_data( request ):
 
 # get initial_data + subtrees to searched nodes
 def get_searched_data( req ):
+    """Grabs the hit data from the first search step"""
     d   = req.GET.get( 'dataset', None )
     v   = req.GET.get( 'view', None )
     i   = req.GET.get( 'issue', None )
@@ -260,7 +261,7 @@ def get_searched_data( req ):
 
 
 def build_query( idef_list):
-    '''Build regex for mongo query'''
+    """Build regex for mongo query"""
     # TODO understand why it's limited
     # TODO in long term - get rid of this limit
     results_limit = 275
@@ -273,46 +274,31 @@ def build_query( idef_list):
     return lookup
 
 
-###########################################################################
-def build_idef_regexp( curr_idef ):
-    """ build regexp quering collection """
-    level_num= curr_idef.count('-')
+def build_idef_regexp( idef ):
+    """Build regexp quering collection"""
+    level_num = idef.count('-')
 
+    # TODO make it recursive to be readable
+    # TODO shouldn't it be done by '$or' mongo operator
+    # TODO move it all to the db module!!
     # build regexp for the given idef plus it's context (siblings and full parental branch)
     if level_num > 0: # deeper than 'a'
-        idef_srch= curr_idef.rsplit('-', 1)[0]
-        lookup_idef= r'^%s\-([A-Z]|\d)+$' % idef_srch
-        curr_idef= idef_srch
-        level= 1
+        idef   = idef.rsplit('-', 1)[0]
+        lookup = r'^%s\-[A-Z\d]+$' % idef
+        level  = 1
         while level < level_num:
-            idef_srch= curr_idef.rsplit('-', 1)[0]
-            lookup_idef += r'|^%s\-([A-Z]|\d)+$' % idef_srch
-            curr_idef= idef_srch
-            level += 1
-        lookup_idef += r'|^([A-Z]|\d)+$'
+            idef    = idef.rsplit('-', 1)[0]
+            lookup += r'|^%s\-[A-Z\d]+$' % idef
+            level  += 1
 
-    else: # simply query the highest level
-        lookup_idef= r'^([A-Z]|\d)+$'
+        lookup += r'|^[A-Z\d]+$'
+    else:
+        lookup = r'^[A-Z\d]+$'
 
-    return lookup_idef
-
-
-###########################################################################
+    return lookup
 
 
-
-def build_regexp(searchline, strictsearch):
-    """ construct regexp for search """
-    # building regexp for search
-    if strictsearch:
-        # ver 0.0
-        # searchline= "^%(lookupstr)s\s|\s%(lookupstr)s\s|\s%(lookupstr)s$" % { "lookupstr": searchline }
-        # ver 0.1
-        searchline= "^%(lookupstr)s([^a-z][^A-Z][^0-9]|\s)|([^a-z][^A-Z][^0-9]|\s)%(lookupstr)s([^a-z][^A-Z][^0-9]|\s)|([^a-z][^A-Z][^0-9]|\s)%(lookupstr)s$" % { "lookupstr": searchline }
-
-    return searchline
-
-def do_search(scope_list, regx, dbconn):
+def do_search( scope, regx, dbconn ):
     """
     TO-DO:
     - search with automatic substitution of specific polish letters
@@ -322,18 +308,24 @@ def do_search(scope_list, regx, dbconn):
       (see str.endswith and startswith)
     - search in 'info' keys
     """
-    ns_list= [] # list of results
-    stat_dict= { "errors": [] }
-    found_num= 0 # number of records found
-    exclude_fields= ['idef', 'idef_sort', 'parent', 'parent_sort', 'level'] # not all fields are searchable
+    results     = []
+    statistics  = { "errors": [] }
+    found_count = 0
 
-    for sc in scope_list: # fill the list of collections
+    # don't search through these fields
+    exclude_fields = ['idef', 'idef_sort', 'parent', 'parent_sort', 'level']
+    coll = rsdb.Collection( fields=["perspective", "ns", "columns"] )
+
+    # TODO change name of sc
+    for sc in scope:
         sc_list= sc.split('-')
-        dataset, idef, issue= int(sc_list[0]), int(sc_list[1]), str(sc_list[2])
-        coll= rsdb.Collection(fields=["perspective", "ns", "columns"])
+        d = int( sc_list[0] )
+        v = int( sc_list[1] )
+        i = str( sc_list[2] )
+
         metadata= coll.get_complete_metadata(dataset, idef, issue, dbconn)
         if metadata is None:
-            stat_dict['errors'].append('collection not found %s' % sc)
+            statistics['errors'].append('collection not found %s' % sc)
         else:
             curr_coll_dict= {
                 'perspective': metadata['perspective'],
@@ -363,13 +355,8 @@ def do_search(scope_list, regx, dbconn):
                                     })
                                 found_num += 1
             if len(curr_coll_dict['data']) > 0:
-                ns_list.append(curr_coll_dict)
+                results.append(curr_coll_dict)
 
-    stat_dict.update( { 'records_found': found_num } )
+    statistics.update( { 'records_found': found_num } )
 
-    return { 'stat': stat_dict, 'result': ns_list }
-
-
-
-
-
+    return { 'stat': statistics, 'result': results }
