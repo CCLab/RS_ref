@@ -11,9 +11,11 @@
       @dark-gray:                               #5b5b5b;
       @gray:                                    #8b8b8b;
       @green                                    #98d39f;
-      @lighter-gray:                            #c1c1c1;
-      @light-gray:                              #dedede;
-      @very-light-gray:                         #e3e3e3;
+      @light-gray:                              #ababab;      
+      @dark-silver:                             #c1c1c1;
+      @silver:                                  #dedede;
+      @light-silver:                            #eee;             
+      @very-light-silver:                       #e3e3e3;
       @white-smoke:                             #f4f4f4;
       @creamy-white:                            #fffffa;
       @white:                                   #fff;
@@ -25,16 +27,16 @@
       @blue-hover-text:                         @blue;
       
       @gray-text:                               @white;
-      @gray-background:                         @light-gray;
+      @gray-background:                         @silver;
       @gray-hover-text:                         @blue;
       @gray-hover-background:                   @white;
       @text-text:                               @white;
-      @text-hover-text:                         @light-gray;
+      @text-hover-text:                         @silver;
 
       @main-tab-text:                           @dark-gray;
       @main-tab-hover-text:                     @steel-blue;
       @main-tab-hover-background:               @white-smoke;      
-      @main-tab-active-background:              @very-light-gray;
+      @main-tab-active-background:              @very-light-silver;
       
       @input-background:                        @white;
       @input-border:                            @light-blue;
@@ -46,12 +48,12 @@
       @selected-background:                     @gray;
       
       @tab-text:                                @blue;
-      @tab-background:                          @very-light-gray;
+      @tab-background:                          @very-light-silver;
       @tab-hover-text:                          @white;
       @tab-hover-background:                    @blue;
       
       @active-text:                             @very-dark-gray;
-      @active-background:                       @lighter-gray;
+      @active-background:                       @dark-silver;
       
       
       
@@ -139,10 +141,10 @@
   }
 
   .active {
-    background-color: @very-light-gray;
+    background-color: @very-light-silver;
   
     &:hover {
-      background-color: @very-light-gray !important;
+      background-color: @very-light-silver !important;
     }
   }
 }
@@ -180,7 +182,7 @@
 /* T O P   M E N U   A N D   T A B L E / S H A R E   T A B S */
 .tab {
   color: @blue;
-  background-color: @very-light-gray;
+  background-color: @very-light-silver;
   font-weight: normal;
 
   &:hover {
