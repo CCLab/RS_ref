@@ -13,17 +13,29 @@
       @small-lighter-gray:                      #ababab; // TODO refactor gray and add to style
       @lighter-gray:                            #c1c1c1;
       @light-gray:                              #dedede;
+      @very-very-light-gray:                    #eee;      
       @very-light-gray:                         #e3e3e3;
       @creamy-white:                            #fffffa;
       @white:                                   #fff;
       
       /* COLORS RULES */
       @datatable-thead-row-background:          @light-black;
-      @datatable-thead-row-text:                @black;
+      @datatable-thead-row-text:                @white;
       @datatable-row-border:                    @dark-gray;
       @datatable-cell-separator:                @gray;
       @datatable-hover-row:                     @green;
       @datatable-dim-row:                       @small-lighter-gray;
+      
+      @odd-background:                          @white;
+      @even-background:                         @very-very-light-gray;
+      @click-text:                              @blue;
+      @current-border:                          @very-dark-gray;
+      @root-text:                               @white;
+      @root-background:                         @dark-gray;
+      @root-border:                             @dark-gray;
+      @dim-text:                                @very-dark-gray;
+      @next-border:                             @dark-gray;
+      
       
       @table-header-background:                 @white;
       @table-header-border:                     @lighter-gray;
@@ -61,6 +73,11 @@
       @table-info-border:                       @black;
       @table-info-shadow:                       @gray;
       
+      @table-info-tab1-border:                  @gray;
+      @table-info-row-hover-background:         @very-light-gray;
+      
+      
+      
       @table-info-button-x-text:                @gray;
       @table-info-button-x-background:          @white;           
       @table-info-button-x-hover-text:          @white;
@@ -79,57 +96,19 @@
       @filtered-data-cell-background:           @white;
       @filtered-data-cell-border:               @gray;
 
-// TODO add color rules and change order       
-/* D A T A T A B L E */
-#app-tb-datatable {
-  width: 100%;
-  border-collapse: collapse;
-
-  thead > tr {
-    background-color: @datatable-thead-row-background;
-    color: @datatable-thead-row-text;
-  }
-
-  tr {
-    border-right: 2px solid @datatable-row-border;
-    border-left: 2px solid @datatable-row-border;
-  }
-  
-  td {
-    cursor: default;
-    vertical-align: top;
-    padding: 5px;
-  }
-  
-  td+td {
-    border-left: 1px solid @datatable-cell-separator;
-  }
-
-  tbody {
-  
-    > tr:hover {
-      background-color: @datatable-hover-row;
-    }
-
-    > tr.dim {
-      border-right: 2px solid @datatable-dim-row;
-      border-left: 2px solid @datatable-dim-row;
-    }
-  }
-}
 
 
 /* G E N E R A L   T A B L E */
 .odd {
-  background-color: #fff;
+  background-color: @odd-background;
 }
 
 .even {
-  background-color: #eee;
+  background-color: @even-background;
 }
 
 .click {
-  color: #11a8f7;
+  color: @click-text;
   font-weight: bold;
 }
 
@@ -150,7 +129,6 @@
   color: black;
   z-index: 1;
 }
-
 
 .a > .type {
   width: 138px;
@@ -182,22 +160,22 @@
 }
 
 .current { 
-  border: 1px solid #3b3b3b;
+  border: 1px solid @current-border;
 }
 
 .root {
-  color: #fff;
-  background-color: #5b5b5b !important; 
-  border-right: 2px solid #5b5b5b;
+  color: @root-text;
+  background-color: @root-background !important; 
+  border-right: 2px solid @root-border;
   border-left: 2px solid #5b5b5b;
 }
 
 .dim {
-  color: #383838;
+  color: @dim-text;
 }
 
 .next {
-  border-top: 2px solid #5b5b5b;
+  border-top: 2px solid @next-border;
 }
 
 .number {
@@ -205,281 +183,247 @@
   text-align: right;
 }
 
+
   /* APPLICATION TABLE */
-  #app-table {
-    
-    > .main-panel {
-      overflow: visible;
-    }
-  
-    header { 
-      li {
-        float: left;
-
-        padding: 4px 5px;
-        margin: 9px 3px;
-        margin-bottom: 0px;
-
-        background-color: @table-header-background;
-        border: 1px solid @table-header-border;
-        border-bottom: 1px solid @table-header-bottom-border;
-    
-        border-radius: 3px 3px 0px 0px;
-        -moz-border-radius: 3px 3px 0px 0px;
-        -webkit-border-radius: 3px 3px 0px 0px;
-        -o-border-radius: 3px 3px 0px 0px;
-        
-        &:hover {
-          border: 1px solid @table-header-hover-border;
-          background-color: @table-header-hover-background;
-        }
-      }
-      
-      li.active {
-        padding: 6px 5px;
-        margin: 5px 3px;
-        margin-bottom: 0px;
-
-        background-color: @table-header-active-background;
-        border-bottom: 1px solid @table-header-active-border-bottom;
-      
-        &:hover {
-          border: 1px solid @table-header-active-hover-border;
-          border-bottom: 1px solid @table-header-active-hover-border-bottom;
-        }      
-      }    
-    }
-  }
-
-  #app-tb-tools > section {
-    clear: both;
-    padding: 10px;
-    padding-bottom: 0px;
-  }
-
-  #app-tb-save-sheet {
-    margin: 9px;
-    margin-bottom: 0px;
-    padding: 3px;
-
-    border-radius: 3px;
-    -moz-border-radius: 3px;
-    -webkit-border-radius: 3px;
-    -o-border-radius: 3px;
-  }
-  
-  #app-tb-tl-rename-button {
-    margin-left: 5px;
-    padding: 2px 4px;
-
-    color: @table-rename-text;
-    background-color: @table-rename-background;
-
-    border-radius: 3px;
-    -moz-border-radius: 3px;
-    -webkit-border-radius: 3px;
-    -o-border-radius: 3px;
-    
-    &:hover {
-      color: @table-rename-hover-text;
-      background-color: @table-rename-hover-background;
-    }
-  }
-
-  #app-tb-tl-bt-container > div {
-    padding: 3px 10px;
-
-    color: @table-buttons-text;
-    background-color: @table-buttons-background;
-    
-    &:hover {
-      color: @table-buttons-hover-text;
-      background-color: @table-buttons-hover-background;
-    }
-  }
-
-  #app-tb-tl-clear-button {
-    margin-right: 10px;
-
-    border-radius: 3px;
-    -moz-border-radius: 3px;
-    -webkit-border-radius: 3px;
-    -o-border-radius: 3px;
-  }
-
-  #app-tb-tl-sort-button {
-    border-radius: 3px 0px 0px 3px;
-    -moz-border-radius: 3px 0px 0px 3px;
-    -webkit-border-radius: 3px 0px 0px 3px;
-    -o-border-radius: 3px 0px 0px 3px;
-  }
-
-  #app-tb-tl-filter-button {
-    border-left: 1px solid @table-buttons-separator;
-
-    border-radius: 0px 3px 3px 0px;
-    -moz-border-radius: 0px 3px 3px 0px;
-    -webkit-border-radius: 0px 3px 3px 0px;
-    -o-border-radius: 0px 3px 3px 0px;
-  }
-
-  #app-tb-tl-srft-forms{
-  
-    > form > *  {
-      float: left;
-      margin-right: 5px;
-    }
-
-    > table td {
-      vertical-align: top;
-      padding: 0px 5px;
-    }
-
-    .button {
-      margin-top: 25px;
-      padding: 5px;
-
-      border-radius: 5px;
-      -moz-border-radius: 5px;
-      -webkit-border-radius: 5px;
-      -o-border-radius: 5px;
-    }
-  }
+#app-table {
    
-  #app-tb-tl-col-button-wrapper {
-    float: right;
-    padding-left: 10px;
-    padding-right: 10px;
-  }
-
-  #app-tb-tl-columns-button {
-    padding: 5px 10px;
-    color: @table-columns-button-text;
-    background-color: @table-columns-button-background;
-
-    border-radius: 5px 5px 0px 0px;
-    -moz-border-radius: 5px 5px 0px 0px;
-    -webkit-border-radius: 5px 5px 0px 0px;
-    -o-border-radius: 5px 5px 0px 0px;
-    
-    &:hover {
-      color: @table-columns-button-hover-text;
-    }
+  > .main-panel {
+    overflow: visible;
   }
   
-  #app-tb-tl-columns-list {
-    position: relative;
+  header { 
+    li {
+      float: left;
+
+      padding: 4px 5px;
+      margin: 9px 3px;
+      margin-bottom: 0px;
+
+      background-color: @table-header-background;
+      border: 1px solid @table-header-border;
+      border-bottom: 1px solid @table-header-bottom-border;
     
-    form {
-      position: absolute;
-      z-index: 30;
-      width: 330px;
-      right: 0px;
-      padding: 5px;
-
-      background-color: @table-columns-list-background;
-
-      border: 2px solid @table-columns-list-border;
-
-      border-radius: 5px 0px 5px 5px;
-      -moz-border-radius: 5px 0px 5px 5px;
-      -webkit-border-radius: 5px 0px 5px 5px;
-      -o-border-radius: 5px 0px 5px 5px;
+      border-radius: 3px 3px 0px 0px;
+      -moz-border-radius: 3px 3px 0px 0px;
+      -webkit-border-radius: 3px 3px 0px 0px;
+      -o-border-radius: 3px 3px 0px 0px;
+        
+      &:hover {
+        border: 1px solid @table-header-hover-border;
+        background-color: @table-header-hover-background;
+      }
     }
-    
-    td {
-      padding: 0px;
-    }
-    
-    .button {
-      padding: 5px;
-      margin-right: 5px;
+      
+    li.active {
+      padding: 6px 5px;
+      margin: 5px 3px;
+      margin-bottom: 0px;
 
-      border-radius: 5px;
-      -moz-border-radius: 5px;
-      -webkit-border-radius: 5px;
-      -o-border-radius: 5px;
+      background-color: @table-header-active-background;
+      border-bottom: 1px solid @table-header-active-border-bottom;
+      
+      &:hover {
+        border: 1px solid @table-header-active-hover-border;
+        border-bottom: 1px solid @table-header-active-hover-border-bottom;
+      }      
     }    
   }
+}
 
-  #app-tb-tl-old-title {
-    margin-top: 2px;
-    margin-left: 5px;
-    color: @table-old-title-text;
-  }
+#app-tb-tools > section {
+  clear: both;
+  padding: 10px;
+  padding-bottom: 0px;
+}
 
-  #app-tb-info {
-    position: absolute;
-    z-index: 1;
-    left: 0px;
-    width: 100%;
-    height: 0px;       
+#app-tb-save-sheet {
+  margin: 9px;
+  margin-bottom: 0px;
+  padding: 3px;
+
+  border-radius: 3px;
+  -moz-border-radius: 3px;
+  -webkit-border-radius: 3px;
+  -o-border-radius: 3px;
+}
+  
+#app-tb-tl-rename-button {
+  margin-left: 5px;
+  padding: 2px 4px;
+
+  color: @table-rename-text;
+  background-color: @table-rename-background;
+
+  border-radius: 3px;
+  -moz-border-radius: 3px;
+  -webkit-border-radius: 3px;
+  -o-border-radius: 3px;
     
-    text-align: center;
+  &:hover {
+    color: @table-rename-hover-text;
+    background-color: @table-rename-hover-background;
+  }
+}
+
+#app-tb-tl-bt-container > div {
+  padding: 3px 10px;
+
+  color: @table-buttons-text;
+  background-color: @table-buttons-background;
+    
+  &:hover {
+    color: @table-buttons-hover-text;
+    background-color: @table-buttons-hover-background;
+  }
+}
+
+#app-tb-tl-clear-button {
+  margin-right: 10px;
+
+  border-radius: 3px;
+  -moz-border-radius: 3px;
+  -webkit-border-radius: 3px;
+  -o-border-radius: 3px;
+}
+
+#app-tb-tl-sort-button {
+  border-radius: 3px 0px 0px 3px;
+  -moz-border-radius: 3px 0px 0px 3px;
+  -webkit-border-radius: 3px 0px 0px 3px;
+  -o-border-radius: 3px 0px 0px 3px;
+}
+
+#app-tb-tl-filter-button {
+  border-left: 1px solid @table-buttons-separator;
+
+  border-radius: 0px 3px 3px 0px;
+  -moz-border-radius: 0px 3px 3px 0px;
+  -webkit-border-radius: 0px 3px 3px 0px;
+  -o-border-radius: 0px 3px 3px 0px;
+}
+
+#app-tb-tl-srft-forms{
+  
+  > form > *  {
+    float: left;
+    margin-right: 5px;
   }
 
-  #app-tb-in-table{
-    display: table;
+  > table td {
+    vertical-align: top;
+    padding: 0px 5px;
+  }
 
-    margin-left: auto;
-    margin-right: auto;
-  }  
+  .button {
+    margin-top: 25px;
+    padding: 5px;
 
-  #app-tb-in-content {
-    display: none;
-    width: 690px;
-    top: 10px;
-    left: 5px;
-
-    margin: 0px;
-    margin-left: auto;
-    margin-right: auto;
-  	padding: 10px;
-    padding-left: 30px;
-    padding-right: 30px;
-
-    background-color: @table-info-background;
-    color: @table-info-text;
-    text-align: left;
-    font-weight: normal;
-
-  	border: 2px solid @table-info-border;
     border-radius: 5px;
     -moz-border-radius: 5px;
     -webkit-border-radius: 5px;
     -o-border-radius: 5px;
-
-    -moz-box-shadow: 0px 0px 50px @table-info-shadow;
-    -webkit-box-shadow: 0px 0px 50px @table-info-shadow;
-    box-shadow: 0px 0px 50px @table-info-shadow;
   }
+}
+   
+#app-tb-tl-col-button-wrapper {
+  float: right;
+  padding-left: 10px;
+  padding-right: 10px;
+}
 
-  .app-tb-info-button {
-    display: inline;
-    position: relative;
-  }
+#app-tb-tl-columns-button {
+  padding: 5px 10px;
+  color: @table-columns-button-text;
+  background-color: @table-columns-button-background;
 
-  #app-tb-in-con-button-x {
-    float: right;
-    height: 14px;
-    width: 14px;
-
-    margin-right: -20px;
-    margin-top: -5px;
-
-    color: @table-info-button-x-text;
-    background-color: @table-info-button-x-background;
-    text-align: center;
-
-    border-radius: 7px;
-    -moz-border-radius: 7px;
-    -webkit-border-radius: 7px;
-    -o-border-radius: 7px;
+  border-radius: 5px 5px 0px 0px;
+  -moz-border-radius: 5px 5px 0px 0px;
+  -webkit-border-radius: 5px 5px 0px 0px;
+  -o-border-radius: 5px 5px 0px 0px;
     
-    &:hover {
-      color: @table-info-button-x-hover-text;
-      background-color: @table-info-button-x-hover-background;
-    }    
+  &:hover {
+    color: @table-columns-button-hover-text;
+  }
+}
+  
+#app-tb-tl-columns-list {
+  position: relative;
+    
+  form {
+    position: absolute;
+    z-index: 30;
+    width: 330px;
+    right: 0px;
+    padding: 5px;
+
+    background-color: @table-columns-list-background;
+
+    border: 2px solid @table-columns-list-border;
+
+    border-radius: 5px 0px 5px 5px;
+    -moz-border-radius: 5px 0px 5px 5px;
+    -webkit-border-radius: 5px 0px 5px 5px;
+    -o-border-radius: 5px 0px 5px 5px;
+  }
+    
+  td {
+    padding: 0px;
+  }
+    
+  .button {
+    padding: 5px;
+    margin-right: 5px;
+
+    border-radius: 5px;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    -o-border-radius: 5px;
+  }    
+}
+
+#app-tb-tl-old-title {
+  margin-top: 2px;
+  margin-left: 5px;
+  color: @table-old-title-text;
+}
+
+
+  /* D A T A T A B L E */
+  #app-tb-datatable {
+    width: 100%;
+    border-collapse: collapse;
+
+    thead > tr {
+      background-color: @datatable-thead-row-background;
+      color: @datatable-thead-row-text;
+    }
+
+    tr {
+      border-right: 2px solid @datatable-row-border;
+      border-left: 2px solid @datatable-row-border;
+    }
+  
+    td {
+      cursor: default;
+      vertical-align: top;
+      padding: 5px;
+    }
+  
+    td+td {
+      border-left: 1px solid @datatable-cell-separator;
+    }
+
+    tbody {
+  
+      > tr:hover {
+        background-color: @datatable-hover-row;
+      }
+
+      > tr.dim {
+        border-right: 2px solid @datatable-dim-row;
+        border-left: 2px solid @datatable-dim-row;
+      }
+    }
   }
 
   .app-tb-close-sheet {
@@ -514,91 +458,158 @@
     width: 100%;
     border-collapse: collapse;
   }
-  
-    /* APPLICATION FILTERED */
-    #app-tb-filteredtable {
+
+
+    /* INFO PANEL */
+    #app-tb-info {
+      position: absolute;
+      z-index: 1;
+      left: 0px;
       width: 100%;
-      border-collapse: collapse;
-          
-      tr {
-        border: 1px solid @filtered-row-border;
-      }
-
-      th {
-        background-color: @filtered-head-cell-background;
-        text-align: left;
-        border: 1px solid @filtered-head-cell-border;
-      }
+      height: 0px;       
+    
+      text-align: center;
     }
-       
-    .filtered-breadcrumb {
-      border-left: @filtered-breadcrumb-border !important;
-      border-right: @filtered-breadcrumb-border !important;
 
+    #app-tb-in-table{
+      display: table;
+
+      margin-left: auto;
+      margin-right: auto;
+    }  
+
+    #app-tb-in-content {
+      display: none;
+      width: 690px;
+      top: 10px;
+      left: 5px;
+
+      margin: 0px;
+      margin-left: auto;
+      margin-right: auto;
+   	  padding: 10px;
+      padding-left: 30px;
+      padding-right: 30px;
+
+      background-color: @table-info-background;
+      color: @table-info-text;
+      text-align: left;
+      font-weight: normal;
+
+      border: 2px solid @table-info-border;
+      border-radius: 5px;
+      -moz-border-radius: 5px;
+      -webkit-border-radius: 5px;
+      -o-border-radius: 5px;
+
+      -moz-box-shadow: 0px 0px 50px @table-info-shadow;
+      -webkit-box-shadow: 0px 0px 50px @table-info-shadow;
+      box-shadow: 0px 0px 50px @table-info-shadow;
+      
       td {
-        color: @filtered-breadcrumb-text;
-        padding-top: 15px;
-        padding-left: 5px;
-        font-size: 9px;
+        padding: 0px;
+        padding-right: 25px;
+      }
+
+      td+td {
+        border-left: none;
+        padding: 0px;
+      }
+
+      > table > tbody > tr:hover {
+        background-color: @very-light-gray;
       }
     }
- 
-    .filtered-data td {
-      padding: 5px;
-      background-color: @filtered-data-cell-background;
-      border: 1px solid @filtered-data-cell-border;
+
+    .app-tb-info-button {
+      display: inline;
+      position: relative;
+
+      cursor: pointer;
     }
 
+    #app-tb-in-con-button-x {
+      float: right;
+      height: 14px;
+      width: 14px;
 
+      margin-right: -20px;
+      margin-top: -5px;
 
+      color: @table-info-button-x-text;
+      background-color: @table-info-button-x-background;
+      text-align: center;
 
-/* TABLE INFO PANEL */
-  #app-tb-in-con-table1 {
-      border-top: 1px solid #8B8B8B;
-      border-bottom: 1px solid #8B8B8B;
+      border-radius: 7px;
+      -moz-border-radius: 7px;
+      -webkit-border-radius: 7px;
+      -o-border-radius: 7px;
+    
+      &:hover {
+        color: @table-info-button-x-hover-text;
+        background-color: @table-info-button-x-hover-background;
+      }    
+    }  
+ 
+    #app-tb-in-con-table1 {
+      border-top: 1px solid @table-info-tab1-border;
+      border-bottom: 1px solid @table-info-tab1-border;
       display: table;
       margin-top: 5px;
       width: 680px;
-  }
+    }
 
-  #app-tb-in-content {
+    .app-tb-in-con-type {
+      width: 150px;
+      text-align: right;
+    }
+
+    .app-tb-in-con-name{
+      padding: 5px;
+      width: 510px;
+    } 
+
+    td.app-tb-in-con-attr{
+      width: 150px;
+      text-align: right;
+    } 
+
+    td.app-tb-in-con-num{
+      padding: 5px;
+      text-align: right;
+    } 
  
+  
+  /* APPLICATION FILTERED */
+  #app-tb-filteredtable {
+    width: 100%;
+    border-collapse: collapse;
+          
+    tr {
+      border: 1px solid @filtered-row-border;
+    }
+
+    th {
+      background-color: @filtered-head-cell-background;
+      text-align: left;
+      border: 1px solid @filtered-head-cell-border;
+    }
+  }
+       
+  .filtered-breadcrumb {
+    border-left: @filtered-breadcrumb-border !important;
+    border-right: @filtered-breadcrumb-border !important;
+
     td {
-      padding: 0px;
-      padding-right: 25px;
-    }
-
-    td+td {
-      border-left: none;
-      padding: 0px;
-    }
-
-
-    > table > tbody > tr:hover {
-      background-color: #E3E3E3;
+      color: @filtered-breadcrumb-text;
+      padding-top: 15px;
+      padding-left: 5px;
+      font-size: 9px;
     }
   }
-
-  .app-tb-in-con-type {
-    width: 150px;
-    text-align: right;
+ 
+  .filtered-data td {
+    padding: 5px;
+    background-color: @filtered-data-cell-background;
+    border: 1px solid @filtered-data-cell-border;
   }
-
-  .app-tb-in-con-name{
-    padding: 5px;
-    width: 510px;
-  } 
-
-  td.app-tb-in-con-attr{
-    width: 150px;
-    text-align: right;
-  } 
-
-  td.app-tb-in-con-num{
-    padding: 5px;
-    text-align: right;
-  } 
-
-.app-tb-info-button {
-  cursor: pointer;
-}
