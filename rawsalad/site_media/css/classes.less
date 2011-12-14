@@ -1,80 +1,107 @@
+/*  L E S S  J S  */
+  /*V A R I A B L E S */
+    /* COLORS */
+      /* COLORS NAMES */ 
+      @black:                                   #000000;
+      @blue:                                    #1ea3e8;
+      @light-black:                             #2b2b2b;      
+      @very-dark-gray:                          #3b3b3b;
+      @steel-blue:                              #438db3;
+      @light-blue:                              #4cbceb;
+      @dark-gray:                               #5b5b5b;
+      @gray:                                    #8b8b8b;
+      @green                                    #98d39f;
+      @lighter-gray:                            #c1c1c1;
+      @light-gray:                              #dedede;
+      @very-light-gray:                         #e3e3e3;
+      @white-smoke:                             #f4f4f4;
+      @creamy-white:                            #fffffa;
+      @white:                                   #fff;
+      
+      /* COLORS RULES */
+      @blue-background:                         @light-blue;
+      @blue-text:                               @white;
+      @blue-hover-background:                   @white;
+      @blue-hover-text:                         @blue;
+      
+      @gray-text:                               @white;
+      @gray-background:                         @light-gray;
+      @gray-hover-text:                         @blue;
+      @gray-hover-background:                   @white;
+      @text-text:                               @white;
+      @text-hover-text:                         @light-gray;
+
+      @main-tab-text:                           @dark-gray;
+      @main-tab-hover-text:                     @steel-blue;
+      @main-tab-hover-background:               @white-smoke;      
+      @main-tab-active-background:              @very-light-gray;
+      
+      @input-background:                        @white;
+      @input-border:                            @light-blue;
+      
+      @pushed-text:                             @white;
+      @pushed-background:                       @gray;
+      
+      @selected-text:                           @white;
+      @selected-background:                     @gray;
+      
+      @tab-text:                                @blue;
+      @tab-background:                          @very-light-gray;
+      @tab-hover-text:                          @white;
+      @tab-hover-background:                    @blue;
+      
+      @active-text:                             @very-dark-gray;
+      @active-background:                       @lighter-gray;
+      
+      
+      
 /* G E N E R A L   B U T T O N  */
-
 .button {
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -o-user-select: none;
-    user-select: none;
-}
-
-.button:hover {
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -o-user-select: none;
+  user-select: none;
+    
+  &:hover {
     cursor: pointer;
+  }
 }
 
 .blue {
-    color: #fff;
-    background-color: #4abff7;
-}
+  color: @blue-text;
+  background-color: @blue-background;
 
-.blue:hover {
-    color: #1ea3e8;
-    background-color: #fff;
+  &:hover {
+    color: @blue-hover-text;
+    background-color: @blue-hover-background;
+  }
 }
 
 .grey {
-    color: #fff;
-    background-color: #c8c8c8;
-}
+  color: @gray-text;
+  background-color: @gray-background;
 
-.grey:hover {
-    color: #1ea3e8;
-    background-color: #fff;
+  &:hover {
+    color: @gray-hover-text;
+    background-color: @gray-hover-background;
+  }
 }
 
 .text {
-    color: #fff;
-}
+  color: @text-text;
 
-.text:hover {
-    color: #d8d8d8;
-}
-
-.main-tab {
-  font-size: 14px;
-  padding: 15px 15px;
-  color: #6a6a6a;
-}
-
-.main-tab:hover {
-  color: #438db3;
-  background-color: #f4f4f4;
-}
-
-.main-tab.active {
-  background-color: #e8e8e8;
-}
-
-.main-tab.active:hover {
-  background-color: #e8e8e8 !important;
-}
-
-.rounded {
-  padding: 5px;
-  margin: 0px 5px;
-  margin-bottom: 5px;
-  border-radius: 5px;
-  -moz-border-radius: 5px;
-  -webkit-border-radius: 5px;
-  -o-border-radius: 5px;
+  &:hover {
+    color: @text-hover-text;
+  }
 }
 
 .input-text {
   min-width: 200px;
   height: 18px;
-  background-color: #fff;
+  background-color: @input-background;
 
-  border: 1px solid #4cbceb;
+  border: 1px solid @input-border;
 
   border-radius: 5px;
   -moz-border-radius: 5px;
@@ -82,46 +109,6 @@
   -o-border-radius: 5px;
 }
 
-
-/*  T O G G L E   B U T T O N */
-.pushed {
-    color: #fff;
-    background-color: #767676;
-}
-
-/*  S H E E T   T A B S  */
-.selected {
-    color: #fff;
-    background-color: #767676;
-}
-
-.selected:hover {
-    cursor: default;
-}
-
-
-/* T O P   M E N U   A N D   T A B L E / S H A R E   T A B S */
-.tab {
-    color: #1ea3e8;
-    background-color: #e1e1e1;
-    font-weight: normal;
-}
-
-.tab:hover {
-    color: #fff;
-    background-color: #1ea3e8;
-}
-
-.active {
-    color: #3b3b3b;
-    background-color: #c8c8c8;
-}
-
-.active:hover {
-    cursor: default;
-    color: #3b3b3b;
-    background-color: #c8c8c8;
-}
 
 /* G E N E R A L   C L A S S E S */ 
 .clear {
@@ -138,4 +125,77 @@
 
 .click:hover {
   cursor: pointer !important;
+}
+
+.main-tab {
+  padding: 15px 15px;
+  color: @dark-gray;
+  font-size: 14px;
+ 
+
+  &:hover {
+    color: @steel-blue;
+    background-color: @main-tab-hover-background;
+  }
+
+  .active {
+    background-color: @very-light-gray;
+  
+    &:hover {
+      background-color: @very-light-gray !important;
+    }
+  }
+}
+
+.rounded {
+  padding: 5px;
+  margin: 0px 5px;
+  margin-bottom: 5px;
+ 
+  border-radius: 5px;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  -o-border-radius: 5px;
+}
+
+
+/*  T O G G L E   B U T T O N */
+.pushed {
+  color: @pushed-text;
+  background-color: @pushed-background;
+}
+
+
+/*  S H E E T   T A B S  */
+.selected {
+  color: @selected-text;
+  background-color: @selected-background;
+
+  &:hover {
+    cursor: default;
+  }
+}
+
+
+/* T O P   M E N U   A N D   T A B L E / S H A R E   T A B S */
+.tab {
+  color: @blue;
+  background-color: @very-light-gray;
+  font-weight: normal;
+
+  &:hover {
+    color: @tab-hover-text;
+    background-color: @tab-hover-background;
+  }
+}
+
+.active {
+  color: @active-text;
+  background-color: @active-background;
+
+  &:hover {
+    cursor: default;
+    color: @active-text;
+    background-color: @active-background;
+  }
 }
