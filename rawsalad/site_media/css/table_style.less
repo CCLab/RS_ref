@@ -10,7 +10,7 @@
       @light-blue:                              #4cbceb;
       @dark-gray:                               #5b5b5b;
       @gray:                                    #8b8b8b;
-      @green                                    #98d39f;
+      @green:                                   #98d39f;
       @light-gray:                              #ababab;
       @dark-silver:                             #c1c1c1;
       @silver:                                  #dedede;
@@ -98,6 +98,27 @@
       @filtered-data-cell-background:           @white;
       @filtered-data-cell-border:               @gray;
 
+
+    /*  M I X I N S  */ // TODO - mixins in every file?
+    .border-radius (@radius: 5px) {
+      border-radius: @radius;
+      -webkit-border-radius: @radius;
+      -moz-border-radius: @radius;
+      -o-border-radius: @radius;	
+    }
+    
+    .border-radius-custom (@topleft: 5px, @topright: 5px, @bottomleft: 5px, @bottomright: 5px) {    
+	  border-radius: @topleft @topright @bottomright @bottomleft;
+	  -webkit-border-radius: @topleft @topright @bottomright @bottomleft;
+	  -moz-border-radius: @topleft @topright @bottomright @bottomleft;
+      -o-border-radius: @topleft @topright @bottomright @bottomleft;	
+    }
+    
+    .box-shadow-custom( @offset-x: 0px, @offset-y: 0px, @blur-radius: 50px, @color: @table-info-shadow) {
+      -moz-box-shadow: @offset-x @offset-y @blur-radius @color;
+      -webkit-box-shadow: @offset-x @offset-y @blur-radius @color;
+      box-shadow: @offset-x @offset-y @blur-radius @color;
+    }
 
 
 /* G E N E R A L   T A B L E */
@@ -204,11 +225,8 @@
       background-color: @table-header-background;
       border: 1px solid @table-header-border;
       border-bottom: 1px solid @table-header-bottom-border;
-    
-      border-radius: 3px 3px 0px 0px;
-      -moz-border-radius: 3px 3px 0px 0px;
-      -webkit-border-radius: 3px 3px 0px 0px;
-      -o-border-radius: 3px 3px 0px 0px;
+
+      .border-radius-custom(3px, 3px, 0px, 0px);    
         
       &:hover {
         border: 1px solid @table-header-hover-border;
@@ -243,10 +261,7 @@
   margin-bottom: 0px;
   padding: 3px;
 
-  border-radius: 3px;
-  -moz-border-radius: 3px;
-  -webkit-border-radius: 3px;
-  -o-border-radius: 3px;
+  .border-radius(3px);
 }
   
 #app-tb-tl-rename-button {
@@ -256,10 +271,7 @@
   color: @table-rename-text;
   background-color: @table-rename-background;
 
-  border-radius: 3px;
-  -moz-border-radius: 3px;
-  -webkit-border-radius: 3px;
-  -o-border-radius: 3px;
+  .border-radius(3px);
     
   &:hover {
     color: @table-rename-hover-text;
@@ -282,26 +294,17 @@
 #app-tb-tl-clear-button {
   margin-right: 10px;
 
-  border-radius: 3px;
-  -moz-border-radius: 3px;
-  -webkit-border-radius: 3px;
-  -o-border-radius: 3px;
+  .border-radius(3px);
 }
 
 #app-tb-tl-sort-button {
-  border-radius: 3px 0px 0px 3px;
-  -moz-border-radius: 3px 0px 0px 3px;
-  -webkit-border-radius: 3px 0px 0px 3px;
-  -o-border-radius: 3px 0px 0px 3px;
+  .border-radius-custom(3px, 0px, 0px, 3px);    
 }
 
 #app-tb-tl-filter-button {
   border-left: 1px solid @table-buttons-separator;
 
-  border-radius: 0px 3px 3px 0px;
-  -moz-border-radius: 0px 3px 3px 0px;
-  -webkit-border-radius: 0px 3px 3px 0px;
-  -o-border-radius: 0px 3px 3px 0px;
+  .border-radius-custom(0px, 3px, 3px, 0px);    
 }
 
 #app-tb-tl-srft-forms{
@@ -320,10 +323,7 @@
     margin-top: 25px;
     padding: 5px;
 
-    border-radius: 5px;
-    -moz-border-radius: 5px;
-    -webkit-border-radius: 5px;
-    -o-border-radius: 5px;
+    .border-radius(5px);    
   }
 }
    
@@ -338,10 +338,7 @@
   color: @table-columns-button-text;
   background-color: @table-columns-button-background;
 
-  border-radius: 5px 5px 0px 0px;
-  -moz-border-radius: 5px 5px 0px 0px;
-  -webkit-border-radius: 5px 5px 0px 0px;
-  -o-border-radius: 5px 5px 0px 0px;
+  .border-radius-custom(5px, 5px, 0px, 0px);    
     
   &:hover {
     color: @table-columns-button-hover-text;
@@ -362,10 +359,7 @@
 
     border: 2px solid @table-columns-list-border;
 
-    border-radius: 5px 0px 5px 5px;
-    -moz-border-radius: 5px 0px 5px 5px;
-    -webkit-border-radius: 5px 0px 5px 5px;
-    -o-border-radius: 5px 0px 5px 5px;
+    .border-radius-custom(5px, 0px, 5px, 5px);    
   }
     
   td {
@@ -376,10 +370,7 @@
     padding: 5px;
     margin-right: 5px;
 
-    border-radius: 5px;
-    -moz-border-radius: 5px;
-    -webkit-border-radius: 5px;
-    -o-border-radius: 5px;
+    .border-radius(5px);
   }    
 }
 
@@ -438,10 +429,7 @@
     background-color: @table-close-sheet-background;
     color: @table-close-sheet-text;
 
-    border-radius: 3px;    
-    -moz-border-radius: 3px;    
-    -webkit-border-radius: 3px;    
-    -o-border-radius: 3px;    
+    .border-radius(3px);    
     
     &:hover {
       color: @table-close-sheet-hover-text;
@@ -499,14 +487,9 @@
       font-weight: normal;
 
       border: 2px solid @table-info-border;
-      border-radius: 5px;
-      -moz-border-radius: 5px;
-      -webkit-border-radius: 5px;
-      -o-border-radius: 5px;
+      .border-radius(5px);
 
-      -moz-box-shadow: 0px 0px 50px @table-info-shadow;
-      -webkit-box-shadow: 0px 0px 50px @table-info-shadow;
-      box-shadow: 0px 0px 50px @table-info-shadow;
+      .box-shadow-custom(0px, 0px, 50px, @table-info-shadow);
       
       td {
         padding: 0px;
@@ -542,10 +525,7 @@
       background-color: @table-info-button-x-background;
       text-align: center;
 
-      border-radius: 7px;
-      -moz-border-radius: 7px;
-      -webkit-border-radius: 7px;
-      -o-border-radius: 7px;
+      .border-radius(7px);
     
       &:hover {
         color: @table-info-button-x-hover-text;

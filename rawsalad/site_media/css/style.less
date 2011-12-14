@@ -10,7 +10,7 @@
       @light-blue:                              #4cbceb;
       @dark-gray:                               #5b5b5b;
       @gray:                                    #8b8b8b;
-      @green                                    #98d39f;
+      @green:                                   #98d39f;
       @light-gray:                              #ababab;
       @dark-silver:                             #c1c1c1;
       @silver:                                  #dedede;
@@ -70,7 +70,23 @@
       @app-permalink-text:                      @blue; 
       
       @footer-border:                           @silver;
-      @footer-hover-links:                      @gray;     
+      @footer-hover-links:                      @gray;   
+
+
+    /*  M I X I N S  */ // TODO - mixins in every file?
+    .border-radius (@radius: 5px) {
+      border-radius: @radius;
+      -webkit-border-radius: @radius;
+      -moz-border-radius: @radius;
+      -o-border-radius: @radius;	
+    }
+    
+    .border-radius-custom (@topleft: 5px, @topright: 5px, @bottomleft: 5px, @bottomright: 5px) {
+	  border-radius: @topleft @topright @bottomright @bottomleft;
+	  -webkit-border-radius: @topleft @topright @bottomright @bottomleft;
+	  -moz-border-radius: @topleft @topright @bottomright @bottomleft;
+      -o-border-radius: @topleft @topright @bottomright @bottomleft;	
+    }    
 
 
 /*  G E N E R A L   H T M L   T A G S  */
@@ -152,10 +168,7 @@ textarea {
   font-size: 12px;
   border: 1px solid @textinput-border;
 
-  border-radius: 5px;
-  -moz-border-radius: 5px;
-  -webkit-border-radius: 5px;
-  -o-border-radius: 5px;
+  .border-radius(5px); 
 }
 
 #most-top {
@@ -190,11 +203,9 @@ textarea {
   border-left: 3px solid @preloader-border;
   border-right: 3px solid @preloader-border;
   border-bottom: 3px solid @preloader-border;
-  border-radius: 0px 0px 5px 5px;
-  -moz-border-radius: 0px 0px 5px 5px;
-  -webkit-border-radius: 0px 0px 5px 5px;
-  -o-border-radius: 0px 0px 5px 5px;
-  
+
+  .border-radius-custom(0px, 0px, 5px, 5px);
+
   a:hover {
     color: @preolader-text-hover;
   }
@@ -226,10 +237,7 @@ textarea {
 
     text-align: center;
 
-    border-radius: 0px 0px 5px 5px;
-    -moz-border-radius: 0px 0px 5px 5px;
-    -webkit-border-radius: 0px 0px 5px 5px;
-    -o-border-radius: 0px 0px 5px 5px;
+    .border-radius-custom(0px, 0px, 5px, 5px);
   }
  
   .active {
@@ -258,10 +266,7 @@ textarea {
 
     background-color: @meta-menu-background;
 
-    border-radius: 5px 5px 5px 5px;
-    -moz-border-radius: 5px 5px 5px 5px;
-    -webkit-border-radius: 5px 5px 5px 5px;
-    -o-border-radius: 5px 5px 5px 5px;
+    .border-radius(5px);
   }
 
  
@@ -293,10 +298,7 @@ textarea {
 
       padding: 5px;
 
-      border-radius: 5px;
-      -moz-border-radius: 5px;
-      -webkit-border-radius: 5px;
-      -o-border-radius: 5px;
+      .border-radius(5px);
     }
   }
     
@@ -308,10 +310,7 @@ textarea {
     color: @panel-title-text-color;
     background-color: @panel-title-background;
 
-    border-radius: 5px 5px 0px 0px;
-    -moz-border-radius: 5px 5px 0px 0px;
-    -webkit-border-radius: 5px 5px 0px 0px;
-    -o-border-radius: 5px 5px 0px 0px;
+    .border-radius-custom(5px, 5px, 0px, 0px);
   }
 
   .panel-icon {
@@ -334,11 +333,8 @@ textarea {
     
     background-color: @panel-main-background;
     
-    border-radius: 5px;
-    -moz-border-radius: 5px;
-    -webkit-border-radius: 5px;
-    -o-border-radius: 5px;
-  
+    .border-radius(5px);
+
     img {
       margin-left: 5px;
     }
@@ -452,10 +448,7 @@ textarea {
     background-color: @search-more-background;
     color: @search-more-text;
 
-    border-radius: 0px 0px 5px 5px;
-    -moz-border-radius: 0px 0px 5px 5px;
-    -webkit-border-radius: 0px 0px 5px 5px;
-    -o-border-radius: 0px 0px 5px 5px;
+    .border-radius-custom(0px, 0px, 5px, 5px);
     
     &:hover {
       background-color: @search-more-hover-background;
@@ -488,10 +481,7 @@ textarea {
   
     background-color: @search-res-button-background; 
 
-    border-radius: 3px;    
-    -moz-border-radius: 3px;    
-    -webkit-border-radius: 3px;    
-    -o-border-radius: 3px;    
+    .border-radius(3px);
   }
   
 /*  A P P L I C A T I O N  */
@@ -527,10 +517,7 @@ textarea {
 
       border-bottom: 1px solid @tabs-bottom-border;
 
-      border-radius: 5px 5px 0px 0px;
-      -moz-border-radius: 5px 5px 0px 0px;
-      -webkit-border-radius: 5px 5px 0px 0px;
-      -o-border-radius: 5px 5px 0px 0px;
+      .border-radius-custom(5px, 5px, 0px, 0px);
     }  
       
     li.active {
@@ -554,10 +541,7 @@ textarea {
     background-color: @app-permalink-background;
     color: @app-permalink-text;
 
-    border-radius: 0px 0px 5px 5px;
-    -moz-border-radius: 0px 0px 5px 5px;
-    -webkit-border-radius: 0px 0px 5px 5px;
-    -o-border-radius: 0px 0px 5px 5px;
+    .border-radius-custom(0px, 0px, 5px, 5px);
   }
 
 /* F O T E R */

@@ -10,7 +10,7 @@
       @light-blue:                              #4cbceb;
       @dark-gray:                               #5b5b5b;
       @gray:                                    #8b8b8b;
-      @green                                    #98d39f;
+      @green:                                   #98d39f;
       @light-gray:                              #ababab;      
       @dark-silver:                             #c1c1c1;
       @silver:                                  #dedede;
@@ -55,15 +55,34 @@
       @active-text:                             @very-dark-gray;
       @active-background:                       @dark-silver;
       
-      
+
+    /*  M I X I N S  */ // TODO - mixins in every file?
+    .border-radius (@radius: 5px) {
+      border-radius: @radius;
+      -webkit-border-radius: @radius;
+      -moz-border-radius: @radius;
+      -o-border-radius: @radius;	
+    }
+    
+    .border-radius-custom (@topleft: 5px, @topright: 5px, @bottomleft: 5px, @bottomright: 5px) {    
+	  border-radius: @topleft @topright @bottomright @bottomleft;
+	  -webkit-border-radius: @topleft @topright @bottomright @bottomleft;
+	  -moz-border-radius: @topleft @topright @bottomright @bottomleft;
+      -o-border-radius: @topleft @topright @bottomright @bottomleft;	
+    }
+    
+    .user-select (@arg: none){
+      user-select: @arg;
+      -webkit-user-select: @arg;
+      -khtml-user-select: @arg;
+      -moz-user-select: @arg;
+      -o-user-select: @arg;    
+    }  
+ 
       
 /* G E N E R A L   B U T T O N  */
 .button {
-  -webkit-user-select: none;
-  -khtml-user-select: none;
-  -moz-user-select: none;
-  -o-user-select: none;
-  user-select: none;
+  .user-select(none);
     
   &:hover {
     cursor: pointer;
@@ -154,10 +173,7 @@
   margin: 0px 5px;
   margin-bottom: 5px;
  
-  border-radius: 5px;
-  -moz-border-radius: 5px;
-  -webkit-border-radius: 5px;
-  -o-border-radius: 5px;
+  .border-radius(5px);
 }
 
 
