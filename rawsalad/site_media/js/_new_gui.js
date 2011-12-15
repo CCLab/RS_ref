@@ -98,7 +98,7 @@ var _gui = (function () {
     }
     
     function show_table( table_code, table_id ) {
-        $('#tables').append( table_code );
+        $('#app-tb-datatable').append( table_code );
         //$('#simpletable').html( table_code );
         console.log( table_code );
     }

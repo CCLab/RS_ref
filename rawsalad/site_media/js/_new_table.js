@@ -66,7 +66,7 @@ var _table = (function () {
     
     function create_header( columns ) {
         var header_code = [];
-        
+        header_code.push('<');
         columns.forEach( function ( column ) {
             header_code.push( column['label'] );
         });
