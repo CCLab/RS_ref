@@ -58,7 +58,7 @@ def _convert_dict_to_xml_recurse(parent, dict_item, list_names):
 
 def format_result(result, srz, httpresp= None, rt_tag= None):
     if httpresp is None:
-        httpresp= 200    
+        httpresp= 200
     if srz == 'json':
         res= json.dumps( result, ensure_ascii=False, indent=4 )
         mime_tp= "application/json"
@@ -104,9 +104,9 @@ def get_formats(request):
 
 def get_datasets(request, serializer, db=None):
     if db is None:
-        db= rsdb.DBconnect("mongodb").dbconnect
+        db= rsdb.DBConnection().connect()
 
-    nav= rsdb.Navtree()
+    nav= rsdb.DBNavigator()
     data= nav.get_dataset(db)
 
     result= { 'request': nav.request, 'response': nav.response['descr'] }
@@ -119,9 +119,9 @@ def get_datasets(request, serializer, db=None):
 
 def get_datasets_meta(request, serializer, db=None):
     if db is None:
-        db= rsdb.DBconnect("mongodb").dbconnect
+        db= rsdb.DBConnection().connect()
 
-    nav= rsdb.Navtree()
+    nav= rsdb.DBNavigator()
     count= nav.get_count(db)
 
     result= { 'request': nav.request, 'response': nav.response['descr'] }
@@ -135,9 +135,9 @@ def get_datasets_meta(request, serializer, db=None):
 
 def get_views(request, serializer, dataset_idef, db=None):
     if db is None:
-        db= rsdb.DBconnect("mongodb").dbconnect
+        db= rsdb.DBConnection().connect()
 
-    nav= rsdb.Navtree()
+    nav= rsdb.DBNavigator()
     data= nav.get_view(db, dataset_idef)
 
     result= { 'request': nav.request, 'response': nav.response['descr'] }
@@ -150,9 +150,9 @@ def get_views(request, serializer, dataset_idef, db=None):
 
 def get_views_meta(request, serializer, dataset_idef, db=None):
     if db is None:
-        db= rsdb.DBconnect("mongodb").dbconnect
+        db= rsdb.DBConnection().connect()
 
-    nav= rsdb.Navtree()
+    nav= rsdb.DBNavigator()
     count= nav.get_count(db, dataset_idef)
 
     result= { 'request': nav.request, 'response': nav.response['descr'] }
@@ -165,9 +165,9 @@ def get_views_meta(request, serializer, dataset_idef, db=None):
 
 def get_issues(request, serializer, dataset_idef, view_idef, db=None):
     if db is None:
-        db= rsdb.DBconnect("mongodb").dbconnect
+        db= rsdb.DBConnection().connect()
 
-    nav= rsdb.Navtree()
+    nav= rsdb.DBNavigator()
     data= nav.get_issue(db, dataset_idef, view_idef)
 
     result= { 'request': nav.request, 'response': nav.response['descr'] }
@@ -180,9 +180,9 @@ def get_issues(request, serializer, dataset_idef, view_idef, db=None):
 
 def get_issues_meta(request, serializer, dataset_idef, view_idef, db=None):
     if db is None:
-        db= rsdb.DBconnect("mongodb").dbconnect
+        db= rsdb.DBConnection().connect()
 
-    nav= rsdb.Navtree()
+    nav= rsdb.DBNavigator()
     count= nav.get_count(db, dataset_idef, view_idef)
 
     result= { 'request': nav.request, 'response': nav.response['descr'] }
@@ -212,7 +212,7 @@ def get_userdef_fields(rq, parm):
     for elm in out_tmp: # check for empty elements
         if len(elm) > 0:
             out_list.append(elm)
-    
+
     return out_list
 
 def parse_conditions(pth):
@@ -240,7 +240,7 @@ def parse_conditions(pth):
 
                     if len(tmplst_from) != len(tmplst_to): # ERROR!
                         return { "error": '31' } # 'to' and 'from' are from different levels
-                    
+
                     if len(tmplst_from) > 1: # check one, but do for both (we know alredy that they are on the same level)
                         try:
                             last_num_from= int(tmplst_from[-1])
@@ -249,13 +249,13 @@ def parse_conditions(pth):
                             base_from= "-".join(tmplst_from[:-1])
                             base_to= "-".join(tmplst_to[:-1])
                         except: # ERROR!
-                            return { "error": '34' } # syntax error like [...+AND] or [+TO+2...]                        
+                            return { "error": '34' } # syntax error like [...+AND] or [+TO+2...]
                     else:
                         try:
                             last_num_from= int(tmplst_from[0])
                             last_num_to= int(tmplst_to[0])
                         except:
-                            return { "error": '34' } # syntax error like [...+2+6+AND...]                        
+                            return { "error": '34' } # syntax error like [...+2+6+AND...]
 
                     if last_num_to < last_num_from: # ERROR!
                         return { "error": '32' } # 'to' is less than 'from'
@@ -289,7 +289,7 @@ def parse_conditions(pth):
         else: # plain list of elements
             qry_fin= { "$in": idef_list }
 
-        return { "idef": qry_fin }    
+        return { "idef": qry_fin }
 
     elif (not test_presence) and (not test_order) and (not test_count): # dealing with single idef
         if '/branch' in pth: # query based on regexp (brothers and parents of given idef + all level 'a')
@@ -305,7 +305,7 @@ def parse_conditions(pth):
 
 def get_count(query, collection, db=None):
     if db is None:
-        db= rsdb.DBconnect("mongodb").dbconnect
+        db= rsdb.DBConnection().connect()
 
     return db[collection].find(query).count()
 
@@ -330,7 +330,7 @@ def build_idef_regexp( curr_idef ):
 
 def get_data(request, serializer, dataset_idef, view_idef, issue, path='', db=None):
     if db is None:
-        db= rsdb.DBconnect("mongodb").dbconnect
+        db= rsdb.DBConnection().connect()
 
     result= {
         'dataset_id': int(dataset_idef),
@@ -369,7 +369,7 @@ def get_data(request, serializer, dataset_idef, view_idef, issue, path='', db=No
 
 def get_metadata(request, serializer, dataset_idef, view_idef, issue, path='', db=None):
     if db is None:
-        db= rsdb.DBconnect("mongodb").dbconnect
+        db= rsdb.DBConnection().connect()
 
     result= {
         'dataset_id': int(dataset_idef),
@@ -400,7 +400,7 @@ def get_metadata(request, serializer, dataset_idef, view_idef, issue, path='', d
 
 def get_tree(request, serializer, dataset_idef, view_idef, issue, path='', db=None):
     if db is None:
-        db= rsdb.DBconnect("mongodb").dbconnect
+        db= rsdb.DBConnection().connect()
 
     result= {
         'dataset_id': int(dataset_idef),
@@ -471,7 +471,7 @@ def search_data(request, serializer, path='', db=None, **kwargs):
         result['response']= rsdb.Response().get_response(36)["descr"]
     else:
         if db is None:
-            db= rsdb.DBconnect("mongodb").dbconnect
+            db= rsdb.DBConnection().connect()
 
         # cleaning user query
         query_str= query_str.strip()
@@ -480,7 +480,7 @@ def search_data(request, serializer, path='', db=None, **kwargs):
         # optional args specifying what collections to search in
         dataset= kwargs.get('dataset_idef', None)
         view= kwargs.get('view_idef', None)
-        issue= kwargs.get('issue', None)        
+        issue= kwargs.get('issue', None)
         scope_list= build_scope(db, dataset, view, issue)
         if len(scope_list) == 0: # ERROR! wrong conditions for search
             result['response']= rsdb.Response().get_response(37)["descr"]
@@ -509,7 +509,7 @@ def search_data(request, serializer, path='', db=None, **kwargs):
                         db, qrystr= query_str, scope= scope_list, strict= strict, display= display_fields
                         )
                     )
-                result['response']= rsdb.Response().get_response(0)["descr"]                
+                result['response']= rsdb.Response().get_response(0)["descr"]
 
     out, mime_tp, http_response = format_result(result, serializer, 200)
     return HttpResponse( out, mimetype=mime_tp, status=http_response )

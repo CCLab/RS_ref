@@ -649,67 +649,11 @@
           "js_choose_panel_issue": 'Wybierz jedno z wydań danych.',
       }; 
       (function () {
-        // new template
-        _store.meta_data( {{ meta|safe }} );
-        /*tmp_meta = [
-            {
-                "_id": "100000",
-                "description": "Bud\u017cet centralny Rzeczpospolitej Polskiej, czyli komplet finans\u00f3w centralnych planowanych w ustawie bud\u017cetowej. Poza planami finansowymi kolekcja zawiera sprawozdania finansowe - stron\u0119 dochod\u00f3w i wydatk\u00f3w.",
-                "long_description": null,
-                "name": "Bud\u017cet centralny",
-                "parent_id": ""
-            },
-            {
-                "_id": "100001",
-                "description": "Bud\u017cet tradycyjny, czyli ta posta\u0107 bud\u017cetu pa\u0144stwa, kt\u00f3ra zapisana jest w ustawie bud\u017cetowej.",
-                "long_description": null,
-                "name": "Bud\u017cet tradycyjny",
-                "parent_id": "100000"
-            },
-            {
-                "_id": "100002",
-                "name": "2011",
-                "parent_id": "100001"
-            },
-            {
-                "_id": "100003",
-                "description": "Bud\u017cet Narodowego Funduszu Zdrowia z rozbiciem na o\u015brodki wojew\u00f3dzkie",
-                "long_description": null,
-                "name": "Narodowy Fundusz Zdrowia",
-                "parent_id": ""
-            },
-            {
-                "_id": "100004",
-                "description": "Dane szczebla centralnego",
-                "long_description": null,
-                "name": "Dane zagregowane",
-                "parent_id": "100003"
-            },
-            {
-                "_id": "100005",
-                "name": "2011",
-                "parent_id": "100004"
-            },
-            {
-                "_id": "100006",
-                "description": "Dane bud\u017cetowe o\u015brodk\u00f3w regionalnych NFZ",
-                "long_description": null,
-                "name": "Dane o\u015brodk\u00f3w regionalnych",
-                "parent_id": "100003"
-            },
-            {
-                "_id": "100007",
-                "name": "2011",
-                "parent_id": "100006"
-            }
-        ];
-        _store.init_store( {{ meta|safe }} );*/
         {% if idef %}
         _gui.init_gui( true );
         _gui.restore_session( {{ idef }} );
         {% else %}
         _gui.init_gui();
-
         {% endif %}
       })();
   // ]]>

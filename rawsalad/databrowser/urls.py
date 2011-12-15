@@ -3,6 +3,7 @@ from django.conf.urls.defaults import *
 urlpatterns = patterns( 'databrowser.views',
     ( r'^$',               'app_page' ),
 
+    ( r'^get_db_tree/$',   'get_db_tree' ),
     ( r'^get_init_data/$', 'get_init_data' ),
     ( r'^get_children/$',  'get_children' ),
 

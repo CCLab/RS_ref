@@ -1,181 +1,85 @@
 # -*- coding: utf-8 -*-
-"""
-project: Raw Salad
-function: classes representing the API to data and meta-data
-requirements: mongod, conf file (see conf_filename)
-"""
-
-from time import time
-from ConfigParser import ConfigParser
-import pymongo
-import re
 import os
+import re
+from pymongo import Connection
+from ConfigParser import ConfigParser
+from time import time
 
-meta_src= "md_budg_scheme"
-state_counter= "md_sta_cnt"
-nav_schema= "ms_nav"
+meta_src      = "md_budg_scheme"
+state_counter = "md_sta_cnt"
+#nav_schema    = "ms_nav"
+nav_schema    = "navigator_tree"
 
-dir_path = os.path.dirname( __file__ )
-conf_filename = os.path.join(dir_path, 'site_media', 'rawsdata.conf')
+# TODO make http response work better (use http headers)
 
-class Response:
-    """
-    response object
-    returns dict with http response and description
-    """
-    def __init__(self):
-        self.code= 0 # Response class is optimistic
-        self.response_dict= {
-            '0': {
-                'httpresp': 200,
-                'descr': 'OK'
-                },
-            '1': {
-                'httpresp': 200,
-                'descr': 'OK: Data successfully updated'
-                },
-            '2': {
-                'httpresp': 200,
-                'descr': 'OK: Data successfully inserted'
-                },
-            '10': {
-                'httpresp': 404,
-                'descr': 'ERROR: No such data!'
-                },
-            '20': {
-                'httpresp': 404,
-                'descr': 'ERROR: No such meta-data!'
-                },
-            '30': {
-                'httpresp': 400,
-                'descr': 'ERROR: Bad request!'
-                },
-            '31': {
-                'httpresp': 400,
-                'descr': 'ERROR: Scope +TO+ is applicable to the codes on the same level!'
-                },
-            '32': {
-                'httpresp': 400,
-                'descr': 'ERROR: Wrong sequence in the scope +TO+!'
-                },
-            '33': {
-                'httpresp': 400,
-                'descr': 'ERROR: Scope +TO+ should include only 2 elements!'
-                },
-            '34': {
-                'httpresp': 400,
-                'descr': 'ERROR: Syntax error in scope definition!',
-                },
-            '35': {
-                'httpresp': 400,
-                'descr': 'ERROR: Format not specified!'
-                },
-            '36': {
-                'httpresp': 400,
-                'descr': 'ERROR: Search string not given!'
-                },
-            '37': {
-                'httpresp': 404,
-                'descr': 'ERROR: No such collection(s)!'
-                },
-            '40': {
-                'httpresp': 404,
-                'descr': 'ERROR: No data for specified state id!'
-                },
-            '41': {
-                'httpresp': 500,
-                'descr': 'ERROR: Cannot insert data into the db!'
-                },
-            '42': {
-                'httpresp': 400,
-                'descr': 'ERROR: Wrong state id!'
-                },
-            '43': {
-                'httpresp': 404,
-                'descr': 'ERROR: No data specified!'
-                },
-            '44': {
-                'httpresp': 500,
-                'descr': 'ERROR: Cannot update document!'
-                },
-            }
+# TODO create Resource class that REALLY abstracts DB work
+class Resource:
+    pass
 
-    def __del__(self):
-        pass
+# TODO make it a singleton
+# TODO define app entry points and move db connection to session
+class DBConnection:
+    def __init__( self, db_type='mongodb' ):
+        '''Define a connection object for a selected database'''
+        # TODO move config file path into SETTINGS
+        dir_path  = os.path.dirname( __file__ )
+        conf_file = os.path.join( dir_path, 'site_media', 'rawsdata.conf' )
 
-    def get_response(self, code):
-        self.code= code
-        self.http_resp= self.response_dict[str(code)]['httpresp']
-        self.descr= self.response_dict[str(code)]['descr']
-        return self.response_dict[str(code)]
+        cfg = ConfigParser({ 'basedir': conf_file })
+        cfg.read( conf_file )
 
-class DBconnect:
-    def __init__(self, db_type):
-        if db_type == 'mongodb':
-            self.fill_connection(db_type)
-            self.connect= pymongo.Connection(self.host, self.port)
-            dbase= self.connect[self.database]
-            dbase.authenticate(self.username, self.password)
-        elif db_type == 'postgresql':
-            dbase= None # not yet realized
+        self.host     = cfg.get( db_type, 'host' )
+        self.port     = cfg.getint( db_type, 'port' )
+        self.database = cfg.get( db_type, 'database' )
+        self.username = cfg.get( db_type, 'username' )
+        try:
+            self.password = cfg.get( db_type, 'password' )
+        except:
+            # must be instance of basestring
+            self.password = ''
 
-        self.dbconnect= dbase
 
-    def __del__(self):
-        pass
+    def connect( self ):
+        '''Connect to db and return a connection singleton'''
+        # if connection not established yet - connect
+        try:
+            return self.db
+        except:
+            connection = Connection( self.host, self.port )
+            self.db    = connection[ self.database ]
+            self.db.authenticate( self.username, self.password )
 
-    def fill_connection(self, db_type):
-            cfg= ConfigParser({ 'basedir': conf_filename })
-            cfg.read(conf_filename)
+            return self.db
 
-            self.host= cfg.get(db_type,'host')
-            self.port= cfg.getint(db_type,'port')
-            self.database= cfg.get(db_type,'database')
-            self.username= cfg.get(db_type,'username')
-            try:
-                pssw= cfg.get(db_type,'password')
-            except:
-                pssw = None
-            if pssw is not None:
-                self.password= pssw
-            else:
-                self.password= '' # must be instance of basestring
 
-class Navtree:
-    """ Navigator tree """
-    def __init__(self, **parms):
-        """
-        **parms are:
-        - fields_aux - {} specified keys from the structure
-        - query_aux - {} additional query conditions
-        """
-        self.fields= parms.pop("fields_aux", {}) # before match against metadata
-        self.query= parms.pop("query_aux", {}) # before update from metadata
-        self.response= Response().get_response(0) # Navtree class is optimistic
+class DBNavigator:
+    '''Navigator tree'''
+    def __init__( self, db_type='mongodb' ):
+        self.db = DBConnection( db_type ).connect()
 
-    def __del__(self):
-        pass
 
-    def get_meta_tree(self, datasrc):
-        out= []
-
+    def get_db_tree( self ):
+        '''Get the navigation tree for all database collections'''
+        # TODO get rid of it
         self.request= 'navigator'
 
-        nav_fields= { '_id': 0 } # _id is never returned
-        nav_fields.update(self.fields)
-
-        query= {} # query conditions
-        query.update(self.query) # additional query, depends on the call
-
-        cursor_data= datasrc[nav_schema].find(query, nav_fields)
-        if cursor_data is not None:
-            self.response= Response().get_response(0)
-            for row in cursor_data:
-                out.append(row)
-        else: # error
-            self.response= Response().get_response(10)
+        cursor = self.db[ nav_schema ].find({})
+        out = [ row for row in cursor ]
+        # sorting metadata before serving
+        out.sort( cmp=lambda a, b: a['_id'] - b['_id'] )
 
         return out
+
+
+    def get_node( self, id ):
+        '''Get certain position in the db_tree'''
+        pass
+
+
+    def get_children( self, id ):
+        '''Get children of the certain position in the db_tree'''
+        pass
+
 
     def get_dataset(self, datasrc):
         out= []
@@ -921,3 +825,99 @@ class Search:
             } )
 
         return out
+
+
+
+# TODO make it HTTP response, not pseudo-response
+class Response:
+    """
+    response object
+    returns dict with http response and description
+    """
+    def __init__(self):
+        self.code= 0 # Response class is optimistic
+        self.response_dict= {
+            '0': {
+                'httpresp': 200,
+                'descr': 'OK'
+                },
+            '1': {
+                'httpresp': 200,
+                'descr': 'OK: Data successfully updated'
+                },
+            '2': {
+                'httpresp': 200,
+                'descr': 'OK: Data successfully inserted'
+                },
+            '10': {
+                'httpresp': 404,
+                'descr': 'ERROR: No such data!'
+                },
+            '20': {
+                'httpresp': 404,
+                'descr': 'ERROR: No such meta-data!'
+                },
+            '30': {
+                'httpresp': 400,
+                'descr': 'ERROR: Bad request!'
+                },
+            '31': {
+                'httpresp': 400,
+                'descr': 'ERROR: Scope +TO+ is applicable to the codes on the same level!'
+                },
+            '32': {
+                'httpresp': 400,
+                'descr': 'ERROR: Wrong sequence in the scope +TO+!'
+                },
+            '33': {
+                'httpresp': 400,
+                'descr': 'ERROR: Scope +TO+ should include only 2 elements!'
+                },
+            '34': {
+                'httpresp': 400,
+                'descr': 'ERROR: Syntax error in scope definition!',
+                },
+            '35': {
+                'httpresp': 400,
+                'descr': 'ERROR: Format not specified!'
+                },
+            '36': {
+                'httpresp': 400,
+                'descr': 'ERROR: Search string not given!'
+                },
+            '37': {
+                'httpresp': 404,
+                'descr': 'ERROR: No such collection(s)!'
+                },
+            '40': {
+                'httpresp': 404,
+                'descr': 'ERROR: No data for specified state id!'
+                },
+            '41': {
+                'httpresp': 500,
+                'descr': 'ERROR: Cannot insert data into the db!'
+                },
+            '42': {
+                'httpresp': 400,
+                'descr': 'ERROR: Wrong state id!'
+                },
+            '43': {
+                'httpresp': 404,
+                'descr': 'ERROR: No data specified!'
+                },
+            '44': {
+                'httpresp': 500,
+                'descr': 'ERROR: Cannot update document!'
+                },
+            }
+
+    def __del__(self):
+        pass
+
+    def get_response(self, code):
+        self.code= code
+        self.http_resp= self.response_dict[str(code)]['httpresp']
+        self.descr= self.response_dict[str(code)]['descr']
+        return self.response_dict[str(code)]
+
+
