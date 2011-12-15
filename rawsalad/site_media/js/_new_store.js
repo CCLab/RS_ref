@@ -43,26 +43,6 @@ var _store = (function () {
     that.meta_data = function ( value ) {
         meta_data = value;
     };
-
-    // get metadata about available datasets
-    // OUT:
-    // [ {'description': '', 'idef': x, 'name': '', perspectives: []}, ... ]
-    /*that.meta_datasets = function () {
-        return meta_data;
-    };
-
-
-    // get metadata about views available in a cerain dataset (name perspectives comes from db!)
-    // dataset_id - int
-    // OUT:
-    // [ {'description': '', 'idef': x, 'name': '', issues: []}, ... ]
-    that.meta_views = function ( dataset_id ) {
-        var view = meta_data['perspectives'].filter( function ( e ) {
-            return e['idef'] === dataset_id;
-        });
-        
-        return view;
-    };*/
     
     that.get_init_data = function ( col_id, callback ) {
         var data_source;
@@ -72,8 +52,13 @@ var _store = (function () {
         
         if ( has_data( col_id ) ) {
             data_source = get_data_source( col_id );
-            data = data_source.first_level();
-            callback( data );
+            data = monkey.createTree( data_source.children( data_source.root() ), 'idef_sort' );
+            data_package = {
+                'data': data.copy(),
+                'meta': meta_data_sources[col_id]
+            };
+            //data = data_source.first_level();
+            callback( data_package );
         } else {
             _db.get_init_data( col_id, function ( db_data ) {
                 data_source = store_data( db_data['rows'], col_id );
@@ -107,10 +92,6 @@ var _store = (function () {
         return data_sources[col_id];
     };
     
-    function get_meta_data( col_id ) {
-        return meta_data_sources[col_id];
-    };
-    
     function store_data( db_data, col_id ) {
         var new_data_source = monkey.createTree( db_data, 'idef_sort' );
         data_sources[col_id] = new_data_source;
@@ -125,7 +106,7 @@ var _store = (function () {
         return extracted_meta_data;
     };
     
-    function extract_meta_data( db_meta_data ) {
+    function extract_meta_data( db_meta_data, col_id ) {
         return {
             'name': db_meta_data['perspective'],
             'columns': db_meta_data['columns']

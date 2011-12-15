@@ -32,10 +32,10 @@ var _gui = (function () {
     var counter = 0;
     that.init_gui = function () {
         $('#test-button-1').click( function( ) {
-            _resource.get_top_level(100002, redraw_table);
+            _resource.get_top_level(100002, draw_new_table);
         });
         $('#test-button-2').click( function( ) {
-            _resource.get_top_level(100005, redraw_table);
+            _resource.get_top_level(100005, draw_new_table);
         });
     };
     
@@ -46,25 +46,40 @@ var _gui = (function () {
     // Create table.
     // IN:
     // data - data needed to draw table
-    function redraw_table( data ) {
+    function draw_table( data ) {
         var table_code;
         var table_type = data['type'];
         var table_data = data['data'];
         var columns = data['columns'];
         
         table_code = _table.create_table( table_data, columns, table_type );
+        
         remove_table();
         show_table( table_code );
-    };
+    }
+    
+    function draw_new_table( data ) {
+        var draw_tab = function( name, id ) {
+            var html_code = [];
+            html_code = ['<button id=', id, '>'];
+            html_code.push( name );
+            html_code.push( '</button>' );
+            
+            return html_code.join('');
+        };
+        
+        draw_tab( data['name'], data['id'], data['type'] );
+        draw_table( data );
+    }
     
     function remove_table() {
         $('#simpletable').empty();
-    };
+    }
     
     function show_table( table_code ) {
         $('#simpletable').html( table_code );
         console.log( table_code );
-    };
+    }
     
     return that;
     

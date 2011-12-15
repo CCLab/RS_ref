@@ -28,79 +28,32 @@ var _resource = (function () {
 
 //  P U B L I C   I N T E R F A C E
     var that = {};
-
-    // get metadata about available datasets
-    // OUT:
-    // [ {'description': '', 'idef': x, 'name': '', perspectives: []}, ... ]
-    that.get_meta_datasets = function() {
-        var tree = _store.meta_datasets();
-        return tree.children(tree.root());
-    };
-    
-    that.get_meta_views = function( dataset_id ) {
-        var tree = _store.meta_datasets();
-        return tree.children( dataset_id );
-    };
-    
-    // get children and pass them to callback
-    that.get_children = function( parent_id, group_id, callback ) {
-        var group_id = group_id || _store.get_active_group_index();
-        _store.get_children( parent_id, group_id, callback );
-    };
-    
-    that.get_init_data = function( dataset_id, view_id, issue, callback ) {
-        var data = _store.get_data
-    };
-    
-    that.convert_meta_data = function( meta_data ) {
-        var rows;
-        //dataset_rows = $.extend([], true, meta_data);
-        meta_data.forEach( function ( dataset ) {
-            var dataset_id = dataset['idef'];
-            var rows = rows;
-            dataset['perspectives'].forEach( function( view ) {
-                var view_id = view['idef'];
-                view['issues'].forEach( function( issue ) {
-                    var rows = rows;
-                    var meta_id = dataset_id + '-' + view_id + '-' + issue;
-                    rows.push({'id': meta_id, 'description': issue});
-                });
-                meta_id = dataset_id + '-' + view_id;
-                delete view['issues'];
-                delete view['idef'];
-                view['id'] = meta_id;
-                rows.push(view);
-            });
-            meta_id = dataset_id;
-            delete dataset['perspectives'];
-            delete dataset['idef'];
-            dataset['id'] = dataset_id;
-            rows.push(dataset);
-        });
-    };
     
     that.get_top_level = function( col_id, callback ) {
-        var processed_data;
-        var gui_data;
-        var new_sheet;
+        //if ( has_sheet( col_id ) ) {
+        //    return_basic_data( col_id, callback );
+        //} else {
+        //    _store.get_init_data( col_id, function( data ) {
+        //        var sheet_id = add_sheet( col_id, data );
+        //        return_basic_data( sheet_id, callback );
+        //    });
+        //}
         
-        if ( has_sheet( col_id ) ) {
-            sheet = get_basic_sheet( col_id );
-            gui_data = prepare_data_for_gui( sheet );
-            callback(gui_data);
-        } else {
-            _store.get_init_data( col_id, function( data ) {
-                processed_data = process_data( data );
-                add_group( col_id, processed_data['meta']['columns'] );
-                sheet = add_sheet( processed_data['data'], processed_data['meta']['name'], col_id );
-                gui_data = prepare_data_for_gui( sheet );
-                callback( gui_data );
-            });
-        }
+        _store.get_init_data( col_id, function( data ) {
+            var sheet;
+            var sheet_id;
+            var gui_data;
+            
+            sheet_id = add_sheet( col_id, data );
+            sheet = sheets[sheet_id];
+            gui_data = prepare_data_for_gui( sheet, sheet_id );
+            callback( gui_data );
+        });
     };
 
 // P R I V A T E   I N T E R F A C E
-    var groups = [];
+    var sheets = {};
+    var next_sheet_id = 10000;
     
     function has_sheet( col_id ) {
         var found_group;
@@ -114,58 +67,36 @@ var _resource = (function () {
         return found_group.length > 0;
     };
     
-    function process_data( data ) {
-        return data;
-    };
-    
-    function add_group( col_id, columns ) {
-        var new_group;
-        
-        new_group = {
-            'id': col_id,
-            'sheets': [],
-            'columns': columns
+    function add_sheet( col_id, data ) {
+        var generate_sheet_id = function() {
+            var act_id = next_sheet_id;
+            act_id += 1;
+            return next_sheet_id;
         };
-        
-        groups.push( new_group );
-    };
-    
-    function get_group( col_id ) {
-        var found_groups;
-        
-        found_groups = groups.filter( function ( group ) {
-            return group['id'] === col_id;
-        });
-        
-        _assert.assert( (found_groups.length === 0 || found_groups.length === 1),
-                        '_resource:get_group:too many groups' );
-
-        return found_groups.length > 0 ? found_groups[0] : undefined;
-    };
-    
-    function add_sheet( data, name, col_id, type ) {
         var new_sheet;
-        var group;
-        var type = type || 'STANDARD';
-        var basic_columns;
+        var active_columns;
+        var cleaned_data;
+        var sheet_id = generate_sheet_id();
+        var name = data['meta']['name'];
         
-        group = get_group( col_id );
-        active_columns = group['columns'].filter( function ( column ) {
+        active_columns = data['meta']['columns'].filter( function ( column ) {
             return !!column['basic'];
         });
+        cleaned_data = clean_data( data['data'], active_columns );
         
         new_sheet = {
+            'endpoint': col_id,
+            'data': cleaned_data,
             'name': name,
-            'type': type,
-            'data': data,
-            'active_columns': active_columns
+            'columns': active_columns,
+            'type': 'STANDARD'
         };
-        group['sheets'].push( new_sheet );
+        sheets[sheet_id] = new_sheet;
         
-        return new_sheet;
+        return sheet_id;
     };
     
-    function get_basic_sheet( col_id , type) {
+    function get_basic_sheet( col_id, type ) {
         var group;
         var type = type || 'STANDARD';
         var first_sheet;
@@ -193,45 +124,43 @@ var _resource = (function () {
         return basic_sheet;
     };
     
-    function prepare_data_for_gui( sheet ) {
-        var full_data;
+    function prepare_data_for_gui( sheet, sheet_id ) {
         var data = [];
         var data_package;
-        var columns_keys;
-        var columns_description;
         
-        full_data = sheet['data'].toList();
-        
-        columns_description = sheet['active_columns'];/*.map( function ( column ) {
-            return {
-                'label': column['label'],
-                'key': column['key'],
-                'type': column['type']
-            };
-        });*/
-        
-        full_data.forEach( function ( row ) {
-            data.push( clean_row( row, sheet['active_columns'] ) );
-        });
-        
+        data = sheet['data'].toList();
         data_package = {
             'type': sheet['type'],
             'data': data,
-            'columns': columns_description
+            'columns': sheet['columns'],
+            'id': sheet_id,
+            'name': sheet['name']
         };
         
         return data_package;
     };
     
-    function clean_row( row, columns ) {
-        var property;
-        var new_row = {};
+    function clean_data( data, columns ) {
+        var clean_node = function( node, columns ) {
+            var property;
+            var new_node = {};
+            
+            new_node['idef_sort'] = node['idef_sort'];
+            
+            columns.forEach( function ( column ) {
+                new_node[ column['key'] ] = node[ column['key'] ];
+            });
+            
+            return new_node;
+        };
+        var new_data = monkey.createTree( [], 'idef_sort' );
         
-        columns.forEach( function ( column ) {
-            new_row[ column['key'] ] = row[ column['key'] ];
+        data.forEach( function ( node ) {
+            var new_node = clean_node( node, columns );
+            new_data.insertNode( new_node );
         });
         
-        return new_row;
+        return new_data;
     };
     
     return that;
