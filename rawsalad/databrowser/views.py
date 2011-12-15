@@ -35,6 +35,22 @@ def get_db_tree( req ):
 # url: /get_init_data/
 def get_init_data( req ):
     '''Get top-level data of the collection'''
+#    endpoint = req.GET.get( 'endpoint', None )
+#        if ( col_id === 100002 ) {
+#            init_data_info = {
+#                "dataset": 0,
+#                "view": 0,
+#                "issue": '2011'
+#            };
+#        } else if ( col_id === 100005 ) {
+#            init_data_info = {
+#                "dataset": 1,
+#                "view": 0,
+#                "issue": '2011'
+#            };
+#        } else {
+#            _assert.assert_is_true( false, '_db:get_init_data:unknow col id' );
+#        }
     d = req.GET.get( 'dataset', None )
     v = req.GET.get( 'view', None )
     i = req.GET.get( 'issue', None )

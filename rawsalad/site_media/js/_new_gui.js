@@ -68,18 +68,18 @@ var _gui = (function () {
 
         table_code = _table.create_table( table_data, columns, table_type );
         full_code = prepare_full_code( table_code, data['id'] );
-        
+
         remove_table();
         show_table( full_code, data['id'] );
     }
-    
+
     function draw_new_table( data ) {
         var create_tab = function( name, id ) {
             var html_code = [];
             html_code = ['<button id=', id, '>'];
             html_code.push( name );
             html_code.push( '</button>' );
-            
+
             return html_code.join('');
         };
         
@@ -91,7 +91,7 @@ var _gui = (function () {
         
         draw_table( data );
     }
-    
+
     function remove_table() {
         //$('#simpletable').empty();
         $('#tables').empty();
@@ -102,7 +102,7 @@ var _gui = (function () {
         //$('#simpletable').html( table_code );
         console.log( table_code );
     }
-    
+
     return that;
 
 })();
