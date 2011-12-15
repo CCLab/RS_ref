@@ -56,7 +56,7 @@ var _store = (function () {
         else {
             _db.get_db_tree( function ( data ) {
                 // TODO make the monkey eat the tree
-                save_db_tree();
+                save_db_tree( data );
                 respond();
             });
         }
@@ -94,7 +94,7 @@ var _store = (function () {
 // P R I V A T E   I N T E R F A C E
 
     // data tree about data
-    var meta_data;
+    var db_tree;
     // initiated - is store initiated(meta_data downloaded)
     var initiated = false;
     // tree for each collection
@@ -131,7 +131,19 @@ var _store = (function () {
         };
     };
 
+    function has_db_tree() {
+        return !!db_tree;
+    };
 
+    function get_db_tree() {
+        // TODO: to copy or not to copy?
+        return db_tree.copy();
+    };
+    
+    function save_db_tree( data ) {
+        db_tree = monkey.createTree( data, '_id', 'parent_id' );
+    };
+    
     return that;
 
 }) ();

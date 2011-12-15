@@ -67,6 +67,7 @@ var _db = (function () {
                 callback( data );
             },
             error: function ( err ) {
+                console.log( err );
                 _utils.clear_preloader();
             }
         });

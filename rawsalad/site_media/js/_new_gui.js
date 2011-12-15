@@ -29,7 +29,6 @@ var _gui = (function () {
 // P U B L I C   I N T E R F A C E
     var that = {};
 
-    var counter = 0;
     that.init_gui = function () {
         $('#test-button-1').click( function( ) {
             _resource.get_top_level(100002, draw_new_table);
@@ -54,19 +53,28 @@ var _gui = (function () {
     // IN:
     // data - data needed to draw table
     function draw_table( data ) {
+        var prepare_full_code = function( table_code, id ) {
+            var full_code = ['<div="table-' + id + '">'];
+            full_code.push( table_code );
+            full_code.push( '</div>' );
+            
+            return full_code.join('');
+        };
         var table_code;
         var table_type = data['type'];
         var table_data = data['data'];
         var columns = data['columns'];
+        var full_code;
 
         table_code = _table.create_table( table_data, columns, table_type );
+        full_code = prepare_full_code( table_code, data['id'] );
         
         remove_table();
-        show_table( table_code );
+        show_table( full_code, data['id'] );
     }
     
     function draw_new_table( data ) {
-        var draw_tab = function( name, id ) {
+        var create_tab = function( name, id ) {
             var html_code = [];
             html_code = ['<button id=', id, '>'];
             html_code.push( name );
@@ -75,16 +83,23 @@ var _gui = (function () {
             return html_code.join('');
         };
         
-        draw_tab( data['name'], data['id'], data['type'] );
+        var tab_code = create_tab( data['name'], data['id'], data['type'] );
+        $('#tabs').append( tab_code );
+        $('#id-' + data['id']).click( function ( tab ) {
+            draw_table( data );
+        });
+        
         draw_table( data );
     }
     
     function remove_table() {
-        $('#simpletable').empty();
+        //$('#simpletable').empty();
+        $('#tables').empty();
     }
     
-    function show_table( table_code ) {
-        $('#simpletable').html( table_code );
+    function show_table( table_code, table_id ) {
+        $('#tables').append( table_code );
+        //$('#simpletable').html( table_code );
         console.log( table_code );
     }
     
