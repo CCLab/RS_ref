@@ -78,7 +78,9 @@ Form of created tree:
                 var isFiltered = isFiltered || false;
                 
                 parentId = (!!parentColumn) ? value[parentColumn] : getParentId(id);
-                if (parentId === '')    parentId = '__root__';
+                if (parentId === '' || parentId === undefined || parentId === null) {
+                    parentId = '__root__';
+                }
                 parentNode = this.getNode(parentId);
                 if (!parentNode) return this;        
                 
@@ -857,8 +859,12 @@ Form of created tree:
     };
     
     var assertId = function(id, msg) {
-        if (id !== null) {
-            assertNonEmptyString(id, 'assertId( ' + msg + ' )');
+        if (id !== undefined) {
+            if ( id === null || (id.constructor !== String && id.constructor !== Number) ) {
+                throw 'assertId(id=' + id + ')' + msg;
+            }
+        } else {
+            throw 'assertId(id=' + id + ')' + msg;
         }
     };
     
