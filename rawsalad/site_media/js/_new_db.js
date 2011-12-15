@@ -35,7 +35,7 @@ var _db = (function () {
     that.get_init_data = function ( col_id, callback ) {
         // temporary hardcoded
         var init_data_info;
-        
+
         if ( col_id === 100002 ) {
             init_data_info = {
                 "dataset": 0,
@@ -62,12 +62,26 @@ var _db = (function () {
                     rows: received_data.rows,
                     meta: received_data.perspective
                 };
-                
+
                 _utils.clear_preloader();
                 callback( data );
             },
             error: function ( err ) {
                 _utils.clear_preloader();
+            }
+        });
+    };
+
+    that.get_db_tree = function ( callback ) {
+        $.ajax({
+            url: '/get_db_tree/',
+            dataType: 'json',
+            type: 'GET',
+            success : function ( received_data ) {
+                callback( received_data );
+            },
+            error   : function ( err ) {
+                console.log( err );
             }
         });
     };

@@ -20,27 +20,21 @@ def app_page( request ):
     if browser in old_browsers:
         return render_to_response( 'old_browser.html' )
 
-    return render_to_response( 'app.html', { 'meta': get_meta_tree() })
+    return render_to_response( '_new_app.html' )
 
 
-# get the metadata tree (i.e. all datasets, views, issues)
-def get_meta_tree():
-    # TODO can we store the connection in the session?
-    # TODO can we use some kind of singleton pattern here?!
-    # TODO make it explicit function call instead of field retrieval
-    db  = rsdb.DBConnection().connect()
-    nav = rsdb.DBNavigator()
+# url: /get_db_tree/
+def get_db_tree( req ):
+    '''Get the navigation tree for all database collections'''
+    # create a navigator for the db collections
+    db_tree = rsdb.DBNavigator().get_db_tree()
 
-    # get metadata tree and sort it by dataset idef
-    meta_tree = nav.get_meta_tree( db )
-    meta_tree.sort( cmp=lambda a, b: a['idef'] - b['idef'] )
-
-    return json.dumps( meta_tree )
+    return HttpResponse( json.dumps( db_tree ) )
 
 
 # url: /get_init_data/
-# get top-level data of the collection
 def get_init_data( req ):
+    '''Get top-level data of the collection'''
     d = req.GET.get( 'dataset', None )
     v = req.GET.get( 'view', None )
     i = req.GET.get( 'issue', None )
@@ -61,8 +55,8 @@ def get_init_data( req ):
 
 
 # url: /get_children/
-# get children of the node
 def get_children( req ):
+    '''Get children of the node'''
     d = req.GET.get( 'dataset', None )
     v = req.GET.get( 'view', None )
     i = req.GET.get( 'issue', None )
@@ -138,7 +132,7 @@ def store_state( request ):
 # init application prepared to handle restore data
 def init_restore( request, idef ):
     data = {
-        'meta': get_meta_tree(),
+        'meta': json.dumps( get_db_tree() ),
         'idef': idef
     }
     return render_to_response( 'app.html', data )

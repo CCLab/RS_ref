@@ -31,17 +31,35 @@ var _store = (function () {
 
     // meta_data setter
     // IN:
-    // init_meta_data: [ {'description': '', 'idef': x, 'name': '', perspectives: []}, ... ] 
+    // init_meta_data: [ {'description': '', 'idef': x, 'name': '', perspectives: []}, ... ]
     that.init_store = function ( init_meta_data ) {
         if ( !initiated ) {
             meta_data = monkey.createTree(init_meta_data, '_id', 'parent_id');
             initiated = true;
         }
     };
-    
+
     // temporary
     that.meta_data = function ( value ) {
         meta_data = value;
+    };
+
+    that.get_db_tree = function ( callback ) {
+        var respond = function ( data ) {
+            var data = get_db_tree();
+            callback( data );
+        };
+
+        if( has_db_tree() ) {
+            respond();
+        }
+        else {
+            _db.get_db_tree( function ( data ) {
+                // TODO make the monkey eat the tree
+                save_db_tree();
+                respond();
+            });
+        }
     };
 
     // get metadata about available datasets
@@ -60,16 +78,16 @@ var _store = (function () {
         var view = meta_data['perspectives'].filter( function ( e ) {
             return e['idef'] === dataset_id;
         });
-        
+
         return view;
     };*/
-    
+
     that.get_init_data = function ( col_id, callback ) {
         var data_source;
         var data;
         var meta;
         var data_package;
-        
+
         if ( has_data( col_id ) ) {
             data_source = get_data_source( col_id );
             data = data_source.first_level();
@@ -98,33 +116,33 @@ var _store = (function () {
     var data_sources = {};
     // contains meta data for each collection
     var meta_data_sources = {};
-    
+
     function has_data( col_id ) {
         return !!data_sources[col_id];
     };
-    
+
     function get_data_source( col_id ) {
         return data_sources[col_id];
     };
-    
+
     function get_meta_data( col_id ) {
         return meta_data_sources[col_id];
     };
-    
+
     function store_data( db_data, col_id ) {
         var new_data_source = monkey.createTree( db_data, 'idef_sort' );
         data_sources[col_id] = new_data_source;
-        
+
         return new_data_source;
     };
-    
+
     function store_meta_data( db_meta_data, col_id ) {
         var extracted_meta_data = extract_meta_data( db_meta_data );
-        
+
         meta_data_sources[col_id] = extracted_meta_data;
         return extracted_meta_data;
     };
-    
+
     function extract_meta_data( db_meta_data ) {
         return {
             'name': db_meta_data['perspective'],
@@ -132,7 +150,7 @@ var _store = (function () {
         };
     };
 
-    
+
     return that;
 
 }) ();

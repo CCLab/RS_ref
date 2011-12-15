@@ -7,7 +7,8 @@ from time import time
 
 meta_src      = "md_budg_scheme"
 state_counter = "md_sta_cnt"
-nav_schema    = "ms_nav"
+#nav_schema    = "ms_nav"
+nav_schema    = "navigator_tree"
 
 # TODO make http response work better (use http headers)
 
@@ -52,39 +53,33 @@ class DBConnection:
 
 
 class DBNavigator:
-    """ Navigator tree """
-    def __init__(self, **parms):
-        pass
-#        """
-#        **parms are:
-#        - fields_aux - {} specified keys from the structure
-#        - query_aux - {} additional query conditions
-#        """
-#        self.fields= parms.pop("fields_aux", {}) # before match against metadata
-#        self.query= parms.pop("query_aux", {}) # before update from metadata
-#        self.response= Response().get_response(0) # Navtree class is optimistic
+    '''Navigator tree'''
+    def __init__( self, db_type='mongodb' ):
+        self.db = DBConnection( db_type ).connect()
 
 
-    def get_meta_tree(self, datasrc):
-        out= []
-
+    def get_db_tree( self ):
+        '''Get the navigation tree for all database collections'''
+        # TODO get rid of it
         self.request= 'navigator'
 
-        nav_fields= { '_id': 0 } # _id is never returned
-#        nav_fields.update(self.fields)
-
-        query= {} # query conditions
-#        query.update(self.query) # additional query, depends on the call
-
-        cursor_data= datasrc[nav_schema].find(query, nav_fields)
-        if cursor_data is not None:
-            self.response= Response().get_response(0)
-            for row in cursor_data:
-                out.append(row)
-        else: # error
-            self.response= Response().get_response(10)
+        cursor = self.db[ nav_schema ].find({})
+        out = [ row for row in cursor ]
+        # sorting metadata before serving
+        out.sort( cmp=lambda a, b: a['_id'] - b['_id'] )
 
         return out
+
+
+    def get_node( self, id ):
+        '''Get certain position in the db_tree'''
+        pass
+
+
+    def get_children( self, id ):
+        '''Get children of the certain position in the db_tree'''
+        pass
+
 
     def get_dataset(self, datasrc):
         out= []
