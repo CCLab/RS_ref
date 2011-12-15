@@ -1,17 +1,14 @@
 # -*- coding: utf-8 -*-
 # TODO move imports used only in one function to this function's body
+# TODO better handling of POST requests
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
-from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
-from django.template import Context, loader
-from django.utils import simplejson as json
 from django.core.mail import send_mail
+# TODO check why django version of simplejson is in use
+from django.utils import simplejson as json
 
 import rsdbapi as rsdb
-from time import time
-
-from operator import attrgetter
 
 
 # url: /
@@ -28,19 +25,15 @@ def app_page( request ):
 
 # get the metadata tree (i.e. all datasets, views, issues)
 def get_meta_tree():
-    # sort comparator
-    def dataset_compare( d1, d2 ):
-        return d1['idef'] - d2['idef']
-
     # TODO can we store the connection in the session?
     # TODO can we use some kind of singleton pattern here?!
     # TODO make it explicit function call instead of field retrieval
-    db  = rsdb.DBconnect( "mongodb" ).dbconnect
-    nav = rsdb.Navtree()
+    db  = rsdb.DBConnection().connect()
+    nav = rsdb.DBNavigator()
 
     # get metadata tree and sort it by dataset idef
     meta_tree = nav.get_meta_tree( db )
-    meta_tree.sort( cmp=dataset_compare )
+    meta_tree.sort( cmp=lambda a, b: a['idef'] - b['idef'] )
 
     return json.dumps( meta_tree )
 
@@ -53,7 +46,7 @@ def get_init_data( req ):
     i = req.GET.get( 'issue', None )
 
     # TODO in the session?
-    db  = rsdb.DBconnect("mongodb").dbconnect
+    db  = rsdb.DBConnection().connect()
     # TODO change Collection constructor to parametrized!
     # TODO move queries from views!! Make it resource-based!!
     col = rsdb.Collection( query={ 'level': 'a' } )
@@ -76,7 +69,7 @@ def get_children( req ):
     idef = req.GET.get( 'idef', None )
 
     # TODO session!!
-    db  = rsdb.DBconnect("mongodb").dbconnect
+    db  = rsdb.DBConnection().connect()
     # TODO constructor
     # TODO move queries out
     col = rsdb.Collection( query = { 'parent': idef })
@@ -133,7 +126,7 @@ def feedback_email( request ):
 def store_state( request ):
     data  = request.GET.get( 'state', '' )
     # TODO move it to session
-    db    = rsdb.DBconnect("mongodb").dbconnect
+    db    = rsdb.DBConnection().connect()
     state = rsdb.State()
 
     permalink_id = state.save_state( json.loads( data ), db )
@@ -154,7 +147,7 @@ def init_restore( request, idef ):
 # url: /restore_state/
 #restore front-end state from mongo
 def restore_state( request ):
-    db    = rsdb.DBconnect("mongodb").dbconnect
+    db    = rsdb.DBConnection().connect()
     state = rsdb.State()
 
     permalink_id = request.GET.get( 'permalink_id', None )
@@ -212,7 +205,7 @@ def search_data( request ):
     import re
 
     # TODO move it to session
-    db  = rsdb.DBconnect('mongodb').dbconnect
+    db  = rsdb.DBConnection().connect()
     res = rsdb.Search()
 
     query  = request.GET.get( 'query', '' )
@@ -245,7 +238,7 @@ def get_searched_data( req ):
     find_query = build_query( ids )
 
     # TODO move it to session
-    db = rsdb.DBconnect("mongodb").dbconnect
+    db = rsdb.DBConnection().connect()
     # TODO change Collection constructor to parametrized!
     # TODO move queries from views!! Make it resource-based!!
     col = rsdb.Collection( query = { 'idef': { '$regex': find_query }} )
