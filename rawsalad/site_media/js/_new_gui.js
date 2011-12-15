@@ -29,7 +29,6 @@ var _gui = (function () {
 // P U B L I C   I N T E R F A C E
     var that = {};
 
-    var counter = 0;
     that.init_gui = function () {
         $('#test-button-1').click( function( ) {
             _resource.get_top_level(100002, draw_new_table);
@@ -60,34 +59,34 @@ var _gui = (function () {
         var columns = data['columns'];
 
         table_code = _table.create_table( table_data, columns, table_type );
-        
+
         remove_table();
         show_table( table_code );
     }
-    
+
     function draw_new_table( data ) {
         var draw_tab = function( name, id ) {
             var html_code = [];
             html_code = ['<button id=', id, '>'];
             html_code.push( name );
             html_code.push( '</button>' );
-            
+
             return html_code.join('');
         };
-        
+
         draw_tab( data['name'], data['id'], data['type'] );
         draw_table( data );
     }
-    
+
     function remove_table() {
         $('#simpletable').empty();
     }
-    
+
     function show_table( table_code ) {
         $('#simpletable').html( table_code );
         console.log( table_code );
     }
-    
+
     return that;
 
 })();
