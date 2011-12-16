@@ -37,7 +37,8 @@ var _gui = (function () {
             _resource.get_top_level(100005, draw_new_table);
         });
 
-        //_resource.get_db_tree( draw_db_tree_panels );
+        // stupid testing environment
+        _resource.get_db_tree( draw_db_tree_panels );
         $.get(
             '/get_children/',
             {
