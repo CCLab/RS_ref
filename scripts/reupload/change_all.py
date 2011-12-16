@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import pymongo
 from ConfigParser import ConfigParser
+import copy
 
 def get_db_connect(fullpath, dbtype):
     """Returns dict representing Connection to db.
@@ -31,12 +32,12 @@ def get_db_connect(fullpath, dbtype):
 def get_connection():
     connection_info = get_db_connect('rawsdata_reupload.conf', 'local_db')
 
-    local_host = upload_connection_info['host']
-    local_port = upload_connection_info['port']
-    local_dbname = upload_connection_info['database']
+    host = connection_info['host']
+    port = connection_info['port']
+    dbname = connection_info['database']
 
-    local_connection = pymongo.Connection(local_host, local_port)
-    local_db = local_connection[local_dbname]
+    connection = pymongo.Connection(host, port)
+    db = connection[dbname]
 
     #user = upload_connection_info['username']
     #password = upload_connection_info['password']
@@ -44,11 +45,13 @@ def get_connection():
     #if authenticated != 1:
     #    exit('Local db not authenticated')
 
-    return server_db, local_db
+    return db
 
 
 def create_counter(db, counter_collname):
     coll = db[counter_collname]
+    coll.remove()
+
     doc = {
         'metadata': 100000,
         'data': 10000000,
@@ -56,6 +59,10 @@ def create_counter(db, counter_collname):
     }
 
     coll.save(doc)
+
+
+def hash_div(dataset, view, issue):
+    return str(dataset) + '-' + str(view) + '-' + str(issue)
 
 
 def change_navigator(db, collname, new_collname, counter_collname):
@@ -66,7 +73,7 @@ def change_navigator(db, collname, new_collname, counter_collname):
     new_coll.remove()
 
     a_level_nodes = coll.find()
-    old_style_mapping = {}
+    dvi_map = {}
 
     counter_doc = counter_coll.find_one()
     start_id = counter_doc['metadata']
@@ -102,38 +109,51 @@ def change_navigator(db, collname, new_collname, counter_collname):
                     'parent_id': view_id,
                     'name': issue
                 }
-                old_style_mapping[(dataset, view, issue)] = act_id
+                old_dataset_id = dataset['idef']
+                old_view_id = view['idef']
+                key = hash_div(old_dataset_id, old_view_id, issue)
+                dvi_map[key] = act_id
                 act_id += 1
                 new_coll.save(tmp_row)
 
     counter_doc['metadata'] = act_id
     counter_coll.save(counter_doc)
 
-    return old_style_mapping
+    return dvi_map
 
 
-def create_meta_data(db, meta_collname, new_meta_collname, attributes_map, dvi_map):
+def create_meta_data(db, meta_collname, new_meta_collname, attributes_map, dvi_map, names_map):
     coll = db[meta_collname]
     new_coll = db[new_meta_collname]
+    new_coll.remove()
 
     old_meta_data = coll.find()
     for meta_descr in old_meta_data:
         new_meta_descr = {}
         for attr in attributes_map:
-            new_meta_descr[attr['new']] = meta_descr[attr['old']]
+            if attr['old'] in meta_descr:
+                new_meta_descr[attr['new']] = meta_descr[attr['old']]
+
         dataset = meta_descr['dataset']
         view = meta_descr['idef']
         issue = meta_descr['issue']
-        new_meta_descr['_id'] = dvi_map[(dataset, view, issue)]
+        dvi_key = hash_div(dataset, view, issue)
+        new_meta_descr['_id'] = dvi_map[dvi_key]
+        collection_key = hash_collection_name( meta_descr['ns'], meta_descr.get('query', {}) )
+        new_meta_descr['collection'] = names_map[collection_key]
 
         new_coll.save(new_meta_descr)
+
+
+def hash_collection_name(name, query):
+    return name + '-' + str(query)
 
     
 def change_id(db, collname, new_names, counter_collname, queries=[{}]):
     if 1 < len(new_names) != len(queries):
         exit('Number of names > 1 and != number of queries')
     
-    next_id_coll = db[id_collname]
+    next_id_coll = db[counter_collname]
     next_id_doc = next_id_coll.find_one()
     next_id = next_id_doc['data']
 
@@ -141,17 +161,18 @@ def change_id(db, collname, new_names, counter_collname, queries=[{}]):
     for i, name in enumerate(new_names):
         print 'Changing ids in collection', collname, 'query', queries[i]
         coll = db[name]
+        coll.remove()
         query = queries[i]
 
         db_data = old_coll.find(query)
         old_data = [row for row in db_data]
         new_data = []
         # idef_sort is unique, so case a[..] = b[..] can be omitted
-        old_data = sort(cmp=lambda a, b: a['idef_sort'] > b['idef_sort'])
+        old_data.sort(cmp=lambda a, b: a['idef_sort'] > b['idef_sort'])
         id_mapper = {}
         for row in old_data:
             id_mapper['idef'] = next_id
-            new_row = row[:]
+            new_row = copy.deepcopy(row)
             new_row['_id'] = next_id
             next_id += 1
             new_data.append(new_row)
@@ -174,15 +195,24 @@ counter_collname = 'counters'
 budg_collname = 'dd_budg2011_tr'
 budg_collname_new = 'dd_budg2011_tr_copy'
 nfz_collname = 'dd_fund2011_nfz'
-nfz_collname_new = ['dd_fund2011_nfz_agregated', 'dd_fund2011_nfz_regions']
+nfz_collnames_new = ['dd_fund2011_nfz_agregated', 'dd_fund2011_nfz_regions']
 
 attributes_map = [
-    {'old': 'name', 'new': 'perspective'},
-    {'old': 'collection', 'new': 'ns'},
+    {'old': 'perspective', 'new': 'name'},
+    {'old': 'ns', 'new': 'collection'},
     {'old': 'aux', 'new': 'aux'},
     {'old': 'columns', 'new': 'columns'},
     {'old': 'batch_size', 'new': 'batch_size'}
 ]
+
+budg_hash_name = hash_collection_name(budg_collname, {})
+nfz_aggregated_hash_name = hash_collection_name(nfz_collname, { u'node': 0 })
+nfz_regions_hash_name = hash_collection_name(nfz_collname, { u'node': 1 })
+names_map = {
+    budg_hash_name: budg_collname_new,
+    nfz_aggregated_hash_name: nfz_collnames_new[0],
+    nfz_regions_hash_name: nfz_collnames_new[1]
+}
 
 queries = [
     { 'node': 0 },
@@ -198,13 +228,13 @@ print 'Counter created'
 dvi_map = change_navigator(db, tree_collname, new_tree_collname, counter_collname)
 print 'Db tree created'
 
-create_meta_data(db, meta_collname, new_meta_collname, attributes_map, dvi_map)
+create_meta_data(db, meta_collname, new_meta_collname, attributes_map, dvi_map, names_map)
 print 'Meta data created'
 
 change_id(db, budg_collname, [budg_collname_new], counter_collname, queries=[{}])
 print 'Budget changed'
 
-change_id(db, nfz_collname, nfz_collname_new, counter_collname, queries=queries)
+change_id(db, nfz_collname, nfz_collnames_new, counter_collname, queries=queries)
 print 'NFZ changed'
 
 print 'All done'
