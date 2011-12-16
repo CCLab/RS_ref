@@ -54,7 +54,7 @@ def get_init_data( req ):
 def get_children( req ):
     '''Get children of the node'''
     endpoint = int( req.GET.get( 'endpoint', None ) )
-    _id      = int( req.GET.get( 'idef', None ) )
+    _id      = int( req.GET.get( '_id', None ) )
 
     collection = rsdb.Collection( endpoint )
     data = collection.get_children( _id )

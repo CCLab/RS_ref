@@ -5,10 +5,10 @@ from pymongo import Connection
 from ConfigParser import ConfigParser
 from time import time
 
-meta_src      = "md_budg_scheme"
+meta_src      = "metadata"
 state_counter = "md_sta_cnt"
 #nav_schema    = "ms_nav"
-nav_schema    = "navigator_tree"
+nav_schema    = "db_tree"
 
 # TODO make http response work better (use http headers)
 
@@ -117,7 +117,7 @@ class Collection:
         self.metadata = self.db[ meta_src ].find_one({ '_id': self.endpoint })
 
 
-    def get_meta_data( self ):
+    def get_metadata( self ):
         '''Get the metadata of the collection'''
         # TODO do we really need to return all metadata
         #      potentially split into two methods: full/not-full md
@@ -126,14 +126,19 @@ class Collection:
 
     def get_top_level( self ):
         '''Get the top level of the collection'''
-        data = self.get_data({ 'toplevel': True })
+        # TODO make db has a toplevel: True
+        # data = self.get_data({ 'toplevel': True })
+        data = self.get_data({ 'level': 'a' })
 
         return data
 
 
     def get_children( self, _id ):
         '''Get children of the specified node'''
-        data = self.get_data({ 'parent': _id })
+        # TODO temp solution. replace with:
+        #      data = self.get_data({ 'parent': _id })
+        node = self.get_data({ '_id': _id })[0]
+        data = self.get_data({ 'parent': node['idef'] })
 
         return data
 
@@ -158,6 +163,14 @@ class Collection:
         return data
 
 
+    def get_all_fields( self ):
+        columns    = self.metadata.get( 'columns', [] )
+        all_fields = self.metadata.get( 'aux', {} )
+
+        for column in columns:
+            all_fields[ column['key'] ] = 1
+
+        return all_fields
 
 #    def get_metadata(self, datasrc, dataset_id, view_id, issue):
 #
@@ -346,31 +359,7 @@ class Collection:
         return self.count
 
 
-    def get_all_fields( self ):
-        fields_dict = {'_id':0} # _id is never returned
-        meta_data = self.metadata
 
-        if len(self.request_fields) > 0:
-            fields_dict.update(self.request_fields)
-
-            field_names_complete= [] # reverse check
-            for fl in meta_data['columns']:
-                field_names_complete.append(fl['key'])
-
-            aux_fields= []
-            if 'aux' in meta_data:
-                aux_fields= [k for k,v in meta_data['aux'].iteritems()]
-            self.fill_warning( field_names_complete + aux_fields ) # fill self.warning
-
-        else:
-            if 'aux' in meta_data:
-                fields_dict.update(meta_data['aux'])
-
-            md_fields= meta_data['columns'] # list of main columns to be returned
-            for fld in md_fields:
-                fields_dict[fld['key']]= 1
-
-        return fields_dict
 
     def get_sort_list(self, meta_data):
         sort_list= []
