@@ -58,152 +58,149 @@ class DBNavigator:
         self.db = DBConnection( db_type ).connect()
 
 
-    def get_db_tree( self ):
+    def get_db_tree( self, query={} ):
         '''Get the navigation tree for all database collections'''
-        # TODO get rid of it
-        self.request= 'navigator'
-
-        cursor = self.db[ nav_schema ].find({})
-        out = [ row for row in cursor ]
+        cursor  = self.db[ nav_schema ].find( query )
+        db_tree = [ row for row in cursor ]
         # sorting metadata before serving
-        out.sort( cmp=lambda a, b: a['_id'] - b['_id'] )
+        db_tree.sort( cmp=lambda a, b: a['_id'] - b['_id'] )
 
-        return out
+        return db_tree
 
 
-    def get_node( self, id ):
+    def get_node( self, _id ):
         '''Get certain position in the db_tree'''
-        pass
+        data = self.get_db_tree({ '_id': _id })
+
+        try:
+            return data[0].get( '_id', None )
+        except IndexError:
+            return None
 
 
-    def get_children( self, id ):
+    def get_parent( self, _id ):
+        '''Get parent of the certain position in the db_tree'''
+        # get original node to get its parent id
+        node   = self.get_node( _id )
+        parent = self.get_node( node['parent'] )
+
+        return parent
+
+
+    def get_parents( self, _id ):
+        '''Get all parents up to the root of the db_tree'''
+        parents = []
+
+        parent = self.get_parent( _id )
+        while parent != None:
+            parent.append( parent['_id'] )
+            parent = self.get_parent( parent['_id'] )
+
+        return parents
+
+
+    def get_children( self, _id ):
         '''Get children of the certain position in the db_tree'''
-        pass
+        data = self.get_db_tree({ 'parent', _id })
 
-
-    def get_dataset(self, datasrc):
-        out= []
-        self.request= 'dataset'
-
-        cursor_data= datasrc[nav_schema].find({}, { '_id':0, 'perspectives':0 })
-        if cursor_data.count() > 0:
-            self.response= Response().get_response(0) # no error
-            for row in cursor_data:
-                out.append(row)
-        else:
-            self.response= Response().get_response(10)
-
-        return out
-
-    def get_view(self, datasrc, dataset_idef):
-        out= []
-        self.request= 'view'
-
-        nav_fields= {
-            '_id':0,
-            'perspectives.idef':1,
-            'perspectives.name':1,
-            'perspectives.description':1,
-            'perspectives.long_description':1
-            }
-        query= { 'idef': int(dataset_idef) }
-        cursor_data= datasrc[nav_schema].find_one(query, nav_fields)
-        if cursor_data is not None:
-            self.response= Response().get_response(0)
-            out= cursor_data['perspectives']
-        else: # error
-            self.response= Response().get_response(10)
-
-        return out
-
-    def get_issue(self, datasrc, dataset_idef, view_idef):
-        out= []
-        self.request= 'issue'
-
-        nav_fields= { '_id':0, 'perspectives.issues':1 }
-        query={
-            'idef': int(dataset_idef),
-            'perspectives': { '$elemMatch': { 'idef': int(view_idef) } }
-            }
-        cursor_data= datasrc[nav_schema].find_one(query, nav_fields)
-        if cursor_data is not None:
-            self.response= Response().get_response(0)
-            out= cursor_data['perspectives'][int(view_idef)]['issues']
-        else: # error
-            self.response= Response().get_response(10)
-
-        return out
-
-    def get_count(self, datasrc, dataset_idef= None, view_idef= None):
-        count= 0
-
-        if dataset_idef is None and view_idef is None: # datasets count
-            element_list= self.get_dataset(datasrc)
-        elif dataset_idef is not None and view_idef is None: # views count
-            element_list= self.get_view(datasrc, dataset_idef)
-        else: # issues count
-            element_list= self.get_issue(datasrc, dataset_idef, view_idef)
-
-        if self.response['httpresp'] == 200:
-            count= len(element_list)
-        else:
-            self.response= Response().get_response(20)
-
-        return count
-
-    def get_max_dataset(self, datasrc):
-        """
-        the max dataset id in the nav tree
-        """
-        dsmax_dict= datasrc[nav_schema].find(
-            fields= { '_id': 0, 'idef':1 },
-            sort= [('idef', -1)],
-            limit= 1
-            )
-        for ii in dsmax_dict:
-            result= int(ii['idef']) # it is anyway only one record
-
-        return result
-
-    def get_max_view(self, datasrc, dataset):
-        """
-        the max view number of the given dataset in the nav tree
-        """
-        vwmax_dict= datasrc[nav_schema].find_one(
-            spec_or_id= { 'idef': int(dataset) },
-            fields= { '_id':0, 'perspectives.idef':1}
-            )
-
-        vwid_list= []
-        for vw in vwmax_dict['perspectives']:
-            vwid_list.append( int(vw['idef']) )
-
-        return max(vwid_list)
+        return data
 
 
 class Collection:
-    """
-    extraction of the imformation from the db
-    params: dataset, view, issue
-    additional params: query, user defined list of fields
-    """
-    def __init__(self, **parms):
-        """
-        **parms are URL params:
-        - fields - [] or None (fields to return)
-        - query - {} or None (query to db before defined in meta-data)
-        """
-        self.raw_usrdef_fields= parms.pop("fields", []) # before match against metadata
-        self.request_fields= {}
-        if len(self.raw_usrdef_fields) > 0:
-            self.set_fields(self.raw_usrdef_fields) # for queries
-        self.raw_query= parms.pop("query", {}) # before update from metadata
-        self.warning= None # non-critical errors and typos
-        self.response= Response().get_response(0) # Collection class is optimistic
-        self.count= 0
+    '''Class for extracting data from acenrtain endpoint in the db'''
+    def __init__( self, endpoint, db_type='mongodb' ): #**parms):
+        # connect to db
+        self.db = DBConnection( db_type ).connect()
+        # define the endpoint
+        self.endpoint = endpoint
+        # get the complete metadata
+        self.metadata = self.db[ meta_src ].find_one({ '_id': self.endpoint })
 
-    def __del__(self):
-        pass
+
+    def get_meta_data( self ):
+        '''Get the metadata of the collection'''
+        # TODO do we really need to return all metadata
+        #      potentially split into two methods: full/not-full md
+        return self.metadata
+
+
+    def get_top_level( self ):
+        '''Get the top level of the collection'''
+        data = self.get_data({ 'toplevel': True })
+
+        return data
+
+
+    def get_children( self, _id ):
+        '''Get children of the specified node'''
+        data = self.get_data({ 'parent': _id })
+
+        return data
+
+
+    def get_data( self, query={}, fields=None ):
+        '''Get queried data from db'''
+        order      = [( '_id', 1 )]
+        col_name   = self.metadata.get( 'collection', "LALALA" );
+        collection = self.db[ col_name ]
+        batchsize  = self.metadata.get( 'batchsize', None )
+
+        if fields == None:
+            fields = self.get_all_fields()
+
+        if batchsize == None:
+            cursor = collection.find( query, fields, sort=order )
+        else:
+            cursor = collection.find( query, fields, sort=order ).batch_size( batchsize )
+
+        data = [ d for d in cursor ]
+
+        return data
+
+
+
+#    def get_metadata(self, datasrc, dataset_id, view_id, issue):
+#
+#        # used for counting
+#        count_query = metadata_complete['query']
+#
+#        # define useless keys
+#        useless_keys= [ 'collection', 'aux', 'batchsize', '_id' ]
+#
+#        if len(self.raw_query) != 0: # the query is on the specific elements
+#            useless_keys.append('max_level') # so, max_level is also useless
+#            count_query.update(self.raw_query)
+#
+#        # but before delete useless keys - counting children of a given parent
+#        count= self.get_count(datasrc, metadata_complete['ns'], count_query)
+#        if count == 0:
+#            self.response= Response().get_response(10)
+#        else:
+#            metadata_complete['count']= count
+#
+#            for curr in useless_keys: # now delete useless keys
+#                if curr in metadata_complete:
+#                    del metadata_complete[curr]
+#
+#            field_list_complete= metadata_complete.pop('columns')
+#            field_list= []
+#            field_names_complete= []
+#            if len(self.raw_usrdef_fields) > 0: # describe only user defined columns
+#                for fld in field_list_complete:
+#                    field_names_complete.append(fld['key']) # for future check
+#                    if fld['key'] in self.raw_usrdef_fields:
+#                        field_list.append(fld)
+#                self.fill_warning(field_names_complete) # fill self.warning
+#            else:
+#                field_list= field_list_complete # substitute 'columns' for 'fields'
+#
+#            metadata_complete['fields']= field_list # to match the name of URL parameter
+#            metadata= metadata_complete
+#
+#        return metadata
+#
+
+
 
     def set_query(self, query):
         if query is not None:
@@ -215,65 +212,7 @@ class Collection:
         else:
             self.request_fields= { }
 
-    def get_metadata(self, datasrc, dataset_id, view_id, issue):
-        metadata= {}
-        metadata_complete= self.get_complete_metadata(
-            int(dataset_id), int(view_id), str(issue), datasrc
-            )
 
-        if metadata_complete is None: # no such source
-            self.response= Response().get_response(20)
-            self.request= "unknown"
-        else:
-            self.response= Response().get_response(0)
-            self.request= metadata_complete['name']
-
-            count_query= metadata_complete['query'] # used for counting
-
-            # define useless keys
-            useless_keys= ['ns', 'aux', 'batchsize', 'sort', 'query', 'explorable', 'name', 'dataset', 'idef', 'issue']
-
-            if len(self.raw_query) != 0: # the query is on the specific elements
-                useless_keys.append('max_level') # so, max_level is also useless
-                count_query.update(self.raw_query)
-
-            # but before delete useless keys - counting children of a given parent
-            count= self.get_count(datasrc, metadata_complete['ns'], count_query)
-            if count == 0:
-                self.response= Response().get_response(10)
-            else:
-                metadata_complete['count']= count
-
-                for curr in useless_keys: # now delete useless keys
-                    if curr in metadata_complete:
-                        del metadata_complete[curr]
-
-                field_list_complete= metadata_complete.pop('columns')
-                field_list= []
-                field_names_complete= []
-                if len(self.raw_usrdef_fields) > 0: # describe only user defined columns
-                    for fld in field_list_complete:
-                        field_names_complete.append(fld['key']) # for future check
-                        if fld['key'] in self.raw_usrdef_fields:
-                            field_list.append(fld)
-                    self.fill_warning(field_names_complete) # fill self.warning
-                else:
-                    field_list= field_list_complete # substitute 'columns' for 'fields'
-
-                metadata_complete['fields']= field_list # to match the name of URL parameter
-                metadata= metadata_complete
-
-        return metadata
-
-    def get_complete_metadata(self, ds_id, ps_id, iss, dbase, use_fields= False):
-        field_dict= { '_id' : 0 }
-        if use_fields: # return only the fields specified in self.request_fields
-            field_dict.update(self.request_fields)
-        self.metadata_complete= dbase[meta_src].find_one(
-            { 'dataset': ds_id, 'idef' : ps_id, 'issue': iss },
-            field_dict
-            )
-        return self.metadata_complete
 
     def save_complete_metadata(self, new_object, dbase):
         """
@@ -329,53 +268,6 @@ class Collection:
 
         return self.response
 
-
-    def get_data(self, datasrc, dataset_id, view_id, issue):
-        data= []
-        elm_count= 0
-
-        metadata_complete= self.get_complete_metadata(
-            int(dataset_id), int(view_id), str(issue), datasrc
-            )
-
-        if metadata_complete is None: # no such source
-            self.response= Response().get_response(20)
-            self.request= "unknown"
-        else:
-            self.response= Response().get_response(0)
-            self.request= metadata_complete['name']
-
-            conn_coll= metadata_complete['ns'] # collection name
-
-            cursor_fields= self.get_fields(metadata_complete) # full columns list
-            cursor_sort= self.get_sort_list(metadata_complete) # list of sort columns
-
-            try: # batch size
-                cursor_batchsize= metadata_complete['batchsize']
-            except:
-                cursor_batchsize= 'default'
-
-            cursor_query= {}
-            if 'query' in metadata_complete:
-                cursor_query.update( metadata_complete['query'] ) # initial query
-            if len(self.raw_query) != 0:
-                cursor_query.update(self.raw_query) # additional query build on the path argument
-
-            # EXTRACT data (rows)
-            if cursor_batchsize in ['default', None]:
-                cursor_data= datasrc[conn_coll].find(cursor_query, cursor_fields, sort=cursor_sort)
-            else:
-                cursor_data= datasrc[conn_coll].find(cursor_query, cursor_fields, sort=cursor_sort).batch_size(cursor_batchsize)
-
-            if cursor_data.count() > 0:
-                elm_count= cursor_data.count()
-                for row in cursor_data:
-                    data.append(row)
-            else:
-                self.response= Response().get_response(10)
-
-        self.count= elm_count
-        return data
 
 
     def get_tree(self, datasrc, dataset_id, view_id, issue):
@@ -454,8 +346,9 @@ class Collection:
         return self.count
 
 
-    def get_fields(self, meta_data):
-        fields_dict= {'_id':0} # _id is never returned
+    def get_all_fields( self ):
+        fields_dict = {'_id':0} # _id is never returned
+        meta_data = self.metadata
 
         if len(self.request_fields) > 0:
             fields_dict.update(self.request_fields)

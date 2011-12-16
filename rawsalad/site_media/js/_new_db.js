@@ -32,43 +32,25 @@ var _db = (function () {
     // Gets the top-level from db
     // IN:
     // col_id -- id of collection
-    that.get_init_data = function ( col_id, callback ) {
-        // temporary hardcoded
-        var init_data_info;
-
-        if ( col_id === 100002 ) {
-            init_data_info = {
-                "dataset": 0,
-                "view": 0,
-                "issue": '2011'
-            };
-        } else if ( col_id === 100005 ) {
-            init_data_info = {
-                "dataset": 1,
-                "view": 0,
-                "issue": '2011'
-            };
-        } else {
-            _assert.assert_is_true( false, '_db:get_init_data:unknow col id' );
-        }
-
+    that.get_init_data = function ( _id, callback ) {
         _utils.create_preloader( translation['js_loading_data'] );
+
         $.ajax({
             url: '/get_init_data/',
-            data: init_data_info,
+            data: { endpoint: _id },
             dataType: "json",
             success: function( received_data ) {
                 var data = {
-                    rows: received_data.rows,
-                    meta: received_data.perspective
+                    data     : received_data.data,
+                    metadata : received_data.metadata
                 };
 
                 _utils.clear_preloader();
                 callback( data );
             },
             error: function ( err ) {
-                console.log( err );
                 _utils.clear_preloader();
+                console.log( err );
             }
         });
     };
