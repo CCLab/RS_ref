@@ -85,7 +85,7 @@ var _gui = (function () {
         
         var tab_code = create_tab( data['name'], data['id'], data['type'] );
         $('#tabs').append( tab_code );
-        $('#id-' + data['id']).click( function ( tab ) {
+        $('#' + data['id']).click( function ( tab ) {
             draw_table( data );
         });
         

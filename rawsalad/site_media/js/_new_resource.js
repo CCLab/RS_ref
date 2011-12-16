@@ -83,7 +83,7 @@ var _resource = (function () {
     function add_sheet( col_id, data ) {
         var generate_sheet_id = function() {
             var act_id = next_sheet_id;
-            act_id += 1;
+            next_sheet_id += 1;
             return next_sheet_id;
         };
         var new_sheet;
