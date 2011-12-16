@@ -35,37 +35,17 @@ def get_db_tree( req ):
 # url: /get_init_data/
 def get_init_data( req ):
     '''Get top-level data of the collection'''
-#    endpoint = req.GET.get( 'endpoint', None )
-#        if ( col_id === 100002 ) {
-#            init_data_info = {
-#                "dataset": 0,
-#                "view": 0,
-#                "issue": '2011'
-#            };
-#        } else if ( col_id === 100005 ) {
-#            init_data_info = {
-#                "dataset": 1,
-#                "view": 0,
-#                "issue": '2011'
-#            };
-#        } else {
-#            _assert.assert_is_true( false, '_db:get_init_data:unknow col id' );
-#        }
-    d = req.GET.get( 'dataset', None )
-    v = req.GET.get( 'view', None )
-    i = req.GET.get( 'issue', None )
+    endpoint = int( req.GET.get( 'endpoint', None ) )
 
-    # TODO in the session?
-    db  = rsdb.DBConnection().connect()
-    # TODO change Collection constructor to parametrized!
-    # TODO move queries from views!! Make it resource-based!!
-    col = rsdb.Collection( query={ 'level': 'a' } )
+    collection = rsdb.Collection( endpoint )
 
-    data = {}
-    data['rows'] = col.get_data( db, d, v, i )
-    # TODO change it to explicit function call!
-    # TODO change parameter name from perspective to view
-    data['perspective']= col.metadata_complete
+    # TODO on the front-end change:
+    #         :: rows --> data
+    #         :: perspective --> metadata
+    data = {
+        'data'     : collection.get_top_level(),
+        'metadata' : collection.get_metadata()
+    }
 
     return HttpResponse( json.dumps( data ) )
 
@@ -73,18 +53,11 @@ def get_init_data( req ):
 # url: /get_children/
 def get_children( req ):
     '''Get children of the node'''
-    d = req.GET.get( 'dataset', None )
-    v = req.GET.get( 'view', None )
-    i = req.GET.get( 'issue', None )
-    idef = req.GET.get( 'idef', None )
+    endpoint = int( req.GET.get( 'endpoint', None ) )
+    _id      = int( req.GET.get( 'idef', None ) )
 
-    # TODO session!!
-    db  = rsdb.DBConnection().connect()
-    # TODO constructor
-    # TODO move queries out
-    col = rsdb.Collection( query = { 'parent': idef })
-
-    data = col.get_data( db, d, v, i )
+    collection = rsdb.Collection( endpoint )
+    data = collection.get_children( _id )
 
     return HttpResponse( json.dumps( data ) )
 
