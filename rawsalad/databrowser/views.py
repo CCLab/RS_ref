@@ -34,9 +34,11 @@ def get_init_data( req ):
     endpoint = int( req.GET.get( 'endpoint', None ) )
 
     collection = rsdb.Collection( endpoint )
+    meta = collection.get_metadata()
+
     data = {
         'data': collection.get_top_level(),
-        'meta': collection.get_metadata()
+        'meta': meta
     }
 
     return HttpResponse( json.dumps( data ) )
@@ -101,9 +103,7 @@ def feedback_email( request ):
 @csrf_exempt
 def store_state( request ):
     data  = request.GET.get( 'state', '' )
-    # TODO move it to session
-    db    = rsdb.DBConnection().connect()
-    state = rsdb.State()
+    state = rsdb.StateManager()
 
     permalink_id = state.save_state( json.loads( data ), db )
 
@@ -124,7 +124,7 @@ def init_restore( request, idef ):
 #restore front-end state from mongo
 def restore_state( request ):
     db    = rsdb.DBConnection().connect()
-    state = rsdb.State()
+    state = rsdb.StateManager()
 
     permalink_id = request.GET.get( 'permalink_id', None )
     # TODO unify the parameter lists of rsdb module making db first param
