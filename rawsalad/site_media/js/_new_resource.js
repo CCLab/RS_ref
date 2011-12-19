@@ -78,7 +78,7 @@ var _resource = (function () {
         _assert.assert( (found_group.length === 1 || found_group.length === 0),
                         '_resource:has_sheet:bad_length' );
         return found_group.length > 0;
-    };
+    }
 
     function add_sheet( col_id, data ) {
         var generate_sheet_id = function() {
@@ -102,16 +102,16 @@ var _resource = (function () {
             'data': cleaned_data,
             'name': name,
             'columns': active_columns,
-            'type': 'STANDARD'
+            'type': _enum['STANDARD']
         };
         sheets[sheet_id] = new_sheet;
 
         return sheet_id;
-    };
+    }
 
     function get_basic_sheet( col_id, type ) {
         var group;
-        var type = type || 'STANDARD';
+        var type = type || _enum['STANDARD'];
         var first_sheet;
         var basic_sheet;
         var basic_data;
@@ -126,7 +126,7 @@ var _resource = (function () {
         first_sheet = group['sheets'][0];
 
         basic_data = monkey.createTree( first_sheet['data'].children( first_sheet['data'].root() ), // CHANGE
-                                        'idef_sort' );
+                                        '_id', 'parent' );
         basic_sheet = {
             'name': first_sheet['name'],
             'type': type,
@@ -135,10 +135,87 @@ var _resource = (function () {
         };
 
         return basic_sheet;
-    };
+    }
 
-    function prepare_data_for_gui( sheet, sheet_id ) {
+    function prepare_data_package_for_gui( sheet, sheet_id ) {
+        var data_package;
+        
+        switch (sheet['type']) {
+            case _enum['STANDARD']:
+                data_package = prepare_standard_data_package_for_gui( sheet, sheet_id );
+                break;
+            case _enum['FILTERED']:
+                data_package = prepare_filtered_data_package_for_gui( sheet, sheet_id );
+                break;
+            case _enum['SEARCHED']:
+                data_package = prepare_searched_data_package_for_gui( sheet, sheet_id );
+                break;
+        };
+
+        return data_package;
+    }
+
+    function prepare_standard_data_package_for_gui( sheet, sheet_id ) {
+        var prepare_rows_for_gui = function( rows, columns ) {
+            var update_level_map = function( id_level_map, row_id, parent_id ) {
+                var level;
+                if ( !!parent_id ) {
+                    level = id_map[ parent_id ] + 1;
+                } else {
+                    level = 1;
+                }
+                id_map[ row_id ] = level;
+            };
+            var prepare_row = function( row, id_level_map ) {
+                var new_row = {
+                    '_id': row['_id'],
+                    'parent': row['parent'],
+                    'leaf': row['leaf'],
+                    'is_open': row['state']['is_open']
+                };
+                if ( !!row['info'] ) {
+                    new_row['info'] = row['info'];
+                }
+                if ( !!row['state']['selected'] ) {
+                    new_row['selected'] = row['state']['selected'];
+                }
+                new_row['level'] = id_level_map[ new_row['_id'] ];
+                new_row['data'] = columns.map( function( e ) {
+                    var tmp;
+                    tmp['column_key'] = e['key'];
+                    tmp['column_type'] = e['type'];
+                    tmp['click'] = (e['type'] === 'type' && !new_row['leaf']) ? 'click' : '';
+                    tmp['content'] = format_value( row[ e['key'] ], type, format );
+                    return tmp;
+                });
+
+                return new_row;
+            };
+            var new_rows = [];
+            var id_level_map = {};
+            var selected_rows = prepare_selection_description( rows );
+            rows.forEach( function( row ) {
+                update_level_map( id_level_map, row['_id'], row['parent'] );
+                new_rows.push( prepare_row( row, id_level_map, selected_rows[ row['_id'] ] ) );
+            });
+            return new_rows;
+        };
+        var prepare_total_row = function( rows, columns ) {
+            var total_row = [];
+            var last_row = rows.pop();
+            columns.forEach( function ( column ) {
+                total_row.push( {
+                    'data': format( last_row[ column['key'] ], column['type'], column['key'] ),
+                    'column_type': column['type'],
+                    'column_key': column['key']
+                });
+            });
+            
+            return total_row;
+        };
         var columns_for_gui;
+        var data_fot_gui;
+        var total_row;
         var data = [];
         var data_package;
         
@@ -146,42 +223,56 @@ var _resource = (function () {
             return {
                 'key': column['key'],
                 'label': column['label'],
-                'format': column['format'],
                 'type': column['type']
             }
         });
         data = sheet['data'].toList();
         data_package = {
-            'type': sheet['type'],
-            'data': data,
-            'columns': columns_for_gui,
             'id': sheet_id,
-            'name': sheet['name']
+            'type': sheet['type'],
+            'name': sheet['name'],
+            'total': prepare_total_row( rows, columns_for_gui ),
+            'columns': columns_for_gui,
+            'rows': prepare_rows_for_gui( data, columns_for_gui )
         };
 
         return data_package;
-    };
+    }
 
-    function clean_data( data, columns ) {
+    function prepare_filtered_data_package_for_gui( sheet, sheet_id ) {
+        return 'TODO';
+    }
+
+    function prepare_searched_data_package_for_gui( sheet, sheet_id ) {
+        return 'TODO';
+    }
+
+    function format_value( value, type, format ) {
+        if ( type !== 'string' ) {
+            value = value + '';
+        }
+        return value;
+    }
+
+    function clean_data( data, columns, auxiliary_list ) {
         var clean_node = function( node, columns ) {
-            var add_additional_fields = function ( node, new_node ) {
-                new_node['idef'] = node['idef'];
-                new_node['idef_sort'] = node['idef_sort'];
-                new_node['level'] = node['level'];
-                new_node['leaf'] = node['leaf'];
-            };
             var property;
             var new_node = {};
-            
-            add_additional_fields( node, new_node );
             
             columns.forEach( function ( column ) {
                 new_node[ column['key'] ] = node[ column['key'] ];
             });
+            auxiliary_list.forEach( function( aux_field ) {
+                new_node[ aux_field ] = node[ aux_field ];
+            });
+            new_node['state'] = {
+                'selected': '',
+                'is_open': false
+            };
 
             return new_node;
         };
-        var new_data = monkey.createTree( [], 'idef_sort' );
+        var new_data = monkey.createTree( [], '_id', 'parent' );
 
         data.forEach( function ( node ) {
             var new_node = clean_node( node, columns );
@@ -189,7 +280,7 @@ var _resource = (function () {
         });
 
         return new_data;
-    };
+    }
 
     return that;
 }) ();
