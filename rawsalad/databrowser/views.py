@@ -103,16 +103,17 @@ def feedback_email( request ):
 @csrf_exempt
 def store_state( request ):
     data  = request.GET.get( 'state', '' )
-    state = rsdb.StateManager()
 
-    permalink_id = state.save_state( json.loads( data ), db )
+    state_manager = rsdb.StateManager()
+    permalink_id  = state_manager.save_state( json.loads( data ) )
 
+    # TODO why the object is returned instead of simple int?
     return HttpResponse( json.dumps({ 'id': permalink_id }) )
 
 
 # url: /\d+
-# init application prepared to handle restore data
 def init_restore( request, idef ):
+    '''Init application prepared to handle restore data'''
     data = {
         'meta': json.dumps( get_db_tree() ),
         'idef': idef
@@ -121,59 +122,19 @@ def init_restore( request, idef ):
 
 
 # url: /restore_state/
-#restore front-end state from mongo
 def restore_state( request ):
-    db    = rsdb.DBConnection().connect()
-    state = rsdb.StateManager()
+    '''Restore front-end state from mongo'''
+    permalink_id  = request.GET.get( 'permalink_id', None )
+    state_manager = rsdb.StateManager()
 
-    permalink_id = request.GET.get( 'permalink_id', None )
-    # TODO unify the parameter lists of rsdb module making db first param
-    groups = state.get_state( int( permalink_id ), db )
-
-    # TODO make it handling http errors properly!!
-    if state.response['httpresp'] != 200: # ERROR!
-        groups = state.response # {'descr': <str - error description>, 'httpresp': <int - http status>}
-    # TODO hide db logic --> move this to db interface and give me a ready-to-use resource!!
-    else:
-        # now substitute list of open idefs with actual data:
-        # level 'a' + open branches
-        col = rsdb.Collection()
-        for group in groups:
-            d = int( group['dataset'] )
-            v = int( group['view'] )
-            i = str( group['issue'] )
-            # TODO are columns complete metadata? If not -> change the name of method
-            # TODO make db a first parameter of all db methods
-            metadata= col.get_complete_metadata( d, v, i, db )
-            group['columns']= metadata['columns']
-
-            for sheet in group['sheets']:
-                open_elements= []
-                for cur_idef in sheet['rows']:
-                    # artificially moving focus to one level deeper,
-                    # as build_query looks for siblings, not parents
-                    # TODO query should look for children not siblings!!
-                    open_elements.append( "-".join( [cur_idef, '1'] ))
-
-                # TODO move these queries into db interface FGS!!
-                if sheet['filtered']:
-                    find_query= { '$in': sheet['rows'] }
-                else:
-                    find_query= { '$regex': build_query( open_elements ) }
-
-                col.set_query({ 'idef': find_query })
-                data = col.get_data( db, d, v, i )
-
-                # TODO make sheet['rows'], sheet['breadcrumbs'] and data be sorted the same way!!
-                # TODO re-code it one sipmle for over zip( data, sheet['breeadcrumbs'] )
-                if sheet['filtered']:
-                    for filtered_row in data:
-                        for j, rw in enumerate( sheet['rows'] ):
-                            if filtered_row['idef'] == rw:
-                                filtered_row.update({ 'breadcrumb': sheet['breadcrumbs'][j] })
-                                break
+    groups = state_manager.get_state( int( permalink_id ) )
 
     return HttpResponse( json.dumps( groups ) )
+
+
+
+
+
 
 
 def search_data( request ):
@@ -229,42 +190,6 @@ def get_searched_data( req ):
     return HttpResponse( json.dumps( found_data ) )
 
 
-def build_query( idef_list):
-    """Build regex for mongo query"""
-    # TODO understand why it's limited
-    # TODO in long term - get rid of this limit
-    results_limit = 275
-
-    if len( idef_list ) < results_limit:
-        lookup = ''.join( [ r'(%s)|' % build_idef_regexp( idef ) for idef in idef_list ] )
-        # cutting the last symbol | in case it's the end of list
-        lookup = lookup[:-1]
-
-    return lookup
-
-
-def build_idef_regexp( idef ):
-    """Build regexp quering collection"""
-    level_num = idef.count('-')
-
-    # TODO make it recursive to be readable
-    # TODO shouldn't it be done by '$or' mongo operator
-    # TODO move it all to the db module!!
-    # build regexp for the given idef plus it's context (siblings and full parental branch)
-    if level_num > 0: # deeper than 'a'
-        idef   = idef.rsplit('-', 1)[0]
-        lookup = r'^%s\-[A-Z\d]+$' % idef
-        level  = 1
-        while level < level_num:
-            idef    = idef.rsplit('-', 1)[0]
-            lookup += r'|^%s\-[A-Z\d]+$' % idef
-            level  += 1
-
-        lookup += r'|^[A-Z\d]+$'
-    else:
-        lookup = r'^[A-Z\d]+$'
-
-    return lookup
 
 
 def do_search( scope, regex, db ):

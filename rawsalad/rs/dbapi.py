@@ -110,9 +110,10 @@ class DBNavigator:
 
 class Collection:
     '''Class for extracting data from acenrtain endpoint in the db'''
-    def __init__( self, endpoint, db_type='mongodb' ):
+    # TODO move db connection to the session
+    def __init__( self, endpoint, db=None, db_type='mongodb' ):
         # connect to db
-        self.db = DBConnection( db_type ).connect()
+        self.db = db or DBConnection( db_type ).connect()
         # define the endpoint
         self.endpoint = endpoint
         # get the complete metadata
@@ -125,16 +126,25 @@ class Collection:
         #      potentially split into two methods: full/not-full md
         return self.metadata
 
+    def get_columns( self ):
+        '''Get full list of columns of the collection'''
+        metadata = self.get_metadata()
+
+        return metadata
 
     def get_top_level( self ):
         '''Get the top level of the collection'''
-        return self.get_data({ 'toplevel': True })
+        return self.get_data({ 'parent': None })
 
+    def get_node( self, _id ):
+        '''Get the certain node in the collection'''
+        data = self.get_data({ '_id': _id })
+
+        return data[0]
 
     def get_children( self, _id ):
         '''Get children of the specified node'''
         return self.get_data({ 'parent': _id })
-
 
     def get_data( self, query={}, fields=None ):
         '''Get queried data from db'''
@@ -415,12 +425,109 @@ class StateManager:
     def get_state( self, permalink_id ):
         permalinks   = self.db['permalinks']
 
-        # get the permalink from db
-        data = permalinks.find_one({ '_id': permalink_id })
+        # get the state object stored in db
+        state = permalinks.find_one({ '_id': permalink_id })
+
+
+        # TODO TODO TODO
+        # TODO TODO TODO
+        # TODO TODO TODO
+        # substitute list of open ids with actual data: level 'a' + open branches
+        for group in groups:
+            endpoint   = group['endpoint']
+            collection = Collection( endpoint, db=self.db )
+
+            # get the full list of collection columns
+            group['columns'] = collection.get_columns()
+
+            # get data for each sheet in the group
+            for sheet in group['sheets']:
+                if sheet['filtered']:
+                    # TODO new method in Collection class!
+                    find_query= { '$in': sheet['rows'] }
+                else:
+                    data = []
+                    for _id in sheet['rows']:
+                        data += self.collect_children( collection, parent_id, {} )
+
+                    sheet['rows'] = data
+
+        # TODO TODO TODO
+        # TODO TODO TODO
+
+                collection.set_query({ 'idef': find_query })
+                data = collection.get_data( db, d, v, i )
+
+                # TODO make sheet['rows'], sheet['breadcrumbs'] and data be sorted the same way!!
+                # TODO re-code it one sipmle for over zip( data, sheet['breeadcrumbs'] )
+                if sheet['filtered']:
+                    for filtered_row in data:
+                        for j, rw in enumerate( sheet['rows'] ):
+                            if filtered_row['idef'] == rw:
+                                filtered_row.update({ 'breadcrumb': sheet['breadcrumbs'][j] })
+                                break
 
         return data
 
 
+    def collect_children( self, collection, parent_id, visited ):
+        # hit the top level
+        if not parent_id:
+            return []
+        # already been there
+        elif parent_id in visited:
+            return []
+        # get children
+        else:
+            visited[ parent_id ] = True
+
+            node     = collection.get_node( parent_id )
+            children = collection.get_children( parent_id )
+
+            return children + collect_children( collection, node['parent'], visited )
+
+
+
+class Query:
+    def __init__( self ):
+        pass
+
+    def build_query( idef_list):
+        """Build regex for mongo query"""
+        # TODO understand why it's limited
+        # TODO in long term - get rid of this limit
+        results_limit = 275
+
+        if len( idef_list ) < results_limit:
+            lookup = ''.join( [ r'(%s)|' % build_idef_regexp( idef ) for idef in idef_list ] )
+            # cutting the last symbol | in case it's the end of list
+            lookup = lookup[:-1]
+
+        return lookup
+
+
+    def build_idef_regexp( idef ):
+        """Build regexp quering collection"""
+        level_num = idef.count('-')
+
+        # TODO make it recursive to be readable
+        # TODO shouldn't it be done by '$or' mongo operator
+        # TODO move it all to the db module!!
+        # build regexp for the given idef plus it's context (siblings and full parental branch)
+        if level_num > 0: # deeper than 'a'
+            idef   = idef.rsplit('-', 1)[0]
+            lookup = r'^%s\-[A-Z\d]+$' % idef
+            level  = 1
+            while level < level_num:
+                idef    = idef.rsplit('-', 1)[0]
+                lookup += r'|^%s\-[A-Z\d]+$' % idef
+                level  += 1
+
+            lookup += r'|^[A-Z\d]+$'
+        else:
+            lookup = r'^[A-Z\d]+$'
+
+        return lookup
 
 
 
