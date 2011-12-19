@@ -123,7 +123,7 @@ def change_navigator(db, collname, new_collname, counter_collname):
 
 
 def change_aux(aux_dict):
-    aux_list = []
+    aux_list = ['_id', 'parent'] #  id and parent are moved to aux from columns
     for key in aux_dict:
         if key in ['info', 'leaf']:
             aux_list.append(key)
@@ -151,6 +151,7 @@ def create_meta_data(db, meta_collname, new_meta_collname, attributes_map, dvi_m
         collection_key = hash_collection_name( meta_descr['ns'], meta_descr.get('query', {}) )
         new_meta_descr['collection'] = names_map[collection_key]
         new_meta_descr['aux'] = change_aux(meta_descr['aux'])
+        new_meta_descr['columns'] = new_meta_descr['columns'][3:] #  omit id, parent and level columns
 
         new_coll.save(new_meta_descr)
 
@@ -187,7 +188,6 @@ def change_rows(db, collname, new_names, counter_collname, queries=[{}]):
                 new_row['parent'] = None
             else:
                 new_row['parent'] = id_mapper[row['parent_sort']]
-            new_row['toplevel'] = new_row['level'] == 'a'
             del new_row['level']
             del new_row['idef']
             del new_row['idef_sort']
