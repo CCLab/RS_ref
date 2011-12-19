@@ -5,10 +5,10 @@ from pymongo import Connection
 from ConfigParser import ConfigParser
 from time import time
 
-meta_src      = "metadata"
-state_counter = "counter"
+meta_src    = "metadata"
+counters    = "counters"
 #nav_schema    = "ms_nav"
-nav_schema    = "db_tree"
+nav_schema  = "db_tree"
 
 # TODO make http response work better (use http headers)
 
@@ -116,7 +116,7 @@ class Collection:
         # define the endpoint
         self.endpoint = endpoint
         # get the complete metadata
-        self.metadata = self.db[ meta_src ].find_one({ '_id': self.endpoint })
+        self.metadata = self.db['metadata'].find_one({ '_id': self.endpoint })
 
 
     def get_metadata( self ):
@@ -146,7 +146,6 @@ class Collection:
         if fields == None:
             fields = self.get_all_fields()
 
-        print fields
         if batchsize == None:
             cursor = collection.find( query, fields, sort=order )
         else:
@@ -158,8 +157,9 @@ class Collection:
 
 
     def get_all_fields( self ):
-        fields  = self.metadata.get( 'aux', [] )
-        fields += [ c['key'] for c in self.metadata.get( 'columns', [] ) ]
+        # aggregate columns fields and aux
+        fields  = [ c['key'] for c in self.metadata.get( 'columns', [] ) ]
+        fields += self.metadata.get( 'aux', [] )
 
         all_fields = {}
         for field in fields:
@@ -388,69 +388,35 @@ class Collection:
 #            self.warning= "There are no such columns as ['%s'] in meta-data!" % "', '".join(warning_list)
 
 
-class State:
+class StateManager:
     def __init__( self, db_type='mongodb' ):
         # connect to db
         self.db = DBConnection( db_type ).connect()
 
-    def save_state(self, state_object, datasrc):
-        """
-        saves state compiled by a user
-        into the db collection sd_0000xxxx
-        returns xxxx (id for permalink)
-        """
-        state_id= 0 # generate state id
-        state_id_dict= datasrc[state_counter].find_one( {'curr_state_id': True } )
-        if state_id_dict is None: # not yet created
-            state_id, state_id_inc= 0, 1
-            state_id_dict= {
-                "curr_state_id":True,
-                "curr_id": state_id,
-                "increment": state_id_inc
-                }
 
-        if state_object is not None: # save object to the db
-            state_id= int(state_id_dict['curr_id']) + state_id_dict['increment']
-            state_collection_name= "_".join(["sd", "%07d" % state_id]) # sd - state data
-            success= True
-            try:
-                datasrc[state_collection_name].insert({ 'content': state_object })
-            except Exception as e:
-                success= False
+    def save_state( self, state ):
+        counters     = self.db['counters']
+        permalinks   = self.db['permalinks']
 
-            if success: # incrementing state counter & saving it into the db
-                state_id_dict['curr_id']= state_id
-                datasrc[state_counter].save(state_id_dict)
-            else:
-                self.response= Response().get_response(41) # can't insert into the db
-        else:
-            self.response= Response().get_response(40) # bad request - data is empty
+        # get last permalink id and increment it
+        permalink_id = counters.find_one()['permalinks'] + 1
 
-        return state_id
+        # save the permalink
+        permalinks.insert({
+            '_id'   : permalink_id,
+            'state' : state
+        });
+        # and set a current id as the last one in counters
+        counters.update( {}, { '$set': { 'permalinks': permalink_id }} );
 
-    def get_state(self, state_id, datasrc):
-        """ extracts user view (string) from the db """
-        data= ''
-        success= True
+        return permalink_id
 
-        if state_id == 0 or state_id is None:
-            self.response= Response().get_response(42) # state id not specified
-            success= False
 
-        if success:
-            state_coll_name= ''
-            try:
-                state_coll_name=  "_".join(["sd", "%07d" % state_id])
-            except:
-                success= False
-                self.response= Response().get_response(42) # wrong state id
+    def get_state( self, permalink_id ):
+        permalinks   = self.db['permalinks']
 
-        if success:
-            state_dict= datasrc[state_coll_name].find_one() # state is always a single object
-            if state_dict is not None:
-                data= state_dict['content']
-            else:
-                self.response= Response().get_response(40) # no state data
+        # get the permalink from db
+        data = permalinks.find_one({ '_id': permalink_id })
 
         return data
 

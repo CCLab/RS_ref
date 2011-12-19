@@ -38,7 +38,7 @@ var _gui = (function () {
         });
 
         // stupid testing environment
-        _resource.get_db_tree( draw_db_tree_panels );
+        //_resource.get_db_tree( draw_db_tree_panels );
         $.get(
             '/get_init_data/',
             {
@@ -46,20 +46,20 @@ var _gui = (function () {
             },
             function ( d ) {
                 console.log( 'Top level' );
-                console.log( JSON.parse( d ).meta );
-            }
-        );
-        $.get(
-            '/get_children/',
-            {
-                endpoint: 100002,
-                _id: 10000000
-            },
-            function ( d ) {
-                console.log( 'Children' );
                 console.log( JSON.parse( d ) );
             }
         );
+//        $.get(
+//            '/get_children/',
+//            {
+//                endpoint: 100002,
+//                _id: 10000000
+//            },
+//            function ( d ) {
+//                console.log( 'Children' );
+//                console.log( JSON.parse( d ) );
+//            }
+//        );
     };
 
 
