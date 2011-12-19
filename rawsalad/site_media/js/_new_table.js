@@ -29,18 +29,19 @@ var _table = (function () {
 //  P U B L I C   I N T E R F A C E
     var that = {};
     
-    that.create_table = function( table_data, columns, type) {
-        var table_code;
+    that.create_table = function( data ) {
+        var type = data['type'];
+        
         
         switch ( type ) {
             case 'STANDARD':
-                table_code = create_standard_table( table_data, columns );
+                table_code = create_standard_table( data );
                 break;
             case 'FILTERED':
-                table_code = create_filtered_table( table_data, columns );
+                table_code = create_filtered_table( data );
                 break;
             case 'SEARCHED':
-                table_code = create_searched_table( table_data, columns );
+                table_code = create_searched_table( data );
                 break;
             default:
                 _assert.assert( true, '_table:create_table:wrong table type' );
@@ -49,44 +50,121 @@ var _table = (function () {
         return table_code;
     };
 
-    return that;
 
 //  P R I V A T E   I N T E R F A C E
-    function create_standard_table( rows, columns ) {
+    function create_standard_table( data ) {
         var header_code;
         var rows_code;
         var table_code;
+ 
+        data['rows'] = data['rows'].filter( function ( row ) {                                       
+            if ( row['level'] > 1 ) {
+                row['data']['0']['padding']['value'] = ( row['level'] - 1 ) * 10;
+            } 
+            return row;
+        }
+                        
+        header_code = create_standard_header( data );
+        rows_code = create_rows( data );
+//        table_code = header_code + rows_code;
         
-        header_code = create_header( columns );
-        rows_code = create_rows( rows, columns );
-        table_code = header_code + rows_code;
         
-        return header_code + '\n' + rows_code;
+        return header_code; //+ '\n' + rows_code;
     };
     
-    function create_header( columns ) {
-        var header_code = [];
-        header_code.push('<');
-        columns.forEach( function ( column ) {
-            header_code.push( column['label'] );
-        });
-        header_code.push('<br>');
-        
-        return header_code.join(' ');
+    function create_standard_header( data ) {
+        var head_row_code;
+        var total_row_code = '';        
+        var total = data['total'] || false; // TODO- need 'total' in data from resource every total has 'key', 'class' and 'data'
+
+        head_row_code = Mustache.to_html( standard_head_row_template, data );
+        if ( !!total ) {
+            total_row_code = Mustache.to_html( standard_total_row_template, data );
+        }
+        return '<thead>' + head_row_code + total_row_code + '</thead>';
     };
-    
-    function create_rows( data, columns ) {
-        var rows_code = [];
         
-        data.forEach( function ( row ) {
-            columns.forEach ( function ( column ) {
-                rows_code.push( row[ column['key'] ] );
-            });
-            rows_code.push('<br>');
-        });
+    function create_rows( data ) {
+        var tbody_code;
+        
+        tbody_code = Mustache.to_html( standard_tbody_template, data )
+        
+//        rows.forEach( function ( row ) {
+//                rows_code.push( generate_single_row( row, columns ) );
+//        });
         
         return rows_code.join(' ');
     };
 
+    function generate_single_row( row, columns ) {  //TODO add mustache template for 
+        var row_code = [];
+        var level = row['level'];
+        var selected = row['selected'] || '';
+        
+        row_code.push( '<tr id="', row['idef'], '" ' );
+        row_code.push( 'data-open="', row['is_open'], '" ' );
+        row_code.push( 'class="', selected,' ', row['parent'], '">' );
+        columns.forEach( function ( column, i  ) {                           
+            row_code.push( '<td class="', column['key'],' ', column['format_class'] );
+            if ( !row[leaf] && column['key'] === 'type' ) { // TODO refactor and add info panel heare
+                row_code.push( 'click ' );
+            }
+            
+            if ( i === 0 && level > 1 ) {
+                row_code.push( 'style="padding-left: ', ( level - 1 ) * 10, 'px;"' );            
+            }
+            
+            row_code.push( '>' );
+            row.code.push( row[column['key']] );
+            
+            row_code.push('</td>');            
+        } );
+        row_code.push('</tr>');
+        return row_code.join('');
+        
+    };
+
+// T E M P L A T E S
+    var standard_head_row_template = 
+        '<tr>' +
+            '{{#columns}}' +
+                '<td class="{{key}} {{type}}">' +
+                    '{{label}}' +
+                '</td>' +
+            '{{/columns}}' +
+        '</tr>';
+                
+    var standard_total_row_template =      
+        '<tr>' +
+            '{{#total}}' +        
+                '<td class="{{column_key}} {{column_type}}">' +
+                    '{{content}}' +
+                '</td>' +    
+            '{{/total}}' +
+        '</tr>';
+        
+    var standard_tbody_template = 
+        '<tbody>' +
+            '{{#rows}}' + //TODO add info panel
+                '<tr id="{{_id}}" data_open="{{is_open}}" ' +
+                  'class="{{selected}} {{parent}}">' +
+                    '{{#data}}' +
+                        '<td class="{{column_key}} {{column_type}} {{click}}"' +
+                          '{{#padding}}' +
+                            'style="padding-left= {{value}}px;" ' +
+                          '{{/padding}} '+
+                          '>' +
+                            '{{content}}' +
+                        '</td>' +
+                    '{{/data}}' +                                
+                '</tr>' +
+            '{{/rows}}' +
+        '</tbody>';
+            
+
+    
+    
+    // return public interface
+    return that;
 })();
 

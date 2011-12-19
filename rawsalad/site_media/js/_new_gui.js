@@ -61,12 +61,12 @@ var _gui = (function () {
             return full_code.join('');
         };
         var table_code;
-        var table_type = data['type'];
-        var table_data = data['data'];
-        var columns = data['columns'];
+        var table_type = data['type']; // TODO remove
+        var table_data = data['data']; // TODO remove
+        var columns = data['columns']; // TODO remove
         var full_code;
 
-        table_code = _table.create_table( table_data, columns, table_type );
+        table_code = _table.create_table( data );
         full_code = prepare_full_code( table_code, data['id'] );
 
         remove_table();
