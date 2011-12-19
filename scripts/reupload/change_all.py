@@ -122,6 +122,15 @@ def change_navigator(db, collname, new_collname, counter_collname):
     return dvi_map
 
 
+def change_aux(aux_dict):
+    aux_list = []
+    for key in aux_dict:
+        if key in ['info', 'leaf']:
+            aux_list.append(key)
+    
+    return aux_list
+
+
 def create_meta_data(db, meta_collname, new_meta_collname, attributes_map, dvi_map, names_map):
     coll = db[meta_collname]
     new_coll = db[new_meta_collname]
@@ -141,7 +150,7 @@ def create_meta_data(db, meta_collname, new_meta_collname, attributes_map, dvi_m
         new_meta_descr['_id'] = dvi_map[dvi_key]
         collection_key = hash_collection_name( meta_descr['ns'], meta_descr.get('query', {}) )
         new_meta_descr['collection'] = names_map[collection_key]
-        new_meta_descr['aux'] = meta_descr['aux'].keys()
+        new_meta_descr['aux'] = change_aux(meta_descr['aux'])
 
         new_coll.save(new_meta_descr)
 
