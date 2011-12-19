@@ -23,7 +23,7 @@ class DBConnection:
         '''Define a connection object for a selected database'''
         # TODO move config file path into SETTINGS
         dir_path  = os.path.dirname( __file__ )
-        conf_file = os.path.join( dir_path, 'site_media', 'rawsdata.conf' )
+        conf_file = os.path.join( dir_path, 'rawsdata.conf' )
 
         cfg = ConfigParser({ 'basedir': conf_file })
         cfg.read( conf_file )
