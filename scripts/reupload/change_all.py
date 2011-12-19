@@ -169,9 +169,6 @@ def change_rows(db, collname, new_names, counter_collname, queries=[{}]):
         old_data = [row for row in db_data]
         new_data = []
         # idef_sort is unique, so case a[..] = b[..] can be omitted
-        #old_data.sort(key=lambda a: a['idef_sort'])
-        for o in old_data:
-            print o['idef_sort']
         id_mapper = {}
         for row in old_data:
             id_mapper[row['idef_sort']] = next_id
