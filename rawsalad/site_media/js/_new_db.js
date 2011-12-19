@@ -42,7 +42,7 @@ var _db = (function () {
             success: function( received_data ) {
                 var data = {
                     data     : received_data.data,
-                    metadata : received_data.meta
+                    meta : received_data.meta
                 };
 
                 _utils.clear_preloader();

@@ -84,7 +84,7 @@ var _store = (function () {
                 //        meta --> metadata
                 //      change it where appropriate
                 data_source = store_data( db_data['data'], col_id );
-                meta = store_meta_data( db_data['metadata'], col_id );
+                meta = store_meta_data( db_data['meta'], col_id );
                 data_package = {
                     'data': data_source.copy(),
                     'meta': meta
@@ -115,7 +115,7 @@ var _store = (function () {
     };
 
     function store_data( db_data, col_id ) {
-        var new_data_source = monkey.createTree( db_data, 'idef_sort' );
+        var new_data_source = monkey.createTree( db_data, '_id', 'parent' );
         data_sources[col_id] = new_data_source;
 
         return new_data_source;
@@ -130,8 +130,9 @@ var _store = (function () {
 
     function extract_meta_data( db_meta_data, col_id ) {
         return {
-            'name': db_meta_data['perspective'],
-            'columns': db_meta_data['columns']
+            'name': db_meta_data['name'],
+            'columns': db_meta_data['columns'],
+            'aux': db_meta_data['aux']
         };
     };
 

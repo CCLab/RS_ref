@@ -46,7 +46,7 @@ var _resource = (function () {
 
             sheet_id = add_sheet( col_id, data );
             sheet = sheets[sheet_id];
-            gui_data = prepare_data_for_gui( sheet, sheet_id );
+            gui_data = prepare_data_package_for_gui( sheet, sheet_id );
             callback( gui_data );
         });
     };
@@ -95,13 +95,14 @@ var _resource = (function () {
         active_columns = data['meta']['columns'].filter( function ( column ) {
             return !!column['basic'];
         });
-        cleaned_data = clean_data( data['data'], active_columns );
+        cleaned_data = clean_data( data['data'], active_columns, data['meta']['aux'] );
 
         new_sheet = {
             'endpoint': col_id,
             'data': cleaned_data,
             'name': name,
             'columns': active_columns,
+            'aux': data['meta']['aux'],
             'type': _enum['STANDARD']
         };
         sheets[sheet_id] = new_sheet;
@@ -160,18 +161,18 @@ var _resource = (function () {
             var update_level_map = function( id_level_map, row_id, parent_id ) {
                 var level;
                 if ( !!parent_id ) {
-                    level = id_map[ parent_id ] + 1;
+                    level = id_level_map[ parent_id ] + 1;
                 } else {
                     level = 1;
                 }
-                id_map[ row_id ] = level;
+                id_level_map[ row_id ] = level;
             };
             var prepare_row = function( row, id_level_map ) {
                 var new_row = {
-                    '_id': row['_id'],
-                    'parent': row['parent'],
-                    'leaf': row['leaf'],
-                    'is_open': row['state']['is_open']
+                    '_id'     : row['_id'],
+                    'parent'  : row['parent'],
+                    'leaf'    : row['leaf'],
+                    'is_open' : row['state']['is_open']
                 };
                 if ( !!row['info'] ) {
                     new_row['info'] = row['info'];
@@ -181,31 +182,34 @@ var _resource = (function () {
                 }
                 new_row['level'] = id_level_map[ new_row['_id'] ];
                 new_row['data'] = columns.map( function( e ) {
-                    var tmp;
-                    tmp['column_key'] = e['key'];
-                    tmp['column_type'] = e['type'];
-                    tmp['click'] = (e['type'] === 'type' && !new_row['leaf']) ? 'click' : '';
-                    tmp['content'] = format_value( row[ e['key'] ], type, format );
-                    return tmp;
+                    return {
+                        'column_key'  : e['key'],
+                        'column_type' : e['type'],
+                        'click'       : (e['type'] === 'type' && !new_row['leaf']) ? 'click' : '',
+                        'content'     : format_value( row[ e['key'] ], e['type'], e['format'] )
+                    };
                 });
 
                 return new_row;
             };
             var new_rows = [];
             var id_level_map = {};
-            var selected_rows = prepare_selection_description( rows );
             rows.forEach( function( row ) {
                 update_level_map( id_level_map, row['_id'], row['parent'] );
-                new_rows.push( prepare_row( row, id_level_map, selected_rows[ row['_id'] ] ) );
+                new_rows.push( prepare_row( row, id_level_map ) );
             });
             return new_rows;
         };
         var prepare_total_row = function( rows, columns ) {
             var total_row = [];
             var last_row = rows.pop();
+            if ( last_row['type'] !== 'Total' ) {
+                rows.push( last_row );
+                return undefined;
+            }
             columns.forEach( function ( column ) {
                 total_row.push( {
-                    'data': format( last_row[ column['key'] ], column['type'], column['key'] ),
+                    'data': format_value( last_row[ column['key'] ], column['type'], column['key'] ),
                     'column_type': column['type'],
                     'column_key': column['key']
                 });
@@ -217,6 +221,8 @@ var _resource = (function () {
         var data_fot_gui;
         var total_row;
         var data = [];
+        var total_row;
+        var rows_for_gui;
         var data_package;
         
         columns_for_gui = sheet['columns'].map( function ( column ) {
@@ -224,16 +230,18 @@ var _resource = (function () {
                 'key': column['key'],
                 'label': column['label'],
                 'type': column['type']
-            }
+            };
         });
         data = sheet['data'].toList();
+        total_row = prepare_total_row( data, columns_for_gui );
+        rows_for_gui = prepare_rows_for_gui( data, columns_for_gui );
         data_package = {
             'id': sheet_id,
             'type': sheet['type'],
             'name': sheet['name'],
-            'total': prepare_total_row( rows, columns_for_gui ),
+            'total': total_row,
             'columns': columns_for_gui,
-            'rows': prepare_rows_for_gui( data, columns_for_gui )
+            'rows': rows_for_gui
         };
 
         return data_package;
@@ -272,12 +280,17 @@ var _resource = (function () {
 
             return new_node;
         };
-        var new_data = monkey.createTree( [], '_id', 'parent' );
+        var list_data = data.toList();
+        var cleaned_data = list_data.map( function( node ) {
+            return clean_node( node, columns );
+        });
+        var new_data = monkey.createTree( cleaned_data, '_id', 'parent' );
+        //var new_data = monkey.createTree( list_data, '_id', 'parent' );
 
-        data.forEach( function ( node ) {
+        /*data.forEach( function ( node ) {
             var new_node = clean_node( node, columns );
             new_data.insertNode( new_node );
-        });
+        });*/
 
         return new_data;
     }
