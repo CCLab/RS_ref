@@ -30,23 +30,34 @@ var _gui = (function () {
     var that = {};
 
     that.init_gui = function () {
-        $('#test-button-1').click( function( ) {
+        $('#test-button-1').click( function () {
             _resource.get_top_level(100002, draw_new_table);
         });
-        $('#test-button-2').click( function( ) {
+        $('#test-button-2').click( function () {
             _resource.get_top_level(100005, draw_new_table);
         });
 
         // stupid testing environment
         _resource.get_db_tree( draw_db_tree_panels );
         $.get(
+            '/get_init_data/',
+            {
+                endpoint: 100002
+            },
+            function ( d ) {
+                console.log( 'Top level' );
+                console.log( JSON.parse( d ) );
+            }
+        );
+        $.get(
             '/get_children/',
             {
                 endpoint: 100002,
-                _id: 10000000
+                _id: 10000022
             },
             function ( d ) {
-                console.log( d );
+                console.log( 'Children' );
+                console.log( JSON.parse( d ) );
             }
         );
     };

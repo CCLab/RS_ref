@@ -8,8 +8,7 @@ from django.core.mail import send_mail
 # TODO check why django version of simplejson is in use
 from django.utils import simplejson as json
 
-import rsdbapi as rsdb
-
+import rs.dbapi as rsdb
 
 # url: /
 def app_page( request ):
@@ -28,7 +27,6 @@ def get_db_tree( req ):
     '''Get the navigation tree for all database collections'''
     # create a navigator for the db collections
     db_tree = rsdb.DBNavigator().get_db_tree()
-
     return HttpResponse( json.dumps( db_tree ) )
 
 
@@ -38,13 +36,9 @@ def get_init_data( req ):
     endpoint = int( req.GET.get( 'endpoint', None ) )
 
     collection = rsdb.Collection( endpoint )
-
-    # TODO on the front-end change:
-    #         :: rows --> data
-    #         :: perspective --> metadata
     data = {
-        'data'     : collection.get_top_level(),
-        'metadata' : collection.get_metadata()
+        'data': collection.get_top_level(),
+        'meta': collection.get_metadata()
     }
 
     return HttpResponse( json.dumps( data ) )
@@ -66,8 +60,8 @@ def get_children( req ):
 # TODO can POST forms be handeled better?!
 @csrf_exempt
 def download_data( request ):
-    from downloader import single_file
-    from downloader import multiple_files
+    from rs.downloader import single_file
+    from rs.downloader import multiple_files
 
     response = HttpResponse()
     # TODO check if this is the only way to create a sheets download!
