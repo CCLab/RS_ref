@@ -141,6 +141,7 @@ def create_meta_data(db, meta_collname, new_meta_collname, attributes_map, dvi_m
         new_meta_descr['_id'] = dvi_map[dvi_key]
         collection_key = hash_collection_name( meta_descr['ns'], meta_descr.get('query', {}) )
         new_meta_descr['collection'] = names_map[collection_key]
+        new_meta_descr['aux'] = meta_descr['aux'].keys()
 
         new_coll.save(new_meta_descr)
 
@@ -149,7 +150,7 @@ def hash_collection_name(name, query):
     return name + '-' + str(query)
 
     
-def change_id(db, collname, new_names, counter_collname, queries=[{}]):
+def change_rows(db, collname, new_names, counter_collname, queries=[{}]):
     if 1 < len(new_names) != len(queries):
         exit('Number of names > 1 and != number of queries')
     
@@ -164,16 +165,25 @@ def change_id(db, collname, new_names, counter_collname, queries=[{}]):
         coll.remove()
         query = queries[i]
 
-        db_data = old_coll.find(query)
+        db_data = old_coll.find(query, sort=[('idef_sort', 1)])
         old_data = [row for row in db_data]
         new_data = []
         # idef_sort is unique, so case a[..] = b[..] can be omitted
-        old_data.sort(cmp=lambda a, b: a['idef_sort'] > b['idef_sort'])
         id_mapper = {}
         for row in old_data:
-            id_mapper['idef'] = next_id
+            id_mapper[row['idef_sort']] = next_id
             new_row = copy.deepcopy(row)
             new_row['_id'] = next_id
+            if row['parent_sort'] is None:
+                new_row['parent'] = None
+            else:
+                new_row['parent'] = id_mapper[row['parent_sort']]
+            new_row['toplevel'] = new_row['level'] == 'a'
+            del new_row['level']
+            del new_row['idef']
+            del new_row['idef_sort']
+            del new_row['parent_sort']
+            
             next_id += 1
             new_data.append(new_row)
 
@@ -231,10 +241,10 @@ print 'Db tree created'
 create_meta_data(db, meta_collname, new_meta_collname, attributes_map, dvi_map, names_map)
 print 'Meta data created'
 
-change_id(db, budg_collname, [budg_collname_new], counter_collname, queries=[{}])
+change_rows(db, budg_collname, [budg_collname_new], counter_collname, queries=[{}])
 print 'Budget changed'
 
-change_id(db, nfz_collname, nfz_collnames_new, counter_collname, queries=queries)
+change_rows(db, nfz_collname, nfz_collnames_new, counter_collname, queries=queries)
 print 'NFZ changed'
 
 print 'All done'
