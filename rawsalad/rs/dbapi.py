@@ -6,7 +6,7 @@ from ConfigParser import ConfigParser
 from time import time
 
 meta_src      = "metadata"
-state_counter = "md_sta_cnt"
+state_counter = "counter"
 #nav_schema    = "ms_nav"
 nav_schema    = "db_tree"
 
@@ -67,48 +67,50 @@ class DBNavigator:
 
         return db_tree
 
-
-    def get_node( self, _id ):
-        '''Get certain position in the db_tree'''
-        data = self.get_db_tree({ '_id': _id })
-
-        try:
-            return data[0].get( '_id', None )
-        except IndexError:
-            return None
-
-
-    def get_parent( self, _id ):
-        '''Get parent of the certain position in the db_tree'''
-        # get original node to get its parent id
-        node   = self.get_node( _id )
-        parent = self.get_node( node['parent'] )
-
-        return parent
-
-
-    def get_parents( self, _id ):
-        '''Get all parents up to the root of the db_tree'''
-        parents = []
-
-        parent = self.get_parent( _id )
-        while parent != None:
-            parent.append( parent['_id'] )
-            parent = self.get_parent( parent['_id'] )
-
-        return parents
-
-
-    def get_children( self, _id ):
-        '''Get children of the certain position in the db_tree'''
-        data = self.get_db_tree({ 'parent', _id })
-
-        return data
+#
+# TODO use it with a new API code
+#
+#    def get_node( self, _id ):
+#        '''Get certain position in the db_tree'''
+#        data = self.get_db_tree({ '_id': _id })
+#
+#        try:
+#            return data[0].get( '_id', None )
+#        except IndexError:
+#            return None
+#
+#
+#    def get_parent( self, _id ):
+#        '''Get parent of the certain position in the db_tree'''
+#        # get original node to get its parent id
+#        node   = self.get_node( _id )
+#        parent = self.get_node( node['parent'] )
+#
+#        return parent
+#
+#
+#    def get_parents( self, _id ):
+#        '''Get all parents up to the root of the db_tree'''
+#        parents = []
+#
+#        parent = self.get_parent( _id )
+#        while parent != None:
+#            parent.append( parent['_id'] )
+#            parent = self.get_parent( parent['_id'] )
+#
+#        return parents
+#
+#
+#    def get_children( self, _id ):
+#        '''Get children of the certain position in the db_tree'''
+#        data = self.get_db_tree({ 'parent', _id })
+#
+#        return data
 
 
 class Collection:
     '''Class for extracting data from acenrtain endpoint in the db'''
-    def __init__( self, endpoint, db_type='mongodb' ): #**parms):
+    def __init__( self, endpoint, db_type='mongodb' ):
         # connect to db
         self.db = DBConnection( db_type ).connect()
         # define the endpoint
@@ -126,33 +128,25 @@ class Collection:
 
     def get_top_level( self ):
         '''Get the top level of the collection'''
-        # TODO make db has a toplevel: True
-        # data = self.get_data({ 'toplevel': True })
-        data = self.get_data({ 'level': 'a' })
-
-        return data
+        return self.get_data({ 'toplevel': True })
 
 
     def get_children( self, _id ):
         '''Get children of the specified node'''
-        # TODO temp solution. replace with:
-        #      data = self.get_data({ 'parent': _id })
-        node = self.get_data({ '_id': _id })[0]
-        data = self.get_data({ 'parent': node['idef'] })
-
-        return data
+        return self.get_data({ 'parent': _id })
 
 
     def get_data( self, query={}, fields=None ):
         '''Get queried data from db'''
         order      = [( '_id', 1 )]
-        col_name   = self.metadata.get( 'collection', "LALALA" );
+        col_name   = self.metadata.get( 'collection', None );
         collection = self.db[ col_name ]
         batchsize  = self.metadata.get( 'batchsize', None )
 
         if fields == None:
             fields = self.get_all_fields()
 
+        print fields
         if batchsize == None:
             cursor = collection.find( query, fields, sort=order )
         else:
@@ -164,11 +158,12 @@ class Collection:
 
 
     def get_all_fields( self ):
-        columns    = self.metadata.get( 'columns', [] )
-        all_fields = self.metadata.get( 'aux', {} )
+        fields  = self.metadata.get( 'aux', [] )
+        fields += [ c['key'] for c in self.metadata.get( 'columns', [] ) ]
 
-        for column in columns:
-            all_fields[ column['key'] ] = 1
+        all_fields = {}
+        for field in fields:
+            all_fields[ field ] = 1
 
         return all_fields
 
@@ -215,220 +210,188 @@ class Collection:
 
 
 
-    def set_query(self, query):
-        if query is not None:
-            self.raw_query= query
-
-    def set_fields(self, field_list= None):
-        if field_list is not None:
-            self.request_fields= { k:1 for k in field_list }
-        else:
-            self.request_fields= { }
-
-
-
-    def save_complete_metadata(self, new_object, dbase):
-        """
-        saves metadata defined by a user
-        into the db collection for metadata
-        """
-        ds_id, ps_id, iss= new_object['dataset'], new_object['idef'], new_object['issue']
-        update_status= True # true - update, false - insert
-        if new_object is not None:
-            current_object= dbase[meta_src].find_one({ 'dataset': ds_id, 'idef': ps_id, 'issue': iss })
-            if current_object is None: # is dataset-view-issue already in the db?
-                current_object= {}
-                update_status= False # insert instead of update
-            else:
-                current_object= { '_id': current_object['_id'] } # only _id is required for save()
-
-            current_object.update(new_object)
-
-            try:
-                dbase[meta_src].save(current_object)
-                if update_status:
-                    self.response= Response().get_response(1) # OK, updated
-                else:
-                    self.response= Response().get_response(2) # OK, inserted
-            except Exception as e:
-                self.response= Response().get_response(41) # ERROR, can't insert into the db
-                self.response['descr']= ' '.join([ self.response['descr'], str(e) ])
-
-        else:
-            self.response= Response().get_response(43) # ERROR, bad request - data is empty
-
-        return ds_id, ps_id, iss, update_status
-
-
-    def save_doc(self, new_doc, dataset_id, view_id, issue, idef, dbase):
-        """
-        saves new_dict (a dictionary) into specified doc in the db
-        """
-        qry= { 'idef': idef }
-        self.set_query(qry)
-        orig_doc= self.get_data(dbase, dataset_id, view_id, issue)
-        coll_name= self.metadata_complete['ns'] # get_data calls for complete metadata
-
-        if self.response['httpresp'] == 200: # record found
-            orig_doc= orig_doc[0] # expecting only one element
-            orig_doc.update(new_doc)
-
-            try:
-                dbase[coll_name].update(qry, orig_doc) # update doc by its idef
-            except Exception as e:
-                self.response= Response().get_response(44) # ERROR, can't insert into the db
-                self.response['descr']= ' '.join([ self.response['descr'], str(e) ])
-
-        return self.response
-
-
-
-    def get_tree(self, datasrc, dataset_id, view_id, issue):
-        tree= []
-
-        metadata_complete= self.get_complete_metadata(
-            int(dataset_id), int(view_id), str(issue), datasrc
-            )
-
-        if metadata_complete is None: # no such source
-            self.response= Response().get_response(20)
-            self.request= "unknown"
-        else:
-            self.response= Response().get_response(0)
-            self.request= metadata_complete['name']
-
-            conn_coll= metadata_complete['ns'] # collection name
-
-            cursor_fields= self.get_fields(metadata_complete) # full columns list
-            cursor_sort= self.get_sort_list(metadata_complete) # list of sort columns
-
-            cursor_query= metadata_complete['query'] # initial query
-            clean_query= cursor_query.copy() # saving initial query for iteration
-            if len(self.raw_query) == 0: # no additional query, extract the whole collection in a form of a tree
-                cursor_query.update({ 'level': 'a' })
-                cursor_data= datasrc[conn_coll].find(cursor_query, cursor_fields, sort=cursor_sort)
-                for curr_root in cursor_data:
-                    if 'idef' in clean_query: del clean_query['idef'] # clean the clean_query before it starts working
-                    if 'parent' in clean_query: del clean_query['parent']
-                    curr_branch= self.build_tree(datasrc[conn_coll], clean_query, cursor_fields, cursor_sort, curr_root['idef'])
-                    tree.append(curr_branch)
-            else:
-                if 'idef' in self.raw_query: # root element
-                    result_tree= self.build_tree(datasrc[conn_coll], cursor_query, cursor_fields, cursor_sort, self.raw_query['idef'])
-                    if result_tree is not None:
-                        tree.append(result_tree)
-                    else: # error
-                        self.response= Response().get_response(10)
-                else: # means we deal with URL like /a/X/b/ or /a/X/b/Y/c - which is nonesense for a tree
-                    self.response= Response().get_response(30)
-
-        return tree
-
-
-    def build_tree(self, cl, query, columns, sortby, root):
-        out= {}
-
-        query['idef']= root
-
-        root_elt= cl.find_one(query, columns, sort=sortby)
-        if root_elt is not None:
-            if not root_elt['leaf']: # there are children
-                if 'idef' in query: del query['idef'] # don't need this anymore
-                self._get_children_recurse(root_elt, cl, query, columns, sortby)
-            else: # no children, just leave root_elt as it is
-                pass
-            out.update(root_elt)
-        else: # error - no such data!
-            out= None
-
-        return out
-
-    def _get_children_recurse(self, parent, coll, curr_query, columns, srt):
-        if not parent['leaf']:
-            parent['children']= []
-            curr_query['parent']= parent['idef']
-            crs= coll.find(curr_query, columns, sort=srt)
-            if crs.count() > 0:
-                for elm in crs:
-                    parent['children'].append(elm)
-                    self._get_children_recurse(elm, coll, curr_query, columns, srt)
-
-
-    def get_count(self, datasrc, collection, count_query= {}):
-        self.count= datasrc[collection].find(count_query).count()
-        return self.count
-
-
-
-
-    def get_sort_list(self, meta_data):
-        sort_list= []
-        try:
-            cond_sort= meta_data['sort']
-        except:
-            cond_sort= None
-
-        if cond_sort is not None:
-            srt= [int(k) for k, v in cond_sort.iteritems()]
-            srt.sort()
-            for sort_key in srt:
-                sort_list.append((cond_sort[str(sort_key)].keys()[0], cond_sort[str(sort_key)].values()[0]))
-
-        return sort_list
-
-    def fill_warning(self, field_names_list):
-        """
-        check if there are user defined fields
-        that are not listed in metadata
-        """
-        warning_list= []
-        for fld in self.raw_usrdef_fields:
-            if fld not in field_names_list:
-                warning_list.append( fld )
-        if len(warning_list) == 0:
-            pass
-        elif len(warning_list) == 1:
-            self.warning= "There is no such column as '%s' in meta-data!" % warning_list[0]
-        elif len(warning_list) > 1:
-            self.warning= "There are no such columns as ['%s'] in meta-data!" % "', '".join(warning_list)
+#    def set_query(self, query):
+#        if query is not None:
+#            self.raw_query= query
+#
+#    def set_fields(self, field_list= None):
+#        if field_list is not None:
+#            self.request_fields= { k:1 for k in field_list }
+#        else:
+#            self.request_fields= { }
+#
+#
+#
+#    def save_complete_metadata(self, new_object, dbase):
+#        """
+#        saves metadata defined by a user
+#        into the db collection for metadata
+#        """
+#        ds_id, ps_id, iss= new_object['dataset'], new_object['idef'], new_object['issue']
+#        update_status= True # true - update, false - insert
+#        if new_object is not None:
+#            current_object= dbase[meta_src].find_one({ 'dataset': ds_id, 'idef': ps_id, 'issue': iss })
+#            if current_object is None: # is dataset-view-issue already in the db?
+#                current_object= {}
+#                update_status= False # insert instead of update
+#            else:
+#                current_object= { '_id': current_object['_id'] } # only _id is required for save()
+#
+#            current_object.update(new_object)
+#
+#            try:
+#                dbase[meta_src].save(current_object)
+#                if update_status:
+#                    self.response= Response().get_response(1) # OK, updated
+#                else:
+#                    self.response= Response().get_response(2) # OK, inserted
+#            except Exception as e:
+#                self.response= Response().get_response(41) # ERROR, can't insert into the db
+#                self.response['descr']= ' '.join([ self.response['descr'], str(e) ])
+#
+#        else:
+#            self.response= Response().get_response(43) # ERROR, bad request - data is empty
+#
+#        return ds_id, ps_id, iss, update_status
+#
+#
+#    def save_doc(self, new_doc, dataset_id, view_id, issue, idef, dbase):
+#        """
+#        saves new_dict (a dictionary) into specified doc in the db
+#        """
+#        qry= { 'idef': idef }
+#        self.set_query(qry)
+#        orig_doc= self.get_data(dbase, dataset_id, view_id, issue)
+#        coll_name= self.metadata_complete['ns'] # get_data calls for complete metadata
+#
+#        if self.response['httpresp'] == 200: # record found
+#            orig_doc= orig_doc[0] # expecting only one element
+#            orig_doc.update(new_doc)
+#
+#            try:
+#                dbase[coll_name].update(qry, orig_doc) # update doc by its idef
+#            except Exception as e:
+#                self.response= Response().get_response(44) # ERROR, can't insert into the db
+#                self.response['descr']= ' '.join([ self.response['descr'], str(e) ])
+#
+#        return self.response
+#
+#
+#
+#    def get_tree(self, datasrc, dataset_id, view_id, issue):
+#        tree= []
+#
+#        metadata_complete= self.get_complete_metadata(
+#            int(dataset_id), int(view_id), str(issue), datasrc
+#            )
+#
+#        if metadata_complete is None: # no such source
+#            self.response= Response().get_response(20)
+#            self.request= "unknown"
+#        else:
+#            self.response= Response().get_response(0)
+#            self.request= metadata_complete['name']
+#
+#            conn_coll= metadata_complete['ns'] # collection name
+#
+#            cursor_fields= self.get_fields(metadata_complete) # full columns list
+#            cursor_sort= self.get_sort_list(metadata_complete) # list of sort columns
+#
+#            cursor_query= metadata_complete['query'] # initial query
+#            clean_query= cursor_query.copy() # saving initial query for iteration
+#            if len(self.raw_query) == 0: # no additional query, extract the whole collection in a form of a tree
+#                cursor_query.update({ 'level': 'a' })
+#                cursor_data= datasrc[conn_coll].find(cursor_query, cursor_fields, sort=cursor_sort)
+#                for curr_root in cursor_data:
+#                    if 'idef' in clean_query: del clean_query['idef'] # clean the clean_query before it starts working
+#                    if 'parent' in clean_query: del clean_query['parent']
+#                    curr_branch= self.build_tree(datasrc[conn_coll], clean_query, cursor_fields, cursor_sort, curr_root['idef'])
+#                    tree.append(curr_branch)
+#            else:
+#                if 'idef' in self.raw_query: # root element
+#                    result_tree= self.build_tree(datasrc[conn_coll], cursor_query, cursor_fields, cursor_sort, self.raw_query['idef'])
+#                    if result_tree is not None:
+#                        tree.append(result_tree)
+#                    else: # error
+#                        self.response= Response().get_response(10)
+#                else: # means we deal with URL like /a/X/b/ or /a/X/b/Y/c - which is nonesense for a tree
+#                    self.response= Response().get_response(30)
+#
+#        return tree
+#
+#
+#    def build_tree(self, cl, query, columns, sortby, root):
+#        out= {}
+#
+#        query['idef']= root
+#
+#        root_elt= cl.find_one(query, columns, sort=sortby)
+#        if root_elt is not None:
+#            if not root_elt['leaf']: # there are children
+#                if 'idef' in query: del query['idef'] # don't need this anymore
+#                self._get_children_recurse(root_elt, cl, query, columns, sortby)
+#            else: # no children, just leave root_elt as it is
+#                pass
+#            out.update(root_elt)
+#        else: # error - no such data!
+#            out= None
+#
+#        return out
+#
+#    def _get_children_recurse(self, parent, coll, curr_query, columns, srt):
+#        if not parent['leaf']:
+#            parent['children']= []
+#            curr_query['parent']= parent['idef']
+#            crs= coll.find(curr_query, columns, sort=srt)
+#            if crs.count() > 0:
+#                for elm in crs:
+#                    parent['children'].append(elm)
+#                    self._get_children_recurse(elm, coll, curr_query, columns, srt)
+#
+#
+#    def get_count(self, datasrc, collection, count_query= {}):
+#        self.count= datasrc[collection].find(count_query).count()
+#        return self.count
+#
+#
+#
+#
+#    def get_sort_list(self, meta_data):
+#        sort_list= []
+#        try:
+#            cond_sort= meta_data['sort']
+#        except:
+#            cond_sort= None
+#
+#        if cond_sort is not None:
+#            srt= [int(k) for k, v in cond_sort.iteritems()]
+#            srt.sort()
+#            for sort_key in srt:
+#                sort_list.append((cond_sort[str(sort_key)].keys()[0], cond_sort[str(sort_key)].values()[0]))
+#
+#        return sort_list
+#
+#    def fill_warning(self, field_names_list):
+#        """
+#        check if there are user defined fields
+#        that are not listed in metadata
+#        """
+#        warning_list= []
+#        for fld in self.raw_usrdef_fields:
+#            if fld not in field_names_list:
+#                warning_list.append( fld )
+#        if len(warning_list) == 0:
+#            pass
+#        elif len(warning_list) == 1:
+#            self.warning= "There is no such column as '%s' in meta-data!" % warning_list[0]
+#        elif len(warning_list) > 1:
+#            self.warning= "There are no such columns as ['%s'] in meta-data!" % "', '".join(warning_list)
 
 
 class State:
-    """
-    the class saves to and restores from mongo
-    the current state of open datasheets
-    """
-    def __init__(self):
-        self.response= Response().get_response(0) # CollectionState class is optimistic
-
-    def __del__(self):
-        pass
-
-    def get_state(self, state_id, datasrc):
-        """ extracts user view (string) from the db """
-        data= ''
-        success= True
-
-        if state_id == 0 or state_id is None:
-            self.response= Response().get_response(42) # state id not specified
-            success= False
-
-        if success:
-            state_coll_name= ''
-            try:
-                state_coll_name=  "_".join(["sd", "%07d" % state_id])
-            except:
-                success= False
-                self.response= Response().get_response(42) # wrong state id
-
-        if success:
-            state_dict= datasrc[state_coll_name].find_one() # state is always a single object
-            if state_dict is not None:
-                data= state_dict['content']
-            else:
-                self.response= Response().get_response(40) # no state data
-
-        return data
+    def __init__( self, db_type='mongodb' ):
+        # connect to db
+        self.db = DBConnection( db_type ).connect()
 
     def save_state(self, state_object, datasrc):
         """
@@ -464,6 +427,37 @@ class State:
             self.response= Response().get_response(40) # bad request - data is empty
 
         return state_id
+
+    def get_state(self, state_id, datasrc):
+        """ extracts user view (string) from the db """
+        data= ''
+        success= True
+
+        if state_id == 0 or state_id is None:
+            self.response= Response().get_response(42) # state id not specified
+            success= False
+
+        if success:
+            state_coll_name= ''
+            try:
+                state_coll_name=  "_".join(["sd", "%07d" % state_id])
+            except:
+                success= False
+                self.response= Response().get_response(42) # wrong state id
+
+        if success:
+            state_dict= datasrc[state_coll_name].find_one() # state is always a single object
+            if state_dict is not None:
+                data= state_dict['content']
+            else:
+                self.response= Response().get_response(40) # no state data
+
+        return data
+
+
+
+
+
 
 class Search:
     """

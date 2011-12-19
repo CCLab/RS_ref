@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
-# TODO move imports used only in one function to this function's body
 # TODO better handling of POST requests
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
-from django.core.mail import send_mail
-# TODO check why django version of simplejson is in use
-from django.utils import simplejson as json
+import simplejson as json
 
 import rs.dbapi as rsdb
 
@@ -27,6 +24,7 @@ def get_db_tree( req ):
     '''Get the navigation tree for all database collections'''
     # create a navigator for the db collections
     db_tree = rsdb.DBNavigator().get_db_tree()
+
     return HttpResponse( json.dumps( db_tree ) )
 
 
@@ -85,6 +83,7 @@ def download_data( request ):
 # TODO can POST forms be handeled better?!
 @csrf_exempt
 def feedback_email( request ):
+    from django.core.mail import send_mail
     e_from    = request.POST.get( 'email', 'NO EMAIL PROVIDED' )
     e_message = request.POST.get( 'message', 'MESSAGE LEFT EMPTY' )
 

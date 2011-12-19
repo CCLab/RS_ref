@@ -46,14 +46,14 @@ var _gui = (function () {
             },
             function ( d ) {
                 console.log( 'Top level' );
-                console.log( JSON.parse( d ) );
+                console.log( JSON.parse( d ).meta );
             }
         );
         $.get(
             '/get_children/',
             {
                 endpoint: 100002,
-                _id: 10000022
+                _id: 10000000
             },
             function ( d ) {
                 console.log( 'Children' );
