@@ -76,7 +76,7 @@ var _gui = (function () {
     // data - data needed to draw table
     function draw_table( data ) {
         var prepare_full_code = function( table_code, id ) {
-            var full_code = ['<div="table-' + id + '">'];
+            var full_code = ['<table="table-' + id + '">'];
             full_code.push( table_code );
             full_code.push( '</div>' );
 
@@ -89,10 +89,10 @@ var _gui = (function () {
         var full_code;
 
         table_code = _table.create_table( data );
-        full_code = prepare_full_code( table_code, data['id'] );
+//        full_code = prepare_full_code( table_code, data['id'] ); TODO add sheet id to full code
 
         remove_table();
-        show_table( full_code, data['id'] );
+        show_table( table_code, data['id'] );
     }
 
     function draw_new_table( data ) {
@@ -116,13 +116,13 @@ var _gui = (function () {
 
     function remove_table() {
         //$('#simpletable').empty();
-        $('#tables').empty();
+        $('#app-tb-datatable').empty();
     }
 
     function show_table( table_code, table_id ) {
         $('#app-tb-datatable').append( table_code );
         //$('#simpletable').html( table_code );
-        console.log( table_code );
+        //console.log( table_code );
     }
 
     return that;

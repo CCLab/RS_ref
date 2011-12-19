@@ -34,7 +34,7 @@ var _table = (function () {
         
         
         switch ( type ) {
-            case 'STANDARD':
+            case 0: // TODO change for 'STANDARD'
                 table_code = create_standard_table( data );
                 break;
             case 'FILTERED':
@@ -57,19 +57,19 @@ var _table = (function () {
         var rows_code;
         var table_code;
  
-        data['rows'] = data['rows'].filter( function ( row ) {                                       
+        data['rows'] = data['rows'].map( function ( row ) { // TODO - test it                                       
             if ( row['level'] > 1 ) {
                 row['data']['0']['padding']['value'] = ( row['level'] - 1 ) * 10;
             } 
             return row;
-        }
+        });
                         
         header_code = create_standard_header( data );
         rows_code = create_rows( data );
 //        table_code = header_code + rows_code;
         
         
-        return header_code; //+ '\n' + rows_code;
+        return header_code.concat( rows_code );
     };
     
     function create_standard_header( data ) {
@@ -81,19 +81,15 @@ var _table = (function () {
         if ( !!total ) {
             total_row_code = Mustache.to_html( standard_total_row_template, data );
         }
-        return '<thead>' + head_row_code + total_row_code + '</thead>';
+        return '<thead>'.concat( head_row_code, total_row_code, '</thead>' );
     };
         
     function create_rows( data ) {
         var tbody_code;
         
         tbody_code = Mustache.to_html( standard_tbody_template, data )
-        
-//        rows.forEach( function ( row ) {
-//                rows_code.push( generate_single_row( row, columns ) );
-//        });
-        
-        return rows_code.join(' ');
+                
+        return tbody_code;
     };
 
     function generate_single_row( row, columns ) {  //TODO add mustache template for 
@@ -138,7 +134,7 @@ var _table = (function () {
         '<tr>' +
             '{{#total}}' +        
                 '<td class="{{column_key}} {{column_type}}">' +
-                    '{{content}}' +
+                    '{{data}}' +
                 '</td>' +    
             '{{/total}}' +
         '</tr>';
@@ -149,7 +145,7 @@ var _table = (function () {
                 '<tr id="{{_id}}" data_open="{{is_open}}" ' +
                   'class="{{selected}} {{parent}}">' +
                     '{{#data}}' +
-                        '<td class="{{column_key}} {{column_type}} {{click}}"' +
+                        '<td class="{{column_key}} {{column_type}} {{click}}"' + //TODO add click in object
                           '{{#padding}}' +
                             'style="padding-left= {{value}}px;" ' +
                           '{{/padding}} '+

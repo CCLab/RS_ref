@@ -22,6 +22,7 @@
       
       /* COLORS RULES */
       @datatable-thead-row-background:          @light-black;
+      @datatable-total-row-background:          @gray;
       @datatable-thead-row-text:                @white;
       @datatable-row-border:                    @dark-gray;
       @datatable-cell-separator:                @gray;
@@ -386,9 +387,16 @@
     width: 100%;
     border-collapse: collapse;
 
-    thead > tr {
-      background-color: @datatable-thead-row-background;
-      color: @datatable-thead-row-text;
+    thead{
+      
+      > tr {
+        background-color: @datatable-total-row-background;
+        color: @datatable-thead-row-text;
+      }
+      
+      > tr:first-child {
+        background-color: @datatable-thead-row-background;
+      }
     }
 
     tr {
