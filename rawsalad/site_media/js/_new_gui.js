@@ -30,14 +30,36 @@ var _gui = (function () {
     var that = {};
 
     that.init_gui = function () {
-        $('#test-button-1').click( function( ) {
+        $('#test-button-1').click( function () {
             _resource.get_top_level(100002, draw_new_table);
         });
-        $('#test-button-2').click( function( ) {
+        $('#test-button-2').click( function () {
             _resource.get_top_level(100005, draw_new_table);
         });
 
+        // stupid testing environment
         _resource.get_db_tree( draw_db_tree_panels );
+        $.get(
+            '/get_init_data/',
+            {
+                endpoint: 100002
+            },
+            function ( d ) {
+                console.log( 'Top level' );
+                console.log( JSON.parse( d ) );
+            }
+        );
+        $.get(
+            '/get_children/',
+            {
+                endpoint: 100002,
+                _id: 10000000
+            },
+            function ( d ) {
+                console.log( 'Children' );
+                console.log( JSON.parse( d ) );
+            }
+        );
     };
 
 
@@ -57,7 +79,7 @@ var _gui = (function () {
             var full_code = ['<div="table-' + id + '">'];
             full_code.push( table_code );
             full_code.push( '</div>' );
-            
+
             return full_code.join('');
         };
         var table_code;
@@ -82,13 +104,13 @@ var _gui = (function () {
 
             return html_code.join('');
         };
-        
+
         var tab_code = create_tab( data['name'], data['id'], data['type'] );
         $('#tabs').append( tab_code );
         $('#' + data['id']).click( function ( tab ) {
             draw_table( data );
         });
-        
+
         draw_table( data );
     }
 
@@ -96,7 +118,7 @@ var _gui = (function () {
         //$('#simpletable').empty();
         $('#tables').empty();
     }
-    
+
     function show_table( table_code, table_id ) {
         $('#app-tb-datatable').append( table_code );
         //$('#simpletable').html( table_code );

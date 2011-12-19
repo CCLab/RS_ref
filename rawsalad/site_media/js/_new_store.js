@@ -79,7 +79,11 @@ var _store = (function () {
             callback( data_package );
         } else {
             _db.get_init_data( col_id, function ( db_data ) {
-                data_source = store_data( db_data['rows'], col_id );
+                // TODO names of db obejct's fields changed
+                //        rows --> data
+                //        meta --> metadata
+                //      change it where appropriate
+                data_source = store_data( db_data['data'], col_id );
                 meta = store_meta_data( db_data['meta'], col_id );
                 data_package = {
                     'data': data_source.copy(),
@@ -111,7 +115,7 @@ var _store = (function () {
     };
 
     function store_data( db_data, col_id ) {
-        var new_data_source = monkey.createTree( db_data, 'idef_sort' );
+        var new_data_source = monkey.createTree( db_data, '_id', 'parent' );
         data_sources[col_id] = new_data_source;
 
         return new_data_source;
@@ -126,8 +130,9 @@ var _store = (function () {
 
     function extract_meta_data( db_meta_data, col_id ) {
         return {
-            'name': db_meta_data['perspective'],
-            'columns': db_meta_data['columns']
+            'name': db_meta_data['name'],
+            'columns': db_meta_data['columns'],
+            'aux': db_meta_data['aux']
         };
     };
 
@@ -139,11 +144,11 @@ var _store = (function () {
         // TODO: to copy or not to copy?
         return db_tree.copy();
     };
-    
+
     function save_db_tree( data ) {
         db_tree = monkey.createTree( data, '_id', 'parent_id' );
     };
-    
+
     return that;
 
 }) ();

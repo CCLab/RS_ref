@@ -24,51 +24,12 @@
 // LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-var _db = (function () {
+var _enum = (function () {
 
 //  P U B L I C   I N T E R F A C E
-    var that = {};
-
-    // Gets the top-level from db
-    // IN:
-    // col_id -- id of collection
-    that.get_init_data = function ( _id, callback ) {
-        _utils.create_preloader( translation['js_loading_data'] );
-
-        $.ajax({
-            url: '/get_init_data/',
-            data: { endpoint: _id },
-            dataType: "json",
-            success: function( received_data ) {
-                var data = {
-                    data     : received_data.data,
-                    meta : received_data.meta
-                };
-
-                _utils.clear_preloader();
-                callback( data );
-            },
-            error: function ( err ) {
-                _utils.clear_preloader();
-                console.log( err );
-            }
-        });
+    return {
+        'STANDARD': 0,
+        'FILTERED': 1,
+        'SEARCHED': 2
     };
-
-    that.get_db_tree = function ( callback ) {
-        $.ajax({
-            url: '/get_db_tree/',
-            dataType: 'json',
-            type: 'GET',
-            success : function ( received_data ) {
-                callback( received_data );
-            },
-            error   : function ( err ) {
-                console.log( err );
-            }
-        });
-    };
-
-    return that;
-
-})();
+}) ();
