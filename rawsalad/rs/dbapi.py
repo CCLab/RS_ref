@@ -428,7 +428,6 @@ class StateManager:
         # get the state object stored in db
         state = permalinks.find_one({ '_id': permalink_id })
 
-
         # TODO TODO TODO
         # TODO TODO TODO
         # TODO TODO TODO
@@ -443,29 +442,27 @@ class StateManager:
             # get data for each sheet in the group
             for sheet in group['sheets']:
                 if sheet['filtered']:
+                    # TODO TODO TODO
+                    # TODO TODO TODO
                     # TODO new method in Collection class!
                     find_query= { '$in': sheet['rows'] }
+                    collection.set_query({ 'idef': find_query })
+                    data = collection.get_data( db, d, v, i )
+
+                    # TODO make sheet['rows'], sheet['breadcrumbs'] and data be sorted the same way!!
+                    # TODO re-code it one sipmle for over zip( data, sheet['breeadcrumbs'] )
+                    if sheet['filtered']:
+                        for filtered_row in data:
+                            for j, rw in enumerate( sheet['rows'] ):
+                                if filtered_row['idef'] == rw:
+                                    filtered_row.update({ 'breadcrumb': sheet['breadcrumbs'][j] })
+                                    break
                 else:
                     data = []
                     for _id in sheet['rows']:
                         data += self.collect_children( collection, parent_id, {} )
 
                     sheet['rows'] = data
-
-        # TODO TODO TODO
-        # TODO TODO TODO
-
-                collection.set_query({ 'idef': find_query })
-                data = collection.get_data( db, d, v, i )
-
-                # TODO make sheet['rows'], sheet['breadcrumbs'] and data be sorted the same way!!
-                # TODO re-code it one sipmle for over zip( data, sheet['breeadcrumbs'] )
-                if sheet['filtered']:
-                    for filtered_row in data:
-                        for j, rw in enumerate( sheet['rows'] ):
-                            if filtered_row['idef'] == rw:
-                                filtered_row.update({ 'breadcrumb': sheet['breadcrumbs'][j] })
-                                break
 
         return data
 
