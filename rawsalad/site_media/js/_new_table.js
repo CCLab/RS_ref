@@ -34,13 +34,13 @@ var _table = (function () {
         
         
         switch ( type ) {
-            case 0: // TODO change for 'STANDARD'
+            case _enum.STANDARD:
                 table_code = create_standard_table( data );
                 break;
-            case 'FILTERED':
+            case _enum.FILTERED:
                 table_code = create_filtered_table( data );
                 break;
-            case 'SEARCHED':
+            case _enum.SEARCHED:
                 table_code = create_searched_table( data );
                 break;
             default:
@@ -66,23 +66,30 @@ var _table = (function () {
                         
         header_code = create_standard_header( data );
         rows_code = create_rows( data );
-//        table_code = header_code + rows_code;
+        table_code = header_code.concat( rows_code );
         
-        
-        return header_code.concat( rows_code );
+        return table_code;
     };
+
     
     function create_standard_header( data ) {
         var head_row_code;
+        var standard_header_code;
         var total_row_code = '';        
-        var total = data['total'] || false; // TODO- need 'total' in data from resource every total has 'key', 'class' and 'data'
+        var total = data['total'] || false;
 
         head_row_code = Mustache.to_html( standard_head_row_template, data );
+
         if ( !!total ) {
             total_row_code = Mustache.to_html( standard_total_row_template, data );
         }
-        return '<thead>'.concat( head_row_code, total_row_code, '</thead>' );
+        
+        standard_header_code = '<thead>'
+                                .concat( head_row_code, total_row_code, '</thead>' );
+
+        return standard_header_code;
     };
+
         
     function create_rows( data ) {
         var tbody_code;
@@ -92,35 +99,8 @@ var _table = (function () {
         return tbody_code;
     };
 
-    function generate_single_row( row, columns ) {  //TODO add mustache template for 
-        var row_code = [];
-        var level = row['level'];
-        var selected = row['selected'] || '';
-        
-        row_code.push( '<tr id="', row['idef'], '" ' );
-        row_code.push( 'data-open="', row['is_open'], '" ' );
-        row_code.push( 'class="', selected,' ', row['parent'], '">' );
-        columns.forEach( function ( column, i  ) {                           
-            row_code.push( '<td class="', column['key'],' ', column['format_class'] );
-            if ( !row[leaf] && column['key'] === 'type' ) { // TODO refactor and add info panel heare
-                row_code.push( 'click ' );
-            }
-            
-            if ( i === 0 && level > 1 ) {
-                row_code.push( 'style="padding-left: ', ( level - 1 ) * 10, 'px;"' );            
-            }
-            
-            row_code.push( '>' );
-            row.code.push( row[column['key']] );
-            
-            row_code.push('</td>');            
-        } );
-        row_code.push('</tr>');
-        return row_code.join('');
-        
-    };
 
-// T E M P L A T E S
+    // T E M P L A T E S
     var standard_head_row_template = 
         '<tr>' +
             '{{#columns}}' +
@@ -129,6 +109,7 @@ var _table = (function () {
                 '</td>' +
             '{{/columns}}' +
         '</tr>';
+
                 
     var standard_total_row_template =      
         '<tr>' +
@@ -139,6 +120,7 @@ var _table = (function () {
             '{{/total}}' +
         '</tr>';
         
+
     var standard_tbody_template = 
         '<tbody>' +
             '{{#rows}}' + //TODO add info panel
@@ -157,8 +139,6 @@ var _table = (function () {
             '{{/rows}}' +
         '</tbody>';
             
-
-    
     
     // return public interface
     return that;

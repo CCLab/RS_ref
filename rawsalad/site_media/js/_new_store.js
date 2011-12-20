@@ -70,7 +70,7 @@ var _store = (function () {
 
         if ( has_data( col_id ) ) {
             data_source = get_data_source( col_id );
-            data = monkey.createTree( data_source.children( data_source.root() ), 'idef_sort' );
+            data = monkey.createTree( data_source.children( data_source.root() ), '_id', 'parent' );
             data_package = {
                 'data': data.copy(),
                 'meta': meta_data_sources[col_id]

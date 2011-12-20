@@ -1,0 +1,136 @@
+/******************************************************/
+/*                 O B J E C T S                      */
+/******************************************************/
+ 
+ 
+SHEET OBJECT:
+=============
+
+    columns: Array[]
+    id: int
+    name: string
+    rows: Array[]
+    total: Array[]
+    type: int
+
+
+== Lists of objects in 'sheet' object: ==
+
+    columns:[ { 
+        key: string
+        label: string
+        type: string
+        }, ]
+
+    total:[ {
+        column_key: string
+        column_type: string
+        data: string
+        }, ]
+
+    rows:[ {
+        _id: int
+        data: Array[]
+        is_open: bolean
+        leaf: bolean
+        level: int
+        parent: int
+        }, ]
+ 
+
+==== 'data' list of objects in 'rows': ====
+
+        data:[ {
+            click: string
+            column_key: string
+            column_type: string
+            content: string
+            }, ] 
+
+
+/******************************************************/
+/*                 F U N C T I O N S                  */
+/******************************************************/
+
+ALL SHEETS
+==========
+
+    _resource.get_sheets_names() : sheets[{} ];
+
+== 'sheets' list of objects: ==
+
+    sheets:[ {
+        name: string
+        sheet_id: int
+        }, ]
+
+
+ADD NODE:
+=========
+
+    _resource.get_children( sheet_id, row_id ) : rows[{},]
+
+    _resource.remove_child( sheet_id, node_id ) : void
+
+
+
+SELECT ROW
+===========
+
+    _resource.row_selected( new_row_id, before_row_id ): void
+
+
+
+SHOW MORE COLUMNS
+===================
+
+    _resource.all_columns( sheet_id ) : columns[{},]
+
+
+== 'columns' list of objects: ==
+
+    columns:[ {
+        key: string
+        label: string
+        selected: bolean
+        }, ]
+        
+CLEAN TABLE
+===========
+
+    _resource.clean_table( sheet_id, callback ): void
+    
+
+CHANGE SHEET NAME
+=================
+
+    _resource.change_name( sheet_id, new_name ): void
+    
+    
+INFO PANEL
+==========
+
+    _resource.get_info( sheet_id, row_id ): info[]
+    
+    
+SORT SHEET
+==========
+
+    _resource.sortable_columns( sheet_id ): columns[{},]
+
+    _resource.sort( sheet_id, query, callback );
+    
+== 'columns' list of objects: ==
+
+    columns:[ {
+        key: string
+        label: string
+        }, ]
+
+
+FILTER SHEET
+============
+
+
+SEARCH SHEET
+============
