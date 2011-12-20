@@ -34,13 +34,13 @@ var _table = (function () {
         
         
         switch ( type ) {
-            case 0: // TODO change for 'STANDARD'
+            case _enum.STANDARD:
                 table_code = create_standard_table( data );
                 break;
-            case 'FILTERED':
+            case _enum.FILTERED:
                 table_code = create_filtered_table( data );
                 break;
-            case 'SEARCHED':
+            case _enum.SEARCHED:
                 table_code = create_searched_table( data );
                 break;
             default:
@@ -66,10 +66,10 @@ var _table = (function () {
                         
         header_code = create_standard_header( data );
         rows_code = create_rows( data );
-//        table_code = header_code + rows_code;
+        table_code = header_code.concat( rows_code );
         
         
-        return header_code.concat( rows_code );
+        return table_code;
     };
     
     function create_standard_header( data ) {
