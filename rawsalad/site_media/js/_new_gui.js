@@ -112,6 +112,22 @@ var _gui = (function () {
         });
 
         draw_table( data );
+        make_zebra();
+    }
+    
+    function make_zebra() {
+        $('#app-tb-datatable')
+            .find('tr:visible')
+            .each( function ( i ) {
+                if( i % 2 === 0 ) {
+                    $(this).removeClass( 'odd' );
+                    $(this).addClass( 'even' );
+                }
+                else {
+                    $(this).removeClass( 'even' );
+                    $(this).addClass( 'odd' );
+                }
+            });
     }
 
     function remove_table() {
