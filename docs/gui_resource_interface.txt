@@ -52,6 +52,18 @@ SHEET OBJECT:
 /*                 F U N C T I O N S                  */
 /******************************************************/
 
+ALL SHEETS
+==========
+
+    _resource.get_sheets_names() : sheets[{} ];
+
+== 'sheets' list of objects: ==
+
+    sheets:[ {
+        name: string
+        sheet_id: int
+        }, ]
+
 
 ADD NODE:
 =========

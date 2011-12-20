@@ -31,10 +31,10 @@ var _gui = (function () {
 
     that.init_gui = function () {
         $('#test-button-1').click( function () {
-            _resource.get_top_level(100002, draw_new_table);
+            _resource.get_top_level(100002, draw_app_table);
         });
         $('#test-button-2').click( function () {
-            _resource.get_top_level(100005, draw_new_table);
+            _resource.get_top_level(100005, draw_app_table);
         });
 
         // stupid testing environment
@@ -63,39 +63,15 @@ var _gui = (function () {
     };
 
 
-
-
 // P R I V A T E   I N T E R F A C E
 
-    function draw_db_tree_panels( data ) {
-        console.log( data );
-    }
+    function draw_app_table( data ) {
+        
+        //generate_app_table_code( data );         
 
-    // Create table.
-    // IN:
-    // data - data needed to draw table
-    function draw_table( data ) {
-        var prepare_full_code = function( table_code, id ) {
-            var full_code = ['<table="table-' + id + '">'];
-            full_code.push( table_code );
-            full_code.push( '</div>' );
 
-            return full_code.join('');
-        };
-        var table_code;
-        var table_type = data['type']; // TODO remove
-        var table_data = data['data']; // TODO remove
-        var columns = data['columns']; // TODO remove
-        var full_code;
 
-        table_code = _table.create_table( data );
-//        full_code = prepare_full_code( table_code, data['id'] ); TODO add sheet id to full code
-
-        remove_table();
-        show_table( table_code, data['id'] );
-    }
-
-    function draw_new_table( data ) {
+        // simple test environment
         var create_tab = function( name, id ) {
             var html_code = [];
             html_code = ['<button id=', id, '>'];
@@ -104,16 +80,63 @@ var _gui = (function () {
 
             return html_code.join('');
         };
-
         var tab_code = create_tab( data['name'], data['id'], data['type'] );
         $('#tabs').append( tab_code );
         $('#' + data['id']).click( function ( tab ) {
             draw_table( data );
         });
+        // end of test environment
 
-        draw_table( data );
+
+        draw_table( data ); // TODO remove this
+        $('#application').show();
         make_zebra();
     }
+    
+    function generate_app_table_code( data ) {
+        var app_table_code;    
+        var header_code;
+        var main_pan_code;
+        var main_pan_content;
+        var tools_code;
+        var table_code;
+        
+        //var sheets = _resource.get_sheets_names(); TODO - not ready in resources
+        
+        
+        // TODO add to 'sheet' 'active' = true if active      
+        //app_table_header_code = Mustache.to_html( app_table_header_template, sheets );
+
+
+// TODO tools_code = prepare tools code
+        table_code = _table.create_table( data );        
+
+
+        main_pan_content = {
+                    'tools': tools_code,
+                    'table': table_code,
+                    }; 
+        main_pan_code = Mustache.to_html( app_table_main_pan_template, main_pan_content );
+
+        
+        app_table_code = app_table_header_code.concat( app_table_main_pan_code );
+        return app_table_code;    
+    }
+
+
+    function draw_db_tree_panels( data ) {
+        console.log( data );
+    }
+
+
+    function draw_table( data ) { // TODO - remove this function
+        
+        var table_code;
+        table_code = _table.create_table( data );
+        remove_table(); // TODO - remove 
+        show_table( table_code, data['id'] );
+    }
+
     
     function make_zebra() {
         $('#app-tb-datatable')
@@ -130,17 +153,49 @@ var _gui = (function () {
             });
     }
 
+
     function remove_table() {
-        //$('#simpletable').empty();
         $('#app-tb-datatable').empty();
     }
 
+
     function show_table( table_code, table_id ) {
         $('#app-tb-datatable').append( table_code );
-        //$('#simpletable').html( table_code );
-        //console.log( table_code );
     }
 
+
+    // T E M P L A T E S
+
+    var app_table_header_template = //TODO test it
+        '<header>' +
+            '<div id="app-tb-save-sheet" class="blue button left">Kopiuj do arkusza</div>' +
+            '<ul id="app-tb-sheets">' +
+                '{{#sheet}}' +
+                    '<li id="snap-{{sheet_id}}" class="sheet tab button' +
+                        '{{#active}}' +
+                            ' active' +
+                        '{{/active}}' +
+                    '" title="{{name}}">' +
+                        '{{name}}' +
+                    '</li>' +
+                '{{/sheet}}' +                
+            '</ul>' +
+        '</header>';
+        
+    var app_table_main_pan_template = 
+        '<section class="panel-main">' +
+          '<section id="app-tb-tools">' +
+            '{{tools}}' +
+          '</section>' +
+          '<table id="app-tb-datatable">' +
+            '{{table}}' +
+          '</table>' +
+        '</section>';
+              
+    var app_table_tools_template = '' //TODO prepare this
+    
+
+    // return public interface    
     return that;
 
 })();
