@@ -423,14 +423,11 @@ class StateManager:
 
 
     def get_state( self, permalink_id ):
-        permalinks   = self.db['permalinks']
+        permalinks = self.db['permalinks']
 
         # get the state object stored in db
         state = permalinks.find_one({ '_id': permalink_id })
 
-        # TODO TODO TODO
-        # TODO TODO TODO
-        # TODO TODO TODO
         # substitute list of open ids with actual data: level 'a' + open branches
         for group in groups:
             endpoint   = group['endpoint']
@@ -445,18 +442,19 @@ class StateManager:
                     # TODO TODO TODO
                     # TODO TODO TODO
                     # TODO new method in Collection class!
-                    find_query= { '$in': sheet['rows'] }
-                    collection.set_query({ 'idef': find_query })
-                    data = collection.get_data( db, d, v, i )
-
-                    # TODO make sheet['rows'], sheet['breadcrumbs'] and data be sorted the same way!!
-                    # TODO re-code it one sipmle for over zip( data, sheet['breeadcrumbs'] )
-                    if sheet['filtered']:
-                        for filtered_row in data:
-                            for j, rw in enumerate( sheet['rows'] ):
-                                if filtered_row['idef'] == rw:
-                                    filtered_row.update({ 'breadcrumb': sheet['breadcrumbs'][j] })
-                                    break
+                    pass
+#                    find_query= { '$in': sheet['rows'] }
+#                    collection.set_query({ 'idef': find_query })
+#                    data = collection.get_data( db, d, v, i )
+#
+#                    # TODO make sheet['rows'], sheet['breadcrumbs'] and data be sorted the same way!!
+#                    # TODO re-code it one sipmle for over zip( data, sheet['breeadcrumbs'] )
+#                    if sheet['filtered']:
+#                        for filtered_row in data:
+#                            for j, rw in enumerate( sheet['rows'] ):
+#                                if filtered_row['idef'] == rw:
+#                                    filtered_row.update({ 'breadcrumb': sheet['breadcrumbs'][j] })
+#                                    break
                 else:
                     data = []
                     for _id in sheet['rows']:
@@ -464,7 +462,7 @@ class StateManager:
 
                     sheet['rows'] = data
 
-        return data
+        return groups
 
 
     def collect_children( self, collection, parent_id, visited ):
@@ -481,389 +479,389 @@ class StateManager:
             node     = collection.get_node( parent_id )
             children = collection.get_children( parent_id )
 
-            return children + collect_children( collection, node['parent'], visited )
-
-
-
-class Query:
-    def __init__( self ):
-        pass
-
-    def build_query( idef_list):
-        """Build regex for mongo query"""
-        # TODO understand why it's limited
-        # TODO in long term - get rid of this limit
-        results_limit = 275
-
-        if len( idef_list ) < results_limit:
-            lookup = ''.join( [ r'(%s)|' % build_idef_regexp( idef ) for idef in idef_list ] )
-            # cutting the last symbol | in case it's the end of list
-            lookup = lookup[:-1]
-
-        return lookup
-
-
-    def build_idef_regexp( idef ):
-        """Build regexp quering collection"""
-        level_num = idef.count('-')
-
-        # TODO make it recursive to be readable
-        # TODO shouldn't it be done by '$or' mongo operator
-        # TODO move it all to the db module!!
-        # build regexp for the given idef plus it's context (siblings and full parental branch)
-        if level_num > 0: # deeper than 'a'
-            idef   = idef.rsplit('-', 1)[0]
-            lookup = r'^%s\-[A-Z\d]+$' % idef
-            level  = 1
-            while level < level_num:
-                idef    = idef.rsplit('-', 1)[0]
-                lookup += r'|^%s\-[A-Z\d]+$' % idef
-                level  += 1
-
-            lookup += r'|^[A-Z\d]+$'
-        else:
-            lookup = r'^[A-Z\d]+$'
-
-        return lookup
-
-
-
-
-class Search:
-    """
-    the class searches through data in mongo
-    """
-    def __init__(self):
-        self.set_query( None )
-        self.set_scope( None )
-        self.strict= False
-        self.found= {} # results in short form
-        self.response= Response().get_response(0) # Search class is optimistic
-
-    def __del__(self):
-        self.found= None
-
-    def set_query(self, query):
-        self.qrystr= query
-
-    def set_scope(self, scope):
-        self.scope= scope
-
-    def set_lookup(self, lookup):
-        self.lookup= lookup
-        if lookup is None:
-            self.lookup= []
-
-    def switch_strict(self, strict):
-        if strict:
-            self.strict= True
-
-    def do_search(self, regx, dbconn, collect):
-        """
-        TO-DO:
-        - search with automatic substitution of specific polish letters
-          (lowercase & uppercase): user can enter 'lodz', but the search
-          should find 'Łódż' as well
-        - search with flexible processing of prefixes and suffixes
-          (see str.endswith and startswith)
-        - search in 'info' keys (???)
-        """
-
-        ns_list= [] # list of results
-        error_list= []
-        found_num= 0 # number of records found
-        exclude_fields= ['idef', 'idef_sort', 'parent', 'parent_sort', 'level'] # not all fields are searchable!
-
-        for sc in self.scope: # fill the list of collections
-            sc_list= sc.split('-')
-            dataset, idef, issue= int(sc_list[0]), int(sc_list[1]), str(sc_list[2])
-            collect.set_fields( ["perspective", "ns", "columns"] )
-            metadata= collect.get_complete_metadata(dataset, idef, issue, dbconn)
-            if metadata is None:
-                error_list.append('collection not found %s' % sc)
-            else:
-                curr_coll_dict= {
-                    'perspective': metadata['perspective'],
-                    'dataset': dataset,
-                    'view': idef,
-                    'issue': issue,
-                    'data': []
-                    }
-
-                collect.set_fields(None) # presumed to search through all fields
-                for fld in metadata['columns']:
-                    if 'processable' in fld:
-
-                        check_str= fld['type'] == 'string'
-                        if len(self.lookup) > 0:
-                            check_valid= fld['key'] in self.lookup
-                        else:
-                            check_valid= fld['key'] not in exclude_fields
-
-                        if fld['processable'] and check_str and check_valid:
-                            search_query= { fld['key']: regx }
-                            collect.set_query(search_query)
-
-                            # actual query to the db
-                            found= collect.get_data(dbconn, dataset, idef, issue)
-
-                            for found_elt in found:
-                                # control of what is already found
-                                if sc not in self.found:
-                                    self.found[sc]= []
-                                if found_elt['idef'] not in self.found[sc]:
-                                    self.found[sc].append(found_elt['idef'])
-
-                                    curr_coll_dict['data'].append({
-                                        'key': fld['key'],
-                                        'text': found_elt[str(fld['key'])],
-                                        'idef': found_elt['idef'],
-                                        'parent': found_elt['parent']
-                                        })
-                                    found_num += 1
-
-                if len(curr_coll_dict['data']) > 0:
-                    ns_list.append(curr_coll_dict)
-
-        out_dict= { 'records_found': found_num, 'result': ns_list }
-        if len(error_list) > 0:
-            out_dict['errors']= error_list
-
-        return out_dict
-
-
-    def build_regexp(self, searchline, strict):
-        """ construct regexp for search """
-        if strict:
-            # version 1 - have problems
-            # searchline= "^%(lookupstr)s([^a-z][^A-Z][^0-9]|\s)|([^a-z][^A-Z][^0-9]|\s)%(lookupstr)s([^a-z][^A-Z][^0-9]|\s)|([^a-z][^A-Z][^0-9]|\s)%(lookupstr)s$" % { "lookupstr": searchline }
-            # version 2
-            searchline= r"^%(lookupstr)s(\s)+|^%(lookupstr)s$|\s+%(lookupstr)s\s+|\s+%(lookupstr)s$" % { "lookupstr": searchline }
-        return searchline
-
-    def search_data(self, datasrc, qrystr, scope, strict, lookup= None):
-        self.set_query(qrystr)
-        self.set_scope(scope)
-        self.switch_strict(strict)
-        self.set_lookup(lookup)
-
-        regxsearch= self.build_regexp( self.qrystr, self.strict )
-        regx= re.compile(regxsearch, re.IGNORECASE)
-
-        coll= Collection()
-        out= { }
-        total_rec= 0
-
-        self.found= {}
-
-        # 1st pass
-        tl1= time() # starting to search
-        result_1= self.do_search(regx, datasrc, coll)
-        total_rec += result_1['records_found']
-        tlap1= time()-tl1 # 1st pass finished
-        result_1.update( { "search_time": "%0.6f" % tlap1 } )
-        out['strict']= result_1
-
-        # 2nd pass
-        second_pass_list= []
-        if not self.strict: # second pass makes sense
-            result_2= { 'records_found': 0 } # blank dict for 2nd pass
-            tl2= time() # starting to search
-
-            second_pass_list= self.qrystr.split(' ')
-            if len(second_pass_list) > 1: # 2nd pass makes sense only if search str consists of >1 words
-
-                for wrd in second_pass_list:
-                    lookup= self.build_regexp(wrd, True) # we look for separate words using strict
-                    regx= re.compile(lookup, re.IGNORECASE)
-                    result_2_curr= self.do_search(regx, datasrc, coll)
-
-                    if result_2_curr['records_found'] > 0:
-                        result_2['result']= result_2_curr['result']
-                        result_2['records_found'] += result_2_curr['records_found']
-
-                    total_rec += result_2_curr['records_found']
-
-            tlap2= time()-tl2 # 2nd pass finished
-            result_2.update( { "search_time": "%0.6f" % tlap2 } )
-
-            out['loose']= result_2
-
-        tlap= time()-tl1
-        out.update( {
-            'search_time_total': "%0.6f" % tlap,
-            'records_found_total': total_rec
-            } )
-
-        return out
-
-    def search_text( self, datasrc, qrystr, scope, strict, display=['idef'] ):
-        self.set_query(qrystr)
-        self.set_scope(scope)
-        self.switch_strict(strict)
-
-        out= { 'result': [] }
-        self.found= {}
-        qry_dict= { }
-
-        collect= Collection()
-
-        words_list= qrystr.strip().lower().split(' ')
-        if len(words_list) > 1: # multiple words
-            kwds_list= []
-            for word in words_list:
-                query_regx= r'^%s' % word
-                # query_regx= r'%s' % word # WARNING! it works, but extremely slow!
-                if strict:
-                    query_regx += '$'
-                    # query_regx = '^' + query_regx + '$'
-                kwds_list.append({ '_keywords': re.compile(query_regx) })
-            qry_dict.update({ '$and': kwds_list })
-        elif len(words_list) == 1: # one word
-            query_regx= r'^%s' % qrystr
-            # query_regx= r'%s' % qrystr # WARNING! it works, but extremely slow!
-            if strict:
-                query_regx += '$'
-                # query_regx = '^' + query_regx + '$'
-            qry_dict.update( { '_keywords': re.compile(query_regx) } )
-
-        collect.set_query(qry_dict)
-
-        tl1= time() # starting to search
-        found_total= 0
-
-        # iterating through collections
-        error_list= []
-        for sc in self.scope: # fill the list of collections
-            found_num= 0
-            sc_list= sc.split('-')
-            dataset, idef, issue= int(sc_list[0]), int(sc_list[1]), str(sc_list[2])
-            collect.set_fields( ["perspective", "ns"] ) # WARNING! eventually we can add "columns" here for indication where the result is found
-            metadata= collect.get_complete_metadata(dataset, idef, issue, datasrc)
-
-            if metadata is None:
-                error_list.append('collection not found %s' % sc)
-            else:
-                curr_coll_dict= {
-                    'perspective': metadata.get('perspective', ''),
-                    'dataset': dataset,
-                    'view': idef,
-                    'issue': issue,
-                    'data': []
-                    }
-
-                collect.set_fields(display)
-
-                # actual query to the db
-                found= collect.get_data(datasrc, dataset, idef, issue)
-                for rec in found:
-                    curr_coll_dict['data'].append(rec)
-                    found_num += 1
-
-            if found_num > 0:
-                found_total += found_num
-                out['result'].append(curr_coll_dict)
-
-        tlap= time()-tl1
-        out.update( {
-            'search_time_total': "%0.6f" % tlap,
-            'records_found_total': found_total
-            } )
-
-        return out
-
-
-
-# TODO make it HTTP response, not pseudo-response
-class Response:
-    """
-    response object
-    returns dict with http response and description
-    """
-    def __init__(self):
-        self.code= 0 # Response class is optimistic
-        self.response_dict= {
-            '0': {
-                'httpresp': 200,
-                'descr': 'OK'
-                },
-            '1': {
-                'httpresp': 200,
-                'descr': 'OK: Data successfully updated'
-                },
-            '2': {
-                'httpresp': 200,
-                'descr': 'OK: Data successfully inserted'
-                },
-            '10': {
-                'httpresp': 404,
-                'descr': 'ERROR: No such data!'
-                },
-            '20': {
-                'httpresp': 404,
-                'descr': 'ERROR: No such meta-data!'
-                },
-            '30': {
-                'httpresp': 400,
-                'descr': 'ERROR: Bad request!'
-                },
-            '31': {
-                'httpresp': 400,
-                'descr': 'ERROR: Scope +TO+ is applicable to the codes on the same level!'
-                },
-            '32': {
-                'httpresp': 400,
-                'descr': 'ERROR: Wrong sequence in the scope +TO+!'
-                },
-            '33': {
-                'httpresp': 400,
-                'descr': 'ERROR: Scope +TO+ should include only 2 elements!'
-                },
-            '34': {
-                'httpresp': 400,
-                'descr': 'ERROR: Syntax error in scope definition!',
-                },
-            '35': {
-                'httpresp': 400,
-                'descr': 'ERROR: Format not specified!'
-                },
-            '36': {
-                'httpresp': 400,
-                'descr': 'ERROR: Search string not given!'
-                },
-            '37': {
-                'httpresp': 404,
-                'descr': 'ERROR: No such collection(s)!'
-                },
-            '40': {
-                'httpresp': 404,
-                'descr': 'ERROR: No data for specified state id!'
-                },
-            '41': {
-                'httpresp': 500,
-                'descr': 'ERROR: Cannot insert data into the db!'
-                },
-            '42': {
-                'httpresp': 400,
-                'descr': 'ERROR: Wrong state id!'
-                },
-            '43': {
-                'httpresp': 404,
-                'descr': 'ERROR: No data specified!'
-                },
-            '44': {
-                'httpresp': 500,
-                'descr': 'ERROR: Cannot update document!'
-                },
-            }
-
-    def __del__(self):
-        pass
-
-    def get_response(self, code):
-        self.code= code
-        self.http_resp= self.response_dict[str(code)]['httpresp']
-        self.descr= self.response_dict[str(code)]['descr']
-        return self.response_dict[str(code)]
-
+            return children + self.collect_children( collection, node['parent'], visited )
+
+
+
+#class Query:
+#    def __init__( self ):
+#        pass
+#
+#    def build_query( idef_list):
+#        """Build regex for mongo query"""
+#        # TODO understand why it's limited
+#        # TODO in long term - get rid of this limit
+#        results_limit = 275
+#
+#        if len( idef_list ) < results_limit:
+#            lookup = ''.join( [ r'(%s)|' % build_idef_regexp( idef ) for idef in idef_list ] )
+#            # cutting the last symbol | in case it's the end of list
+#            lookup = lookup[:-1]
+#
+#        return lookup
+#
+#
+#    def build_idef_regexp( idef ):
+#        """Build regexp quering collection"""
+#        level_num = idef.count('-')
+#
+#        # TODO make it recursive to be readable
+#        # TODO shouldn't it be done by '$or' mongo operator
+#        # TODO move it all to the db module!!
+#        # build regexp for the given idef plus it's context (siblings and full parental branch)
+#        if level_num > 0: # deeper than 'a'
+#            idef   = idef.rsplit('-', 1)[0]
+#            lookup = r'^%s\-[A-Z\d]+$' % idef
+#            level  = 1
+#            while level < level_num:
+#                idef    = idef.rsplit('-', 1)[0]
+#                lookup += r'|^%s\-[A-Z\d]+$' % idef
+#                level  += 1
+#
+#            lookup += r'|^[A-Z\d]+$'
+#        else:
+#            lookup = r'^[A-Z\d]+$'
+#
+#        return lookup
+#
+#
+#
+#
+#class Search:
+#    """
+#    the class searches through data in mongo
+#    """
+#    def __init__(self):
+#        self.set_query( None )
+#        self.set_scope( None )
+#        self.strict= False
+#        self.found= {} # results in short form
+#        self.response= Response().get_response(0) # Search class is optimistic
+#
+#    def __del__(self):
+#        self.found= None
+#
+#    def set_query(self, query):
+#        self.qrystr= query
+#
+#    def set_scope(self, scope):
+#        self.scope= scope
+#
+#    def set_lookup(self, lookup):
+#        self.lookup= lookup
+#        if lookup is None:
+#            self.lookup= []
+#
+#    def switch_strict(self, strict):
+#        if strict:
+#            self.strict= True
+#
+#    def do_search(self, regx, dbconn, collect):
+#        """
+#        TO-DO:
+#        - search with automatic substitution of specific polish letters
+#          (lowercase & uppercase): user can enter 'lodz', but the search
+#          should find 'Łódż' as well
+#        - search with flexible processing of prefixes and suffixes
+#          (see str.endswith and startswith)
+#        - search in 'info' keys (???)
+#        """
+#
+#        ns_list= [] # list of results
+#        error_list= []
+#        found_num= 0 # number of records found
+#        exclude_fields= ['idef', 'idef_sort', 'parent', 'parent_sort', 'level'] # not all fields are searchable!
+#
+#        for sc in self.scope: # fill the list of collections
+#            sc_list= sc.split('-')
+#            dataset, idef, issue= int(sc_list[0]), int(sc_list[1]), str(sc_list[2])
+#            collect.set_fields( ["perspective", "ns", "columns"] )
+#            metadata= collect.get_complete_metadata(dataset, idef, issue, dbconn)
+#            if metadata is None:
+#                error_list.append('collection not found %s' % sc)
+#            else:
+#                curr_coll_dict= {
+#                    'perspective': metadata['perspective'],
+#                    'dataset': dataset,
+#                    'view': idef,
+#                    'issue': issue,
+#                    'data': []
+#                    }
+#
+#                collect.set_fields(None) # presumed to search through all fields
+#                for fld in metadata['columns']:
+#                    if 'processable' in fld:
+#
+#                        check_str= fld['type'] == 'string'
+#                        if len(self.lookup) > 0:
+#                            check_valid= fld['key'] in self.lookup
+#                        else:
+#                            check_valid= fld['key'] not in exclude_fields
+#
+#                        if fld['processable'] and check_str and check_valid:
+#                            search_query= { fld['key']: regx }
+#                            collect.set_query(search_query)
+#
+#                            # actual query to the db
+#                            found= collect.get_data(dbconn, dataset, idef, issue)
+#
+#                            for found_elt in found:
+#                                # control of what is already found
+#                                if sc not in self.found:
+#                                    self.found[sc]= []
+#                                if found_elt['idef'] not in self.found[sc]:
+#                                    self.found[sc].append(found_elt['idef'])
+#
+#                                    curr_coll_dict['data'].append({
+#                                        'key': fld['key'],
+#                                        'text': found_elt[str(fld['key'])],
+#                                        'idef': found_elt['idef'],
+#                                        'parent': found_elt['parent']
+#                                        })
+#                                    found_num += 1
+#
+#                if len(curr_coll_dict['data']) > 0:
+#                    ns_list.append(curr_coll_dict)
+#
+#        out_dict= { 'records_found': found_num, 'result': ns_list }
+#        if len(error_list) > 0:
+#            out_dict['errors']= error_list
+#
+#        return out_dict
+#
+#
+#    def build_regexp(self, searchline, strict):
+#        """ construct regexp for search """
+#        if strict:
+#            # version 1 - have problems
+#            # searchline= "^%(lookupstr)s([^a-z][^A-Z][^0-9]|\s)|([^a-z][^A-Z][^0-9]|\s)%(lookupstr)s([^a-z][^A-Z][^0-9]|\s)|([^a-z][^A-Z][^0-9]|\s)%(lookupstr)s$" % { "lookupstr": searchline }
+#            # version 2
+#            searchline= r"^%(lookupstr)s(\s)+|^%(lookupstr)s$|\s+%(lookupstr)s\s+|\s+%(lookupstr)s$" % { "lookupstr": searchline }
+#        return searchline
+#
+#    def search_data(self, datasrc, qrystr, scope, strict, lookup= None):
+#        self.set_query(qrystr)
+#        self.set_scope(scope)
+#        self.switch_strict(strict)
+#        self.set_lookup(lookup)
+#
+#        regxsearch= self.build_regexp( self.qrystr, self.strict )
+#        regx= re.compile(regxsearch, re.IGNORECASE)
+#
+#        coll= Collection()
+#        out= { }
+#        total_rec= 0
+#
+#        self.found= {}
+#
+#        # 1st pass
+#        tl1= time() # starting to search
+#        result_1= self.do_search(regx, datasrc, coll)
+#        total_rec += result_1['records_found']
+#        tlap1= time()-tl1 # 1st pass finished
+#        result_1.update( { "search_time": "%0.6f" % tlap1 } )
+#        out['strict']= result_1
+#
+#        # 2nd pass
+#        second_pass_list= []
+#        if not self.strict: # second pass makes sense
+#            result_2= { 'records_found': 0 } # blank dict for 2nd pass
+#            tl2= time() # starting to search
+#
+#            second_pass_list= self.qrystr.split(' ')
+#            if len(second_pass_list) > 1: # 2nd pass makes sense only if search str consists of >1 words
+#
+#                for wrd in second_pass_list:
+#                    lookup= self.build_regexp(wrd, True) # we look for separate words using strict
+#                    regx= re.compile(lookup, re.IGNORECASE)
+#                    result_2_curr= self.do_search(regx, datasrc, coll)
+#
+#                    if result_2_curr['records_found'] > 0:
+#                        result_2['result']= result_2_curr['result']
+#                        result_2['records_found'] += result_2_curr['records_found']
+#
+#                    total_rec += result_2_curr['records_found']
+#
+#            tlap2= time()-tl2 # 2nd pass finished
+#            result_2.update( { "search_time": "%0.6f" % tlap2 } )
+#
+#            out['loose']= result_2
+#
+#        tlap= time()-tl1
+#        out.update( {
+#            'search_time_total': "%0.6f" % tlap,
+#            'records_found_total': total_rec
+#            } )
+#
+#        return out
+#
+#    def search_text( self, datasrc, qrystr, scope, strict, display=['idef'] ):
+#        self.set_query(qrystr)
+#        self.set_scope(scope)
+#        self.switch_strict(strict)
+#
+#        out= { 'result': [] }
+#        self.found= {}
+#        qry_dict= { }
+#
+#        collect= Collection()
+#
+#        words_list= qrystr.strip().lower().split(' ')
+#        if len(words_list) > 1: # multiple words
+#            kwds_list= []
+#            for word in words_list:
+#                query_regx= r'^%s' % word
+#                # query_regx= r'%s' % word # WARNING! it works, but extremely slow!
+#                if strict:
+#                    query_regx += '$'
+#                    # query_regx = '^' + query_regx + '$'
+#                kwds_list.append({ '_keywords': re.compile(query_regx) })
+#            qry_dict.update({ '$and': kwds_list })
+#        elif len(words_list) == 1: # one word
+#            query_regx= r'^%s' % qrystr
+#            # query_regx= r'%s' % qrystr # WARNING! it works, but extremely slow!
+#            if strict:
+#                query_regx += '$'
+#                # query_regx = '^' + query_regx + '$'
+#            qry_dict.update( { '_keywords': re.compile(query_regx) } )
+#
+#        collect.set_query(qry_dict)
+#
+#        tl1= time() # starting to search
+#        found_total= 0
+#
+#        # iterating through collections
+#        error_list= []
+#        for sc in self.scope: # fill the list of collections
+#            found_num= 0
+#            sc_list= sc.split('-')
+#            dataset, idef, issue= int(sc_list[0]), int(sc_list[1]), str(sc_list[2])
+#            collect.set_fields( ["perspective", "ns"] ) # WARNING! eventually we can add "columns" here for indication where the result is found
+#            metadata= collect.get_complete_metadata(dataset, idef, issue, datasrc)
+#
+#            if metadata is None:
+#                error_list.append('collection not found %s' % sc)
+#            else:
+#                curr_coll_dict= {
+#                    'perspective': metadata.get('perspective', ''),
+#                    'dataset': dataset,
+#                    'view': idef,
+#                    'issue': issue,
+#                    'data': []
+#                    }
+#
+#                collect.set_fields(display)
+#
+#                # actual query to the db
+#                found= collect.get_data(datasrc, dataset, idef, issue)
+#                for rec in found:
+#                    curr_coll_dict['data'].append(rec)
+#                    found_num += 1
+#
+#            if found_num > 0:
+#                found_total += found_num
+#                out['result'].append(curr_coll_dict)
+#
+#        tlap= time()-tl1
+#        out.update( {
+#            'search_time_total': "%0.6f" % tlap,
+#            'records_found_total': found_total
+#            } )
+#
+#        return out
+#
+#
+#
+## TODO make it HTTP response, not pseudo-response
+#class Response:
+#    """
+#    response object
+#    returns dict with http response and description
+#    """
+#    def __init__(self):
+#        self.code= 0 # Response class is optimistic
+#        self.response_dict= {
+#            '0': {
+#                'httpresp': 200,
+#                'descr': 'OK'
+#                },
+#            '1': {
+#                'httpresp': 200,
+#                'descr': 'OK: Data successfully updated'
+#                },
+#            '2': {
+#                'httpresp': 200,
+#                'descr': 'OK: Data successfully inserted'
+#                },
+#            '10': {
+#                'httpresp': 404,
+#                'descr': 'ERROR: No such data!'
+#                },
+#            '20': {
+#                'httpresp': 404,
+#                'descr': 'ERROR: No such meta-data!'
+#                },
+#            '30': {
+#                'httpresp': 400,
+#                'descr': 'ERROR: Bad request!'
+#                },
+#            '31': {
+#                'httpresp': 400,
+#                'descr': 'ERROR: Scope +TO+ is applicable to the codes on the same level!'
+#                },
+#            '32': {
+#                'httpresp': 400,
+#                'descr': 'ERROR: Wrong sequence in the scope +TO+!'
+#                },
+#            '33': {
+#                'httpresp': 400,
+#                'descr': 'ERROR: Scope +TO+ should include only 2 elements!'
+#                },
+#            '34': {
+#                'httpresp': 400,
+#                'descr': 'ERROR: Syntax error in scope definition!',
+#                },
+#            '35': {
+#                'httpresp': 400,
+#                'descr': 'ERROR: Format not specified!'
+#                },
+#            '36': {
+#                'httpresp': 400,
+#                'descr': 'ERROR: Search string not given!'
+#                },
+#            '37': {
+#                'httpresp': 404,
+#                'descr': 'ERROR: No such collection(s)!'
+#                },
+#            '40': {
+#                'httpresp': 404,
+#                'descr': 'ERROR: No data for specified state id!'
+#                },
+#            '41': {
+#                'httpresp': 500,
+#                'descr': 'ERROR: Cannot insert data into the db!'
+#                },
+#            '42': {
+#                'httpresp': 400,
+#                'descr': 'ERROR: Wrong state id!'
+#                },
+#            '43': {
+#                'httpresp': 404,
+#                'descr': 'ERROR: No data specified!'
+#                },
+#            '44': {
+#                'httpresp': 500,
+#                'descr': 'ERROR: Cannot update document!'
+#                },
+#            }
+#
+#    def __del__(self):
+#        pass
+#
+#    def get_response(self, code):
+#        self.code= code
+#        self.http_resp= self.response_dict[str(code)]['httpresp']
+#        self.descr= self.response_dict[str(code)]['descr']
+#        return self.response_dict[str(code)]
+#
 
