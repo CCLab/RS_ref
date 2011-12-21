@@ -29,34 +29,35 @@ var _table = (function () {
 //  P U B L I C   I N T E R F A C E
     var that = {};
     
-    that.create_table = function( data ) {
+    that.create_table = function( data, callback ) {
         var type = data['type'];
         
         
         switch ( type ) {
             case _enum.STANDARD:
-                table_code = create_standard_table( data );
+                create_standard_table( data, callback );
                 break;
             case _enum.FILTERED:
-                table_code = create_filtered_table( data );
+                create_filtered_table( data, callback );
                 break;
             case _enum.SEARCHED:
-                table_code = create_searched_table( data );
+                create_searched_table( data, callback );
                 break;
             default:
                 _assert.assert( true, '_table:create_table:wrong table type' );
         };
         
-        return table_code;
+//        return table_code;
     };
 
 
 //  P R I V A T E   I N T E R F A C E
-    function create_standard_table( data ) {
+    function create_standard_table( data, callback ) {
         var header_code;
         var rows_code;
         var table_code;
  
+        // prepare padding value for child rows
         data['rows'] = data['rows'].map( function ( row ) { // TODO - test it                                       
             if ( row['level'] > 1 ) {
                 row['data']['0']['padding']['value'] = ( row['level'] - 1 ) * 10;
@@ -66,9 +67,9 @@ var _table = (function () {
                         
         header_code = create_standard_header( data );
         rows_code = create_rows( data );
-        table_code = header_code.concat( rows_code );
-        
-        return table_code;
+        table_code = '<table id="app-tb-datatable">'
+                        .concat(header_code, rows_code, '</table>' );
+        callback( table_code);
     };
 
     
