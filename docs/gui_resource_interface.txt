@@ -55,7 +55,7 @@ SHEET OBJECT:
 ALL SHEETS
 ==========
 
-    _resource.get_sheets_names() : sheets[{} ];
+    _resource.get_sheets_names( callback ) : sheets[{} ];
 
 == 'sheets' list of objects: ==
 
@@ -68,10 +68,9 @@ ALL SHEETS
 ADD NODE:
 =========
 
-    _resource.get_children( sheet_id, row_id ) : rows[{},]
+    _resource.get_children( sheet_id, row_id, callback ) : rows[{},]
 
     _resource.remove_child( sheet_id, node_id ) : void
-
 
 
 SELECT ROW
@@ -80,12 +79,10 @@ SELECT ROW
     _resource.row_selected( new_row_id, before_row_id ): void
 
 
-
 SHOW MORE COLUMNS
-===================
+=================
 
-    _resource.all_columns( sheet_id ) : columns[{},]
-
+    _resource.all_columns( sheet_id, callback ) : columns[{},]
 
 == 'columns' list of objects: ==
 
@@ -94,6 +91,7 @@ SHOW MORE COLUMNS
         label: string
         selected: bolean
         }, ]
+
         
 CLEAN TABLE
 ===========
@@ -104,19 +102,19 @@ CLEAN TABLE
 CHANGE SHEET NAME
 =================
 
-    _resource.change_name( sheet_id, new_name ): void
+    _resource.change_name( sheet_id, new_name, callback ): void
     
     
 INFO PANEL
 ==========
 
-    _resource.get_info( sheet_id, row_id ): info[]
+    _resource.get_info( sheet_id, row_id, callback ): info[]
     
     
 SORT SHEET
 ==========
 
-    _resource.sortable_columns( sheet_id ): columns[{},]
+    _resource.sortable_columns( sheet_id, callback ): columns[{},]
 
     _resource.sort( sheet_id, query, callback );
     
