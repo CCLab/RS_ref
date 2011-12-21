@@ -429,7 +429,7 @@ class StateManager:
         state = permalinks.find_one({ '_id': permalink_id })
 
         # substitute list of open ids with actual data: level 'a' + open branches
-        for group in groups:
+        for group in state['state']:
             endpoint   = group['endpoint']
             collection = Collection( endpoint, db=self.db )
 
@@ -438,31 +438,24 @@ class StateManager:
 
             # get data for each sheet in the group
             for sheet in group['sheets']:
-                if sheet['filtered']:
-                    # TODO TODO TODO
-                    # TODO TODO TODO
-                    # TODO new method in Collection class!
-                    pass
-#                    find_query= { '$in': sheet['rows'] }
-#                    collection.set_query({ 'idef': find_query })
-#                    data = collection.get_data( db, d, v, i )
-#
-#                    # TODO make sheet['rows'], sheet['breadcrumbs'] and data be sorted the same way!!
-#                    # TODO re-code it one sipmle for over zip( data, sheet['breeadcrumbs'] )
-#                    if sheet['filtered']:
-#                        for filtered_row in data:
-#                            for j, rw in enumerate( sheet['rows'] ):
-#                                if filtered_row['idef'] == rw:
-#                                    filtered_row.update({ 'breadcrumb': sheet['breadcrumbs'][j] })
-#                                    break
+                if sheet.get('filtered', None):
+                    data = collection.get_data( query={ '_id': { '$in': sheet['rows'] }} )
+                    sheet['breadcrumbs'] = self.create_breadcrumbs( data )
                 else:
-                    data = []
+                    data = collection.get_top_level()
+                    visited = {}
                     for _id in sheet['rows']:
-                        data += self.collect_children( collection, parent_id, {} )
+                        parent_id = collection.get_node( _id )['parent']
+                        data += self.collect_children( collection, parent_id, visited )
 
-                    sheet['rows'] = data
+                sheet['rows'] = data
 
-        return groups
+        return state
+
+
+    def create_breadcrumbs( self, _ids ):
+        # TODO hm... write some code here
+        pass
 
 
     def collect_children( self, collection, parent_id, visited ):
