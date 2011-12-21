@@ -29,12 +29,14 @@ var _gui = (function () {
 // P U B L I C   I N T E R F A C E
     var that = {};
 
-    that.init_gui = function () {
-        $('#test-button-1').click( function () {
-            _resource.get_top_level(100002, draw_app_table);
+    that.init_gui = function() {
+        $('#test-button-1').click( function() {
+            generate_app_table( 100002 );
+            //_resource.get_top_level(100002, draw_app_table); // TODO change test environment
         });
-        $('#test-button-2').click( function () {
-            _resource.get_top_level(100005, draw_app_table);
+        $('#test-button-2').click( function() {
+            generate_app_table( 100005 );
+//            _resource.get_top_level(100005, draw_app_table);
         });
 
         // stupid testing environment
@@ -44,7 +46,7 @@ var _gui = (function () {
             {
                 endpoint: 100002
             },
-            function ( d ) {
+            function( d ) {
                 console.log( 'Top level' );
                 console.log( JSON.parse( d ) );
             }
@@ -55,7 +57,7 @@ var _gui = (function () {
                 endpoint: 100002,
                 _id: 10000000
             },
-            function ( d ) {
+            function( d ) {
                 console.log( 'Children' );
                 console.log( JSON.parse( d ) );
             }
@@ -65,77 +67,78 @@ var _gui = (function () {
 
 // P R I V A T E   I N T E R F A C E
 
-    function draw_app_table( data ) {
+
+
+// TODO remove function
+//    function draw_app_table( data ) {
         
-        //generate_app_table_code( data );         
+//        generate_app_table( data );         
 
 
 
-        // simple test environment
-        var create_tab = function( name, id ) {
-            var html_code = [];
-            html_code = ['<button id=', id, '>'];
-            html_code.push( name );
-            html_code.push( '</button>' );
 
-            return html_code.join('');
-        };
-        var tab_code = create_tab( data['name'], data['id'], data['type'] );
-        $('#tabs').append( tab_code );
-        $('#' + data['id']).click( function ( tab ) {
-            draw_table( data );
-        });
+
+        // simple test environment TODO - remove
+//        var create_tab = function( name, id ) {
+//            var html_code = [];
+//            html_code = ['<button id=', id, '>'];
+//            html_code.push( name );
+//            html_code.push( '</button>' );
+
+//            return html_code.join('');
+//        };
+//        var tab_code = create_tab( data['name'], data['id'], data['type'] );
+//        $('#tabs').append( tab_code );
+//        $('#' + data['id']).click( function( tab ) {
+//            draw_table( data );
+//        });
         // end of test environment
 
+//        draw_table( data ); // TODO remove this
 
-        draw_table( data ); // TODO remove this
-        $('#application').show();
-        make_zebra();
-    }
+//    }
     
-    function generate_app_table_code( data ) {
-        var app_table_code;    
-        var header_code;
-        var main_pan_code;
-        var main_pan_content;
-        var tools_code;
-        var table_code;
+    function generate_app_table( sheet_id ) {
+        var result = {};
         
-        //var sheets = _resource.get_sheets_names(); TODO - not ready in resources
+        var display_app_table = function() {
+            if ( _.keys( result ).length !== 2 ) {
+                return;
+            }
+            remove_table();  
+            show_table( result );
+        }
         
-        
-        // TODO add to 'sheet' 'active' = true if active      
-        //app_table_header_code = Mustache.to_html( app_table_header_template, sheets );
-
-
-// TODO tools_code = prepare tools code
-        table_code = _table.create_table( data );        
-
-
-        main_pan_content = {
-                    'tools': tools_code,
-                    'table': table_code,
-                    }; 
-        main_pan_code = Mustache.to_html( app_table_main_pan_template, main_pan_content );
-
-        
-        app_table_code = app_table_header_code.concat( app_table_main_pan_code );
-        return app_table_code;    
+        // TODO its not ready in re test it
+//        _resource.get_sheets_names( function( sheets ) {
+//            // TODO add to 'sheet' 'active' = true if active      
+//            result['header'] = Mustache.to_html( app_table_header_template, sheets );
+//            display_app_table(); 
+//        });
+        result['header'] = '';
+         
+        _resource.get_top_level( sheet_id, function( data ) {
+            var callback = function( table_html ) {                
+                result['table'] = table_html;
+            }
+            _table.create_table( data, callback )
+            display_app_table(); 
+        });      
     }
-
+             
 
     function draw_db_tree_panels( data ) {
         console.log( data );
     }
 
-
-    function draw_table( data ) { // TODO - remove this function
-        
-        var table_code;
-        table_code = _table.create_table( data );
-        remove_table(); // TODO - remove 
-        show_table( table_code, data['id'] );
-    }
+// TODO - remove this function
+//    function draw_table( data ) { 
+//        
+//        var table_code;
+//        table_code = _table.create_table( data );
+//        remove_table(); // TODO - remove 
+//        show_table( table_code, data['id'] );
+//    }
 
     
     function make_zebra() {
@@ -155,19 +158,32 @@ var _gui = (function () {
 
 
     function remove_table() {
+
+        $('#app-table>header').empty();
+        $('#app-tb-tools').empty();
         $('#app-tb-datatable').empty();
     }
 
 
-    function show_table( table_code, table_id ) {
-        $('#app-tb-datatable').append( table_code );
+    function show_table( result ) {
+                
+        var app_header = result['header'];
+        var app_tools = app_table_tools_template;
+        var app_table = result['table'];
+        
+        //    TODO:    preapare_interface(); 
+        $('#app-table>header').append( app_header );
+        $('#app-tb-tools').append( app_tools );
+        $('#app-tb-datatable').append( app_table );
+        
+        $('#application').show();
+        make_zebra();
     }
 
 
     // T E M P L A T E S
 
     var app_table_header_template = //TODO test it
-        '<header>' +
             '<div id="app-tb-save-sheet" class="blue button left">Kopiuj do arkusza</div>' +
             '<ul id="app-tb-sheets">' +
                 '{{#sheet}}' +
@@ -179,22 +195,28 @@ var _gui = (function () {
                         '{{name}}' +
                     '</li>' +
                 '{{/sheet}}' +                
-            '</ul>' +
-        '</header>';
+            '</ul>';
         
-    var app_table_main_pan_template = 
-        '<section class="panel-main">' +
-          '<section id="app-tb-tools">' +
-            '{{tools}}' +
-          '</section>' +
-          '<table id="app-tb-datatable">' +
-            '{{table}}' +
-          '</table>' +
-        '</section>';
-              
-    var app_table_tools_template = '' //TODO prepare this
-    
-
+    var app_table_tools_template = 
+            '<section>' +
+              '<h3 id="app-tb-tl-title" class="left"></h3>' +
+              '<form id="app-tb-tl-rename-form" style="display: none;" class="left" >' +
+                '<input type="text" class="input-text" id="app-tb-tl-rename-input" />' + 
+              '</form>' +
+              '<div id="app-tb-tl-old-title" class="left" style="display: none;" > </div>' +
+              '<div id="app-tb-tl-rename-button" class="button left">Zmień nazwę</div>' +
+              '<div id="app-tb-tl-bt-container" class="right">' +
+                '<div id="app-tb-tl-clear-button" class="button left">Wyczyść tabelę</div>' +
+                '<div id="app-tb-tl-sort-button" class="button left">Sortuj</div>' +
+                '<div id="app-tb-tl-filter-button" class="button left">Filtruj</div>' +
+              '</div>' +
+            '</section>' +
+            '<section>' +
+              '<div id="app-tb-tl-columns-button" class="button right">Dodaj/Usuń kolumny</div>' +
+              '<br class="clear"/>' +
+            '</section>';
+        
+                  
     // return public interface    
     return that;
 

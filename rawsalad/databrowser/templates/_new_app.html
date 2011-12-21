@@ -204,90 +204,14 @@
       <!-- T A B L E -->
       <section id="app-table" class="app-container">
         <header> 
-          <div id="app-tb-save-sheet" class="blue button left">Kopiuj do arkusza</div>
-          <ul id="app-tb-sheets">
-            <!-- <li class="tab button active">Budżet zadanio...</li>
-            <li class="tab button">Arkusz 1</li>
-            <li class="tab button">Narodowy Fun...</li>-->
-          </ul>
         </header>
         <section class="panel-main">
           <!-- T A B L E   T O O L S -->
           <section id="app-tb-tools">
-            <section>
-              <h3 id="app-tb-tl-title" class="left"></h3>
-              <form id="app-tb-tl-rename-form" style="display: none;" class="left" >
-                  <input type="text" class="input-text" id="app-tb-tl-rename-input" /> 
-              </form>
-              <div id="app-tb-tl-old-title" class="left" style="display: none;" > </div>
-              <div id="app-tb-tl-rename-button" class="button left">Zmień nazwę</div>
-              <div id="app-tb-tl-bt-container" class="right">
-                <div id="app-tb-tl-clear-button" class="button left">Wyczyść tabelę</div>
-                <div id="app-tb-tl-sort-button" class="button left">Sortuj</div>
-                <div id="app-tb-tl-filter-button" class="button left">Filtruj</div>
-              </div>
-            </section>
-            <!-- S O R T   F O R M -->
-            <section id="app-tb-tl-srft-forms">
-              <form id="app-tb-tl-sort-form" class="sort-filter-form left">
-
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Wybierz kolumnę</th>
-                      <th>Wybierz porządek</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                  </tbody>
-                </table>
-
-                <div id="app-tb-tl-sort-add" class="grey button">Dodaj kolejny klucz</div>
-                <div id="app-tb-tl-sort-submit" class="blue button">Sortuj</div>
-
-              </form>
-              <!-- F I L T E R   F O R M -->
-              <form id="app-tb-tl-filter-form" class="sort-filter-form left">
-
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Wybierz kolumnę</th>
-                      <th>Wybierz operację</th>
-                      <th>Wpisz treść filtra</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                  </tbody>
-                </table>
-
-                <div id="app-tb-tl-filter-add" class="grey button">Dodaj kolejny klucz</div>
-                <div id="app-tb-tl-filter-submit" class="blue button">Filtruj</div>
-                
-              </form>
-            </section>
-            <!-- C O L U M N S -->
-            <section>
-              <div id="app-tb-tl-columns-button" class="button right">Dodaj/Usuń kolumny</div>
-              <br class="clear"/>
-              <div id="app-tb-tl-columns-list" class="right">
-                <form id="app-tb-tl-columns-form">    
-                  <div id="app-tb-tl-lt-select" class="grey button left">Zaznacz wszystkie</div>
-                  <div id="app-tb-tl-lt-unselect" class="grey button left">Odznacz wszystkie</div>
-                  <div id="app-tb-tl-lt-submit" class="blue button left">Dodaj/Usuń</div>
-                  <br class="clear" />
-                  <table>
-                    <tbody></tbody>
-                  </table>
-                </form>
-                </div>
-            </section>
           </section>
 
           <!-- D A T A   T A B L E  --> 
           <table id="app-tb-datatable">
-            <thead></thead>
-            <tbody></tbody>
           </table>
           
           <!-- F I L T E R E D   T A B L E -->
@@ -330,6 +254,7 @@
 
   <script src="/site_media/js/jquery-1.7.1.min.js"></script>
   <script src="/site_media/js/less-1.1.5.min.js" type="text/javascript"></script>  
+  <script src="/site_media/js/underscore.js"></script>
   <!-- minification area: /site_media/js/ -->
   
   <script src="/site_media/js/hide.js"></script> 
