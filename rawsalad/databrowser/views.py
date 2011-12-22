@@ -16,7 +16,7 @@ def app_page( request ):
     if browser in old_browsers:
         return render_to_response( 'old_browser.html' )
 
-    return render_to_response( '_new_app.html' )
+    return render_to_response( 'app.html' )
 
 
 # url: /get_db_tree/

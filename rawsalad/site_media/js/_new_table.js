@@ -46,8 +46,6 @@ var _table = (function () {
             default:
                 _assert.assert( true, '_table:create_table:wrong table type' );
         };
-        
-//        return table_code;
     };
 
 
