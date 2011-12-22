@@ -121,10 +121,58 @@ frontend_state = '''
                     ]
                 }
             ]
+        },
+        {
+            "endpoint" : 100005,
+            "sheets" : [
+                {
+                    "rows" : [
+                        10001126,
+                        10001147,
+                        10001155
+                    ],
+                    "name" : "Ośrodki NFZ - centrala i śląski",
+                    "columns" : [
+                        {
+                            "format" : "@",
+                            "label" : "Numer",
+                            "processable" : false,
+                            "key" : "type",
+                            "basic" : true,
+                            "type" : "string"
+                        },
+                        {
+                            "format" : "@",
+                            "label" : "Koszty",
+                            "processable" : true,
+                            "key" : "name",
+                            "basic" : true,
+                            "type" : "string"
+                        },
+                        {
+                            "format" : "# ##0",
+                            "label" : "Centrala",
+                            "processable" : true,
+                            "key" : "centrala",
+                            "basic" : true,
+                            "checkable" : true,
+                            "type" : "number"
+                        },
+                        {
+                            "format" : "# ##0",
+                            "label" : "Śląski",
+                            "processable" : true,
+                            "key" : "slaski",
+                            "basic" : false,
+                            "checkable" : true,
+                            "type" : "number"
+                        }
+                    ]
+                }
+            ]
         }
     ]
     '''
-
 # test: permalink saving and restoring
 permalink = js.loads( frontend_state )
 

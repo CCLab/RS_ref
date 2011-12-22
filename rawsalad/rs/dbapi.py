@@ -142,6 +142,13 @@ class Collection:
 
         return data[0]
 
+    def get_parent( self, _id ):
+        '''Get parent of the certain node in the collection'''
+        node   = self.get_node( _id )
+        parent = self.get_node( node['parent'] )
+
+        return parent
+
     def get_children( self, _id ):
         '''Get children of the specified node'''
         return self.get_data({ 'parent': _id })
@@ -440,7 +447,12 @@ class StateManager:
             for sheet in group['sheets']:
                 if sheet.get('filtered', None):
                     data = collection.get_data( query={ '_id': { '$in': sheet['rows'] }} )
-                    sheet['breadcrumbs'] = self.create_breadcrumbs( data )
+                    # mark them as  filtering results
+                    for d in data:
+                        d['filtered'] = True
+                    # add unique parents
+                    visited = {}
+                    data = self.get_unique_parents( data )
                 else:
                     data = collection.get_top_level()
                     visited = {}
@@ -453,9 +465,18 @@ class StateManager:
         return state
 
 
-    def create_breadcrumbs( self, _ids ):
-        # TODO hm... write some code here
-        pass
+#TODO TODO TODO
+    def get_unique_parents( self, data ):
+        visited = {}
+        parents = []
+        for d in data:
+            if d['parent'] in visited:
+                continue
+            else:
+                pass
+
+
+
 
 
     def collect_children( self, collection, parent_id, visited ):
