@@ -31,78 +31,53 @@ var _gui = (function () {
 
     that.init_gui = function() {
         $('#test-button-1').click( function() {
-            generate_app_table( 100002 );
-            //_resource.get_top_level(100002, draw_app_table); // TODO change test environment
+            draw_table( 100002 );
         });
         $('#test-button-2').click( function() {
-            generate_app_table( 100005 );
-//            _resource.get_top_level(100005, draw_app_table);
+            draw_table( 100005 );
         });
 
         // stupid testing environment
         _resource.get_db_tree( draw_db_tree_panels );
-        $.get(
-            '/get_init_data/',
-            {
-                endpoint: 100002
-            },
-            function( d ) {
-                console.log( 'Top level' );
-                console.log( JSON.parse( d ) );
-            }
-        );
-        $.get(
-            '/get_children/',
-            {
-                endpoint: 100002,
-                _id: 10000000
-            },
-            function( d ) {
-                console.log( 'Children' );
-                console.log( JSON.parse( d ) );
-            }
-        );
+
+// TODO remove this
+//        $.get(
+//            '/get_init_data/',
+//            {
+//                endpoint: 100002
+//            },
+//            function( d ) {
+//                console.log( 'Top level' );
+//                console.log( JSON.parse( d ) );
+//            }
+//        );
+//        $.get(
+//            '/get_children/',
+//            {
+//                endpoint: 100002,
+//                _id: 10000000
+//            },
+//            function( d ) {
+//                console.log( 'Children' );
+//                console.log( JSON.parse( d ) );
+//            }
+//        );
     };
 
 
 // P R I V A T E   I N T E R F A C E
 
+    function draw_db_tree_panels( data ) {
+            
+        console.log( data );
+    }
 
-
-// TODO remove function
-//    function draw_app_table( data ) {
-        
-//        generate_app_table( data );         
-
-
-
-
-
-        // simple test environment TODO - remove
-//        var create_tab = function( name, id ) {
-//            var html_code = [];
-//            html_code = ['<button id=', id, '>'];
-//            html_code.push( name );
-//            html_code.push( '</button>' );
-
-//            return html_code.join('');
-//        };
-//        var tab_code = create_tab( data['name'], data['id'], data['type'] );
-//        $('#tabs').append( tab_code );
-//        $('#' + data['id']).click( function( tab ) {
-//            draw_table( data );
-//        });
-        // end of test environment
-
-//        draw_table( data ); // TODO remove this
-
-//    }
     
-    function generate_app_table( sheet_id ) {
+    function draw_table( sheet_id ) {
         var result = {};
         
         var display_app_table = function() {
-            if ( _.keys( result ).length !== 2 ) {
+            if ( _.keys( result ).length !== 3 ) {
                 return;
             }
             remove_table();  
@@ -121,25 +96,13 @@ var _gui = (function () {
             var callback = function( table_html ) {                
                 result['table'] = table_html;
             }
-            _table.create_table( data, callback )
+            var name = { 'name': data['name'], }; 
+            result['tools'] = Mustache.to_html( app_table_tools_template, name );
+            _table.create_table( data, callback );
             display_app_table(); 
         });      
     }
              
-
-    function draw_db_tree_panels( data ) {
-        console.log( data );
-    }
-
-// TODO - remove this function
-//    function draw_table( data ) { 
-//        
-//        var table_code;
-//        table_code = _table.create_table( data );
-//        remove_table(); // TODO - remove 
-//        show_table( table_code, data['id'] );
-//    }
-
     
     function make_zebra() {
         $('#app-tb-datatable')
@@ -165,11 +128,48 @@ var _gui = (function () {
     }
 
 
+    function hide_columns_form() {
+    
+    
+    }
+
+
+    function show_columns_form() {
+        $(this).unbind;
+        var callback = function( columns ){
+            };
+        
+        
+//        _resource.all_columns( sheet_id, callback ); TODO - not ready - test it
+        
+        $(this).click( hide_columns_form );
+    }
+    
+    
+    function prepare_columns_bt( button ) {
+        buttoon.click( show_columns_form );    
+    }
+
+
+    function prepare_tools_interface( panel ){
+        var rename_bt = panel.find('#app-tb-tl-rename-button');
+        var clean_bt = panel.find('#app-tb-tl-clear-button');
+        var sort_bt = panel.find('#app-tb-tl-sort-button');
+        var filter_bt = panel.find('#app-tb-tl-filter-button');
+        var columns_bt = panel.find('#app-tb-tl-columns-button');
+    
+        prepare_columns_bt( columns_bt );    
+    }
+
+
     function show_table( result ) {
                 
         var app_header = result['header'];
-        var app_tools = app_table_tools_template;
+        var app_tools = $(result['tools']);
         var app_table = result['table'];
+        
+//        prepare_tools_interface( app_tools );
+        
         
         //    TODO:    preapare_interface(); 
         $('#app-table>header').append( app_header );
@@ -184,37 +184,37 @@ var _gui = (function () {
     // T E M P L A T E S
 
     var app_table_header_template = //TODO test it
-            '<div id="app-tb-save-sheet" class="blue button left">Kopiuj do arkusza</div>' +
-            '<ul id="app-tb-sheets">' +
-                '{{#sheet}}' +
-                    '<li id="snap-{{sheet_id}}" class="sheet tab button' +
-                        '{{#active}}' +
-                            ' active' +
-                        '{{/active}}' +
-                    '" title="{{name}}">' +
-                        '{{name}}' +
-                    '</li>' +
-                '{{/sheet}}' +                
-            '</ul>';
+        '<div id="app-tb-save-sheet" class="blue button left">Kopiuj do arkusza</div>' +
+        '<ul id="app-tb-sheets">' +
+            '{{#sheet}}' +
+                '<li id="snap-{{sheet_id}}" class="sheet tab button' +
+                    '{{#active}}' +
+                        ' active' +
+                    '{{/active}}' +
+                '" title="{{name}}">' +
+                    '{{name}}' +
+                '</li>' +
+            '{{/sheet}}' +                
+        '</ul>';
         
     var app_table_tools_template = 
-            '<section>' +
-              '<h3 id="app-tb-tl-title" class="left"></h3>' +
-              '<form id="app-tb-tl-rename-form" style="display: none;" class="left" >' +
+        '<section>' +
+            '<h3 id="app-tb-tl-title" class="left">{{name}}</h3>' +
+            '<form id="app-tb-tl-rename-form" style="display: none;" class="left" >' +
                 '<input type="text" class="input-text" id="app-tb-tl-rename-input" />' + 
-              '</form>' +
-              '<div id="app-tb-tl-old-title" class="left" style="display: none;" > </div>' +
-              '<div id="app-tb-tl-rename-button" class="button left">Zmień nazwę</div>' +
-              '<div id="app-tb-tl-bt-container" class="right">' +
+            '</form>' +
+            '<div id="app-tb-tl-old-title" class="left" style="display: none;" > </div>' +
+            '<div id="app-tb-tl-rename-button" class="button left">Zmień nazwę</div>' +
+            '<div id="app-tb-tl-bt-container" class="right">' +
                 '<div id="app-tb-tl-clear-button" class="button left">Wyczyść tabelę</div>' +
                 '<div id="app-tb-tl-sort-button" class="button left">Sortuj</div>' +
                 '<div id="app-tb-tl-filter-button" class="button left">Filtruj</div>' +
-              '</div>' +
-            '</section>' +
-            '<section>' +
-              '<div id="app-tb-tl-columns-button" class="button right">Dodaj/Usuń kolumny</div>' +
-              '<br class="clear"/>' +
-            '</section>';
+            '</div>' +
+        '</section>' +
+        '<section>' +
+            '<div id="app-tb-tl-columns-button" class="button right">Dodaj/Usuń kolumny</div>' +
+            '<br class="clear"/>' +
+        '</section>';
         
                   
     // return public interface    
