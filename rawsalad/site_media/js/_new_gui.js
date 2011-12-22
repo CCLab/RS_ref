@@ -39,33 +39,36 @@ var _gui = (function () {
 
         // stupid testing environment
         _resource.get_db_tree( draw_db_tree_panels );
-        $.get(
-            '/get_init_data/',
-            {
-                endpoint: 100002
-            },
-            function( d ) {
-                console.log( 'Top level' );
-                console.log( JSON.parse( d ) );
-            }
-        );
-        $.get(
-            '/get_children/',
-            {
-                endpoint: 100002,
-                _id: 10000000
-            },
-            function( d ) {
-                console.log( 'Children' );
-                console.log( JSON.parse( d ) );
-            }
-        );
+
+// TODO remove this
+//        $.get(
+//            '/get_init_data/',
+//            {
+//                endpoint: 100002
+//            },
+//            function( d ) {
+//                console.log( 'Top level' );
+//                console.log( JSON.parse( d ) );
+//            }
+//        );
+//        $.get(
+//            '/get_children/',
+//            {
+//                endpoint: 100002,
+//                _id: 10000000
+//            },
+//            function( d ) {
+//                console.log( 'Children' );
+//                console.log( JSON.parse( d ) );
+//            }
+//        );
     };
 
 
 // P R I V A T E   I N T E R F A C E
 
     function draw_db_tree_panels( data ) {
+            
         console.log( data );
     }
 
@@ -125,11 +128,48 @@ var _gui = (function () {
     }
 
 
+    function hide_columns_form() {
+    
+    
+    }
+
+
+    function show_columns_form() {
+        $(this).unbind;
+        var callback = function( columns ){
+            };
+        
+        
+//        _resource.all_columns( sheet_id, callback ); TODO - not ready - test it
+        
+        $(this).click( hide_columns_form );
+    }
+    
+    
+    function prepare_columns_bt( button ) {
+        buttoon.click( show_columns_form );    
+    }
+
+
+    function prepare_tools_interface( panel ){
+        var rename_bt = panel.find('#app-tb-tl-rename-button');
+        var clean_bt = panel.find('#app-tb-tl-clear-button');
+        var sort_bt = panel.find('#app-tb-tl-sort-button');
+        var filter_bt = panel.find('#app-tb-tl-filter-button');
+        var columns_bt = panel.find('#app-tb-tl-columns-button');
+    
+        prepare_columns_bt( columns_bt );    
+    }
+
+
     function show_table( result ) {
                 
         var app_header = result['header'];
-        var app_tools = result['tools'];
+        var app_tools = $(result['tools']);
         var app_table = result['table'];
+        
+//        prepare_tools_interface( app_tools );
+        
         
         //    TODO:    preapare_interface(); 
         $('#app-table>header').append( app_header );
