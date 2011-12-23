@@ -253,9 +253,19 @@ class StateManager:
         return state
 
 
-############### TODO refactor these two functions ##################
-
     def get_unique_parents( self, collection, parent_id, visited, fields=None ):
+        '''Collect all parents starting with parent_id'''
+        # delegate the job to more general tree traversal function
+        return self.traverse_tree( collection, parent_id, visited, fields )
+
+    def collect_children( self, collection, parent_id, visited, fields=None ):
+        '''Collect the open branch with parent_id as the deepest open node'''
+        # delegate the job to more general tree traversal function
+        return self.traverse_tree( collection, parent_id, visited, fields, children=True )
+
+
+    def traverse_tree( self, collection, parent_id, visited, fields=None, children=False ):
+        '''Traverse the tree from a certain parent up to the top level'''
         # hit the top level
         if not parent_id:
             return []
@@ -268,26 +278,13 @@ class StateManager:
 
             node = collection.get_node( parent_id, fields )
 
-            return [ node ] + self.get_unique_parents( collection, node['parent'], visited, fields )
+            # collect from the tree children or parents
+            if not children:
+                return [ node ] + self.get_unique_parents( collection, node['parent'], visited, fields )
+            else:
+                children = collection.get_children( parent_id, fields )
+                return children + self.collect_children( collection, node['parent'], visited, fields )
 
-
-    def collect_children( self, collection, parent_id, visited, fields=None ):
-        # hit the top level
-        if not parent_id:
-            return []
-        # already been there
-        elif parent_id in visited:
-            return []
-        # get children
-        else:
-            visited[ parent_id ] = True
-
-            node     = collection.get_node( parent_id, fields )
-            children = collection.get_children( parent_id, fields )
-
-            return children + self.collect_children( collection, node['parent'], visited, fields )
-
-####################################################################
 
 
 # OLD SEARCH CODE
