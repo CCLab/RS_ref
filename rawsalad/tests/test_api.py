@@ -13,7 +13,8 @@ frontend_state = '''
         {
             "endpoint" : 100002,
             "sheets" : [
-                    {
+                {
+                    "filtered" : true,
                     "rows" : [
                         10000926,
                         10000986,
@@ -23,42 +24,7 @@ frontend_state = '''
                         10001022
                     ],
                     "name" : "Arkusz 1",
-                    "breadcrumbs" : [
-                        "Bread 1",
-                        "Bread 2",
-                        "Bread 3",
-                        "Bread 4",
-                        "Bread 5",
-                        "Bread 6"
-                    ],
-                    "filtered" : true,
-                    "columns" : [
-                        {
-                            "format" : "@",
-                            "label" : "Typ",
-                            "processable" : false,
-                            "key" : "type",
-                            "basic" : true,
-                            "type" : "string"
-                        },
-                        {
-                            "format" : "@",
-                            "label" : "Treść",
-                            "processable" : true,
-                            "key" : "name",
-                            "basic" : true,
-                            "type" : "string"
-                        },
-                        {
-                            "format" : "# ##0",
-                            "label" : "Ogółem (tys. zł.)",
-                            "processable" : true,
-                            "key" : "v_total",
-                            "basic" : true,
-                            "checkable" : true,
-                            "type" : "number"
-                        }
-                    ]
+                    "columns" : [ "type", "name", "v_total" ]
                 },
                 {
                     "rows" : [
@@ -68,56 +34,12 @@ frontend_state = '''
                     ],
                     "name" : "Budżet księgowy",
                     "columns" : [
-                        {
-                            "format" : "@",
-                            "label" : "Typ",
-                            "processable" : false,
-                            "key" : "type",
-                            "basic" : true,
-                            "type" : "string"
-                        },
-                        {
-                            "format" : "@",
-                            "label" : "Nazwa",
-                            "processable" : true,
-                            "key" : "name",
-                            "basic" : true,
-                            "type" : "string"
-                        },
-                        {
-                            "format" : "@",
-                            "label" : "Program Operacyjny <Nazwa>",
-                            "processable" : true,
-                            "key" : "program-operacyjny-nazwa",
-                            "basic" : true,
-                            "type" : "string"
-                        },
-                        {
-                            "format" : "# ##0.00",
-                            "label" : "Wartość ogółem",
-                            "processable" : true,
-                            "key" : "wartosc-ogolem",
-                            "basic" : true,
-                            "checkable" : true,
-                            "type" : "float"
-                        },
-                        {
-                            "format" : "# ##0.00",
-                            "label" : "Dofinansowanie",
-                            "processable" : true,
-                            "key" : "dofinansowanie",
-                            "basic" : true,
-                            "checkable" : true,
-                            "type" : "float"
-                        },
-                        {
-                            "format" : "@",
-                            "label" : "Nazwa beneficjenta",
-                            "processable" : true,
-                            "key" : "nazwa-beneficjenta",
-                            "basic" : true,
-                            "type" : "string"
-                        }
+                        "type",
+                        "name",
+                        "program-operacyjny-nazwa",
+                        "wartosc-ogolem",
+                        "dofinansowanie",
+                        "nazwa-beneficjenta"
                     ]
                 }
             ]
@@ -132,42 +54,7 @@ frontend_state = '''
                         10001155
                     ],
                     "name" : "Ośrodki NFZ - centrala i śląski",
-                    "columns" : [
-                        {
-                            "format" : "@",
-                            "label" : "Numer",
-                            "processable" : false,
-                            "key" : "type",
-                            "basic" : true,
-                            "type" : "string"
-                        },
-                        {
-                            "format" : "@",
-                            "label" : "Koszty",
-                            "processable" : true,
-                            "key" : "name",
-                            "basic" : true,
-                            "type" : "string"
-                        },
-                        {
-                            "format" : "# ##0",
-                            "label" : "Centrala",
-                            "processable" : true,
-                            "key" : "centrala",
-                            "basic" : true,
-                            "checkable" : true,
-                            "type" : "number"
-                        },
-                        {
-                            "format" : "# ##0",
-                            "label" : "Śląski",
-                            "processable" : true,
-                            "key" : "slaski",
-                            "basic" : false,
-                            "checkable" : true,
-                            "type" : "number"
-                        }
-                    ]
+                    "columns" : [ "type", "name", "centrala", "slaski" ]
                 }
             ]
         }
@@ -189,13 +76,19 @@ print '>> Restoring permalink'
 data = state.get_state( perm_id )
 print '   << Permalink restored:'
 
+
+# print all rows
 for group in data['state']:
     for sheet in group['sheets']:
         print '\t^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^'
         rows = sheet['rows']
         rows.sort( key=lambda e: e['_id'] )
         for row in rows:
-            print '\t', row['_id'], row['type'], row['name']
+            print '\t',
+            for k in sheet['columns']:
+                print row[k['key']],
+            print ''
+
 
 print '^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^'
 
