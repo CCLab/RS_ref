@@ -62,6 +62,41 @@ var _resource = (function () {
             callback( processed_db_tree );
         });
     };
+    
+    
+    // TEST FUNCTIONS 
+    that.get_sheets_names = function ( callback ){
+        var sheets = [];
+
+        var sheet1 = {
+           'name': 'Name1',
+           'sheet_id': 1,
+           'end_id': 10003,
+          };            
+        var sheet2 = {
+           'name': 'Name2',
+           'sheet_id': 2,
+           'end_id': 10004,
+          };
+        var sheet3 = {
+           'name': 'Name3',
+           'sheet_id': 3,
+           'end_id': 10005,
+           'active': true, //TODO remove this 
+          };
+        sheets.push(sheet1, sheet2, sheet3);
+        
+        
+        callback( { 'sheets': sheets, } );
+    }
+    
+    that.get_end_name = function ( end_id, callback ) {
+        var name = { 
+                    'name': 'Example name',
+                   };
+                   
+        callback( name );
+    }; 
 
 
 // P R I V A T E   I N T E R F A C E

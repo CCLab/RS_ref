@@ -62,8 +62,10 @@ ALL SHEETS
     sheets:[ {
         name: string
         sheet_id: int
+        end_id: int
         }, ]
 
+    list is sorted by end_id value
 
 ADD NODE:
 =========
@@ -83,6 +85,9 @@ SHOW MORE COLUMNS
 =================
 
     _resource.all_columns( sheet_id, callback ) : columns[{},]
+    
+    _resource.show_with_columns( columns, callback ) : sheet{}
+    
 
 == 'columns' list of objects: ==
 
@@ -99,11 +104,14 @@ CLEAN TABLE
     _resource.clean_table( sheet_id, callback ): void
     
 
-CHANGE SHEET NAME
-=================
+END NAME
+==========
 
     _resource.change_name( sheet_id, new_name, callback ): void
     
+    _resource.get_end_name( end_id, callback ): { name: string, }
+
+
     
 INFO PANEL
 ==========
