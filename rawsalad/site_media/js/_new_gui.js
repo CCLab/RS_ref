@@ -67,12 +67,11 @@ var _gui = (function () {
     
                 
     function draw_tabs( data ) {
-        // TODO add to 'sheet' 'active' = true if active 
-
         var last = data['sheets'].length - 1;
         var last_sheet = data['sheets'][last];
+
         last_sheet['active'] = true;
-        if ( last > 0 ){
+        if ( last > 0 ) {
             last_sheet['close'] = true;
         }
              
@@ -88,7 +87,6 @@ var _gui = (function () {
     }
 
 
-    // D I S P L A Y   F U N C T I O N S
     function draw_table( data ) {
         var table;
         var callback = function( table_html ) {                
@@ -99,36 +97,39 @@ var _gui = (function () {
         _table.create_table( data, callback );    
     }
              
-
-    function display_tabs( tabs ){
+             
+    // D I S P L A Y   F U N C T I O N S
+    function display_tabs( tabs ) {
         var tabs_code = $(tabs); 
         preapare_tabs_interface( tabs_code );
         $('#app-table>header').empty();
-        $('#app-table>header').append( tabs_code );    
+        $('#app-table>header').append( tabs_code );
     }
 
 
-    function display_tools( tools ){
+    function display_tools( tools ) {
+        var tools_code = $(tools);
+        prepare_tools_interface( tools_code );        
         $('#app-tb-tools').empty();
-        // prepare_tools_interface( app_tools );
-        $('#app-tb-tools').append( tools );
+        $('#app-tb-tools').append( tools_code );
         
     }
 
 
     function display_table( table ) {
-        // TODO add table interface
+        var table_code = $(table);
+        prepare_table_interface( table_code );
         $('#app-tb-datatable').empty();
-        $('#app-tb-datatable').append( table );
+        $('#app-tb-datatable').append( table_code );
         make_zebra();    
     }
     
     
     // P R E A P A R E   I N T E R F A C E   F U N C T I O N S
-    function preapare_tabs_interface( tabs_code ){
+    function preapare_tabs_interface( tabs_code ) {
         var tabs = tabs_code.find('li');
         var close_bt = tabs_code.find('.close-sheet-button');
-        var copy_bt = table_code.find('.app-tb-save-sheet');
+        var copy_bt = tabs_code.find('.app-tb-save-sheet');
         
         // EVENTS
         tabs
@@ -142,17 +143,108 @@ var _gui = (function () {
     }
     
     
-    // E V E N T S   F U N C T I O N S
-    function change_sheet(){
-    
+    function prepare_tools_interface( tools_code ) {
+        var rename_bt = tools_code.find('#app-tb-tl-rename-button');
+        var clear_bt = tools_code.find('#app-tb-tl-clear-button');
+        var sort_bt = tools_code.find('#app-tb-tl-sort-button');
+        var filter_bt = tools_code.find('#app-tb-tl-filter-button');
+        var columns_bt = tools_code.find('#app-tb-tl-columns-button');
+                
+        // EVENTS
+        rename_bt
+            .click( show_rename_form );
+            
+        clear_bt
+            .click( clear_table );
+            
+        sort_bt
+            .click( display_sort_panel );
+            
+        filter_bt
+            .click( display_filter_panel );
+            
+        columns_bt
+            .click( display_columns_form );    
+    }
+
+
+    function prepare_table_interface( table_code ) {
+        var clickable_rows = table_code.find('tr.click');
+        var info_bt = table_code.find('.app-tb-info-button>img');
+        
+        // EVENTS
+        clickable_rows
+            .click( open_node );
+            
+        info_bt
+            .click( display_info_panel );
     }
     
+    
+    // E V E N T S   F U N C T I O N S
+
+    //TABS EVENTS
+    function change_sheet() {
+    
+    }
     
     function close_sheet() {
     
     }
     
     function copy_sheet() {
+    
+    }
+    
+    // TOOLS EVENTS
+    function show_rename_form() {
+    
+    }
+    
+    function clear_table() {
+    
+    }
+    
+    function display_sort_panel() {
+    
+    }
+
+    function display_filter_panel() {
+    
+    }
+    
+    function display_columns_form() {
+    
+    }
+
+    // not used yet:
+    function rename_sheet() {
+    
+    }
+    
+    function sort_table() {
+    
+    }
+    
+    function filter_table() {
+    
+    }
+    
+    function add_columns() {
+    
+    }
+    
+    // TABLE EVENTS
+    function open_node() {
+    
+    }
+    
+    function display_info_panel() {
+    
+    }
+    
+    // not used yet:
+    function close_node() {
     
     }
     
