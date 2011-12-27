@@ -61,7 +61,7 @@ var _gui = (function () {
         _resource.get_sheets_names( draw_tabs ); // TODO - not ready in resources
         _resource.get_end_name( end_id, draw_tools ); // TODO - not ready in resources
         _resource.get_top_level( end_id, draw_table );
-
+        prepare_aplication_interface();
         $('#application').show();
     }
     
@@ -126,6 +126,19 @@ var _gui = (function () {
     
     
     // P R E A P A R E   I N T E R F A C E   F U N C T I O N S
+    // APPLICATION TABS
+    function prepare_aplication_interface() {
+        var share_bt = $('#app-tbs-share');
+        var table_bt = $('#app-tbs-table');
+        
+        share_bt
+            .click( display_share_panel );
+            
+        table_bt
+            .click( display_tabble_panel );                    
+    }
+    
+    
     function preapare_tabs_interface( tabs_code ) {
         var tabs = tabs_code.find('li');
         var close_bt = tabs_code.find('.close-sheet-button');
@@ -181,9 +194,38 @@ var _gui = (function () {
     }
     
     
-    // E V E N T S   F U N C T I O N S
+    // E V E N T S   F U N C T I O N S    
+    // APPLICATION TABS
+    function display_share_panel() {
 
-    //TABS EVENTS
+        if( change_application_tab( $(this) ) ) {                        
+            update_share_tab(); // TODO
+            $('#app-share').show();
+        }        
+    }
+            
+    function display_tabble_panel() {
+
+        if( change_application_tab( $(this) ) ) {                        
+            $('#app-table').show();
+        }                
+    }
+
+    function change_application_tab( button ){
+
+        if ( button.hasClass('active') ) {
+            return false;
+        }        
+
+        button.siblings().removeClass('active');
+        button.addClass('active');        
+        $('.app-container:visible').hide();
+
+        return true;    
+    }
+
+        
+    // TABS EVENTS
     function change_sheet() {
     
     }
@@ -245,6 +287,17 @@ var _gui = (function () {
     
     // not used yet:
     function close_node() {
+    
+    }
+    
+    // PERMALINK EVNTS
+    // not used yet:
+    function close_node() {
+    
+    }
+    
+    // SHARE TABLE    
+    function update_share_tab() { //TODO
     
     }
     

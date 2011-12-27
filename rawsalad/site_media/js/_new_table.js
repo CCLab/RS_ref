@@ -93,7 +93,7 @@ var _table = (function () {
     function create_rows( data ) {
         var tbody_code;
         
-        tbody_code = Mustache.to_html( standard_tbody_template, data )
+        tbody_code = Mustache.to_html( standard_tbody_template, data );
                 
         return tbody_code;
     };
