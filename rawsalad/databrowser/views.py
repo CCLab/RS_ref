@@ -138,21 +138,14 @@ def restore_state( request ):
 
 
 def search_data( request ):
-    """Search engine enter point"""
-    import re
+    '''Search engine enter point'''
+    query  = request.GET.get( 'query', None )
+    scope  = request.GET.get( 'scope', None ).split(',')
 
-    # TODO move it to session
-    db  = rsdb.DBConnection().connect()
-    res = rsdb.Search()
+    search = rsdb.Search( scope, query )
 
-    query  = request.GET.get( 'query', '' )
-    scope  = request.GET.get( 'scope', '' ).split(',')
-    # TODO it's not used right now - the search always comes as strict: false
-    strict = False
 
-    # clean up multiple spaces from the query
-    query  = re.sub( '\s+', ' ', query.strip() )
-    result = res.search_text( db, query, scope, False )
+    result = search.search_text()
 
     if result['result']:
         # rebuild { data: [ { idef: idef1 }, ..., { idef: idefN } ] }
@@ -189,74 +182,3 @@ def get_searched_data( req ):
 
     return HttpResponse( json.dumps( found_data ) )
 
-
-
-
-def do_search( scope, regex, db ):
-    """
-    TO-DO:
-    - search with automatic substitution of specific polish letters
-      (lowercase & uppercase): user can enter 'lodz', but the search
-      should find 'Łódż'
-    - search with flexible processing of prefixes and suffixes
-      (see str.endswith and startswith)
-    - search in 'info' keys
-    """
-    results     = []
-    statistics  = { "errors": [] }
-    found_count = 0
-
-    # don't search through these fields
-    excluded_fields = ['idef', 'idef_sort', 'parent', 'parent_sort', 'level']
-    col = rsdb.Collection( fields=["perspective", "ns", "columns"] )
-
-    # TODO change name of sc
-    for sc in scope:
-        sc_list = sc.split('-')
-        d = int( sc_list[0] )
-        v = int( sc_list[1] )
-        i = str( sc_list[2] )
-
-        # TODO make DB interface unified, db first!!
-        # TODO is there an uncomplete version of metadata?!
-        metadata = col.get_complete_metadata( d, v, i, db )
-        # in case of unexisting collection - report error and try the next one
-        if metadata is None:
-            statistics['errors'].append( 'collection not found %s' % sc )
-            continue
-
-        current_collection = {
-            'perspective' : metadata['perspective'],
-            'dataset'     : d,
-            'view'        : v,
-            'issue'       : i,
-            'data'        : []
-        }
-
-        # for search we need all fields, except for excluded_fields
-        col.set_fields( None )
-        for field in metadata['columns']:
-            # TODO why keeping excluded_fields if there is processable field?
-            if 'processable' in field:
-                is_string    = field['type'] == 'string'
-                not_excluded = field['key'] not in excluded_fields
-
-                if field['processable'] and is_string and not_excluded:
-                    col.set_query({ field['key']: regex })
-                    # TODO make DB interface unified, db first!!
-                    for found_elem in col.get_data( db, d, v, i ):
-                        current_collection['data'].append({
-                            'key'    : field['key'],
-                            # TODO is possible that field['key'] is not string?
-                            'text'   : found_elem[ str( field['key'] ) ],
-                            'idef'   : found_elem['idef'],
-                            'parent' : found_elem['parent']
-                        })
-                        found_count += 1
-
-        if len( current_collection['data'] ) > 0:
-            results.append( current_collection )
-
-    statistics.update({ 'records_found': found_count })
-
-    return { 'stat': statistics, 'result': results }

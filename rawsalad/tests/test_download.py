@@ -61,7 +61,7 @@ def get_data( state ):
                         })
             sheet['columns'] = columns
 
-            if sheet.get('filtered', None):
+            if sheet.get('type', None) == "filter":
                 data = collection.get_data( query={ '_id': { '$in': sheet['rows'] }}, fields=fields )
                 # mark them as filtering results
                 for d in data:
@@ -115,7 +115,8 @@ def get_state():
                 "endpoint" : 100002,
                 "sheets" : [
                     {
-                        "filtered" : true,
+                        "type" : "filter",
+                        "name" : "Arkusz 1",
                         "rows" : [
                             10000926,
                             10000986,
@@ -124,16 +125,15 @@ def get_state():
                             10001008,
                             10001022
                         ],
-                        "name" : "Arkusz 1",
                         "columns" : [ "type", "name", "numer", "pozycja", "v_total" ]
                     },
                     {
+                        "name" : "Budżet księgowy",
                         "rows" : [
                             10000999,
                             10001008,
                             10001022
                         ],
-                        "name" : "Budżet księgowy",
                         "columns" : [ "type", "name", "v_total" ]
                     }
                 ]
@@ -142,6 +142,7 @@ def get_state():
                 "endpoint" : 100005,
                 "sheets" : [
                     {
+                        "name" : "Ośrodki NFZ - centrala i śląski",
                         "rows" : [
                             10001126,
                             10001133,
@@ -152,7 +153,6 @@ def get_state():
                             10001147,
                             10001155
                         ],
-                        "name" : "Ośrodki NFZ - centrala i śląski",
                         "columns" : [ "type", "name", "centrala", "slaski" ]
                     }
                 ]

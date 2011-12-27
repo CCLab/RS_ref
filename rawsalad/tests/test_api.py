@@ -14,7 +14,8 @@ frontend_state = '''
             "endpoint" : 100002,
             "sheets" : [
                 {
-                    "filtered" : true,
+                    "type" : "filter",
+                    "name" : "Arkusz 1",
                     "rows" : [
                         10000926,
                         10000986,
@@ -23,16 +24,15 @@ frontend_state = '''
                         10001008,
                         10001022
                     ],
-                    "name" : "Arkusz 1",
                     "columns" : [ "type", "name", "v_total" ]
                 },
                 {
+                    "name" : "Budżet księgowy",
                     "rows" : [
                         10000999,
                         10001008,
                         10001022
                     ],
-                    "name" : "Budżet księgowy",
                     "columns" : [
                         "type",
                         "name",
@@ -48,12 +48,12 @@ frontend_state = '''
             "endpoint" : 100005,
             "sheets" : [
                 {
+                    "name" : "Ośrodki NFZ - centrala i śląski",
                     "rows" : [
                         10001126,
                         10001147,
                         10001155
                     ],
-                    "name" : "Ośrodki NFZ - centrala i śląski",
                     "columns" : [ "type", "name", "centrala", "slaski" ]
                 }
             ]

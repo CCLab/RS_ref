@@ -12,8 +12,8 @@ MANAGERS = ADMINS
 
 DATABASES = {
     'default': {
-        'ENGINE': '',
-        'NAME': '',
+        'ENGINE': 'sqlite3',
+        'NAME': 'session.db',
         'USER': '',
         'PASSWORD': '',
         'HOST': '',
