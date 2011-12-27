@@ -37,6 +37,9 @@ var _gui = (function () {
             draw_end_point( 100005 );
         });
 
+
+
+
         // stupid testing environment
         _resource.get_db_tree( draw_db_tree_panels );
 
@@ -45,11 +48,12 @@ var _gui = (function () {
 
 // P R I V A T E   I N T E R F A C E
 
+
+    // D R A W   F U N C T I O N S
     function draw_db_tree_panels( data ) {
             
         console.log( data );
     }
-
 
     
     function draw_end_point( end_id ) {
@@ -61,26 +65,30 @@ var _gui = (function () {
         $('#application').show();
     }
     
-        
-        
-        
-        
-    function draw_tabs( sheets ) {
+                
+    function draw_tabs( data ) {
         // TODO add to 'sheet' 'active' = true if active 
-        
+
+        var last = data['sheets'].length - 1;
+        var last_sheet = data['sheets'][last];
+        last_sheet['active'] = true;
+        if ( last > 0 ){
+            last_sheet['close'] = true;
+        }
              
-        tabs = Mustache.to_html( app_table_header_template, sheets );
+        tabs = Mustache.to_html( app_table_header_template, data );
         display_tabs( tabs );     
     }
 
 
     function draw_tools( names ) {
-        var tools
+        var tools;
         tools = Mustache.to_html( app_table_tools_template, names );
         display_tools( tools );             
     }
 
 
+    // D I S P L A Y   F U N C T I O N S
     function draw_table( data ) {
         var table;
         var callback = function( table_html ) {                
@@ -91,8 +99,65 @@ var _gui = (function () {
         _table.create_table( data, callback );    
     }
              
+
+    function display_tabs( tabs ){
+        var tabs_code = $(tabs); 
+        preapare_tabs_interface( tabs_code );
+        $('#app-table>header').empty();
+        $('#app-table>header').append( tabs_code );    
+    }
+
+
+    function display_tools( tools ){
+        $('#app-tb-tools').empty();
+        // prepare_tools_interface( app_tools );
+        $('#app-tb-tools').append( tools );
+        
+    }
+
+
+    function display_table( table ) {
+        // TODO add table interface
+        $('#app-tb-datatable').empty();
+        $('#app-tb-datatable').append( table );
+        make_zebra();    
+    }
+    
+    
+    // P R E A P A R E   I N T E R F A C E   F U N C T I O N S
+    function preapare_tabs_interface( tabs_code ){
+        var tabs = tabs_code.find('li');
+        var close_bt = tabs_code.find('.close-sheet-button');
+        var copy_bt = table_code.find('.app-tb-save-sheet');
+        
+        // EVENTS
+        tabs
+            .click( change_sheet );
+        
+        close_bt
+            .click( close_sheet );
+        
+        copy_bt
+            .click( copy_sheet );
+    }
+    
+    
+    // E V E N T S   F U N C T I O N S
+    function change_sheet(){
+    
+    }
+    
+    
+    function close_sheet() {
+    
+    }
+    
+    function copy_sheet() {
+    
+    }
+    
              
-    // COLUMNS BUTTON FUNCTIONS
+    // C O L U M N S   B U T T O N   F U N C T I O N S
     function hide_columns_form() {
         $(this).unbind;
         $('#app-tb-tl-columns-form').slideUp( 200 );
@@ -185,27 +250,6 @@ var _gui = (function () {
         prepare_columns_bt( columns_bt );    
     }
 
-    function display_tabs( tabs ){
-        //    TODO:    preapare_tabs_interface(); 
-        $('#app-table>header').empty();
-        $('#app-table>header').append( tabs );    
-    }
-
-
-    function display_tools( tools ){
-        $('#app-tb-tools').empty();
-        // prepare_tools_interface( app_tools );
-        $('#app-tb-tools').append( tools );
-        
-    }
-
-
-    function display_table( table ) {
-        // TODO add table interface
-        $('#app-tb-datatable').empty();
-        $('#app-tb-datatable').append( table );
-        make_zebra();    
-    }
 
 
     function make_zebra() {
@@ -226,16 +270,19 @@ var _gui = (function () {
 
     // T E M P L A T E S
 
-    var app_table_header_template = //TODO test it
+    var app_table_header_template = 
         '<div id="app-tb-save-sheet" class="blue button left">Kopiuj do arkusza</div>' +
         '<ul id="app-tb-sheets">' +
             '{{#sheets}}' +
-                '<li id="snap-{{..sheet_id}}" class="sheet tab button' + // TODO change sheet_id for end_id
-                  //  '{{#.active}}' +
-                  //      ' active' +
-                  //  '{{/.active}}' +
-                '" title="{{..name}}">' +
-                    '{{..name}}' +
+                '<li id="snap-{{sheet_id}}" class="sheet tab button' + // TODO change sheet_id for end_id
+                    '{{#active}}' +
+                        ' active' +
+                    '{{/active}}' +
+                '" title="{{name}}">' +
+                    '{{name}}' +
+                    '{{#close}}' +
+                        '<div class="close-sheet-button button">x</div>' +
+                    '{{/close}}' +
                 '</li>' +
             '{{/sheets}}' +                
         '</ul>';

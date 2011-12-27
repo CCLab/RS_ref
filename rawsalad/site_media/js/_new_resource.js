@@ -82,7 +82,7 @@ var _resource = (function () {
            'name': 'Name3',
            'sheet_id': 3,
            'end_id': 10005,
-           'active': true, //TODO remove this 
+ //          'active': true, //TODO remove this 
           };
         sheets.push(sheet1, sheet2, sheet3);
         
@@ -97,6 +97,8 @@ var _resource = (function () {
                    
         callback( name );
     }; 
+    
+    // END OF TEST FUNCTIONS
 
 
 // P R I V A T E   I N T E R F A C E
