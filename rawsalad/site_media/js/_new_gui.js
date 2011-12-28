@@ -37,6 +37,9 @@ var _gui = (function () {
             draw_end_point( 100005 );
         });
 
+
+
+
         // stupid testing environment
         _resource.get_db_tree( draw_db_tree_panels );
 
@@ -45,11 +48,12 @@ var _gui = (function () {
 
 // P R I V A T E   I N T E R F A C E
 
+
+    // D R A W   F U N C T I O N S
     function draw_db_tree_panels( data ) {
             
         console.log( data );
     }
-
 
     
     function draw_end_point( end_id ) {
@@ -57,25 +61,34 @@ var _gui = (function () {
         _resource.get_sheets_names( draw_tabs ); // TODO - not ready in resources
         _resource.get_end_name( end_id, draw_tools ); // TODO - not ready in resources
         _resource.get_top_level( end_id, draw_table );
-
+        
+        prepare_aplication_interface();
         $('#application').show();
     }
     
+    function draw_sheet( sheet_id ){
+        _resource.get_sheet_name( sheet_id, draw_tools ); // TODO - not ready i n resource
+        _resource.get_sheet( sheet_id, draw_table ); // TODO - not ready in resource
         
-        
-        
-        
-    function draw_tabs( sheets ) {
-        // TODO add to 'sheet' 'active' = true if active 
-        
+    }
+    
+                
+    function draw_tabs( data ) {
+        var last = data['sheets'].length - 1;
+        var last_sheet = data['sheets'][last];
+
+        last_sheet['active'] = true;
+        if ( last > 0 ) {
+            last_sheet['close'] = true;
+        }
              
-        tabs = Mustache.to_html( app_table_header_template, sheets );
+        tabs = Mustache.to_html( app_table_header_template, data );
         display_tabs( tabs );     
     }
 
 
     function draw_tools( names ) {
-        var tools
+        var tools;
         tools = Mustache.to_html( app_table_tools_template, names );
         display_tools( tools );             
     }
@@ -92,7 +105,252 @@ var _gui = (function () {
     }
              
              
-    // COLUMNS BUTTON FUNCTIONS
+    // D I S P L A Y   F U N C T I O N S
+    function display_tabs( tabs ) {
+        var tabs_code = $(tabs); 
+        preapare_tabs_interface( tabs_code );
+        $('#app-table>header').empty();
+        $('#app-table>header').append( tabs_code );
+    }
+
+
+    function display_tools( tools ) {
+        var tools_code = $(tools);
+        prepare_tools_interface( tools_code );        
+        $('#app-tb-tools').empty();
+        $('#app-tb-tools').append( tools_code );
+        
+    }
+
+
+    function display_table( table ) {
+        var table_code = $(table);
+        prepare_table_interface( table_code );
+        $('#app-tb-datatable').empty();
+        $('#app-tb-datatable').append( table_code );
+        make_zebra();    
+    }
+    
+    
+    // P R E A P A R E   I N T E R F A C E   F U N C T I O N S
+    // APPLICATION TABS
+    function prepare_aplication_interface() {
+        var share_bt = $('#app-tbs-share');
+        var table_bt = $('#app-tbs-table');
+        
+        share_bt
+            .click( display_share_panel );
+            
+        table_bt
+            .click( display_tabble_panel );                    
+    }
+    
+    
+    function preapare_tabs_interface( tabs_code ) {
+        var tabs = tabs_code.find('li');
+        var close_bt = tabs_code.find('.close-sheet-button');
+        var copy_bt = tabs_code.find('.app-tb-save-sheet');
+        
+        // EVENTS
+        tabs
+            .click( change_sheet );
+        
+        close_bt
+            .click( close_sheet );
+        
+        copy_bt
+            .click( copy_sheet );
+    }
+    
+    
+    function prepare_tools_interface( tools_code ) {
+        var rename_bt = tools_code.find('#app-tb-tl-rename-button');
+        var clear_bt = tools_code.find('#app-tb-tl-clear-button');
+        var sort_bt = tools_code.find('#app-tb-tl-sort-button');
+        var filter_bt = tools_code.find('#app-tb-tl-filter-button');
+        var columns_bt = tools_code.find('#app-tb-tl-columns-button');
+                
+        // EVENTS
+        rename_bt
+            .click( show_rename_form );
+            
+        clear_bt
+            .click( clear_table );
+            
+        sort_bt
+            .click( display_sort_panel );
+            
+        filter_bt
+            .click( display_filter_panel );
+            
+        columns_bt
+            .click( display_columns_form );    
+    }
+
+
+    function prepare_table_interface( table_code ) {
+        var clickable_rows = table_code.find('tr.click');
+        var info_bt = table_code.find('.app-tb-info-button>img');
+        
+        // EVENTS
+        clickable_rows
+            .click( open_node );
+            
+        info_bt
+            .click( display_info_panel );
+    }
+    
+    
+    // E V E N T S   F U N C T I O N S    
+    // APPLICATION TABS
+    function display_share_panel() {
+
+        if( change_application_tab( $(this) ) ) {                        
+            update_share_tab(); // TODO
+            $('#app-share').show();
+        }        
+    }
+            
+    function display_tabble_panel() {
+
+        if( change_application_tab( $(this) ) ) {                        
+            $('#app-table').show();
+        }                
+    }
+
+    function change_application_tab( button ){
+
+        if ( button.hasClass('active') ) {
+            return false;
+        }        
+
+        button.siblings().removeClass('active');
+        button.addClass('active');        
+        $('.app-container:visible').hide();
+
+        return true;    
+    }
+
+        
+    // TABS EVENTS
+    function change_sheet() {
+
+        if ( $(this).hasClass('active') ) {
+            return;
+        }
+        new_active_tab( $(this) );                
+    }
+    
+    function new_active_tab( button ) {
+        var this_id;
+        var sheet_id;
+        var close_bt = $(close_sheet_button);
+        var siblings = button.siblings();
+        
+        
+        this_id = button.attr('id');
+        sheet_id = this_id.split('-')[1];
+        
+        
+        siblings.removeClass('active');
+        siblings.find('.close-sheet-button').remove(); 
+
+        button.addClass('active');
+        if ( siblings.length > 1 ) {
+            close_bt
+                .click( close_sheet )   
+            button.append( close_bt );
+        }
+        draw_sheet( sheet_id );        
+    }
+    
+    function close_sheet() {
+        var button = $(this).parent();
+        var new_active;
+        var this_id = button.attr('id');
+        var sheet_id = this_id.split('-')[1];
+        
+        new_active = button.prev();
+        if ( new_active.length === 0 ) {
+            new_active = button.next();
+        }
+        
+        new_active_tab( new_active );            
+
+        button.remove();        
+        _resource.close_sheet( sheet_id );
+        
+    }
+    
+    function copy_sheet() {
+    
+    }
+    
+    // TOOLS EVENTS
+    function show_rename_form() {
+    
+    }
+    
+    function clear_table() {
+    
+    }
+    
+    function display_sort_panel() {
+    
+    }
+
+    function display_filter_panel() {
+    
+    }
+    
+    function display_columns_form() {
+    
+    }
+
+    // not used yet:
+    function rename_sheet() {
+    
+    }
+    
+    function sort_table() {
+    
+    }
+    
+    function filter_table() {
+    
+    }
+    
+    function add_columns() {
+    
+    }
+    
+    // TABLE EVENTS
+    function open_node() {
+    
+    }
+    
+    function display_info_panel() {
+    
+    }
+    
+    // not used yet:
+    function close_node() {
+    
+    }
+    
+    // PERMALINK EVNTS
+    // not used yet:
+    function close_node() {
+    
+    }
+    
+    // SHARE TABLE    
+    function update_share_tab() { //TODO
+    
+    }
+    
+             
+    // C O L U M N S   B U T T O N   F U N C T I O N S
     function hide_columns_form() {
         $(this).unbind;
         $('#app-tb-tl-columns-form').slideUp( 200 );
@@ -185,27 +443,6 @@ var _gui = (function () {
         prepare_columns_bt( columns_bt );    
     }
 
-    function display_tabs( tabs ){
-        //    TODO:    preapare_tabs_interface(); 
-        $('#app-table>header').empty();
-        $('#app-table>header').append( tabs );    
-    }
-
-
-    function display_tools( tools ){
-        $('#app-tb-tools').empty();
-        // prepare_tools_interface( app_tools );
-        $('#app-tb-tools').append( tools );
-        
-    }
-
-
-    function display_table( table ) {
-        // TODO add table interface
-        $('#app-tb-datatable').empty();
-        $('#app-tb-datatable').append( table );
-        make_zebra();    
-    }
 
 
     function make_zebra() {
@@ -226,16 +463,19 @@ var _gui = (function () {
 
     // T E M P L A T E S
 
-    var app_table_header_template = //TODO test it
+    var app_table_header_template = 
         '<div id="app-tb-save-sheet" class="blue button left">Kopiuj do arkusza</div>' +
         '<ul id="app-tb-sheets">' +
             '{{#sheets}}' +
-                '<li id="snap-{{..sheet_id}}" class="sheet tab button' + // TODO change sheet_id for end_id
-                  //  '{{#.active}}' +
-                  //      ' active' +
-                  //  '{{/.active}}' +
-                '" title="{{..name}}">' +
-                    '{{..name}}' +
+                '<li id="snap-{{sheet_id}}" class="sheet tab button' + 
+                    '{{#active}}' +
+                        ' active' +
+                    '{{/active}}' +
+                '" title="{{name}}">' +
+                    '{{name}}' +
+                    '{{#close}}' +
+                        '<div class="close-sheet-button button">x</div>' +
+                    '{{/close}}' +
                 '</li>' +
             '{{/sheets}}' +                
         '</ul>';
@@ -266,6 +506,9 @@ var _gui = (function () {
             '<div id="app-tb-tl-columns-list" class="right"></div>' +
         '</section>';
         
+    var close_sheet_button = '<div class="close-sheet-button button">x</div>';
+
+
     var columns_form_template = 
         '<form id="app-tb-tl-columns-form" style="display: none;">' +
             '<div id="app-tb-tl-lt-select" class="grey button left">Zaznacz wszystkie</div>' +

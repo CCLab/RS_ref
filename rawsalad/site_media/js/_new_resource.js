@@ -28,6 +28,7 @@ var _resource = (function () {
 
 //  P U B L I C   I N T E R F A C E
     var that = {};
+    var num = 100002 // only for test
 
     that.get_top_level = function( col_id, callback ) {
         //if ( has_sheet( col_id ) ) {
@@ -63,33 +64,6 @@ var _resource = (function () {
         });
     };
     
-    
-    // TEST FUNCTIONS 
-    that.get_sheets_names = function ( callback ){        
-        var sheet_id;
-        var sheet;
-        var sheet_descr;
-        var sheets_names = [];
-        var sorted_sheets_names;
-        for ( sheet_id in sheets ) {
-            if ( sheets.hasOwnProperty( sheet_id ) ) {
-                sheet = sheets[ sheet_id ];
-                sheet_descr = {
-                    'name': sheet['name'],
-                    'sheet_id': sheet_id,
-                    'end_id': sheet['endpoint']
-                };
-                sheets_names.push( sheet_descr );
-            }
-        }
-        
-        sorted_sheets_names = sheets_names.sort( function( s1, s2 ) {
-            return s1['end_id'] - s2['end_id'];
-        });
-        
-        callback( sorted_sheets_names );
-    }
-    
     that.get_children = function( sheet_id, row_id, callback ) {
         var children;
         var sheet = sheets[ sheet_id ];
@@ -107,11 +81,67 @@ var _resource = (function () {
         }
     };
     
+    that.get_sheets_names = function ( callback ){        
+        var sheet_id;
+        var sheet;
+        var sheet_descr;
+        var sheets_names = [];
+        var sorted_sheets_names;
+        
+        for ( sheet_id in sheets ) {
+            if ( sheets.hasOwnProperty( sheet_id ) ) {
+                sheet = sheets[ sheet_id ];
+                sheet_descr = {
+                    'name': sheet['name'],
+                    'sheet_id': sheet_id,
+                    'end_id': sheet['endpoint']
+                };
+                sheets_names.push( sheet_descr );
+            }
+        }
+
+        sorted_sheets_names = sheets_names.sort( function( s1, s2 ) {
+            return s1['end_id'] - s2['end_id'];
+        });
+        
+        callback( { 'sheets': sorted_sheets_names } );
+    };
+    
+    that.get_sheet_name = function ( sheet_id, callback ) {
+        var sheet = sheets[ sheet_id ];
+        
+        callback( { 'name': sheet['name'] } );
+    };
+    
+    that.get_sheet = function ( sheet_id, callback ) {
+        // It's from get_top_level for TEST
+        _store.get_init_data( num, function( data ) {
+            var sheet;
+            var old_sheet_id;
+            var gui_data;
+            var col_id = num;
+
+            old_sheet_id = add_sheet( col_id, data );
+            sheet = sheets[old_sheet_id];
+            gui_data = prepare_data_package_for_gui( sheet, old_sheet_id );
+            
+            callback( gui_data );
+        });
+    };
+    
+    that.close_sheet = function ( sheet_id ){            
+        delete sheets[ sheet_id ];
+    };
+    
     that.get_end_name = function ( end_id, callback ) {
         _store.get_collection_name( end_id, function ( name ) {
             callback( { 'name': name } );
         });
     }; 
+    
+    
+    
+    // END OF TEST FUNCTIONS
 
 
 // P R I V A T E   I N T E R F A C E
@@ -244,10 +274,12 @@ var _resource = (function () {
             };
             var new_rows = [];
             var id_level_map = {};
+            
             rows.forEach( function( row ) {
                 update_level_map( id_level_map, row['_id'], row['parent'] );
                 new_rows.push( prepare_row( row, id_level_map ) );
             });
+            
             return new_rows;
         };
         var prepare_total_row = function( rows, columns ) {

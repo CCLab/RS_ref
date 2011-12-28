@@ -46,7 +46,13 @@
       @table-header-active-background:          @very-light-silver;
       @table-header-active-border-bottom:       @very-light-silver; 
       @table-header-active-hover-border-bottom: @very-light-silver;
-      @table-header-active-hover-border:        @dark-silver; 
+      @table-header-active-hover-border:        @dark-silver;
+      
+      @table-header-close-background:           @gray; 
+      @table-header-close-text:                 @white; 
+      @table-header-close-hover-background:     @dark-silver; 
+      @table-header-close-hover-text:           @dark-gray; 
+
            
       @table-header-hover-background:           @blue;
       @table-header-hover-border:               @blue;
@@ -219,9 +225,9 @@
     li {
       float: left;
 
-      padding: 4px 5px;
       margin: 9px 3px;
       margin-bottom: 0px;
+      padding: 4px 5px;
 
       background-color: @table-header-background;
       border: 1px solid @table-header-border;
@@ -233,12 +239,37 @@
         border: 1px solid @table-header-hover-border;
         background-color: @table-header-hover-background;
       }
+      
+      .close-sheet-button {
+        float: right;
+        
+        margin-top: -2px;
+        margin-bottom: -2px;
+        margin-right: -2px;
+        margin-left: 5px;
+        padding-top: 2px;
+        padding-bottom: 2px;
+        padding-right: 3px;
+        padding-left: 3px;
+        
+        background-color: @table-header-close-background;
+        font-weight: bold;
+        color: @table-header-close-text;
+
+        .border-radius(3px);
+        
+        &:hover {
+          background-color: @table-header-close-hover-background;
+          color: @table-header-close-hover-text;
+        }
+      }
+      
     }
       
     li.active {
-      padding: 6px 5px;
       margin: 5px 3px;
       margin-bottom: 0px;
+      padding: 6px 5px;
 
       background-color: @table-header-active-background;
       border-bottom: 1px solid @table-header-active-border-bottom;
@@ -299,13 +330,13 @@
 }
 
 #app-tb-tl-sort-button {
-  .border-radius-custom(3px, 0px, 0px, 3px);    
+  .border-radius-custom(3px, 0px, 3px, 0px);    
 }
 
 #app-tb-tl-filter-button {
   border-left: 1px solid @table-buttons-separator;
 
-  .border-radius-custom(0px, 3px, 3px, 0px);    
+  .border-radius-custom(0px, 3px, 0px, 3px);    
 }
 
 #app-tb-tl-srft-forms{
