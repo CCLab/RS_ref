@@ -61,6 +61,24 @@ var _store = (function () {
             });
         }
     };
+    
+    that.get_children = function ( col_id, parent_id, callback ) {
+        var data_source;
+        var children;
+        
+        if ( has_data( col_id, parent_id ) ) {
+            data_source = get_data_source( col_id );
+            children = data_source.children( parent_id, true );
+            callback( children );
+        } else {
+            _db.get_children( col_id, parent_id, function ( db_data ) {
+                data_source = get_data_source( col_id );
+                data_source.updateTree( db_data );
+                children = data_source.children( parent_id, true );
+                callback( children );
+            });
+        }
+    };
 
     that.get_init_data = function ( col_id, callback ) {
         var data_source;
@@ -93,6 +111,22 @@ var _store = (function () {
             });
         }
     };
+    
+    that.get_collection_name = function( col_id, callback ) {
+        if ( !!has_data( col_id ) ) {
+            callback( meta_data_sources[ col_id ]['name'] );
+        } else {
+            _db.get_init_data( col_id, function ( db_data ) {
+                data_source = store_data( db_data['data'], col_id );
+                meta = store_meta_data( db_data['meta'], col_id );
+                data_package = {
+                    'data': data_source.copy(),
+                    'meta': meta
+                };
+                callback( meta['name'] );
+            });
+        }
+    };
 
 
 // P R I V A T E   I N T E R F A C E
@@ -103,30 +137,44 @@ var _store = (function () {
     var initiated = false;
     // tree for each collection
     var data_sources = {};
+    // information about complete children
+    var complete_children = {};
     // contains meta data for each collection
     var meta_data_sources = {};
 
-    function has_data( col_id ) {
-        return !!data_sources[col_id];
-    };
+    function has_data( col_id, parent_id ) {
+        if (parent_id !== undefined) {
+            parent_id = '';
+        }
+        return !!data_sources[col_id] && has_all_children( col_id, parent_id );
+    }
+    
+    function has_all_children( col_id, parent_id ) {
+        return !!complete_children[col_id] && !!complete_children[col_id][parent_id];
+    }
+    
+    function all_children_downloaded( col_id, parent_id ) {
+        complete_children[col_id][parent_id] = true;
+    }
 
     function get_data_source( col_id ) {
         return data_sources[col_id];
-    };
+    }
 
     function store_data( db_data, col_id ) {
         var new_data_source = monkey.createTree( db_data, '_id', 'parent' );
         data_sources[col_id] = new_data_source;
+        complete_children[col_id] = { '': true };
 
         return new_data_source;
-    };
+    }
 
     function store_meta_data( db_meta_data, col_id ) {
         var extracted_meta_data = extract_meta_data( db_meta_data );
 
         meta_data_sources[col_id] = extracted_meta_data;
         return extracted_meta_data;
-    };
+    }
 
     function extract_meta_data( db_meta_data, col_id ) {
         return {
@@ -134,21 +182,69 @@ var _store = (function () {
             'columns': db_meta_data['columns'],
             'aux': db_meta_data['aux']
         };
-    };
+    }
 
     function has_db_tree() {
         return !!db_tree;
-    };
+    }
 
     function get_db_tree() {
         // TODO: to copy or not to copy?
         return db_tree.copy();
-    };
+    }
 
     function save_db_tree( data ) {
         db_tree = monkey.createTree( data, '_id', 'parent_id' );
-    };
+    }
 
     return that;
 
 }) ();
+
+/*[
+    {
+        'data': [ {row_object} ],
+        'meta': {
+            'name': collection_name,
+            'columns': { active_columns_objects },
+            'aux': aux_list,
+            'enpoint_id': end_id
+        },
+        'sheets': [
+            {
+                'type': enum,
+                'name': 'sheet_name' || undefined,
+                'columns': [ 'column_key', ...],
+                'sheet_data': sheet type dependent data
+            },
+            ...
+        ]
+    },
+    ...
+]
+
+sheet type dependent data:
+a) standard:
+    [ id1, id2, id3, ... ]
+    lowest open nodes
+b) filtered:
+    [
+        {
+            'breadcrumb': 'breadcrumb',
+            'rows': [ row1, row2, row3, ... ]
+        }
+    ]
+c) search:
+    {
+        'query': 'query_string',
+        'boxes': [
+            {
+                'rows': [
+                    {
+                      ...
+                      'hit': [column_key, ...]
+                    }
+                ]
+            }
+        ]
+    }*/

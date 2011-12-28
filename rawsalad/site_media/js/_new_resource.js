@@ -65,37 +65,52 @@ var _resource = (function () {
     
     
     // TEST FUNCTIONS 
-    that.get_sheets_names = function ( callback ){
-        var sheets = [];
-
-        var sheet1 = {
-           'name': 'Name1',
-           'sheet_id': 1,
-           'end_id': 10003,
-          };            
-        var sheet2 = {
-           'name': 'Name2',
-           'sheet_id': 2,
-           'end_id': 10004,
-          };
-        var sheet3 = {
-           'name': 'Name3',
-           'sheet_id': 3,
-           'end_id': 10005,
-           'active': true, //TODO remove this 
-          };
-        sheets.push(sheet1, sheet2, sheet3);
+    that.get_sheets_names = function ( callback ){        
+        var sheet_id;
+        var sheet;
+        var sheet_descr;
+        var sheets_names = [];
+        var sorted_sheets_names;
+        for ( sheet_id in sheets ) {
+            if ( sheets.hasOwnProperty( sheet_id ) ) {
+                sheet = sheets[ sheet_id ];
+                sheet_descr = {
+                    'name': sheet['name'],
+                    'sheet_id': sheet_id,
+                    'end_id': sheet['endpoint']
+                };
+                sheets_names.push( sheet_descr );
+            }
+        }
         
+        sorted_sheets_names = sheets_names.sort( function( s1, s2 ) {
+            return s1['end_id'] - s2['end_id'];
+        });
         
-        callback( { 'sheets': sheets, } );
+        callback( sorted_sheets_names );
     }
     
+    that.get_children = function( sheet_id, row_id, callback ) {
+        var children;
+        var sheet = sheets[ sheet_id ];
+        var endpoint_id = sheet['endpoint'];
+        
+        if ( sheet['data'].children( row_id ) !== [] ) {
+            children = sheet['data'].children( row_id, true );
+            callback( children );
+        } else {
+            _store.get_children( endpoint_id, row_id, function( data ) {
+                sheet['data'].updateTree( data );
+                children = sheet['data'].children( row_id, true );
+                callback( children );
+            });
+        }
+    };
+    
     that.get_end_name = function ( end_id, callback ) {
-        var name = { 
-                    'name': 'Example name',
-                   };
-                   
-        callback( name );
+        _store.get_collection_name( end_id, function ( name ) {
+            callback( { 'name': name } );
+        });
     }; 
 
 

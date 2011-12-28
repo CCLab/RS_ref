@@ -63,6 +63,8 @@ Form of created tree:
         rootData = {};
         rootData[idColumn] = '__root__';
         rootNode = new Node(rootData, undefined, idMap, idColumn, parentColumn);
+        ////
+        idMap['__root__'] = '';
         
         return {
             // Inserts value into this tree. Finds direct parent of a new node
@@ -86,6 +88,127 @@ Form of created tree:
                 
                 newNode = new Node(value, parentNode, idMap, idColumn, parentColumn, isFiltered);
                 parentNode.children.add(newNode, idMap);
+                
+                return this;
+            },
+            
+            // Inserts values inside tree. Finds direct parent of new nodes and
+            // inserts only nodes that were not inserted earlier in order in which
+            // they appear in values parameter. Changes inner ids so that they match
+            // new hierarchy.
+            // Returns tree after operation.
+            updateTree: function(values) {
+                // Changes ids in subtree which root has rootId id. Translates
+                // all ids by delta value which is caused by root position change.
+                var updateIds = function(tree, idMap, rootId, delta) {
+                    if (delta === 0) return;
+                    
+                    var subtreeRoot = tree.getNode(rootId);
+                    var actNode = tree.next(subtreeRoot);
+                    var innerId = idMap[rootId];
+                    var newBaseId;
+                    var oldBaseLength = innerId.length;
+                    var lastPart = parseInt( innerId.slice(innerId.lastIndexOf('-') + 1) );
+                    
+                    if (getParentId(innerId) === '__root__') {
+                        newBaseId = innerId.parseInt() + delta + '';
+                    } else {
+                        newBaseId = getParentId(innerId) + '-' + (lastPart + delta + '');
+                    }
+
+                    idMap[ tree.nodeId(subtreeRoot) ] = newBaseId;
+                    
+                    while ( !!actNode && tree.isAncestor(subtreeRoot, actNode) ) {
+                        innerId = idMap[ tree.nodeId(actNode) ];
+                        newInnerId = newBaseId + innerId.slice(oldBaseLength);
+                        idMap[ tree.nodeId(actNode) ] = newInnerId;
+                        actNode = tree.next(actNode);
+                    }
+                };
+                
+                // Gets array describing how many positions old ids should be
+                // translated to match their positions in newIds array.
+                var getTranslation = function(oldIds, newIds) {
+                    var translation = [];
+                    var i, j;
+                    var len = oldIds.length;
+                    var actId;
+                    var delta;
+                    
+                    for (i = 0, j = 0; i < len; ++i) {
+                        actId = oldIds[i];
+                        while ( newIds[j] !== actId )
+                            ++j;
+                        delta = j - i;
+                        translation.push(delta);
+                    }
+                    
+                    return translation;
+                };
+                
+                // Gets array describing positions of new nodes(nodes that
+                // are not in oldNodes array, but in newNodes array.
+                var getNewNodesPosition = function(newNodes, oldNodes, idColumn) {
+                    var veryNewNodes = [];
+                    var oldIds = {};
+                    oldNodes.forEach(function(node) {
+                        oldIds[ node[idColumn] ] = true;
+                    });
+                    
+                    veryNewNodes = newNodes
+                        .map(function(node, i) {
+                            return {
+                                'node': node,
+                                'i': i
+                            };
+                        })
+                        .filter(function(node) {
+                            return !oldIds[ node['node'][idColumn] ];
+                    });
+
+                    return veryNewNodes;
+                };
+                
+                var groupedValues = {};
+                var id;
+                var newNodes;
+                var oldNodes;
+                var newPositions;
+                var newIds;
+                var oldIds;
+                var translations;
+                var len;
+                var i;
+                var parentNode;
+                
+                values.forEach(function(value){
+                    var parentId = (!!parentColumn) ? value[parentColumn] : getParentId(id);
+                    if (!!groupedValues[parentId]) {
+                        groupedValues[parentId].push(value);
+                    } else {
+                        groupedValues[parentId] = [value];
+                    }
+                    
+                });
+                
+                for (id in groupedValues) {
+                    if ( groupedValues.hasOwnProperty(id) ) {
+                        newNodes = groupedValues[id];
+                        oldNodes = (!id) ? this.children(this.root()) : this.children(id);
+                        newIds = newNodes.map(function (e) { return e[idColumn]; });
+                        oldIds = oldNodes.map(function (e) { return e[idColumn]; });
+                        translations = getTranslation(oldIds, newIds);
+                        for (i = translations.length - 1; i >= 0; --i) {
+                            updateIds(this, idMap, oldIds[i], translations[i]);
+                        }
+                        newPositions = getNewNodesPosition(newNodes, oldNodes, idColumn);
+                        parentNode = this.getNode(id);
+                        newPositions.forEach(function(node) {
+                            var newNode = new Node(node['node'], parentNode, idMap, idColumn, parentColumn);
+                            parentNode.children.insert(newNode, idMap, node['i']);
+                        });
+                    }
+                }
                 
                 return this;
             },
@@ -536,7 +659,7 @@ Form of created tree:
     // of new node, idMap is map: userId -> innerId, idColumn specifies id,
     // parentNode(optional) is id of node's parent, isFiltered specifies
     // if node is filtered.
-    var Node = function(value, parentNode, idMap, idColumn, parentColumn, isFiltered) {
+    var Node = function(value, parentNode, idMap, idColumn, parentColumn, isFiltered, index) {
         var property;
         var valueCopy = deepCopy(value, idColumn, parentColumn);
         
@@ -552,8 +675,8 @@ Form of created tree:
             get: function() { return _children; }
         });
         Object.defineProperty(this, 'filtered', {
-            get: function() { return _filtered; }
-            ,set: function(newValue) { _filtered = !!newValue; }
+            get: function() { return _filtered; },
+            set: function(newValue) { _filtered = !!newValue; }
         });
         Object.defineProperty(this, 'id', {
             get: function() { return _id; },
@@ -573,18 +696,23 @@ Form of created tree:
             }
         }
         
-        if (!!parentNode) {
-            parentNode.children.add(this, idMap);
+        /*if (!!parentNode) {
+            if (index === undefined) {
+                parentNode.children.add(this, idMap);
+            } else {
+                parentNode.children.insert(this, idMap, index);
+            }
+            //parentNode.children.add(this, idMap);
         } else {
             idMap['__root__'] = '';
-        }
+        }*/
     };
     
     // Children wraps list of children nodes.
     // parentId is userId of parent node, idMap is map: userId -> innerId,
     // data is list of children nodes.
     var Children = function(parentId, idMap, data) {
-        var generateInnerId = function(parentId, idMap) {
+        var generateInnerId = function(parentId, idMap, index) {
             var lastChild;
             var lastChildId;
             var idParts;
@@ -599,7 +727,11 @@ Form of created tree:
             lastChild = nodes[len - 1];
             lastChildId = idMap[ lastChild.id ];
             idParts = lastChildId.split('-');
-            idParts[idParts.length - 1] = (parseInt(idParts[idParts.length - 1]) + 1) + '';
+            if (index === undefined) {
+                idParts[idParts.length - 1] = (parseInt(idParts[idParts.length - 1]) + 1) + '';
+            } else {
+                idParts[idParts.length - 1] = index + '';
+            }
             return idParts.join('-');
         };
         var nodes = [];
@@ -624,6 +756,12 @@ Form of created tree:
                         break;
                     }
                 }
+            }
+        };
+        this.insert = function(node, idMap, index) {
+            if (!idMap[node.id]) {
+                idMap[node.id] = generateInnerId(parentId, idMap, index);
+                nodes.splice(index, 0, node);
             }
         };
         this.remove = function(id) {
