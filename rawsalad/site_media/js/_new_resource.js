@@ -28,6 +28,7 @@ var _resource = (function () {
 
 //  P U B L I C   I N T E R F A C E
     var that = {};
+    var num = 100002 // only for test
 
     that.get_top_level = function( col_id, callback ) {
         //if ( has_sheet( col_id ) ) {
@@ -65,6 +66,29 @@ var _resource = (function () {
     
     
     // TEST FUNCTIONS 
+    that.get_sheet = function ( sheet_id, callback ) {
+        // It's from get_top_level for TEST
+        _store.get_init_data( num, function( data ) {
+            var sheet;
+            var old_sheet_id;
+            var gui_data;
+            var col_id = num;
+
+            old_sheet_id = add_sheet( col_id, data );
+            sheet = sheets[old_sheet_id];
+            gui_data = prepare_data_package_for_gui( sheet, old_sheet_id );
+            
+            callback( gui_data );
+        });
+    
+    };
+    
+    
+    that.close_sheet = function ( sheet_id ){            
+
+    };
+    
+    
     that.get_sheets_names = function ( callback ){
         var sheets = [];
 
@@ -97,6 +121,14 @@ var _resource = (function () {
                    
         callback( name );
     }; 
+    
+    that.get_sheet_name = function ( sheet_id, callback ) {
+        var name = { 
+                    'name': 'Example sheet name',
+                   };
+                   
+        callback( name );  
+    };
     
     // END OF TEST FUNCTIONS
 

@@ -65,6 +65,12 @@ var _gui = (function () {
         $('#application').show();
     }
     
+    function draw_sheet( sheet_id ){
+        _resource.get_sheet_name( sheet_id, draw_tools ); // TODO - not ready i n resource
+        _resource.get_sheet( sheet_id, draw_table ); // TODO - not ready in resource
+        
+    }
+    
                 
     function draw_tabs( data ) {
         var last = data['sheets'].length - 1;
@@ -227,11 +233,52 @@ var _gui = (function () {
         
     // TABS EVENTS
     function change_sheet() {
+
+        if ( $(this).hasClass('active') ) {
+            return;
+        }
+        new_active_tab( $(this) );                
+    }
     
+    function new_active_tab( button ) {
+        var this_id;
+        var sheet_id;
+        var close_bt = $(close_sheet_button);
+        var siblings = button.siblings();
+        
+        
+        this_id = button.attr('id');
+        sheet_id = this_id.split('-')[1];
+        
+        
+        siblings.removeClass('active');
+        siblings.find('.close-sheet-button').remove(); 
+
+        button.addClass('active');
+        if ( siblings.length > 1 ) {
+            close_bt
+                .click( close_sheet )   
+            button.append( close_bt );
+        }
+        draw_sheet( sheet_id );        
     }
     
     function close_sheet() {
-    
+        var button = $(this).parent();
+        var new_active;
+        var this_id = button.attr('id');
+        var sheet_id = this_id.split('-')[1];
+        
+        new_active = button.prev();
+        if ( new_active.length === 0 ) {
+            new_active = button.next();
+        }
+        
+        new_active_tab( new_active );            
+
+        button.remove();        
+        _resource.close_sheet( sheet_id );
+        
     }
     
     function copy_sheet() {
@@ -419,7 +466,7 @@ var _gui = (function () {
         '<div id="app-tb-save-sheet" class="blue button left">Kopiuj do arkusza</div>' +
         '<ul id="app-tb-sheets">' +
             '{{#sheets}}' +
-                '<li id="snap-{{sheet_id}}" class="sheet tab button' + // TODO change sheet_id for end_id
+                '<li id="snap-{{sheet_id}}" class="sheet tab button' + 
                     '{{#active}}' +
                         ' active' +
                     '{{/active}}' +
@@ -458,6 +505,9 @@ var _gui = (function () {
             '<div id="app-tb-tl-columns-list" class="right"></div>' +
         '</section>';
         
+    var close_sheet_button = '<div class="close-sheet-button button">x</div>';
+
+
     var columns_form_template = 
         '<form id="app-tb-tl-columns-form" style="display: none;">' +
             '<div id="app-tb-tl-lt-select" class="grey button left">Zaznacz wszystkie</div>' +
