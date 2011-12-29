@@ -1,0 +1,374 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="744.09448819"
+   height="1052.3622047"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.48.1 r9760"
+   sodipodi:docname="sql_db.svg"
+   inkscape:export-filename="/home/beet/code/cclab/rs_ref/docs/sql_db.png"
+   inkscape:export-xdpi="35.099998"
+   inkscape:export-ydpi="35.099998">
+  <defs
+     id="defs4">
+    <marker
+       inkscape:stockid="DotL"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="DotL"
+       style="overflow:visible">
+      <path
+         id="path4132"
+         d="M -2.5,-1.0 C -2.5,1.7600000 -4.7400000,4.0 -7.5,4.0 C -10.260000,4.0 -12.5,1.7600000 -12.5,-1.0 C -12.5,-3.7600000 -10.260000,-6.0 -7.5,-6.0 C -4.7400000,-6.0 -2.5,-3.7600000 -2.5,-1.0 z "
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1.0pt;marker-start:none;marker-end:none"
+         transform="scale(0.8) translate(7.4, 1)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Lend"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="Arrow1Lend"
+       style="overflow:visible;">
+      <path
+         id="path4073"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1.0pt;marker-start:none;"
+         transform="scale(0.8) rotate(180) translate(12.5,0)" />
+    </marker>
+    <marker
+       inkscape:stockid="DotM"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="DotM"
+       style="overflow:visible">
+      <path
+         id="path4135"
+         d="M -2.5,-1.0 C -2.5,1.7600000 -4.7400000,4.0 -7.5,4.0 C -10.260000,4.0 -12.5,1.7600000 -12.5,-1.0 C -12.5,-3.7600000 -10.260000,-6.0 -7.5,-6.0 C -4.7400000,-6.0 -2.5,-3.7600000 -2.5,-1.0 z "
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1.0pt;marker-start:none;marker-end:none"
+         transform="scale(0.4) translate(7.4, 1)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Mend"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="Arrow1Mend"
+       style="overflow:visible;">
+      <path
+         id="path4079"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1.0pt;marker-start:none;"
+         transform="scale(0.4) rotate(180) translate(10,0)" />
+    </marker>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.28073109"
+     inkscape:cx="-701.89604"
+     inkscape:cy="65.109131"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     showborder="false"
+     inkscape:showpageshadow="false"
+     inkscape:window-width="1920"
+     inkscape:window-height="986"
+     inkscape:window-x="0"
+     inkscape:window-y="32"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="fill:#c8c4b7;fill-opacity:1;stroke:none"
+       id="rect3293"
+       width="2564.27"
+       height="2105.1829"
+       x="-1939.7462"
+       y="-22.976873" />
+    <rect
+       style="fill:#f2f2f2;fill-opacity:1;stroke:none"
+       id="rect3003"
+       width="1595.4907"
+       height="499.9422"
+       x="-1852.545"
+       y="108.87971" />
+    <rect
+       y="722.96338"
+       x="-1852.545"
+       height="391.93921"
+       width="1016.2134"
+       id="rect3005"
+       style="fill:#f2f2f2;fill-opacity:1;stroke:none" />
+    <text
+       xml:space="preserve"
+       style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="-1802.3094"
+       y="697.21606"
+       id="text3023"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3025"
+         x="-1802.3094"
+         y="697.21606"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Monospace;-inkscape-font-specification:Monospace">COLS_<tspan
+   style="fill:#892ca0"
+   id="tspan3197">5001</tspan></tspan></text>
+    <text
+       sodipodi:linespacing="125%"
+       id="text3007"
+       y="866.2774"
+       x="-1802.1532"
+       style="font-size:40px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#333333;fill-opacity:1;stroke:none;font-family:Monospace;-inkscape-font-specification:Monospace"
+       xml:space="preserve"><tspan
+         y="866.2774"
+         x="-1802.1532"
+         id="tspan3009"
+         sodipodi:role="line">type   Typ            @   TRUE  string</tspan><tspan
+         y="916.2774"
+         x="-1802.1532"
+         sodipodi:role="line"
+         id="tspan3083">number Numer          @   TRUE  string</tspan><tspan
+         id="tspan3015"
+         y="966.2774"
+         x="-1802.1532"
+         sodipodi:role="line">name   Nazwa          @   TRUE  string</tspan><tspan
+         y="1016.2773"
+         x="-1802.1532"
+         sodipodi:role="line"
+         id="tspan3085">sub    Subwencje  # ##0  FALSE  number</tspan><tspan
+         id="tspan3021"
+         y="1066.2773"
+         x="-1802.1532"
+         sodipodi:role="line">total  Suma       # ##0   TRUE  number</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:40px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#803300;fill-opacity:1;stroke:none;font-family:Monospace;-inkscape-font-specification:Monospace"
+       x="-1804.204"
+       y="801.62762"
+       id="text3031"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         x="-1804.204"
+         y="801.62762"
+         id="tspan3045">key    label     format  basic    type</tspan></text>
+    <rect
+       style="fill:#f2f2f2;fill-opacity:1;stroke:none"
+       id="rect3097"
+       width="2399.4497"
+       height="299.00519"
+       x="-1852.545"
+       y="1243.0964" />
+    <text
+       sodipodi:linespacing="125%"
+       id="text3099"
+       y="1212.7919"
+       x="-1795.8964"
+       style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       xml:space="preserve"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Monospace;-inkscape-font-specification:Monospace"
+         y="1212.7919"
+         x="-1795.8964"
+         id="tspan3101"
+         sodipodi:role="line">DATA_<tspan
+   style="fill:#892ca0"
+   id="tspan3195">5001</tspan></tspan></text>
+    <g
+       transform="translate(-1787.6839,1142.4565)"
+       id="g3103">
+      <text
+         sodipodi:linespacing="125%"
+         id="text3105"
+         y="243.60999"
+         x="-6.962389"
+         style="font-size:40px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#333333;fill-opacity:1;stroke:none;font-family:Monospace;-inkscape-font-specification:Monospace"
+         xml:space="preserve"><tspan
+           id="tspan3115"
+           y="243.60999"
+           x="-6.962389"
+           sodipodi:role="line">100001  NULL    Część     15      Sądy             64537  826747  NULL            sąd</tspan><tspan
+           y="293.60999"
+           x="-6.962389"
+           sodipodi:role="line"
+           id="tspan3135">100002  100001  Dział     705     Sądy powiatowe   34264  453642  NULL            sąd, powiat</tspan><tspan
+           y="343.60999"
+           x="-6.962389"
+           sodipodi:role="line"
+           id="tspan3137">100003  100002  Rozdział  70512   Obrona narodowa  6453   281276  Lorem ipsum...  obrona, naród</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:40px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#803300;fill-opacity:1;stroke:none;font-family:Monospace;-inkscape-font-specification:Monospace"
+         x="-9.0131702"
+         y="178.96024"
+         id="text3117"
+         sodipodi:linespacing="125%"><tspan
+           sodipodi:role="line"
+           x="-9.0131702"
+           y="178.96024"
+           id="tspan3119">id      parent  type      number  name             sub    total   info            ft_search</tspan></text>
+    </g>
+    <g
+       id="g3177"
+       transform="translate(-0.9465332,6.15905)">
+      <text
+         sodipodi:linespacing="125%"
+         id="text2987"
+         y="250.59872"
+         x="-1799.7711"
+         style="font-size:40px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#333333;fill-opacity:1;stroke:none;font-family:Monospace;-inkscape-font-specification:Monospace"
+         xml:space="preserve"><tspan
+           y="250.59872"
+           x="-1799.7711"
+           id="tspan2989"
+           sodipodi:role="line">1001  NULL    Budżet centralny  2          3          NULL</tspan><tspan
+           id="tspan2991"
+           y="300.59872"
+           x="-1799.7711"
+           sodipodi:role="line">1002  1001    Budżet księgowy   2          2          NULL</tspan><tspan
+           id="tspan2993"
+           y="350.59872"
+           x="-1799.7711"
+           sodipodi:role="line">1003  1002    Ustawa budżetowa  1          1          NULL</tspan><tspan
+           id="tspan2995"
+           y="400.59872"
+           x="-1799.7711"
+           sodipodi:role="line">1004  1003    2011              0          0          <tspan
+   style="fill:#892ca0"
+   id="tspan3193">5001</tspan></tspan><tspan
+           id="tspan2997"
+           y="450.59872"
+           x="-1799.7711"
+           sodipodi:role="line">1005  1002    Sprawozdanie      1          1          NULL</tspan><tspan
+           id="tspan2999"
+           y="500.59872"
+           x="-1799.7711"
+           sodipodi:role="line">1006  1005    2009              0          0          5002</tspan><tspan
+           id="tspan3001"
+           y="550.59875"
+           x="-1799.7711"
+           sodipodi:role="line">1007  1005    2010              0          0          5003</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:40px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#803300;fill-opacity:1;stroke:none;font-family:Monospace;-inkscape-font-specification:Monospace"
+         x="-1799.5758"
+         y="184.60901"
+         id="text3173"
+         sodipodi:linespacing="125%"><tspan
+           sodipodi:role="line"
+           x="-1799.5758"
+           y="184.60901"
+           id="tspan3175">id    parent  name              min_depth  max_depth  endpoint</tspan></text>
+    </g>
+    <text
+       sodipodi:linespacing="125%"
+       id="text3189"
+       y="80.197411"
+       x="-1799.7606"
+       style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       xml:space="preserve"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Monospace;-inkscape-font-specification:Monospace"
+         y="80.197411"
+         x="-1799.7606"
+         id="tspan3191"
+         sodipodi:role="line">DBTREE</tspan></text>
+    <rect
+       style="fill:#f2f2f2;fill-opacity:1;stroke:none"
+       id="rect3247"
+       width="586.07776"
+       height="356.78391"
+       x="-1852.545"
+       y="1662.6384" />
+    <text
+       sodipodi:linespacing="125%"
+       id="text3249"
+       y="1636.8911"
+       x="-1802.3094"
+       style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       xml:space="preserve"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Monospace;-inkscape-font-specification:Monospace"
+         y="1636.8911"
+         x="-1802.3094"
+         id="tspan3251"
+         sodipodi:role="line">COUNTERS</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:40px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#333333;fill-opacity:1;stroke:none;font-family:Monospace;-inkscape-font-specification:Monospace"
+       x="-1802.1532"
+       y="1805.9524"
+       id="text3255"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         x="-1802.1532"
+         y="1805.9524"
+         id="tspan3265">dbtree      1068</tspan><tspan
+         sodipodi:role="line"
+         x="-1802.1532"
+         y="1855.9524"
+         id="tspan3285">endpoints   5053</tspan><tspan
+         sodipodi:role="line"
+         x="-1802.1532"
+         y="1905.9524"
+         id="tspan3287">data        10023417</tspan><tspan
+         sodipodi:role="line"
+         x="-1802.1532"
+         y="1955.9524"
+         id="tspan3291">permalinks  3012</tspan><tspan
+         sodipodi:role="line"
+         x="-1802.1532"
+         y="2005.9524"
+         id="tspan3289" /></text>
+    <text
+       sodipodi:linespacing="125%"
+       id="text3267"
+       y="1741.3026"
+       x="-1804.204"
+       style="font-size:40px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#803300;fill-opacity:1;stroke:none;font-family:Monospace;-inkscape-font-specification:Monospace"
+       xml:space="preserve"><tspan
+         id="tspan3269"
+         y="1741.3026"
+         x="-1804.204"
+         sodipodi:role="line">key         value</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-start:url(#DotM);marker-end:url(#Arrow1Mend)"
+       d="m -378.82246,393.08552 171.62122,0 0,290.90072 -1352.04036,0"
+       id="path5639"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cccc" />
+    <path
+       sodipodi:nodetypes="cccc"
+       inkscape:connector-curvature="0"
+       id="path6017"
+       d="m -378.82246,393.08552 171.62122,0 0,804.73688 -1352.04036,0"
+       style="fill:none;stroke:#000000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-start:url(#DotM);marker-end:url(#Arrow1Mend)" />
+  </g>
+</svg>
