@@ -47,9 +47,11 @@ var _resource = (function () {
     that.get_top_level = function ( col_id, callback ) {
         _store.get_init_data( col_id, function( data ) {
             var sheet_id;
+            var sheet;
             var gui_data;
 
-            sheet_id = add_sheet( col_id, data );
+            sheet = create_sheet( col_id, data );
+            sheet_id = add_sheet( sheet );
             gui_data = prepare_data_package_for_gui( sheet_id );
             
             callback( gui_data );
@@ -59,7 +61,7 @@ var _resource = (function () {
     that.get_children = function ( sheet_id, row_id, callback ) {
         var children;
         var sheet = sheets[ sheet_id ];
-        var endpoint_id = sheet['endpoint'];
+        var endpoint_id = sheet['endpoint_id'];
         
         if ( sheet['data'].children( row_id ) !== [] ) {
             children = sheet['data'].children( row_id, true );
@@ -123,7 +125,7 @@ var _resource = (function () {
         var labels;
 
         sheet = sheets[sheet_id];
-        full_columns_description = _store.get_columns( sheet['endpoint'] );
+        full_columns_description = _store.get_columns( sheet['endpoint_id'] );
         
         labels = full_columns_description.map( function ( column ) {
             return column['label'];
@@ -157,7 +159,7 @@ var _resource = (function () {
         sheet = sheets[sheet_id];
         sheet['columns'] = selected_columns;
         
-        full_tree = _store.get_full_tree( sheet['endpoint'] );
+        full_tree = _store.get_full_tree( sheet['endpoint_id'] );
         cleaned_full_data = clean_data( full_tree.toList(), sheet['columns'], sheet['aux'] );
         new_tree = monkey.createTree( [], '_id', 'parent' );
         
@@ -179,7 +181,7 @@ var _resource = (function () {
         
         sheet = sheets[sheet_id];
         
-        _store.get_top_level( sheet['endpoint'], function ( data ) {
+        _store.get_top_level( sheet['endpoint_id'], function ( data ) {
             var cleaned_data = clean_data( data, sheet['columns'], sheet['aux'] );
             
             sheet['data'] = monkey.createTree( cleaned_data, '_id', 'parent' );
@@ -217,15 +219,16 @@ var _resource = (function () {
                 sheet_descr = {
                     'name': sheet['name'],
                     'sheet_id': sheet_id,
-                    'end_id': sheet['endpoint']
+                    'group_id': sheet['group_id'],
+                    'end_id': sheet['endpoint_id']
                 };
                 sheets_names.push( sheet_descr );
             }
         }
 
         sorted_sheets_names = sheets_names.sort( function( s1, s2 ) {
-            if ( s1['group'] === s2['group'] ) {
-                return s1['end_id'] - s2['end_id'];
+            if ( s1['group_id'] === s2['group_id'] ) {
+                return s1['sheet_id'] - s2['sheet_id'];
             }
             else {
                 return s1['group_id'] - s2['group_id'];
@@ -290,19 +293,29 @@ var _resource = (function () {
         callback( gui_data );
     };
     
-
-    that.copy_sheet = function ( sheet_id, callback ) {
-        var sheet1 = {
-           'name': 'Name1',
-           'sheet_id': 1,
-           'end_id': 10003,
-          };
-        callback( sheet1 );      
-    }
-    
     
     that.close_sheet = function ( sheet_id ){            
         delete sheets[ sheet_id ];
+    };
+    
+    that.copy_sheet = function ( sheet_id, callback ) {
+        var sheet;
+        var copied_sheet;
+        var copied_sheet_id;
+        var sheet_descr;
+        
+        sheet = sheets[sheet_id];
+        copied_sheet = $.extend( true, {}, sheet );
+        copied_sheet_id = add_sheet( copied_sheet );
+        
+        sheet_descr = {
+            'name': copied_sheet['name'],
+            'sheet_id': copied_sheet_id,
+            'group_id': copied_sheet['group_id'],
+            'end_id': copied_sheet['end_id']
+        };
+        
+        callback( sheet_descr );
     };
     // END OF TEST FUNCTIONS
 
@@ -326,18 +339,12 @@ var _resource = (function () {
     function get_group_id( info ) {
         return 0;
     }
-
-    function add_sheet( col_id, data ) {
-        var generate_sheet_id = function() {
-            var act_id = next_sheet_id;
-            next_sheet_id += 1;
-            return next_sheet_id;
-        };
+    
+    function create_sheet( col_id, data ) {
         var new_sheet;
         var active_columns;
         var cleaned_data;
         var cleaned_tree_data;
-        var sheet_id = generate_sheet_id();
         var name = data['meta']['name'];
         var group_id;
 
@@ -351,13 +358,25 @@ var _resource = (function () {
 
         new_sheet = {
             'group_id': group_id,
-            'endpoint': col_id,
+            'endpoint_id': col_id,
             'data': cleaned_tree_data,
             'name': name,
             'columns': active_columns,
             'aux': data['meta']['aux'],
             'type': _enum['STANDARD']
         };
+
+        return new_sheet;
+    }
+
+    function add_sheet( sheet ) {
+        var generate_sheet_id = function() {
+            var act_id = next_sheet_id;
+            next_sheet_id += 1;
+            return next_sheet_id;
+        };
+        var sheet_id = generate_sheet_id();
+        
         sheets[sheet_id] = new_sheet;
 
         return sheet_id;
@@ -410,7 +429,7 @@ var _resource = (function () {
                     return {
                         'column_key'  : e['key'],
                         'column_type' : e['type'],
-                        'click'       : (e['type'] === 'type' && !new_row['leaf']) ? 'click' : '',
+                        'click'       : (e['key'] === 'type' && !new_row['leaf']) ? 'click' : '',
                         'content'     : format_value( row[ e['key'] ], e['type'], e['format'] )
                     };
                 });
