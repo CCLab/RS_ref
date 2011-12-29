@@ -39,7 +39,7 @@ var _gui = (function () {
 
 
         // stupid testing environment
-        _resource.get_db_tree( draw_db_tree_panels );
+//        _resource.get_db_tree( draw_db_tree_panels );
     };
 
 
@@ -54,22 +54,26 @@ var _gui = (function () {
     
     function draw_end_point( end_id ) {
     
-        _resource.get_sheets_names( draw_tabs ); // TODO - not ready in resources
-        _resource.get_end_name( end_id, draw_tools ); // TODO - not ready in resources
-        _resource.get_top_level( end_id, draw_table );
-        
+        _resource.get_top_level( end_id, function ( data ) {
+            console.log(data);
+            var names = { 'name': data['name'], }; 
+            draw_table( data );
+            _resource.get_sheets_names( draw_tabs );
+            draw_tools( names ); //TODO test it    
+                
+        });
+                
         prepare_aplication_interface();
         $('#application').show();
     }
     
     
     function draw_sheet( sheet_id ){
-        _resource.get_sheet_name( sheet_id, draw_tools ); // TODO - not ready i n resource
-        _resource.get_sheet( sheet_id, draw_table ); // TODO - not ready in resource        
+        _resource.get_sheet_name( sheet_id, draw_tools );
+        _resource.get_sheet( sheet_id, draw_table ); 
     }
     
-    
-                
+                   
     function draw_tabs( data ) {
         var last = data['sheets'].length - 1;
         var last_sheet = data['sheets'][last];
@@ -121,8 +125,8 @@ var _gui = (function () {
 
 
     function display_table( table ) {
-        
-        prepare_table_interface( table );
+        var table_code = $(table);
+        prepare_table_interface( table_code );
         $('#app-tb-datatable').empty();
         $('#app-tb-datatable').append( table_code );
         make_zebra();    
@@ -143,10 +147,9 @@ var _gui = (function () {
     }
     
     
-    function preapare_tabs_interface( table ) {
-        var tabs_code = $(table);
-        var copy_bt = tabs_code.find('#app-tb-save-sheet'); // TODO jquery can't find this button
-
+    function preapare_tabs_interface( tabs_code ) {
+        
+        var copy_bt = tabs_code.closest('#app-tb-save-sheet'); // TODO jquery can't find this button
         var tabs = tabs_code.find('li');
         var close_bt = tabs_code.find('.close-sheet-button');
         
@@ -261,12 +264,11 @@ var _gui = (function () {
     
     function copy_sheet() { // TODO - add tab in end_points order?
         var tab = $('#app-tb-sheets>.active');
-        alert('jest');
-        
+        var new_tab = tab.clone;
         
         tab.removeClass('active');
         tab.find('.close-sheet-button').remove();    
-        add_new_tab( tab.clone() );
+        add_new_tab( new_tab );
         
         _resource.copy_sheet( sheet_id, draw_table );
     
@@ -489,7 +491,7 @@ var _gui = (function () {
         '<div id="app-tb-save-sheet" class="blue button left">Kopiuj do arkusza</div>' +
         '<ul id="app-tb-sheets">' +
             '{{#sheets}}' +
-                '<li id="snap-{{sheet_id}}" class="sheet tab button' + 
+                '<li id="snap-{{sheet_id}}" data-end-point="{{end_id}}" class="sheet tab button' + 
                     '{{#active}}' +
                         ' active' +
                     '{{/active}}' +
