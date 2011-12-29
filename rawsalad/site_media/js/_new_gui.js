@@ -61,6 +61,7 @@ var _gui = (function () {
         _resource.get_sheets_names( draw_tabs ); // TODO - not ready in resources
         _resource.get_end_name( end_id, draw_tools ); // TODO - not ready in resources
         _resource.get_top_level( end_id, draw_table );
+        
         prepare_aplication_interface();
         $('#application').show();
     }
