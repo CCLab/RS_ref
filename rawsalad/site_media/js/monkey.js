@@ -79,6 +79,11 @@ Form of created tree:
                 var newNode;
                 var isFiltered = isFiltered || false;
                 
+                assertId(value[idColumn], 'insertNode[idColumn]');
+                if (!!parentColumn) {
+                    assertId(value[parentColumn], 'insertNode[parentColumn]');
+                }
+                
                 parentId = (!!parentColumn) ? value[parentColumn] : getParentId(id);
                 if (parentId === '' || parentId === undefined || parentId === null) {
                     parentId = '__root__';
@@ -182,7 +187,14 @@ Form of created tree:
                 var parentNode;
                 
                 values.forEach(function(value){
-                    var parentId = (!!parentColumn) ? value[parentColumn] : getParentId(id);
+                    var parentId;
+                    
+                    assertId(value[idColumn], 'insertNode[idColumn]');
+                    if (!!parentColumn) {
+                        assertId(value[parentColumn], 'insertNode[parentColumn]');
+                    }
+                    
+                    parentId = (!!parentColumn) ? value[parentColumn] : getParentId(id);
                     if (!!groupedValues[parentId]) {
                         groupedValues[parentId].push(value);
                     } else {
