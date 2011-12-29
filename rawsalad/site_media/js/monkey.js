@@ -548,11 +548,51 @@ Form of created tree:
                 return nextNode;
             },
             
+            // Iterates part of this tree and calls fun function for each node
+            // it gets to. First node and end node are passed in 'first' and
+            // 'end' arguments(can be node or its id).
+            // First and end are optional, if first is undefined, then it will be
+            // first node in tree(next after root), if end is undefined, then
+            // iteration will end on the last node of this tree.
+            // If end is before first, then iteration will end on the last node
+            // of this tree.
+            // Returns tree after iteration.
+            iterate: function(fun, first, end) {
+                var firstNode;
+                var endNode;
+                var nextNode;
+                
+                assertFunction(fun, 'iterate');
+                
+                if (first === undefined) {
+                    firstNode = this.next(root());
+                } else {
+                    firstNode = isIdType(first) ? this.getNode(first) : first;
+                    assertNodeInTree(this, this.nodeId(firstNode), false, 'iterate(firstNode)');
+                }
+                if (end === undefined) {
+                    endNode = undefined;
+                } else {
+                    endNode = isIdType(end) ? this.getNode(end) : end;
+                    assertNodeInTree(this, this.nodeId(endNode), false, 'iterate(endNode)');
+                }
+                
+                nextNode = firstNode;
+                while (!!nextNode && nextNode !== endNode) {
+                    fun(nextNode);
+                    nextNode = this.next(nextNode);
+                }
+                
+                return this;
+            },
+            
             // Iterates this tree and calls fun function for each node,
             // function gets one argument: actual node. Returns the tree.
             forEach: function(fun) {
                 var nextNode = this.next(root());
                 var copiedNode;
+                
+                assertFunction(fun, 'forEach');
                 
                 while (!!nextNode) {
                     fun(nextNode);
@@ -571,6 +611,8 @@ Form of created tree:
                 var modifiedNode;
                 var copiedTree = new Tree(idColumn, parentColumn);
                 
+                assertFunction(fun, 'map');
+                
                 while (!!nextNode) {
                     copiedNode = deepCopy(nextNode, idColumn, parentColumn);
                     modifiedNode = fun(copiedNode);
@@ -588,6 +630,8 @@ Form of created tree:
                 var copiedTree = new Tree(idColumn, parentColumn);
                 var isFiltered;
                 
+                assertFunction(fun, 'filter');
+                
                 while (!!nextNode) {
                     copiedNode = deepCopy(nextNode, idColumn, parentColumn);
                     isFiltered = !fun(copiedNode);
@@ -603,6 +647,8 @@ Form of created tree:
                 var sortedTree;
                 var sortedChildren;
                 var actNode;
+                
+                assertFunction(fun, 'sort');
                 
                 // add sorted top level nodes
                 actNode = root();
@@ -1026,6 +1072,12 @@ Form of created tree:
             }
         } else {
             throw 'assertId(id=' + id + ')' + msg;
+        }
+    };
+    
+    var assertFunction = function(fun, msg) {
+        if (fun.constructor !== Function) {
+            throw 'assertFunction(not function)' + msg;
         }
     };
     
