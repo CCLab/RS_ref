@@ -38,16 +38,12 @@ var _gui = (function () {
         });
 
 
-
-
         // stupid testing environment
         _resource.get_db_tree( draw_db_tree_panels );
-
     };
 
 
 // P R I V A T E   I N T E R F A C E
-
 
     // D R A W   F U N C T I O N S
     function draw_db_tree_panels( data ) {
