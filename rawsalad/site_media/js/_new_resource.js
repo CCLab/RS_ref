@@ -260,7 +260,7 @@ var _resource = (function () {
     
     
     
-    that.sortable_columns = function( sheet_id, callback ) {
+    that.sortable_columns = function ( sheet_id, callback ) {
         var sheet;
         var sortable_columns;
         
@@ -278,8 +278,27 @@ var _resource = (function () {
         callback( sortable_columns );
     };
 
-    that.sort = function( sheet_id, query, callback ) {
-        // TODO (change monkey)
+    that.sort = function ( sheet_id, query, callback ) {
+        // TODO
+        //  ||
+        //  \/
+        var query_to_function = function ( query ) {
+            var fun = function( elem1, elem2 ) {
+                return elem1 - elem2
+            };
+            
+            return fun;
+        };
+        var sheet = sheets[sheet_id];
+        var sorted_tree;
+        var sort_fun;
+        
+        sheet = sheets[sheet_id];
+        sort_fun = query_to_function( query );
+        sorted_tree = sheet['data'].sort( sort_fun );
+        sheet['data'] = sorted_tree;
+        
+        that.get_sheet( sheet_id, callback );
     };
     
         

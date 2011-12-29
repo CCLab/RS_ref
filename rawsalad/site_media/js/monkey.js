@@ -586,6 +586,28 @@ Form of created tree:
                 return copiedTree;
             },
             
+            // Returns new tree with sorted nodes.
+            sort: function(fun) {
+                var sortedTree;
+                var sortedChildren;
+                var actNode;
+                
+                // add sorted top level nodes
+                actNode = root();
+                sortedTree = new Tree(idColumn, parentColumn);
+                
+                // add children of next nodes
+                while (!!actNode) {
+                    sortedChildren = this.children(actNode, true).sort(fun);
+                    sortedChildren.forEach(function(node) {
+                        sortedTree.insertNode(node);
+                    });
+                    actNode = this.next(actNode);
+                }
+                
+                return sortedTree;
+            },
+            
             // Returns number of nodes in subtree with root specified by elem(node or its id).
             countSubtree: function(elem) {
                 var elem = elem || root();
@@ -695,17 +717,6 @@ Form of created tree:
                     this[property] = valueCopy[property];
             }
         }
-        
-        /*if (!!parentNode) {
-            if (index === undefined) {
-                parentNode.children.add(this, idMap);
-            } else {
-                parentNode.children.insert(this, idMap, index);
-            }
-            //parentNode.children.add(this, idMap);
-        } else {
-            idMap['__root__'] = '';
-        }*/
     };
     
     // Children wraps list of children nodes.
