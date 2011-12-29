@@ -224,7 +224,12 @@ var _resource = (function () {
         }
 
         sorted_sheets_names = sheets_names.sort( function( s1, s2 ) {
-            return s1['end_id'] - s2['end_id'];
+            if ( s1['group'] === s2['group'] ) {
+                return s1['end_id'] - s2['end_id'];
+            }
+            else {
+                return s1['group_id'] - s2['group_id'];
+            }
         });
         
         callback( { 'sheets': sorted_sheets_names } );
@@ -306,6 +311,10 @@ var _resource = (function () {
                         '_resource:has_sheet:bad_length' );
         return found_group.length > 0;
     }
+    
+    function get_group_id( info ) {
+        return 0;
+    }
 
     function add_sheet( col_id, data ) {
         var generate_sheet_id = function() {
@@ -319,6 +328,7 @@ var _resource = (function () {
         var cleaned_tree_data;
         var sheet_id = generate_sheet_id();
         var name = data['meta']['name'];
+        var group_id;
 
         active_columns = data['meta']['columns'].filter( function ( column ) {
             return !!column['basic'];
@@ -326,8 +336,10 @@ var _resource = (function () {
         
         cleaned_data = clean_data( data['data'].toList(), active_columns, data['meta']['aux'] );
         cleaned_tree_data = monkey.createTree( cleaned_data, '_id', 'parent' );
+        group_id = get_group_id();
 
         new_sheet = {
+            'group_id': group_id,
             'endpoint': col_id,
             'data': cleaned_tree_data,
             'name': name,
@@ -340,38 +352,10 @@ var _resource = (function () {
         return sheet_id;
     }
 
-    function get_basic_sheet( col_id, type ) {
-        var group;
-        var type = type || _enum['STANDARD'];
-        var first_sheet;
-        var basic_sheet;
-        var basic_data;
-
-        group = get_group( col_id );
-        active_columns = group['columns'].filter( function ( column ) {
-            return !!column['basic'];
-        });
-
-        _assert.is_true( group['sheets'].length > 0,
-                         '_resource:get_basic_sheet:0 sheets in group');
-        first_sheet = group['sheets'][0];
-
-        basic_data = monkey.createTree( first_sheet['data'].children( first_sheet['data'].root() ), // CHANGE
-                                        '_id', 'parent' );
-        basic_sheet = {
-            'name': first_sheet['name'],
-            'type': type,
-            'data': basic_data,
-            'active_columns': active_columns
-        };
-
-        return basic_sheet;
-    }
-
     function prepare_data_package_for_gui( sheet_id, data ) {
         var data_package;
         
-        switch (sheet['type']) {
+        switch ( sheets[sheet_id]['type'] ) {
             case _enum['STANDARD']:
                 data_package = prepare_standard_data_package_for_gui( sheet_id, data );
                 break;
@@ -468,12 +452,13 @@ var _resource = (function () {
             };
         });
         
-        if ( data === [] ) {
+        if ( !!data ) {
             data = sheet['data'].toList();
         }
         total_row = prepare_total_row( data, columns_for_gui );
         rows_for_gui = prepare_rows_for_gui( data, columns_for_gui );
         data_package = {
+            'group': sheet['group_id'],
             'id': sheet_id,
             'type': sheet['type'],
             'name': sheet['name'],
