@@ -279,8 +279,7 @@ var _resource = (function () {
         // TODO (change monkey)
     };
     
-    
-    
+        
     that.get_sheet = function ( sheet_id, callback ) {
         var sheet;
         var gui_data;
@@ -291,9 +290,21 @@ var _resource = (function () {
         callback( gui_data );
     };
     
+
+    that.copy_sheet = function ( sheet_id, callback ) {
+        var sheet1 = {
+           'name': 'Name1',
+           'sheet_id': 1,
+           'end_id': 10003,
+          };
+        callback( sheet1 );      
+    }
+    
+    
     that.close_sheet = function ( sheet_id ){            
         delete sheets[ sheet_id ];
     };
+    // END OF TEST FUNCTIONS
 
 
 // P R I V A T E   I N T E R F A C E
