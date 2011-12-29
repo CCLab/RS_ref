@@ -93,7 +93,7 @@ var _table = (function () {
     function create_rows( data ) {
         var tbody_code;
         
-        tbody_code = Mustache.to_html( standard_tbody_template, data )
+        tbody_code = Mustache.to_html( standard_tbody_template, data );
                 
         return tbody_code;
     };
@@ -124,7 +124,7 @@ var _table = (function () {
         '<tbody>' +
             '{{#rows}}' + //TODO add info panel
                 '<tr id="{{_id}}" data_open="{{is_open}}" ' +
-                  'class="{{selected}} {{parent}}">' +
+                  'class="{{selected}} {{parent}} {{click}}">' +
                     '{{#data}}' +
                         '<td class="{{column_key}} {{column_type}} {{click}}"' + //TODO add click in object
                           '{{#padding}}' +
