@@ -130,6 +130,15 @@ var _resource = (function () {
         callback( name );  
     };
     
+    that.copy_sheet = function ( sheet_id, callback ) {
+        var sheet1 = {
+           'name': 'Name1',
+           'sheet_id': 1,
+           'end_id': 10003,
+          };
+        callback( sheet1 );      
+    }
+    
     // END OF TEST FUNCTIONS
 
 
