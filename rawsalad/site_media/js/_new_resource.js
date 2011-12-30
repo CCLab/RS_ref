@@ -63,7 +63,7 @@ var _resource = (function () {
         var sheet = sheets[ sheet_id ];
         var endpoint_id = sheet['endpoint_id'];
         
-        if ( sheet['data'].children( row_id ) !== [] ) {
+        if ( !!sheet['data'].children( row_id ).length ) {
             children = sheet['data'].children( row_id, true );
             callback( children );
         } else {
@@ -76,16 +76,25 @@ var _resource = (function () {
                 children = sheet['data'].children( row_id, true );
                 gui_data = prepare_data_package_for_gui( sheet_id, children );
                 
-                callback( children );
+                callback( gui_data );
             });
         }
     };
     
     that.remove_child = function ( sheet_id, node_id ) {
         var sheet;
+        var children;
+        var children_ids;
         
         sheet = sheets[sheet_id];
-        sheet['data'].removeNode( node_id );
+        children = sheet['data'].children( node_id, true);
+        children_ids = children.map( function ( node ) {
+            return node['_id'];
+        });
+        
+        children_ids.forEach( function ( id ) {
+            sheet['data'].removeNode( id );
+        });
     };
     
     
@@ -112,7 +121,9 @@ var _resource = (function () {
         sheet = sheets[sheet_id];
         data_tree = sheet['data'];
         
-        set_selection( data_tree, old_row_id, '', '', '' );
+        if ( old_row_id !== undefined ) {
+            set_selection( data_tree, old_row_id, '', '', '' );
+        }
         set_selection( data_tree, new_row_id, 'selected', 'in-selected', 'after-selected' );
     };
     
@@ -120,18 +131,28 @@ var _resource = (function () {
     
     that.all_columns = function ( sheet_id, callback ) {
         var sheet;
-        var enpoint_id;
         var full_columns_description;
-        var labels;
+        var selected_columns;
+        var columns;
 
         sheet = sheets[sheet_id];
+        
+        selected_columns = {};
+        sheet['columns'].forEach( function ( column ) {
+            selected_columns[ column['key'] ] = true;
+        });
         full_columns_description = _store.get_columns( sheet['endpoint_id'] );
         
-        labels = full_columns_description.map( function ( column ) {
-            return column['label'];
+        
+        columns = full_columns_description.map( function ( column ) {
+            return {
+                'key': column['key'],
+                'label': column['label'],
+                'selected': !!selected_columns[ column['key'] ]
+            };
         });
         
-        return labels;
+        return columns;
     };
     
     that.show_with_columns = function ( sheet_id, columns, callback ) {
@@ -270,8 +291,7 @@ var _resource = (function () {
         }).map( function ( column ) {
             return {
                 'label': column['label'],
-                'key': column['key'],
-                'type': column['type']
+                'key': column['key']
             };
         });
         
@@ -289,7 +309,7 @@ var _resource = (function () {
             
             return fun;
         };
-        var sheet = sheets[sheet_id];
+        var sheet;
         var sorted_tree;
         var sort_fun;
         
@@ -331,7 +351,7 @@ var _resource = (function () {
             'name': copied_sheet['name'],
             'sheet_id': copied_sheet_id,
             'group_id': copied_sheet['group_id'],
-            'end_id': copied_sheet['end_id']
+            'end_id': copied_sheet['endpoint_id']
         };
         
         callback( sheet_descr );
@@ -355,8 +375,34 @@ var _resource = (function () {
         return found_group.length > 0;
     }
     
-    function get_group_id( info ) {
-        return 0;
+    function get_group_id( endpoint_id ) {
+        var sheet_id;
+        var sheet;
+        var group_id;
+        var max_group_id;
+        var group_found = false;
+        
+        max_group_id = -1;
+        for ( sheet_id in sheets ) {
+            if ( sheets.hasOwnProperty( sheet_id ) ) {
+                sheet = sheets[sheet_id];
+                if ( sheet['endpoint_id'] === endpoint_id ) {
+                    group_found = true;
+                    group_id = sheet['group_id'];
+                    break;
+                } else {
+                    if ( sheet['group_id'] > max_group_id ) {
+                        max_group_id = sheet['group_id'];
+                    }
+                }
+            }
+        }
+        
+        if ( !group_found ) {
+            group_id = max_group_id + 1;
+        }
+        
+        return group_id;
     }
     
     function create_sheet( col_id, data ) {
@@ -373,7 +419,7 @@ var _resource = (function () {
         
         cleaned_data = clean_data( data['data'].toList(), active_columns, data['meta']['aux'] );
         cleaned_tree_data = monkey.createTree( cleaned_data, '_id', 'parent' );
-        group_id = get_group_id();
+        group_id = get_group_id( col_id );
 
         new_sheet = {
             'group_id': group_id,
@@ -390,9 +436,9 @@ var _resource = (function () {
 
     function add_sheet( new_sheet ) {
         var generate_sheet_id = function() {
-            var act_id = next_sheet_id;
+            var new_id = next_sheet_id;
             next_sheet_id += 1;
-            return next_sheet_id;
+            return new_id;
         };
         var sheet_id = generate_sheet_id();
         
@@ -501,7 +547,7 @@ var _resource = (function () {
             };
         });
         
-        if ( !!data ) {
+        if ( !data.length ) {
             data = sheet['data'].toList();
         }
         total_row = prepare_total_row( data, columns_for_gui );
