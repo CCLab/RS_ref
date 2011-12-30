@@ -124,7 +124,7 @@ var _table = (function () {
         '<tbody>' +
             '{{#rows}}' + //TODO add info panel
                 '<tr id="{{_id}}" data_open="{{is_open}}" ' +
-                  'class="{{selected}} {{parent}} {{click}}">' +
+                  'class="{{selected}} {{parent}}">' +
                     '{{#data}}' +
                         '<td class="{{column_key}} {{column_type}} {{click}}"' + //TODO add click in object
                           '{{#padding}}' +

@@ -1,6 +1,17 @@
 /******************************************************/
 /*                 O B J E C T S                      */
 /******************************************************/
+
+TREE OBJECT:
+============
+list of objects
+    tree:[ {
+        id: int,
+        description: String,
+        long_description: String,
+        name: String,
+        parent_id: String,
+        }, ]
  
  
 SHEET OBJECT:
@@ -52,6 +63,11 @@ SHEET OBJECT:
 /*                 F U N C T I O N S                  */
 /******************************************************/
 
+DB_TREE
+=======
+    _resource.get_db_tree( callback ) : tree[{}, ];
+
+
 ALL SHEETS
 ==========
 
@@ -66,6 +82,12 @@ ALL SHEETS
         }, ]
 
     list is sorted by end_id value
+
+GET END_POINT
+=============
+
+    _resource.get_top_level( end_id, callback ) // TODO - decribe result
+
 
 ADD NODE:
 =========
@@ -102,7 +124,28 @@ CLEAN TABLE
 ===========
 
     _resource.clean_table( sheet_id, callback ): void
+
     
+SHEET
+=====
+
+
+    _resource.get_sheet( sheet_id, callback ): sheet
+    
+===sheet object: ===  TODO
+
+
+    _resource.close_sheet( sheet_id ): void
+    
+    _resource.copy_sheet( sheet_id, callback ): sheet
+
+    
+    
+SHEET NAME
+==========
+    
+    _resource.get_sheet_name( sheet_id, callback ): void
+
 
 END NAME
 ==========

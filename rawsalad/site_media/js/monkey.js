@@ -79,6 +79,11 @@ Form of created tree:
                 var newNode;
                 var isFiltered = isFiltered || false;
                 
+                assertId(value[idColumn], 'insertNode[idColumn]');
+                if (!!parentColumn) {
+                    assertParentId(value[parentColumn], 'insertNode[parentColumn]');
+                }
+                
                 parentId = (!!parentColumn) ? value[parentColumn] : getParentId(id);
                 if (parentId === '' || parentId === undefined || parentId === null) {
                     parentId = '__root__';
@@ -171,6 +176,7 @@ Form of created tree:
                 
                 var groupedValues = {};
                 var id;
+                var parentId;
                 var newNodes;
                 var oldNodes;
                 var newPositions;
@@ -180,9 +186,15 @@ Form of created tree:
                 var len;
                 var i;
                 var parentNode;
+                var firstChild;
                 
                 values.forEach(function(value){
-                    var parentId = (!!parentColumn) ? value[parentColumn] : getParentId(id);
+                    assertId(value[idColumn], 'insertNode[idColumn]');
+                    if (!!parentColumn) {
+                        assertParentId(value[parentColumn], 'insertNode[parentColumn]');
+                    }
+                    
+                    parentId = (!!parentColumn) ? value[parentColumn] : getParentId(value[idColumn]);
                     if (!!groupedValues[parentId]) {
                         groupedValues[parentId].push(value);
                     } else {
@@ -193,6 +205,10 @@ Form of created tree:
                 
                 for (id in groupedValues) {
                     if ( groupedValues.hasOwnProperty(id) ) {
+                        firstChild = groupedValues[id][0];
+                        // id in object will be casted to String, so we want to
+                        // get original form of id
+                        id = (!!parentColumn) ? firstChild[parentColumn] : getParentId(firstChild[idColumn]);
                         newNodes = groupedValues[id];
                         oldNodes = (!id) ? this.children(this.root()) : this.children(id);
                         newIds = newNodes.map(function (e) { return e[idColumn]; });
@@ -536,11 +552,51 @@ Form of created tree:
                 return nextNode;
             },
             
+            // Iterates part of this tree and calls fun function for each node
+            // it gets to. First node and end node are passed in 'first' and
+            // 'end' arguments(can be node or its id).
+            // First and end are optional, if first is undefined, then it will be
+            // first node in tree(next after root), if end is undefined, then
+            // iteration will end on the last node of this tree.
+            // If end is before first, then iteration will end on the last node
+            // of this tree.
+            // Returns tree after iteration.
+            iterate: function(fun, first, end) {
+                var firstNode;
+                var endNode;
+                var nextNode;
+                
+                assertFunction(fun, 'iterate');
+                
+                if (first === undefined) {
+                    firstNode = this.next(root());
+                } else {
+                    firstNode = isIdType(first) ? this.getNode(first) : first;
+                    assertNodeInTree(this, this.nodeId(firstNode), false, 'iterate(firstNode)');
+                }
+                if (end === undefined) {
+                    endNode = undefined;
+                } else {
+                    endNode = isIdType(end) ? this.getNode(end) : end;
+                    assertNodeInTree(this, this.nodeId(endNode), false, 'iterate(endNode)');
+                }
+                
+                nextNode = firstNode;
+                while (!!nextNode && nextNode !== endNode) {
+                    fun(nextNode);
+                    nextNode = this.next(nextNode);
+                }
+                
+                return this;
+            },
+            
             // Iterates this tree and calls fun function for each node,
             // function gets one argument: actual node. Returns the tree.
             forEach: function(fun) {
                 var nextNode = this.next(root());
                 var copiedNode;
+                
+                assertFunction(fun, 'forEach');
                 
                 while (!!nextNode) {
                     fun(nextNode);
@@ -559,6 +615,8 @@ Form of created tree:
                 var modifiedNode;
                 var copiedTree = new Tree(idColumn, parentColumn);
                 
+                assertFunction(fun, 'map');
+                
                 while (!!nextNode) {
                     copiedNode = deepCopy(nextNode, idColumn, parentColumn);
                     modifiedNode = fun(copiedNode);
@@ -576,6 +634,8 @@ Form of created tree:
                 var copiedTree = new Tree(idColumn, parentColumn);
                 var isFiltered;
                 
+                assertFunction(fun, 'filter');
+                
                 while (!!nextNode) {
                     copiedNode = deepCopy(nextNode, idColumn, parentColumn);
                     isFiltered = !fun(copiedNode);
@@ -584,6 +644,30 @@ Form of created tree:
                 }
                 
                 return copiedTree;
+            },
+            
+            // Returns new tree with sorted nodes.
+            sort: function(fun) {
+                var sortedTree;
+                var sortedChildren;
+                var actNode;
+                
+                assertFunction(fun, 'sort');
+                
+                // add sorted top level nodes
+                actNode = root();
+                sortedTree = new Tree(idColumn, parentColumn);
+                
+                // add children of next nodes
+                while (!!actNode) {
+                    sortedChildren = this.children(actNode, true).sort(fun);
+                    sortedChildren.forEach(function(node) {
+                        sortedTree.insertNode(node);
+                    });
+                    actNode = this.next(actNode);
+                }
+                
+                return sortedTree;
             },
             
             // Returns number of nodes in subtree with root specified by elem(node or its id).
@@ -695,17 +779,6 @@ Form of created tree:
                     this[property] = valueCopy[property];
             }
         }
-        
-        /*if (!!parentNode) {
-            if (index === undefined) {
-                parentNode.children.add(this, idMap);
-            } else {
-                parentNode.children.insert(this, idMap, index);
-            }
-            //parentNode.children.add(this, idMap);
-        } else {
-            idMap['__root__'] = '';
-        }*/
     };
     
     // Children wraps list of children nodes.
@@ -919,7 +992,7 @@ Form of created tree:
     
     // Returns true if elem can be id, otherwise false.
     var isIdType = function(elem) {
-        return elem !== undefined && elem.constructor === String;
+        return elem === null || (elem !== undefined && elem.constructor !== Node);
     };
     
     // Returns value of node, does not contain children collection and parent node.
@@ -1003,6 +1076,22 @@ Form of created tree:
             }
         } else {
             throw 'assertId(id=' + id + ')' + msg;
+        }
+    };
+    
+    var assertParentId = function(id, msg) {
+        if (id !== undefined) {
+            if ( id !== null && id.constructor !== String && id.constructor !== Number) {
+                throw 'assertParentId(id=' + id + ')' + msg;
+            }
+        } else {
+            throw 'assertParentId(id=' + id + ')' + msg;
+        }
+    };
+    
+    var assertFunction = function(fun, msg) {
+        if (fun.constructor !== Function) {
+            throw 'assertFunction(not function)' + msg;
         }
     };
     
