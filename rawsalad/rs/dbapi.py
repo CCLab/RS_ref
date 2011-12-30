@@ -230,7 +230,9 @@ class StateManager:
                             columns.append( column )
                 sheet['columns'] = columns
 
-                if sheet.get('type', None) == 'filter':
+                sheet_type = sheet.get('type', None)
+
+                if sheet_type == "filter":
                     data = collection.get_data( query={ '_id': { '$in': sheet['rows'] }} )
                     # mark them as filtering results
                     for d in data:
@@ -239,6 +241,8 @@ class StateManager:
                     visited = {}
                     for node in data:
                         data += self.get_unique_parents( collection, node['parent'], visited )
+                elif sheet_type == "search":
+                    pass
                 else:
                     # top level is always present
                     data = collection.get_top_level()
@@ -298,15 +302,19 @@ class Search:
 
 
     def search_text( self, display=['idef'] ):
-        out= { 'result': [] }
-        self.found= {}
-        qry_dict= { }
+        '''Full-text search'''
+        words_list = self.query.lower().split()
 
-        collect= Collection()
+        if not words_list:
+            # TODO change to proper result object
+            return {}
 
-        words_list= qrystr.strip().lower().split()
+        elif len( words_list ) == 1:
+            query_regx = r'^%s' % qrystr
+            # query_regx= r'%s' % qrystr # WARNING! it works, but extremely slow!
+            qry_dict.update( { '_keywords': re.compile(query_regx) } )
 
-        if len(words_list) > 1: # multiple words
+        else:
             kwds_list= []
             for word in words_list:
                 query_regx= r'^%s' % word
@@ -317,10 +325,6 @@ class Search:
                 kwds_list.append({ '_keywords': re.compile(query_regx) })
             qry_dict.update({ '$and': kwds_list })
 
-        elif len(words_list) == 1: # one word
-            query_regx = r'^%s' % qrystr
-            # query_regx= r'%s' % qrystr # WARNING! it works, but extremely slow!
-            qry_dict.update( { '_keywords': re.compile(query_regx) } )
 
         collect.set_query(qry_dict)
 
@@ -333,7 +337,8 @@ class Search:
             found_num= 0
             sc_list= sc.split('-')
             dataset, idef, issue= int(sc_list[0]), int(sc_list[1]), str(sc_list[2])
-            collect.set_fields( ["perspective", "ns"] ) # WARNING! eventually we can add "columns" here for indication where the result is found
+            # WARNING! eventually we can add "columns" here for indication where the result is found
+            collect.set_fields( ["perspective", "ns"] )
             metadata= collect.get_complete_metadata(dataset, idef, issue, datasrc)
 
             if metadata is None:

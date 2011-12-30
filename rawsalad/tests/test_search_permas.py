@@ -20,6 +20,9 @@ def get_data( state ):
         endpoint   = group['endpoint']
         collection = dbapi.Collection( endpoint, db=sm.db )
 
+        # get the full list of collection columns
+        group['columns'] = collection.get_columns()
+
         # get data for each sheet in the group
         for sheet in group['sheets']:
             fields = [ 'parent' ] + sheet['columns'][:]
@@ -34,9 +37,10 @@ def get_data( state ):
                         })
             sheet['columns'] = columns
 
+            # do the magic here
+            sheet_type = sheet.get('type', None)
 
-
-            if sheet.get('type', None) == "filter":
+            if sheet_type == "filter":
                 data = collection.get_data( query={ '_id': { '$in': sheet['rows'] }}, fields=fields )
                 # mark them as filtering results
                 for d in data:
@@ -45,6 +49,8 @@ def get_data( state ):
                 visited = {}
                 for node in data:
                     data += sm.get_unique_parents( collection, node['parent'], visited, fields=fields )
+            elif sheet_type == "search":
+                pass
             else:
                 # top level is always present
                 data = collection.get_data( query={'parent': None}, fields=fields )
@@ -98,3 +104,5 @@ def get_state():
 
 if __name__ == '__main__':
     test()
+
+

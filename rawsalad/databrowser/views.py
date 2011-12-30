@@ -142,10 +142,8 @@ def search_data( request ):
     query  = request.GET.get( 'query', None )
     scope  = request.GET.get( 'scope', None ).split(',')
 
-    search = rsdb.Search( scope, query )
+    results = rsdb.Search( scope, query ).search()
 
-
-    result = search.search_text()
 
     if result['result']:
         # rebuild { data: [ { idef: idef1 }, ..., { idef: idefN } ] }
