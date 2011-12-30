@@ -29,21 +29,7 @@ var _store = (function () {
 //  P U B L I C   I N T E R F A C E
     var that = {};
 
-    // meta_data setter
-    // IN:
-    // init_meta_data: [ {'description': '', 'idef': x, 'name': '', perspectives: []}, ... ]
-    that.init_store = function ( init_meta_data ) {
-        if ( !initiated ) {
-            meta_data = monkey.createTree(init_meta_data, '_id', 'parent_id');
-            initiated = true;
-        }
-    };
-
-    // temporary
-    that.meta_data = function ( value ) {
-        meta_data = value;
-    };
-
+    // Download db tree describing collections.
     that.get_db_tree = function ( callback ) {
         var respond = function ( data ) {
             var data = get_db_tree();
@@ -55,13 +41,13 @@ var _store = (function () {
         }
         else {
             _db.get_db_tree( function ( data ) {
-                // TODO make the monkey eat the tree
                 save_db_tree( data );
                 respond();
             });
         }
     };
     
+    // Get copy of tree with all nodes from collection with id = col_id.
     that.get_full_tree = function ( col_id, callback ) {
         if ( !has_dat( col_id ) ) {
             return undefined;
@@ -70,37 +56,36 @@ var _store = (function () {
         }
     };
 
+    // Download meta data and first level nodes of collection with id = col_id.
     that.get_init_data = function ( col_id, callback ) {
         var data_source;
         var data;
-        var meta;
+        var metadata;
         var data_package;
 
         if ( has_data( col_id ) ) {
             data_source = get_data_source( col_id );
             data = monkey.createTree( data_source.children( data_source.root(), true ), '_id', 'parent' );
             data_package = {
-                'data': data.copy(),
-                'meta': meta_data_sources[col_id]
+                'data'    : data.copy(),
+                'metadata': meta_data_sources[col_id]
             };
             callback( data_package );
         } else {
             _db.get_init_data( col_id, function ( db_data ) {
-                // TODO names of db obejct's fields changed
-                //        rows --> data
-                //        meta --> metadata
-                //      change it where appropriate
+                // save data and meta data, return it in callback
                 data_source = store_data( db_data['data'], col_id );
-                meta = store_meta_data( db_data['meta'], col_id );
+                metadata = store_meta_data( db_data['metadata'], col_id );
                 data_package = {
-                    'data': data_source.copy(),
-                    'meta': meta
+                    'data'    : data_source.copy(),
+                    'metadata': metadata
                 };
                 callback( data_package );
             });
         }
     };
     
+    // Get children of parent_id node from col_id collection.
     that.get_children = function ( col_id, parent_id, callback ) {
         var data_source;
         var children;
@@ -111,6 +96,8 @@ var _store = (function () {
             callback( children );
         } else {
             _db.get_children( col_id, parent_id, function ( db_data ) {
+                // Store is not sure if it has all children of parent_id,
+                // downloads them and updates tree(inserting new nodes).
                 data_source = get_data_source( col_id );
                 data_source.updateTree( db_data );
                 children = data_source.children( parent_id, true );
@@ -120,6 +107,7 @@ var _store = (function () {
     };
     
     that.get_top_level = function ( col_id, callback ) {
+        // TODO: __root__ is temporary here
         that.get_children( col_id, '__root__', callback );
     };
     
@@ -127,14 +115,9 @@ var _store = (function () {
         if ( !!has_data( col_id ) ) {
             callback( meta_data_sources[ col_id ]['name'] );
         } else {
-            _db.get_init_data( col_id, function ( db_data ) {
-                data_source = store_data( db_data['data'], col_id );
-                meta = store_meta_data( db_data['meta'], col_id );
-                data_package = {
-                    'data': data_source.copy(),
-                    'meta': meta
-                };
-                callback( meta['name'] );
+            // does not have collection, must download init data
+            that.get_init_data( col_id, function ( data ) {
+                callback( data['metadata']['name'] );
             });
         }
     };
@@ -158,8 +141,6 @@ var _store = (function () {
 
     // data tree about data
     var db_tree;
-    // initiated - is store initiated(meta_data downloaded)
-    var initiated = false;
     // tree for each collection
     var data_sources = {};
     // information about complete children
@@ -167,6 +148,7 @@ var _store = (function () {
     // contains meta data for each collection
     var meta_data_sources = {};
 
+    // Does store have children of parent_id(default root's id) in col_id collection.
     function has_data( col_id, parent_id ) {
         if (parent_id === undefined) {
             parent_id = '__root__';
@@ -174,10 +156,13 @@ var _store = (function () {
         return !!data_sources[col_id] && has_all_children( col_id, parent_id );
     }
     
+    // Does store have all children of parent_id in col_id collection.
     function has_all_children( col_id, parent_id ) {
         return !!complete_children[col_id] && !!complete_children[col_id][parent_id];
     }
     
+    // Saves information about having downloaded all children of parent_id node in
+    // col_id collection.
     function all_children_downloaded( col_id, parent_id ) {
         if ( !complete_children[col_id] ) {
             complete_children[col_id] = {};
@@ -193,6 +178,7 @@ var _store = (function () {
         return meta_data_sources[col_id];
     }
 
+    // Save downloaded data and save information about having full first level.
     function store_data( db_data, col_id ) {
         var new_data_source = monkey.createTree( db_data, '_id', 'parent' );
         data_sources[col_id] = new_data_source;
@@ -208,6 +194,7 @@ var _store = (function () {
         return extracted_meta_data;
     }
 
+    // Returns important metadata from data downloaded by db.
     function extract_meta_data( db_meta_data, col_id ) {
         return {
             'name': db_meta_data['name'],
@@ -221,7 +208,6 @@ var _store = (function () {
     }
 
     function get_db_tree() {
-        // TODO: to copy or not to copy?
         return db_tree.copy();
     }
 
@@ -232,51 +218,3 @@ var _store = (function () {
     return that;
 
 }) ();
-
-/*[
-    {
-        'data': [ {row_object} ],
-        'meta': {
-            'name': collection_name,
-            'columns': { active_columns_objects },
-            'aux': aux_list,
-            'enpoint_id': end_id
-        },
-        'sheets': [
-            {
-                'type': enum,
-                'name': 'sheet_name' || undefined,
-                'columns': [ 'column_key', ...],
-                'sheet_data': sheet type dependent data
-            },
-            ...
-        ]
-    },
-    ...
-]
-
-sheet type dependent data:
-a) standard:
-    [ id1, id2, id3, ... ]
-    lowest open nodes
-b) filtered:
-    [
-        {
-            'breadcrumb': 'breadcrumb',
-            'rows': [ row1, row2, row3, ... ]
-        }
-    ]
-c) search:
-    {
-        'query': 'query_string',
-        'boxes': [
-            {
-                'rows': [
-                    {
-                      ...
-                      'hit': [column_key, ...]
-                    }
-                ]
-            }
-        ]
-    }*/
