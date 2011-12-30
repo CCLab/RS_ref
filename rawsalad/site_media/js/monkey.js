@@ -81,7 +81,7 @@ Form of created tree:
                 
                 assertId(value[idColumn], 'insertNode[idColumn]');
                 if (!!parentColumn) {
-                    assertId(value[parentColumn], 'insertNode[parentColumn]');
+                    assertParentId(value[parentColumn], 'insertNode[parentColumn]');
                 }
                 
                 parentId = (!!parentColumn) ? value[parentColumn] : getParentId(id);
@@ -191,7 +191,7 @@ Form of created tree:
                     
                     assertId(value[idColumn], 'insertNode[idColumn]');
                     if (!!parentColumn) {
-                        assertId(value[parentColumn], 'insertNode[parentColumn]');
+                        assertParentId(value[parentColumn], 'insertNode[parentColumn]');
                     }
                     
                     parentId = (!!parentColumn) ? value[parentColumn] : getParentId(id);
@@ -1072,6 +1072,16 @@ Form of created tree:
             }
         } else {
             throw 'assertId(id=' + id + ')' + msg;
+        }
+    };
+    
+    var assertParentId = function(id, msg) {
+        if (id !== undefined) {
+            if ( id !== null && id.constructor !== String && id.constructor !== Number) {
+                throw 'assertParentId(id=' + id + ')' + msg;
+            }
+        } else {
+            throw 'assertParentId(id=' + id + ')' + msg;
         }
     };
     

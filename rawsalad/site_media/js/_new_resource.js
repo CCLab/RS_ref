@@ -388,7 +388,7 @@ var _resource = (function () {
         return new_sheet;
     }
 
-    function add_sheet( sheet ) {
+    function add_sheet( new_sheet ) {
         var generate_sheet_id = function() {
             var act_id = next_sheet_id;
             next_sheet_id += 1;
