@@ -237,46 +237,109 @@ var _gui = (function () {
         
     // TABS EVENTS
     function change_sheet() {
-
+        var sheet_id;
         if ( $(this).hasClass('active') ) {
             return;
         }
-        new_active_tab( $(this) );                
+        new_active_tab( $(this) );
+        sheet_id = active_sheet_id();
+        draw_sheet( sheet_id );                
     }
         
     function close_sheet() { //TODO is it ok?
         var button = $(this).parent();
-        var new_active;
-        var this_id = button.attr('id');
-        var sheet_id = this_id.split('-')[1];
+        var new_active;        
+        var new_sheet_id;
+        var sheet_id = active_sheet_id();
+
+        _resource.close_sheet( sheet_id );
         
         new_active = button.prev();
         if ( new_active.length === 0 ) {
             new_active = button.next();
         }
         
-        new_active_tab( new_active );            
-
         button.remove();        
-        _resource.close_sheet( sheet_id );
-        
+        new_active_tab( new_active );    
+        new_sheet_id = active_sheet_id();        
+        draw_sheet( new_sheet_id );                
     }
     
-    function copy_sheet() { // TODO - add tab in end_points order?
+    function copy_sheet() { // TODO - add tab in end_points order? change sheet id itd
         var tab = $('#app-tb-sheets>.active');
-        var new_tab = tab.clone;
+        var new_tab;
+        var sheet_id = active_sheet_id();
+        var callback = function( data ) {
+            draw_table( data );
+            tab.find('.close-sheet-button').remove();
+            new_tab = tab.clone();
+//            tab.removeClass('active');
+            var new_id = 'snap-' + data['sheet_id'];
+            new_tab.attr('id', new_id);
+            new_tab
+                .click( change_sheet );
+            add_new_tab( new_tab );   
+            new_active_tab( new_tab );
+        }
         
-        tab.removeClass('active');
-        tab.find('.close-sheet-button').remove();    
-        add_new_tab( new_tab );
         
-        _resource.copy_sheet( sheet_id, draw_table );
+        
+        _resource.copy_sheet( sheet_id, callback );
+        
+        
+        
+        //add_new_tab( new_tab );
+        
+        
     
     }
+    
+    function change_active_tab_name( new_name ) {
+        var tab = $('#app-tb-sheets>.active>p');
+        tab.text( new_name );
+    }
+    
+    function active_tab_name() {
+        var tab = $('#app-tb-sheets>.active');
+        
+        return tab.text();
+    }
+
+    
     
     // TOOLS EVENTS
-    function show_rename_form() {
-    
+    function show_rename_form() { // TODO test it
+
+        
+        if ( $('#app-tb-tl-rename-input').is(":visible")){
+            var new_name = $('#app-tb-tl-rename-input').val();
+            var old_name = active_tab_name();
+            if ( new_name !== old_name ) {
+                var sheet_id = active_sheet_id();
+                
+                $('#app-tb-tl-title').html( new_name );                
+                _resource.change_name( sheet_id, new_name );
+                change_active_tab_name( new_name ); 
+            }
+            $('#app-tb-tl-rename-form').hide();
+            $('#app-tb-tl-title').show();            
+        }
+        else {
+            var old_name = $('#app-tb-tl-title').html();
+ 
+            $('#app-tb-tl-title').hide();
+            $('#app-tb-tl-rename-form')
+                .show()
+                .submit( function () {
+                    $('#app-tb-tl-rename-button').trigger( $.Event( 'click' ) );
+                    return false;
+                });
+
+            $('#app-tb-tl-rename-input')
+                .val( old_name )
+                .select()
+                .focus();
+        }
     }
     
     function clear_table() {
@@ -297,8 +360,13 @@ var _gui = (function () {
 
     // not used yet:
     function rename_sheet() {
-    
+        var new_name = $('#app-tb-tl-rename-input').val();
+        var sheet_id = active_sheet_id();
+        
+        _resource.change_name( sheet_id, new_name );
+        return false;
     }
+    
     
     function sort_table() {
     
@@ -353,18 +421,24 @@ var _gui = (function () {
         siblings.find('.close-sheet-button').remove(); 
 
         button.addClass('active');
-        if ( siblings.length > 0 ) {
+        if ( siblings.length > 0 ) { // TODO bug when close 2nd sheet
             close_bt
                 .click( close_sheet )   
             button.append( close_bt );
         }
-        draw_sheet( sheet_id );        
     }
     
-    function add_new_tab( button ) {
+    function add_new_tab( button ) { // TODO - conect with new_active_tab
         $('#app-tb-sheets').append( button );
     }
 
+    function active_sheet_id() {
+        var sheet_tab = $('#app-tb-sheets').find('.active');
+        var tab_id = sheet_tab.attr('id');
+        var sheet_id = tab_id.split('-')[1];
+
+        return sheet_id;
+    }
 
 
 
@@ -456,19 +530,6 @@ var _gui = (function () {
 
     // END OF COLUMNS BUTTON FUNCTIONS
 
-
-    function prepare_tools_interface( panel ){
-        var rename_bt = panel.find('#app-tb-tl-rename-button');
-        var clean_bt = panel.find('#app-tb-tl-clear-button');
-        var sort_bt = panel.find('#app-tb-tl-sort-button');
-        var filter_bt = panel.find('#app-tb-tl-filter-button');
-        var columns_bt = panel.find('#app-tb-tl-columns-button');
-    
-        prepare_columns_bt( columns_bt );    
-    }
-
-
-
     function make_zebra() {
         $('#app-tb-datatable')
             .find('tr:visible')
@@ -496,7 +557,9 @@ var _gui = (function () {
                         ' active' +
                     '{{/active}}' +
                 '" title="{{name}}">' +
+                    '<p>' +
                     '{{name}}' +
+                    '</p>' +
                     '{{#close}}' +
                         '<div class="close-sheet-button button">x</div>' +
                     '{{/close}}' +

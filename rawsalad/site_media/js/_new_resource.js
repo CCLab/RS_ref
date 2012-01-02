@@ -197,7 +197,10 @@ var _resource = (function () {
         
         sheet['name'] = new_name;
         
-        callback();
+        // for future possible implementations
+        if( !!callback ) {
+            callback();
+        }
     };
     
     that.get_end_name = function ( end_id, callback ) {
