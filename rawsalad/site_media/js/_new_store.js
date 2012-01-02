@@ -46,7 +46,7 @@ var _store = (function () {
             });
         }
     };
-    
+
     // Get copy of tree with all nodes from collection with id = col_id.
     that.get_full_tree = function ( col_id, callback ) {
         if ( !has_dat( col_id ) ) {
@@ -65,7 +65,7 @@ var _store = (function () {
 
         if ( has_data( col_id ) ) {
             data_source = get_data_source( col_id );
-            data = monkey.createTree( data_source.children( data_source.root(), true ), '_id', 'parent' );
+            data = monkey.createTree( data_source.children( data_source.root(), true ), 'id', 'parent' );
             data_package = {
                 'data'    : data.copy(),
                 'metadata': meta_data_sources[col_id]
@@ -84,12 +84,12 @@ var _store = (function () {
             });
         }
     };
-    
+
     // Get children of parent_id node from col_id collection.
     that.get_children = function ( col_id, parent_id, callback ) {
         var data_source;
         var children;
-        
+
         if ( has_data( col_id, parent_id ) ) {
             data_source = get_data_source( col_id );
             children = data_source.children( parent_id, true );
@@ -105,12 +105,12 @@ var _store = (function () {
             });
         }
     };
-    
+
     that.get_top_level = function ( col_id, callback ) {
         // TODO: __root__ is temporary here
         that.get_children( col_id, '__root__', callback );
     };
-    
+
     that.get_collection_name = function( col_id, callback ) {
         if ( !!has_data( col_id ) ) {
             callback( meta_data_sources[ col_id ]['name'] );
@@ -121,21 +121,21 @@ var _store = (function () {
             });
         }
     };
-    
+
     that.get_columns = function( col_id ) {
         var meta_data;
         var columns;
-        
+
         _assert.is_true( !!meta_data_sources[col_id],
                          '_store:get_columns:no collection with given id');
-        
+
         meta_data = get_meta_data_source( col_id );
         columns = meta_data['columns'];
-        
+
         return columns;
     };
 
-    
+
 
 // P R I V A T E   I N T E R F A C E
 
@@ -155,12 +155,12 @@ var _store = (function () {
         }
         return !!data_sources[col_id] && has_all_children( col_id, parent_id );
     }
-    
+
     // Does store have all children of parent_id in col_id collection.
     function has_all_children( col_id, parent_id ) {
         return !!complete_children[col_id] && !!complete_children[col_id][parent_id];
     }
-    
+
     // Saves information about having downloaded all children of parent_id node in
     // col_id collection.
     function all_children_downloaded( col_id, parent_id ) {
@@ -173,14 +173,14 @@ var _store = (function () {
     function get_data_source( col_id ) {
         return data_sources[col_id];
     }
-    
+
     function get_meta_data_source( col_id ) {
         return meta_data_sources[col_id];
     }
 
     // Save downloaded data and save information about having full first level.
     function store_data( db_data, col_id ) {
-        var new_data_source = monkey.createTree( db_data, '_id', 'parent' );
+        var new_data_source = monkey.createTree( db_data, 'id', 'parent' );
         data_sources[col_id] = new_data_source;
         all_children_downloaded( col_id, '__root__' );
 
@@ -212,7 +212,7 @@ var _store = (function () {
     }
 
     function save_db_tree( data ) {
-        db_tree = monkey.createTree( data, '_id', 'parent_id' );
+        db_tree = monkey.createTree( data, 'id', 'parent_id' );
     }
 
     return that;

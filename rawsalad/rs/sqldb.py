@@ -8,7 +8,7 @@ from time import time
 
 
 class DBConnection:
-    def __init__( self, db_type='postgres' ):
+    def __init__( self ):
         '''Define a connection object for a selected database'''
         # TODO move config file path into SETTINGS
         dir_path  = os.path.dirname( __file__ )
@@ -17,11 +17,11 @@ class DBConnection:
         cfg = ConfigParser({ 'basedir': conf_file })
         cfg.read( conf_file )
 
-        self.host   = cfg.get( db_type, 'host' )
-        self.dbname = cfg.get( db_type, 'dbname' )
-        self.user   = cfg.get( db_type, 'user' )
+        self.host   = cfg.get( 'postgres', 'host' )
+        self.dbname = cfg.get( 'postgres', 'dbname' )
+        self.user   = cfg.get( 'postgres', 'user' )
         try:
-            self.password = cfg.get( db_type, 'pass' )
+            self.password = cfg.get( 'postgres', 'pass' )
         except:
             self.password = None
 
@@ -44,8 +44,8 @@ class DBConnection:
 
 class DBNavigator:
     '''Navigator tree'''
-    def __init__( self, db_type='postgres' ):
-        self.cursor = DBConnection( db_type ).connect()
+    def __init__( self ):
+        self.cursor = DBConnection().connect()
 
 
     def get_db_tree( self ):
@@ -61,9 +61,9 @@ class DBNavigator:
 class Collection:
     '''Class for extracting data from acenrtain endpoint in the db'''
     # TODO move db connection to the session
-    def __init__( self, endpoint, cursor=None, db_type='postgres' ):
+    def __init__( self, endpoint, cursor=None ):
         # connect to db
-        self.cursor = cursor or DBConnection( db_type ).connect()
+        self.cursor = cursor or DBConnection().connect()
         # define the endpoint
         self.endpoint = endpoint
         # get the complete list of columns
