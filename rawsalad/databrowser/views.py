@@ -6,6 +6,7 @@ from django.shortcuts import render_to_response
 import simplejson as json
 
 import rs.dbapi as rsdb
+import rs.sqldb as sqldb
 
 # url: /
 def app_page( request ):
@@ -23,7 +24,7 @@ def app_page( request ):
 def get_db_tree( req ):
     '''Get the navigation tree for all database collections'''
     # create a navigator for the db collections
-    db_tree = rsdb.DBNavigator().get_db_tree()
+    db_tree = sqldb.DBNavigator().get_db_tree()
 
     return HttpResponse( json.dumps( db_tree ) )
 
@@ -31,14 +32,17 @@ def get_db_tree( req ):
 # url: /get_init_data/
 def get_init_data( req ):
     '''Get top-level data of the collection'''
-    endpoint = int( req.GET.get( 'endpoint', None ) )
+    endpoint = req.GET.get( 'endpoint', None )
 
-    collection = rsdb.Collection( endpoint )
-    meta = collection.get_metadata()
+    collection = sqldb.Collection( endpoint )
+    meta = 'to be implemented'#collection.get_metadata()
 
     data = {
         'data': collection.get_top_level(),
-        'meta': meta
+        'meta': {
+            'name': 'Nazwa na sztywno',
+            'columns': collection.get_columns()
+        }
     }
 
     return HttpResponse( json.dumps( data ) )
@@ -47,10 +51,10 @@ def get_init_data( req ):
 # url: /get_children/
 def get_children( req ):
     '''Get children of the node'''
-    endpoint = int( req.GET.get( 'endpoint', None ) )
-    _id      = int( req.GET.get( '_id', None ) )
+    endpoint = req.GET.get( 'endpoint', None )
+    _id      = req.GET.get( '_id', None )
 
-    collection = rsdb.Collection( endpoint )
+    collection = sqldb.Collection( endpoint )
     data = collection.get_children( _id )
 
     return HttpResponse( json.dumps( data ) )
