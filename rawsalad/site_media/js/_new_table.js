@@ -54,6 +54,8 @@ var _table = (function () {
         var header_code;
         var rows_code;
         var table_code;
+        var table_tag;
+
  
         // prepare padding value for child rows
         data['rows'] = data['rows'].map( function ( row ) { // TODO - test it                                       
@@ -63,10 +65,12 @@ var _table = (function () {
             return row;
         });
                         
+                                     
         header_code = create_standard_header( data );
         rows_code = create_rows( data );
-        table_code = '<table id="app-tb-datatable">'
-                        .concat(header_code, rows_code, '</table>' );
+        
+        table_code = header_code.concat( rows_code );
+        
         callback( table_code);
     };
 
@@ -83,7 +87,7 @@ var _table = (function () {
             total_row_code = Mustache.to_html( standard_total_row_template, data );
         }
         
-        standard_header_code = '<thead>'
+        standard_header_code = '<thead data-sheet-id="' + data['id'] + '">'
                                 .concat( head_row_code, total_row_code, '</thead>' );
 
         return standard_header_code;

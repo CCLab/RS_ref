@@ -1,0 +1,46 @@
+django --> db
+[
+    {
+        'data': [ {row} ], // all needed rows
+        'metadata': {
+            'name': collection_name,
+            'columns': { active_columns_objects }
+            'enpoint_id': end_id
+        },
+        'sheets': [
+            {
+                'type': enum,
+                'name': 'sheet_name' || undefined,
+                'columns': [ 'column_key', ...],
+                'sheet_data': sheet type dependent data
+            },
+            ...
+        ]
+    },
+    ...
+]
+
+sheet type dependent data:
+a) standard:
+    [ id1, id2, id3, ... ]
+    lowest open nodes
+b) filtered:
+    [
+        {
+            'rows': [ id1, id2, id3, ... ]
+        }
+    ]
+c) search:
+    {
+        'query': 'query_string',
+        'boxes': [
+            {
+                'rows': [
+                    {
+                      'id': 'id',
+                      'hit': [column_key, ...]
+                    }
+                ]
+            }
+        ]
+    }

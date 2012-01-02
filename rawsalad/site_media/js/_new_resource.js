@@ -354,8 +354,11 @@ var _resource = (function () {
     };
     
     
-    that.close_sheet = function ( sheet_id ){            
+    that.close_sheet = function ( sheet_id, callback ){            
         delete sheets[ sheet_id ];
+        if( !!callback ) {
+            callback();
+        }
     };
     
     that.copy_sheet = function ( sheet_id, callback ) {
