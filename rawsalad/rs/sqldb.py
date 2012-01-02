@@ -20,6 +20,10 @@ class DBConnection:
         self.host   = cfg.get( db_type, 'host' )
         self.dbname = cfg.get( db_type, 'dbname' )
         self.user   = cfg.get( db_type, 'user' )
+        try:
+            self.password = cfg.get( db_type, 'pass' )
+        except:
+            self.password = None
 
 
     def connect( self ):
@@ -29,6 +33,9 @@ class DBConnection:
             return self.cursor
         except:
             config = "host='"+ self.host +"' dbname='"+ self.dbname +"' user='"+ self.user +"'"
+            if passwd:
+                config += " password='"+ self.password +"'"
+
             connection  = psql.connect( config )
             self.cursor = connection.cursor( cursor_factory=psqlextras.RealDictCursor )
 
