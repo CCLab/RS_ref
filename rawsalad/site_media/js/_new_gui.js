@@ -242,32 +242,24 @@ var _gui = (function () {
         if ( $(this).hasClass('active') ) {
             return;
         }
-//        new_active_tab( $(this) );
         sheet_id = get_sheet_id( $(this) );
         draw_sheet( sheet_id );                
     }
 
         
-    function close_sheet() { //TODO is it ok - use group?
-        var button = $(this).parent();
-        var new_active;        
-        var new_sheet_id;
+    function close_sheet() { 
         var sheet_id = active_sheet_id();
-        var callback = function () {
-            new_active = button.prev();
-            if ( new_active.length === 0 ) {
-                new_active = button.next();
-            }
-            new_sheet_id = get_sheet_id( new_active );
+        var new_sheet_id = after_close_id();
 
+        var callback = function () {
             draw_sheet( new_sheet_id );        
         }                
-        _resource.close_sheet( sheet_id, callback );        
-                        
+        
+        _resource.close_sheet( sheet_id, callback );                                
     }
     
 
-    function copy_sheet() { // TODO - add tab in end_points order? change sheet id itd
+    function copy_sheet() {
         var new_sheet_id;
         var sheet_id = active_sheet_id();
 
@@ -402,7 +394,7 @@ var _gui = (function () {
         
 
     // TABS FUNCTIONS
-    function new_active_tab( button ) { // TODO need it?
+    function new_active_tab( button ) { 
         var close_bt = $(close_sheet_button);
         var siblings = button.siblings();
                 
@@ -411,8 +403,6 @@ var _gui = (function () {
 
         button.addClass('active');
         if ( siblings.length > 0 ) {
-            close_bt
-                .click( close_sheet )   
             button.append( close_bt );
         }
     }
@@ -425,17 +415,32 @@ var _gui = (function () {
 
         new_active_tab( active_tab_bt );        
     } 
+        
     
-
-    function add_new_tab( button ) {
-        $('#app-tb-sheets').append( button );
+    function after_close_id() {
+        var new_sheet_id;
+        var active_tab = $('#app-tb-sheets').find('.active');
+        var active_group = active_tab.attr( 'data-group' );
+        var siblings = active_tab.siblings();
+        var group_sheets = siblings.filter( function () {
+           return ( $(this).attr( 'data-group' ) === active_group ); 
+        } );
+                
+        if ( group_sheets.length > 0 ) {
+            new_sheet_id = parse_id_num( group_sheets[0]['id'] );
+        }
+        else {
+            var siblings = active_tab.siblings();
+            new_sheet_id = parse_id_num( siblings[0]['id'] );            
+        }
+        return new_sheet_id;
     }
 
 
     function active_sheet_id() {
         var sheet_tab = $('#app-tb-sheets').find('.active');
         var tab_id = sheet_tab.attr('id');
-        var sheet_id = tab_id.split('-')[1];
+        var sheet_id = parse_id_num( tab_id );
 
         return sheet_id;
     }
@@ -443,9 +448,14 @@ var _gui = (function () {
     
     function get_sheet_id( tab ) {
         var tab_id = tab.attr('id');
-        var sheet_id = tab_id.split('-')[1];
-
+        var sheet_id = parse_id_num( tab_id );
         return sheet_id;        
+    }
+
+    
+    function parse_id_num( tab_id ) {
+        var sheet_id = tab_id.split('-')[1];
+        return sheet_id;
     }
 
 
