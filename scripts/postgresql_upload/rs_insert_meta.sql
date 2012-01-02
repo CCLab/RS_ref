@@ -25,13 +25,13 @@ INSERT INTO columns VALUES( NULL, 'type', 'Typ', '@', TRUE, 'string', FALSE, FAL
 INSERT INTO columns VALUES( NULL, 'name', 'Nazwa', '@', TRUE, 'string', TRUE, TRUE );
 -- Budżet centralny > tradycyjny > 2011
 INSERT INTO columns VALUES( 'data_50001', 'dot_sub', 'Dotacje i subwencje', '# ##0', FALSE, 'number', TRUE, FALSE );
-INSERT INTO columns VALUES( 'data_50001', 'wiad_fiz', 'Świadczenia na rzecz osób fizycznych', '# ##0', FALSE, 'number', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50001', 'swiad_fiz', 'Świadczenia na rzecz osób fizycznych', '# ##0', FALSE, 'number', TRUE, FALSE );
 INSERT INTO columns VALUES( 'data_50001', 'wyd_jednostek', 'Wydatki bieżące jednostek budżetowych', '# ##0', FALSE, 'number', TRUE, FALSE );
 INSERT INTO columns VALUES( 'data_50001', 'wyd_majatk', 'Wydatki majątkowe', '# ##0', FALSE, 'number', TRUE, FALSE );
 INSERT INTO columns VALUES( 'data_50001', 'wyd_dlug', 'Wydatki na obsługę długu Skarbu Państwa', '# ##0', FALSE, 'number', TRUE, FALSE );
 INSERT INTO columns VALUES( 'data_50001', 'wspolfin_eu', 'Współfinansowanie projektów z udziałem środków Unii Europejskiej', '# ##0', FALSE, 'number', TRUE, FALSE );
-INSERT INTO columns VALUES( 'data_50001', 'sw_eur', 'Środki własne Unii Europejskiej', '# ##0', FALSE, 'number', TRUE, FALSE );
-INSERT INTO columns VALUES( 'data_50001', 'total', 'Ogółem (w tys. zł.)', '# ##0', TRUE, 'number', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50001', 'sw_eu', 'Środki własne Unii Europejskiej', '# ##0', FALSE, 'number', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50001', 'v_total', 'Ogółem (w tys. zł.)', '# ##0', TRUE, 'number', TRUE, FALSE );
 -- NFZ > Dane zagregowane > 2011
 INSERT INTO columns VALUES( 'data_50002', 'centrala', 'Centrala', '# ##0', TRUE, 'number', TRUE, FALSE );
 INSERT INTO columns VALUES( 'data_50002', 'dolnosląskie', 'Dolnośląskie', '# ##0', FALSE, 'number', TRUE, FALSE );

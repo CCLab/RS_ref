@@ -60,7 +60,7 @@ class DBNavigator:
 
 class Collection:
     '''Class for extracting data from acenrtain endpoint in the db'''
-    # TODO move db connection to the session
+    # TODO move db cursor to the session
     def __init__( self, endpoint, cursor=None ):
         # connect to db
         self.cursor = cursor or DBConnection().connect()
@@ -111,5 +111,23 @@ class Collection:
         self.cursor.execute( query )
         data = self.cursor.fetchall()
 
-        return data
+        result = []
+        for row in data:
+            new_row = {
+                'id'     : row['id'],
+                'parent' : row['parent']
+            }
+            try:
+                new_row['info'] = row['info']
+            except:
+                pass
+
+            new_row['data'] = {}
+            for column in self.columns:
+                key = column['key']
+                new_row['data'][ key ] = row[ key ]
+
+            result.append( new_row )
+
+        return result
 
