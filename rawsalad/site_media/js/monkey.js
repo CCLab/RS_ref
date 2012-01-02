@@ -176,6 +176,7 @@ Form of created tree:
                 
                 var groupedValues = {};
                 var id;
+                var parentId;
                 var newNodes;
                 var oldNodes;
                 var newPositions;
@@ -185,16 +186,15 @@ Form of created tree:
                 var len;
                 var i;
                 var parentNode;
+                var firstChild;
                 
                 values.forEach(function(value){
-                    var parentId;
-                    
                     assertId(value[idColumn], 'insertNode[idColumn]');
                     if (!!parentColumn) {
                         assertParentId(value[parentColumn], 'insertNode[parentColumn]');
                     }
                     
-                    parentId = (!!parentColumn) ? value[parentColumn] : getParentId(id);
+                    parentId = (!!parentColumn) ? value[parentColumn] : getParentId(value[idColumn]);
                     if (!!groupedValues[parentId]) {
                         groupedValues[parentId].push(value);
                     } else {
@@ -205,6 +205,10 @@ Form of created tree:
                 
                 for (id in groupedValues) {
                     if ( groupedValues.hasOwnProperty(id) ) {
+                        firstChild = groupedValues[id][0];
+                        // id in object will be casted to String, so we want to
+                        // get original form of id
+                        id = (!!parentColumn) ? firstChild[parentColumn] : getParentId(firstChild[idColumn]);
                         newNodes = groupedValues[id];
                         oldNodes = (!id) ? this.children(this.root()) : this.children(id);
                         newIds = newNodes.map(function (e) { return e[idColumn]; });
@@ -988,7 +992,7 @@ Form of created tree:
     
     // Returns true if elem can be id, otherwise false.
     var isIdType = function(elem) {
-        return elem !== undefined && elem.constructor === String;
+        return elem === null || (elem !== undefined && elem.constructor !== Node);
     };
     
     // Returns value of node, does not contain children collection and parent node.

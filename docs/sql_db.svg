@@ -80,9 +80,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.36002935"
-     inkscape:cx="-947.64916"
-     inkscape:cy="-51.067128"
+     inkscape:zoom="0.30800811"
+     inkscape:cx="-538.32342"
+     inkscape:cy="49.596801"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -113,13 +113,15 @@
        style="fill:#c8c4b7;fill-opacity:1;stroke:none"
        id="rect3293"
        width="2564.27"
-       height="2612.5601"
+       height="2242.4399"
        x="-1939.7462"
-       y="-22.976873" />
+       y="-22.976873"
+       inkscape:export-xdpi="27.559175"
+       inkscape:export-ydpi="27.559175" />
     <rect
        style="fill:#f2f2f2;fill-opacity:1;stroke:none"
        id="rect3003"
-       width="1595.4907"
+       width="1806.5846"
        height="499.9422"
        x="-1852.545"
        y="108.87971" />
@@ -244,33 +246,33 @@
            y="250.59872"
            x="-1799.7711"
            id="tspan2989"
-           sodipodi:role="line">1001  NULL    Budżet centralny  SQL FUN    SQL FUN    NULL</tspan><tspan
+           sodipodi:role="line">1001  NULL    Budżet centralny  SQL FUN    SQL FUN    NULL     NULL</tspan><tspan
            id="tspan2991"
            y="300.59872"
            x="-1799.7711"
-           sodipodi:role="line">1002  1001    Budżet księgowy   SQL FUN    SQL FUN    NULL</tspan><tspan
+           sodipodi:role="line">1002  1001    Budżet księgowy   SQL FUN    SQL FUN    NULL     NULL</tspan><tspan
            id="tspan2993"
            y="350.59872"
            x="-1799.7711"
-           sodipodi:role="line">1003  1002    Ustawa budżetowa  SQL FUN    SQL FUN    NULL</tspan><tspan
+           sodipodi:role="line">1003  1002    Ustawa budżetowa  SQL FUN    SQL FUN    NULL     NULL</tspan><tspan
            id="tspan2995"
            y="400.59872"
            x="-1799.7711"
-           sodipodi:role="line">1004  1003    2011              SQL FUN    SQL FUN    <tspan
+           sodipodi:role="line">1004  1003    2011              SQL FUN    SQL FUN    TRUE     <tspan
    style="fill:#892ca0"
    id="tspan3193">5001</tspan></tspan><tspan
            id="tspan2997"
            y="450.59872"
            x="-1799.7711"
-           sodipodi:role="line">1005  1002    Sprawozdanie      SQL FUN    SQL FUN    NULL</tspan><tspan
+           sodipodi:role="line">1005  1002    Sprawozdanie      SQL FUN    SQL FUN    NULL     NULL</tspan><tspan
            id="tspan2999"
            y="500.59872"
            x="-1799.7711"
-           sodipodi:role="line">1006  1005    2009              SQL FUN    SQL FUN    5002</tspan><tspan
+           sodipodi:role="line">1006  1005    2009              SQL FUN    SQL FUN    TRUE     5002</tspan><tspan
            id="tspan3001"
            y="550.59875"
            x="-1799.7711"
-           sodipodi:role="line">1007  1005    2010              SQL FUN    SQL FUN    5003</tspan></text>
+           sodipodi:role="line">1007  1005    2010              SQL FUN    SQL FUN    TRUE     5003</tspan></text>
       <text
          xml:space="preserve"
          style="font-size:40px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#803300;fill-opacity:1;stroke:none;font-family:Monospace;-inkscape-font-specification:Monospace"
@@ -281,7 +283,7 @@
            sodipodi:role="line"
            x="-1799.5758"
            y="184.60901"
-           id="tspan3175">id    parent  name              min_depth  max_depth  endpoint</tspan></text>
+           id="tspan3175">id    parent  name              min_depth  max_depth  visible  endpoint</tspan></text>
     </g>
     <text
        sodipodi:linespacing="125%"
@@ -356,7 +358,7 @@
        sodipodi:nodetypes="cccc"
        inkscape:connector-curvature="0"
        id="path6017"
-       d="m -378.82246,393.08552 171.62122,0 0,1388.81968 -1473.15266,0"
+       d="m -142.7306,393.08552 171.621223,0 0,1388.81968 -1709.244523,0"
        style="fill:none;stroke:#000000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-start:url(#DotM);marker-end:url(#Arrow1Mend)" />
     <text
        xml:space="preserve"
@@ -372,16 +374,16 @@
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Monospace;-inkscape-font-specification:Monospace">COLUMNS</tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:384.29940795999999636px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#b0aa98;fill-opacity:1;stroke:none;font-family:Sans"
-       x="-1298.9294"
-       y="1690.1479"
+       style="font-size:559.15447998px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#69624f;fill-opacity:0.38095242;stroke:none;font-family:Sans"
+       x="-1594.6378"
+       y="1753.1101"
        id="text3062"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan3064"
-         x="-1298.9294"
-         y="1690.1479"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Monospace;-inkscape-font-specification:Monospace;fill:#b0aa98;fill-opacity:1">?</tspan></text>
+         x="-1594.6378"
+         y="1753.1101"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;fill:#69624f;fill-opacity:0.38095242;font-family:Monospace;-inkscape-font-specification:Monospace">?</tspan></text>
     <text
        sodipodi:linespacing="125%"
        id="text3858"

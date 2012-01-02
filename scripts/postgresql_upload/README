@@ -1,0 +1,18 @@
+1. Install PostgreSQL server
+
+2. Create db and db user
+
+3. Upload it in such a sequence:
+
+     $  psql --user <db_user> --file rs_tables.sql
+     $  psql --user <db_user> --file rs_insert_meta.sql
+     $  psql --user <db_user> --file rs_insert_data.sql
+
+   The errors in the console will show up as there are no tables to be dropped 
+   at the beginning, but it's save mechanism. 
+
+4. Play around with lovely SQL syntax ;)
+
+----------
+Footnote: data are downloaded from otwartedane.pl, but some columns where 
+          dropped. Use these files and python script to create SQL inserts
