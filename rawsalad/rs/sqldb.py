@@ -33,7 +33,7 @@ class DBConnection:
             return self.cursor
         except:
             config = "host='"+ self.host +"' dbname='"+ self.dbname +"' user='"+ self.user +"'"
-            if passwd:
+            if self.password:
                 config += " password='"+ self.password +"'"
 
             connection  = psql.connect( config )
