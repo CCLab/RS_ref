@@ -74,7 +74,7 @@ var _resource = (function () {
 
                 // Remove unnecessary fields(not present in columns list) from children
                 // and update tree.
-                cleaned_data = clean_data( data, sheet['columns'], sheet['aux'] );
+                cleaned_data = clean_data( data, sheet['columns'] );
                 sheet['data'].updateTree( cleaned_data );
 
                 // Prepare children in gui-understandable form.
@@ -193,7 +193,7 @@ var _resource = (function () {
 
         // Get list of all nodes with needed columns only
         full_tree = _store.get_full_tree( sheet['endpoint_id'] );
-        cleaned_full_data = clean_data( full_tree.toList(), sheet['columns'], sheet['aux'] );
+        cleaned_full_data = clean_data( full_tree.toList(), sheet['columns'] );
 
         new_tree = monkey.createTree( [], 'id', 'parent' );
         old_tree = sheet['data'];
@@ -218,7 +218,7 @@ var _resource = (function () {
         sheet = sheets[sheet_id];
 
         _store.get_top_level( sheet['endpoint_id'], function ( data ) {
-            var cleaned_data = clean_data( data, sheet['columns'], sheet['aux'] );
+            var cleaned_data = clean_data( data, sheet['columns'] );
 
             sheet['data'] = monkey.createTree( cleaned_data, 'id', 'parent' );
 
@@ -446,7 +446,6 @@ var _resource = (function () {
             'data': cleaned_tree_data,
             'name': name,
             'columns': active_columns,
-            'aux': data['metadata']['aux'],
             'type': _enum['STANDARD']
         };
 
@@ -488,22 +487,28 @@ var _resource = (function () {
 
     // Prepare data for standard sheet.
     function prepare_standard_data_package_for_gui( sheet_id, data ) {
-        var prepare_rows_for_gui = function( rows, columns ) {
-            // Used to generate gui row levels. If row does not have parent,
-            // it's on first level, otherwise is one level lower.
-            var update_level_map = function( id_level_map, row_id, parent_id ) {
-                var level;
-                if ( !!parent_id ) {
-                    level = id_level_map[ parent_id ] + 1;
+        // Used to generate gui row levels. If row does not have parent,
+        // it's on first level, otherwise is one level lower.
+        var create_level_map = function( sheet_id ) {
+            var id_map = {};
+            var data = sheets[sheet_id]['data'].toList();
+            
+            data.forEach( function ( row ) {
+                if ( !row['parent'] && row['parent'] !== 0 ) {
+                    id_map[ row['id'] ] = 1;
                 } else {
-                    level = 1;
+                    id_map[ row['id'] ] = id_map[ row['parent'] ] + 1;
                 }
-                id_level_map[ row_id ] = level;
-            };
+            });
+            
+            return id_map;
+        };
+        var prepare_rows_for_gui = function( rows, columns, id_level_map ) {
             // Returns row prepared for gui(columns data + state).
             var prepare_row = function( row, id_level_map ) {
                 var new_row = {
-                    'id'      : row['id'],
+                    // SEND id not _id
+                    '_id'      : row['id'],
                     'parent'  : row['parent'],
                     'leaf'    : row['leaf'],
                     'is_open' : row['state']['is_open']
@@ -514,6 +519,8 @@ var _resource = (function () {
                 if ( !!row['state']['selected'] ) {
                     new_row['selected'] = row['state']['selected'];
                 }
+                // BUG(if data is not undefined), then there are no parents in data
+                // of rows in data, so level can not be calculated
                 new_row['level'] = id_level_map[ new_row['id'] ];
 
                 // data field contains information to generate cells in table
@@ -530,13 +537,9 @@ var _resource = (function () {
                 return new_row;
             };
             var new_rows = [];
-            var id_level_map = {};
 
-
+            // create array with gui prepared rows
             rows.forEach( function( row ) {
-                // find gui level for all rows
-                update_level_map( id_level_map, row['id'], row['parent'] );
-                // create array with gui prepared rows
                 new_rows.push( prepare_row( row, id_level_map ) );
             });
 
@@ -568,6 +571,7 @@ var _resource = (function () {
         var total_row;
         var rows_for_gui;
         var data_package;
+        var id_map;
 
         sheet = sheets[sheet_id];
 
@@ -584,7 +588,8 @@ var _resource = (function () {
             data = sheet['data'].toList();
         }
         total_row = prepare_total_row( data, columns_for_gui );
-        rows_for_gui = prepare_rows_for_gui( data, columns_for_gui );
+        id_map = create_level_map( sheet_id );
+        rows_for_gui = prepare_rows_for_gui( data, columns_for_gui, id_map );
 
         // object for gui
         data_package = {
@@ -620,12 +625,21 @@ var _resource = (function () {
         var clean_node = function( node, columns ) {
             var property;
             var new_node = {
+                'aux': {},
                 'data': {}
             };
 
-            for ( property in node ) {
-                if ( node.hasOwnProperty( property ) && property !== 'data' ) {
-                    new_node[ property ] = node[ property ];
+            new_node['id'] = node['id'];
+            new_node['parent'] = node['parent'];
+            ///////////////////////////////////////////////////
+            // DELETE IT ASAP
+            ///////////////////////////////////////////////////
+            new_node['leaf'] = false;
+            ///////////////////////////////////////////////////
+            
+            for ( property in node['aux'] ) {
+                if ( node['aux'].hasOwnProperty( property )) {
+                    new_node['aux'][ property ] = node[ property ];
                 }
             }
             columns.forEach( function ( column ) {
@@ -637,12 +651,6 @@ var _resource = (function () {
                 'is_open': false
             };
 
-            ///////////////////////////////////////////////////
-            // DELETE IT ASAP
-            ///////////////////////////////////////////////////
-            new_node['leaf'] = false;
-            ///////////////////////////////////////////////////
-            
             return new_node;
         };
 
