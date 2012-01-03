@@ -521,7 +521,7 @@ var _resource = (function () {
                 }
                 // BUG(if data is not undefined), then there are no parents in data
                 // of rows in data, so level can not be calculated
-                new_row['level'] = id_level_map[ new_row['id'] ];
+                new_row['level'] = id_level_map[ new_row['_id'] ];
 
                 // data field contains information to generate cells in table
                 // for this row
