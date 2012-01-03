@@ -364,8 +364,18 @@ var _gui = (function () {
 
 
     // TABLE EVENTS
-    function open_node() {
-
+    function open_node() {  //TODO - test it 
+        alert('open node:' + this );
+        var sheet_id = active_sheet_id();
+        var row_id = $(this).attr( 'id' );
+        
+        
+        var callback = function ( data ) {
+            table.add_node( row_id, data )
+        
+        }
+        _resource.get_children( sheet_id, row_id, callback )
+        
     }
 
 
@@ -408,21 +418,23 @@ var _gui = (function () {
     }
 
 
-    function tabs_length( data ) { // TODO test it
-        var max_length = tab_max_length( data.length );
-                
-        data = data.map( function( sheet ) {
+    function tabs_length( data ) { 
+        
+        var sheets = data['sheets'];
+        var max_length = tab_max_length( sheets.length );
+
+        data['sheets'] = sheets.map( function( sheet ) {
             var name = sheet['name'];
             
             if ( name.length > max_length ) {
-                name.slice( 0, max_length - 3 ) + '...'; 
+                sheet['name'] = name.slice( 0, max_length - 3 ) + '...'; 
             }
             return sheet;            
         } );    
     }
 
 
-    function tab_max_length( tabs_num ) { // TODO test it
+    function tab_max_length( tabs_num ) {
 
         var cut = [20, 20, 20, 20, 15, // 1-5
                    15, 15, 12, 12, 12, // 6-10
@@ -435,7 +447,7 @@ var _gui = (function () {
             return 3;
         }
 
-        return cut[ sheets_num-1 ];
+        return cut[ tabs_num-1 ];
     }
 
 

@@ -47,8 +47,12 @@ var _table = (function () {
                 _assert.assert( true, '_table:create_table:wrong table type' );
         };
     };
-
-
+    
+    that.add_node = function( row_id, data ) {
+        row = $( '#' + row_id );
+        var new_rows = '';    
+    };
+    
 //  P R I V A T E   I N T E R F A C E
     function create_standard_table( data, callback ) {
         var header_code;
