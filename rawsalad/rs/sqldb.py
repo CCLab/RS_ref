@@ -115,10 +115,11 @@ class Collection:
         for row in data:
             new_row = {
                 'id'     : row['id'],
-                'parent' : row['parent']
+                'parent' : row['parent'],
+                'aux'    : {}
             }
             try:
-                new_row['info'] = row['info']
+                new_row['aux']['info'] = row['info']
             except:
                 pass
 
