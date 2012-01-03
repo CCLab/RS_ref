@@ -77,7 +77,8 @@ if len( sys.argv ) == 3:
 
 else:
     start = time()
-    for endpoint in range( 1, 6 ):
+    # TODO make it with distinc endpoints count!!
+    for endpoint in range( 1, 7 ):
         columns = '''SELECT key FROM columns
                      WHERE searchable IS TRUE
                        AND (endpoint IS NULL

@@ -12,12 +12,14 @@ INSERT INTO dbtree VALUES( 1008, NULL, 'EFRR', 'Projekty Europejskiego Funduszu 
 INSERT INTO dbtree VALUES( 1009, 1008, 'Projekty gminne', 'Projekty realizowane na szczelu gminnym', 1, 1, NULL, NULL );
 INSERT INTO dbtree VALUES( 1010, 1009, '2010', NULL, 0, 0, 'data_50004', TRUE );
 INSERT INTO dbtree VALUES( 1011, 1009, '2011', NULL, 0, 0, 'data_50005', TRUE );
+INSERT INTO dbtree VALUES( 1012, 1000, 'Sprawozdanie', 'Sprawozdanie części wydatkowej', 1, 1, NULL, NULL );
+INSERT INTO dbtree VALUES( 1013, 1012, '2010', NULL, 0, 0, 'data_50006', TRUE );
 COMMIT;
 
 ------------- C O U N T E R S --------------
 BEGIN;
-INSERT INTO counters VALUES( 'dbtree', 1011 );
-INSERT INTO counters VALUES( 'endpoints', 50005 );
+INSERT INTO counters VALUES( 'dbtree', 1013 );
+INSERT INTO counters VALUES( 'endpoints', 50006 );
 INSERT INTO counters VALUES( 'data', 1000025966 );
 INSERT INTO counters VALUES( 'permalinks', 75000 );
 COMMIT;
@@ -64,10 +66,10 @@ INSERT INTO columns VALUES( 'data_50004', 'program_operacyjny', 'Program Operacy
 INSERT INTO columns VALUES( 'data_50004', 'os_priorytetowa', 'Oś priorytetowa <Kod>', '@', FALSE, 'string', TRUE, FALSE );
 INSERT INTO columns VALUES( 'data_50004', 'dzialanie','Działanie <Kod>', '@', FALSE, 'string', TRUE, FALSE );
 INSERT INTO columns VALUES( 'data_50004', 'poddzialanie','Poddziałanie <Kod>', '@', FALSE, 'string', TRUE, FALSE );
-INSERT INTO columns VALUES( 'data_50004', 'wartosc_ogolem','Wartość ogółem', '@', TRUE, 'string', TRUE, FALSE );
-INSERT INTO columns VALUES( 'data_50004', 'wydatki_kwalifik','Wydatki kwalifikowalne', '@', FALSE, 'string', TRUE, FALSE );
-INSERT INTO columns VALUES( 'data_50004', 'dofinansowanie','Dofinansowanie', '@', FALSE, 'string', TRUE, FALSE );
-INSERT INTO columns VALUES( 'data_50004', 'dofinansowanie_ue','Dofinansowanie UE', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50004', 'wartosc_ogolem','Wartość ogółem', '# ##0', TRUE, 'number', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50004', 'wydatki_kwalifik','Wydatki kwalifikowalne', '# ##0', FALSE, 'number', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50004', 'dofinansowanie','Dofinansowanie', '# ##0', FALSE, 'number', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50004', 'dofinansowanie_ue','Dofinansowanie UE', '# ##0', FALSE, 'number', TRUE, FALSE );
 INSERT INTO columns VALUES( 'data_50004', 'nazwa_beneficjenta','Nazwa beneficjenta', '@', TRUE, 'string', TRUE, TRUE );
 INSERT INTO columns VALUES( 'data_50004', 'nip_beneficjenta','NIP beneficjenta', '@', FALSE, 'string', TRUE, FALSE );
 INSERT INTO columns VALUES( 'data_50004', 'kod_pocztowy','Kod pocztowy', '@', FALSE, 'string', TRUE, FALSE );
@@ -87,10 +89,10 @@ INSERT INTO columns VALUES( 'data_50005', 'program_operacyjny', 'Program Operacy
 INSERT INTO columns VALUES( 'data_50005', 'os_priorytetowa', 'Oś priorytetowa <Kod>', '@', FALSE, 'string', TRUE, FALSE );
 INSERT INTO columns VALUES( 'data_50005', 'dzialanie','Działanie <Kod>', '@', FALSE, 'string', TRUE, FALSE );
 INSERT INTO columns VALUES( 'data_50005', 'poddzialanie','Poddziałanie <Kod>', '@', FALSE, 'string', TRUE, FALSE );
-INSERT INTO columns VALUES( 'data_50005', 'wartosc_ogolem','Wartość ogółem', '@', TRUE, 'string', TRUE, FALSE );
-INSERT INTO columns VALUES( 'data_50005', 'wydatki_kwalifik','Wydatki kwalifikowalne', '@', FALSE, 'string', TRUE, FALSE );
-INSERT INTO columns VALUES( 'data_50005', 'dofinansowanie','Dofinansowanie', '@', FALSE, 'string', TRUE, FALSE );
-INSERT INTO columns VALUES( 'data_50005', 'dofinansowanie_ue','Dofinansowanie UE', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50005', 'wartosc_ogolem','Wartość ogółem', '# ##0', TRUE, 'number', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50005', 'wydatki_kwalifik','Wydatki kwalifikowalne', '# ##0', FALSE, 'number', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50005', 'dofinansowanie','Dofinansowanie', '# ##0', FALSE, 'number', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50005', 'dofinansowanie_ue','Dofinansowanie UE', '# ##0', FALSE, 'number', TRUE, FALSE );
 INSERT INTO columns VALUES( 'data_50005', 'nazwa_beneficjenta','Nazwa beneficjenta', '@', TRUE, 'string', TRUE, TRUE );
 INSERT INTO columns VALUES( 'data_50005', 'nip_beneficjenta','NIP beneficjenta', '@', FALSE, 'string', TRUE, FALSE );
 INSERT INTO columns VALUES( 'data_50005', 'kod_pocztowy','Kod pocztowy', '@', FALSE, 'string', TRUE, FALSE );
@@ -104,4 +106,14 @@ INSERT INTO columns VALUES( 'data_50005', 'ostatni_wniosek', 'Ostatni Wniosek o 
 INSERT INTO columns VALUES( 'data_50005', 'projekt_zakonczony', 'Projekt zakończony (Wniosek o płatność końcową)', '@', FALSE, 'string', TRUE, FALSE );
 INSERT INTO columns VALUES( 'data_50005', 'data_podpisania', 'Data podpisania Umowy/Aneksu', '@', FALSE, 'string', TRUE, FALSE );
 INSERT INTO columns VALUES( 'data_50005', 'data_utworzenia', 'Data utworzenia w KSI SIMIK 07-13 Umowy/Aneksu', '@', FALSE, 'string', TRUE, FALSE );
+-- Budżet centralny > sprawozdanie > 2010
+INSERT INTO columns VALUES( 'data_50006', 'grupa_paragrafow', 'Grupa paragrafów', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50006', 'rodzaj_finansowania', 'Rodzaj finansowania wydatków', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50006', 'plan_po_zmianach', 'Plan po zmianach', '# ##0', TRUE, 'number', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50006', 'zaangazowanie', 'Zaangażowanie', '# ##0', FALSE, 'number', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50006', 'wykonanie_wydatkow', 'Wykonanie wydatków', '# ##0', TRUE, 'number', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50006', 'zobowiazania_ogolem', 'Zobowiązania ogółem', '# ##0', FALSE, 'number', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50006', 'zobowiazania_w_latach_ubieglych', 'Zobowiązania wymagalne powstałe w latach ubiegłych', '# ##0', FALSE, 'number', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50006', 'zobowiazania_w_roku_biezacym', 'Zobowiązania wymagalne powstałe w roku bieżącym', '# ##0', FALSE, 'number', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50006', 'wydatki_nie_wygasle', 'Wydatki które nie wygasły z upływem bieżącego roku budżetowego', '# ##0', FALSE, 'number', TRUE, FALSE );
 COMMIT;

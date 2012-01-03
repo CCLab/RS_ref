@@ -159,3 +159,29 @@ for row in open('efrr_g2011.csv'):
     inx += 1
 
 print 'COMMIT;'
+
+print '-- Budżet centralny > sprawozdanie > 2011'
+print 'BEGIN;'
+for row in open('sprawozdanie_w2010.csv'):
+    cols = row[:-1].split(';')
+    parents[ cols[0] ] = str( inx )
+
+    print "INSERT INTO data_50006 VALUES (",
+    print str( inx ), ',',
+    print parents.get( cols[1], 'NULL' ), ',',
+    print cols[2].replace('"', "'"), ',',
+    print cols[3].replace('"', "'"), ',',
+    print cols[4].replace('"', "'"), ',',
+    print cols[5].replace('"', "'"), ',',
+    print cols[6].replace('"', "'"), ',',
+    print cols[7].replace('"', "'"), ',',
+    print cols[8].replace('"', "'"), ',',
+    print cols[9].replace('"', "'"), ',',
+    print cols[10].replace('"', "'"), ',',
+    print cols[11].replace('"', "'"), ',',
+    print cols[12].replace('"', "'"), ',',
+    print 'NULL );'
+
+    inx += 1
+
+print 'COMMIT;'

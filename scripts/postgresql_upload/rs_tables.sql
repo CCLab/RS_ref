@@ -158,3 +158,22 @@ CREATE TABLE data_50005 (
     ft_search           tsvector
 );
 
+-- Budżet tradycyjny > sprawozdanie > 2010
+DROP TABLE data_50006;
+CREATE TABLE data_50006 (
+    id                                  integer PRIMARY KEY, -- same as UNIQUE NOT NULL
+    parent                              integer REFERENCES data_50006 ( id ),
+    type                                varchar(100),
+    name                                text,
+    grupa_paragrafow                    text,
+    rodzaj_finansowania                 text,
+    plan_po_zmianach                    real,
+    zaangazowanie                       real,
+    wykonanie_wydatkow                  real,
+    zobowiazania_ogolem                 real,
+    zobowiazania_w_latach_ubieglych     real,
+    zobowiazania_w_roku_biezacym        real,
+    wydatki_nie_wygasle                 real,
+    ft_search                           tsvector
+);
+
