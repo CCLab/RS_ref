@@ -73,12 +73,14 @@ if len( sys.argv ) == 3:
     results = cursor.fetchall()
 
     end = time() - start
-    print len( results )
+    print '>> Count: %d' % len( results )
 
 else:
     start = time()
     # TODO make it with distinc endpoints count!!
-    for endpoint in range( 1, 7 ):
+    cursor.execute( "SELECT COUNT(*) FROM dbtree WHERE endpoint IS NOT NULL" )
+    end_num = cursor.fetchone()['count']
+    for endpoint in range( 1, end_num+1 ):
         columns = '''SELECT key FROM columns
                      WHERE searchable IS TRUE
                        AND (endpoint IS NULL
@@ -101,10 +103,14 @@ else:
 
         query = "SELECT COUNT(*) FROM data_5000%d %s " % ( endpoint, where )
         cursor.execute( query )
-        results += cursor.fetchall()
+        count = cursor.fetchone()
+        count['index'] = endpoint-1
+        count['endpoint'] = 'data_5000%d' % endpoint
+        results.append( count )
 
     end = time() - start
-    print results
+    for r in results:
+        print r
 
 
-print end
+print '>> Time: %f' % end
