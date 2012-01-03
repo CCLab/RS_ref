@@ -8,13 +8,17 @@ INSERT INTO dbtree VALUES( 1004, 1003, 'Dane zagregowane', 'Dane centrali i ośr
 INSERT INTO dbtree VALUES( 1005, 1004, '2011', NULL, 0, 0, 'data_50002', TRUE );
 INSERT INTO dbtree VALUES( 1006, 1003, 'Ośrodki regionalne', 'Dane ośrodków regionalnych', 1, 1, NULL, NULL );
 INSERT INTO dbtree VALUES( 1007, 1006, '2011', NULL, 0, 0, 'data_50003', TRUE );
+INSERT INTO dbtree VALUES( 1008, NULL, 'EFRR', 'Projekty Europejskiego Funduszu Rozwoju Regionalnego', 2, 2, NULL, NULL );
+INSERT INTO dbtree VALUES( 1009, 1008, 'Projekty gminne', 'Projekty realizowane na szczelu gminnym', 1, 1, NULL, NULL );
+INSERT INTO dbtree VALUES( 1010, 1009, '2010', NULL, 0, 0, 'data_50004', TRUE );
+INSERT INTO dbtree VALUES( 1011, 1009, '2011', NULL, 0, 0, 'data_50005', TRUE );
 COMMIT;
 
 ------------- C O U N T E R S --------------
 BEGIN;
-INSERT INTO counters VALUES( 'dbtree', 1007 );
-INSERT INTO counters VALUES( 'endpoints', 50003 );
-INSERT INTO counters VALUES( 'data', 1000002068 );
+INSERT INTO counters VALUES( 'dbtree', 1011 );
+INSERT INTO counters VALUES( 'endpoints', 50005 );
+INSERT INTO counters VALUES( 'data', 1000025966 );
 INSERT INTO counters VALUES( 'permalinks', 75000 );
 COMMIT;
 
@@ -35,7 +39,7 @@ INSERT INTO columns VALUES( 'data_50001', 'v_total', 'Ogółem (w tys. zł.)', '
 -- NFZ > Dane zagregowane > 2011
 INSERT INTO columns VALUES( 'data_50002', 'centrala', 'Centrala', '# ##0', TRUE, 'number', TRUE, FALSE );
 INSERT INTO columns VALUES( 'data_50002', 'dolnosląskie', 'Dolnośląskie', '# ##0', FALSE, 'number', TRUE, FALSE );
-INSERT INTO columns VALUES( 'data_50002', 'kujawsko-pomorskie', 'Kujawsko-pomorskie', '# ##0', FALSE, 'number', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50002', 'kujawsko_pomorskie', 'Kujawsko-pomorskie', '# ##0', FALSE, 'number', TRUE, FALSE );
 INSERT INTO columns VALUES( 'data_50002', 'lubelskie', 'Lubelskie', '# ##0', FALSE, 'number', TRUE, FALSE );
 INSERT INTO columns VALUES( 'data_50002', 'lubuskie', 'Lubuskie', '# ##0', FALSE, 'number', TRUE, FALSE );
 INSERT INTO columns VALUES( 'data_50002', 'lodzkie', 'Łódzkie', '# ##0', FALSE, 'number', TRUE, FALSE );
@@ -47,11 +51,57 @@ INSERT INTO columns VALUES( 'data_50002', 'podlaskie', 'Podlaskie', '# ##0', FAL
 INSERT INTO columns VALUES( 'data_50002', 'pomorskie', 'Pomorskie', '# ##0', FALSE, 'number', TRUE, FALSE );
 INSERT INTO columns VALUES( 'data_50002', 'slaskie', 'Śląskie', '# ##0', FALSE, 'number', TRUE, FALSE );
 INSERT INTO columns VALUES( 'data_50002', 'swietokrzyskie', 'Świętokrzyskie', '# ##0', FALSE, 'number', TRUE, FALSE );
-INSERT INTO columns VALUES( 'data_50002', 'warminsko-mazurskie', 'Warmińsko-mazurskie', '# ##0', FALSE, 'number', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50002', 'warminsko_mazurskie', 'Warmińsko-mazurskie', '# ##0', FALSE, 'number', TRUE, FALSE );
 INSERT INTO columns VALUES( 'data_50002', 'wielkopolskie', 'Wielkopolskie', '# ##0', FALSE, 'number', TRUE, FALSE );
 INSERT INTO columns VALUES( 'data_50002', 'zachodniopomorskie', 'Zachodniopomorskie', '# ##0', FALSE, 'number', TRUE, FALSE );
 INSERT INTO columns VALUES( 'data_50002', 'osrodki_wojewodzkie', 'Ośrodki Wojewódzkie', '# ##0', TRUE, 'number', TRUE, FALSE );
 INSERT INTO columns VALUES( 'data_50002', 'total', 'Ogółem', '# ##0', TRUE, 'number', TRUE, FALSE );
 -- NFZ > Dane ośrodków regionalnych > 2011
 INSERT INTO columns VALUES( 'data_50003', 'total', 'Ogółem', '# ##0', TRUE, 'number', TRUE, FALSE );
+-- EFRR > Dane gminne > 2010
+INSERT INTO columns VALUES( 'data_50004', 'numer_umowy', 'Numer umowy/decyzji', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50004', 'program_operacyjny', 'Program Operacyjny <Nazwa>', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50004', 'os_priorytetowa', 'Oś priorytetowa <Kod>', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50004', 'dzialanie','Działanie <Kod>', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50004', 'poddzialanie','Poddziałanie <Kod>', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50004', 'wartosc_ogolem','Wartość ogółem', '@', TRUE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50004', 'wydatki_kwalifik','Wydatki kwalifikowalne', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50004', 'dofinansowanie','Dofinansowanie', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50004', 'dofinansowanie_ue','Dofinansowanie UE', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50004', 'nazwa_beneficjenta','Nazwa beneficjenta', '@', TRUE, 'string', TRUE, TRUE );
+INSERT INTO columns VALUES( 'data_50004', 'nip_beneficjenta','NIP beneficjenta', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50004', 'kod_pocztowy','Kod pocztowy', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50004', 'miejscowosc','Miejscowość', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50004', 'wojewodztwo','Województwo', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50004', 'powiat', 'Powiat', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50004', 'temat_priorytetu', 'Temat priorytetu', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50004', 'forma_prawna', 'Forma prawna', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50004', 'obszar_realizacji', 'Obszar realizacji', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50004', 'ostatni_wniosek', 'Ostatni Wniosek o płatność dla najbardziej aktualnej Umowy/Aneksu', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50004', 'projekt_zakonczony', 'Projekt zakończony (Wniosek o płatność końcową)', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50004', 'data_podpisania', 'Data podpisania Umowy/Aneksu', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50004', 'data_utworzenia', 'Data utworzenia w KSI SIMIK 07-13 Umowy/Aneksu', '@', FALSE, 'string', TRUE, FALSE );
+-- EFRR > Dane gminne > 2011
+INSERT INTO columns VALUES( 'data_50005', 'numer_umowy', 'Numer umowy/decyzji', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50005', 'program_operacyjny', 'Program Operacyjny <Nazwa>', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50005', 'os_priorytetowa', 'Oś priorytetowa <Kod>', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50005', 'dzialanie','Działanie <Kod>', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50005', 'poddzialanie','Poddziałanie <Kod>', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50005', 'wartosc_ogolem','Wartość ogółem', '@', TRUE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50005', 'wydatki_kwalifik','Wydatki kwalifikowalne', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50005', 'dofinansowanie','Dofinansowanie', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50005', 'dofinansowanie_ue','Dofinansowanie UE', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50005', 'nazwa_beneficjenta','Nazwa beneficjenta', '@', TRUE, 'string', TRUE, TRUE );
+INSERT INTO columns VALUES( 'data_50005', 'nip_beneficjenta','NIP beneficjenta', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50005', 'kod_pocztowy','Kod pocztowy', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50005', 'miejscowosc','Miejscowość', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50005', 'wojewodztwo','Województwo', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50005', 'powiat', 'Powiat', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50005', 'temat_priorytetu', 'Temat priorytetu', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50005', 'forma_prawna', 'Forma prawna', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50005', 'obszar_realizacji', 'Obszar realizacji', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50005', 'ostatni_wniosek', 'Ostatni Wniosek o płatność dla najbardziej aktualnej Umowy/Aneksu', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50005', 'projekt_zakonczony', 'Projekt zakończony (Wniosek o płatność końcową)', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50005', 'data_podpisania', 'Data podpisania Umowy/Aneksu', '@', FALSE, 'string', TRUE, FALSE );
+INSERT INTO columns VALUES( 'data_50005', 'data_utworzenia', 'Data utworzenia w KSI SIMIK 07-13 Umowy/Aneksu', '@', FALSE, 'string', TRUE, FALSE );
 COMMIT;

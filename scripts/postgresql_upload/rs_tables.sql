@@ -94,3 +94,67 @@ CREATE TABLE data_50003 (
     ft_search           tsvector
 );
 
+-- EFRR > gminy > 2010
+DROP TABLE data_50004;
+CREATE TABLE data_50004 (
+    id                  integer PRIMARY KEY, -- same as UNIQUE NOT NULL
+    parent              integer REFERENCES data_50004 ( id ),
+    type                varchar(50),
+    name                text,
+    numer_umowy         varchar(50),
+    program_operacyjny	varchar(100),
+    os_priorytetowa	    varchar(50),
+    dzialanie	        varchar(30),
+    poddzialanie	    varchar(30),
+    wartosc_ogolem	    real,
+    wydatki_kwalifik	real,
+    dofinansowanie	    real,
+    dofinansowanie_ue	real,
+    nazwa_beneficjenta	text,
+    nip_beneficjenta	varchar(25),
+    kod_pocztowy	    varchar(10),
+    miejscowosc	        varchar(50),
+    wojewodztwo	        varchar(25),
+    powiat	            varchar(75),
+    temat_priorytetu	text,
+    forma_prawna	    text,
+    obszar_realizacji	varchar(125),
+    ostatni_wniosek	    varchar(30),
+    projekt_zakonczony	varchar(10),
+    data_podpisania	    varchar(10),
+    data_utworzenia	    varchar(10),
+    ft_search           tsvector
+);
+
+-- EFRR > gminy > 2011
+DROP TABLE data_50005;
+CREATE TABLE data_50005 (
+    id                  integer PRIMARY KEY, -- same as UNIQUE NOT NULL
+    parent              integer REFERENCES data_50005 ( id ),
+    type                varchar(50),
+    name                text,
+    numer_umowy         varchar(50),
+    program_operacyjny	varchar(100),
+    os_priorytetowa	    varchar(50),
+    dzialanie	        varchar(30),
+    poddzialanie	    varchar(30),
+    wartosc_ogolem	    real,
+    wydatki_kwalifik	real,
+    dofinansowanie	    real,
+    dofinansowanie_ue	real,
+    nazwa_beneficjenta	text,
+    nip_beneficjenta	varchar(25),
+    kod_pocztowy	    varchar(10),
+    miejscowosc	        varchar(50),
+    wojewodztwo	        varchar(25),
+    powiat	            varchar(75),
+    temat_priorytetu	text,
+    forma_prawna	    text,
+    obszar_realizacji	varchar(125),
+    ostatni_wniosek	    varchar(30),
+    projekt_zakonczony	varchar(10),
+    data_podpisania	    varchar(10),
+    data_utworzenia	    varchar(10),
+    ft_search           tsvector
+);
+
