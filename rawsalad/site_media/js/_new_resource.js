@@ -294,7 +294,7 @@ var _resource = (function () {
 
         sheet = sheets[sheet_id];
         row = sheet['data'].getNode( row_id );
-        info = row['info'];
+        info = row['aux']['info'];
 
         return info;
     };
@@ -435,7 +435,7 @@ var _resource = (function () {
         });
 
         // Remove unnecessary columns and inserts cleaned data into tree.
-        cleaned_data = clean_data( data['data'].toList(), active_columns, data['metadata']['aux'] );
+        cleaned_data = clean_data( data['data'].toList(), active_columns );
         cleaned_tree_data = monkey.createTree( cleaned_data, 'id', 'parent' );
 
         group_id = get_group_id( col_id );
@@ -508,8 +508,8 @@ var _resource = (function () {
                     'leaf'    : row['leaf'],
                     'is_open' : row['state']['is_open']
                 };
-                if ( !!row['info'] ) {
-                    new_row['info'] = row['info'];
+                if ( !!row['aux']['info'] ) {
+                    new_row['aux']['info'] = row['aux']['info'];
                 }
                 if ( !!row['state']['selected'] ) {
                     new_row['selected'] = row['state']['selected'];
@@ -523,7 +523,7 @@ var _resource = (function () {
                         'column_key'  : e['key'],
                         'column_type' : e['type'],
                         'click'       : (e['key'] === 'type' && !new_row['leaf']) ? 'click' : '',
-                        'content'     : format_value( row[ e['key'] ], e['type'], e['format'] )
+                        'content'     : format_value( row['data'][ e['key'] ], e['type'], e['format'] )
                     };
                 });
 
@@ -546,13 +546,13 @@ var _resource = (function () {
         var prepare_total_row = function( rows, columns ) {
             var total_row = [];
             var last_row = rows.pop();
-            if ( last_row['type'] !== 'Total' ) {
+            if ( last_row['data']['type'] !== 'Total' ) {
                 rows.push( last_row );
                 return undefined;
             }
             columns.forEach( function ( column ) {
                 total_row.push( {
-                    'data': format_value( last_row[ column['key'] ], column['type'], column['key'] ),
+                    'data': format_value( last_row['data'][ column['key'] ], column['type'], column['key'] ),
                     'column_type': column['type'],
                     'column_key': column['key']
                 });
@@ -616,30 +616,40 @@ var _resource = (function () {
     }
 
     // Return data that contains columns that are in columns list
-    // and auxiliary list, for each node adds
-    function clean_data( data, columns, auxiliary_list ) {
+    function clean_data( data, columns ) {
         var clean_node = function( node, columns ) {
             var property;
-            var new_node = {};
+            var new_node = {
+                'data': {}
+            };
 
+            for ( property in node ) {
+                if ( node.hasOwnProperty( property ) && property !== 'data' ) {
+                    new_node[ property ] = node[ property ];
+                }
+            }
             columns.forEach( function ( column ) {
-                new_node[ column['key'] ] = node[ column['key'] ];
+                new_node['data'][ column['key'] ] = node['data'][ column['key'] ];
             });
-            auxiliary_list.forEach( function( aux_field ) {
-                new_node[ aux_field ] = node[ aux_field ];
-            });
+
             new_node['state'] = {
                 'selected': '',
                 'is_open': false
             };
 
+            ///////////////////////////////////////////////////
+            // DELETE IT ASAP
+            ///////////////////////////////////////////////////
+            new_node['leaf'] = false;
+            ///////////////////////////////////////////////////
+            
             return new_node;
         };
 
         var cleaned_data = data.map( function( node ) {
             return clean_node( node, columns );
         });
-
+        
         return cleaned_data;
     }
 

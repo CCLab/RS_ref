@@ -198,8 +198,7 @@ var _store = (function () {
     function extract_meta_data( db_meta_data, col_id ) {
         return {
             'name': db_meta_data['name'],
-            'columns': db_meta_data['columns'],
-            'aux': db_meta_data['aux']
+            'columns': db_meta_data['columns']
         };
     }
 
