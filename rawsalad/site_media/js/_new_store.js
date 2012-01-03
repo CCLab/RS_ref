@@ -31,7 +31,7 @@ var _store = (function () {
 
     // Download db tree describing collections.
     that.get_db_tree = function ( callback ) {
-        var respond = function ( data ) {
+        var respond = function () {
             var data = get_db_tree();
             callback( data );
         };
@@ -211,7 +211,7 @@ var _store = (function () {
     }
 
     function save_db_tree( data ) {
-        db_tree = monkey.createTree( data, 'id', 'parent_id' );
+        db_tree = monkey.createTree( data, 'id', 'parent' );
     }
 
     return that;
