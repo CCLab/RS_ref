@@ -76,7 +76,7 @@ var _gui = (function () {
 
 
     function draw_tabs( data ) {
-
+        tabs_length( data );
         tabs = Mustache.to_html( app_table_header_template, data );
         display_tabs( tabs );
     }
@@ -406,6 +406,38 @@ var _gui = (function () {
             button.append( close_bt );
         }
     }
+
+
+    function tabs_length( data ) { // TODO test it
+        var max_length = tab_max_length( data.length );
+                
+        data = data.map( function( sheet ) {
+            var name = sheet['name'];
+            
+            if ( name.length > max_length ) {
+                name.slice( 0, max_length - 3 ) + '...'; 
+            }
+            return sheet;            
+        } );    
+    }
+
+
+    function tab_max_length( tabs_num ) { // TODO test it
+
+        var cut = [20, 20, 20, 20, 15, // 1-5
+                   15, 15, 12, 12, 12, // 6-10
+                   9, 9, 6, 6, 6,      // 11-15
+                   6, 4, 4, 4, 4,      // 16-20
+                   4, 4                // 21-22
+                  ];
+        
+        if ( tabs_num  > cut.length ){
+            return 3;
+        }
+
+        return cut[ sheets_num-1 ];
+    }
+
 
     function set_active_tab( tabs_code ) {
         var table_header = $('#app-tb-datatable>thead');
