@@ -1,0 +1,240 @@
+Server --> _db
+
+1) initial collection data, url: /get_init_data/
+{
+    data: [ <row_object>, ... ],
+    meta: {
+        name: string,
+        columns: [
+            <column_object>,
+            ...
+        ]
+    }
+}
+
+2) collections tree, url: /get_db_tree/
+[
+    <db_tree_node>,
+    ...
+]
+
+3) children of a row, url: /get_children/
+[
+    <row_object>,
+    ...
+]
+
+4) permalink, url: /<integer>/
+[
+    {
+        endpoint_id: string/null,
+        data: [ <row_object>, ... ],
+        metadata: {
+            name: string,
+            columns: [
+                <column_object>,
+                ...
+            ]
+        }
+        sheets: [
+            type: enum(integer),
+            name: string,
+            columns: [ visible_column_key1, visible_column_key2, ... ],
+            sheet_data: <sheet_data>
+        ]
+    },
+    ...
+]
+
+db_tree_node = {
+    id: integer,
+    parent: integer/null,
+    endpoint: string/null,
+    min_depth: integer,
+    max_depth: integer,
+    name: string,
+    description: string/null,
+    visible: bool/null
+}
+
+column_object = {
+    format: string,
+    key: string,
+    label: string,
+    type: string,
+    processable: bool,
+    checkable: bool
+}
+
+row_object = {
+    id: string/integer,
+    parent: string/integer/null,
+    leaf: bool,
+    aux: {
+        <optional> info: string
+    },
+    data: {
+        <collection dependent fields>
+    }
+}
+
+sheet_data depends on type of a sheet:
+a) standard sheet:
+    [ id1, id2, ... ]
+
+
+b) filtered sheet:
+    [
+        [
+            id1, id2, ...
+        ],
+        ...
+    ]
+
+c) searched sheet:
+{
+    query: string,
+    boxes: [
+        {
+            rows: [
+                {
+                    id: string/integer,
+                    hit: [ column_key1, column_key2, ... ],
+                    
+                },
+                ...
+            ],
+            breadcrumb: boolean,
+            context: boolean
+        },
+        ...
+    ]
+}
+
+
+
+_db --> Server
+
+1) permalink, url: store_state
+[
+    {
+        endpoint_id: string/null,
+        sheets: [
+            type: enum(integer),
+            name: string,
+            columns: [ visible_column_key1, visible_column_key2, ... ],
+            sheet_data: <sheet_data>
+        ]
+    },
+    ...
+]
+
+
+
+_db --> _store
+1 to 1
+
+
+
+_store --> _resource
+1) initial collection data, _store.get_init_data()
+{
+    data: monkey_tree,
+    metadata: {
+        name: string,
+        columns: [ column_object, ... ]
+    }
+}
+
+2) collections tree, _store.get_db_tree()
+monkey_tree
+
+3) children of a row, url: _store.get_children()
+[ row_object, ... ]
+
+4) all data from collection, _store.get_full_tree()
+monkey_tree
+
+5) top level rows, _store.get_top_level()
+[ row_object, ... ]
+
+6) collection name, _store.get_collection_name()
+string
+
+7) columns from collection, _store.get_columns()
+[ column_object, ... ]
+
+
+
+_resource --> _gui
+1) initial collection data, _resource.get_db_tree
+[
+    <db_tree_node>,
+    ...
+]
+
+2) top level rows, _resource.get_top_level
+{
+    columns: [
+        {
+            key: string,
+            label: string,
+            type: string
+        },
+        ...
+    ],
+    group: integer,
+    id: integer,
+    name: string,
+    rows: [
+        {
+            _id: integer,
+            parent: string/integer/null, // should be integer/null, string is bug
+            leaf: bool,
+            level: integer,
+            is_open: bool,
+            data: [
+                {
+                click: string,
+                column_key: string,
+                column_type: string,
+                content: string
+                },
+                ...
+            ]
+        }
+    ],
+    total: [
+        {
+            column_key: string,
+            column_type: string,
+            data: string
+        },
+        ...
+    ],
+    type: enum(integer)
+}
+
+3) children of a node, _resource.get_children
+
+4) all columns in collection represented by sheet, _resource.all_columns
+
+5) show sheet with new columns, _resource.show_with_columns
+
+6) leave only top level nodes in sheet, _resource.clean_table
+
+7) name of endpoint(original name of endpoint), _resource.get_end_name
+
+8) names of all sheets, _resource.get_sheets_names
+
+9) name of a sheet, _resource.get_sheet_name
+
+10) info assigned to a row in a sheet, _resource.get_info
+
+11) sortable columns in a sheet, _resource.sortable_columns
+
+12) get sorted sheet, _resource.sort
+
+13) rows in sheet in a gui-understandable form, _resource.get_sheet
+
+14) copy sheet, _resource.copy_sheet
