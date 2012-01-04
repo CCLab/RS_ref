@@ -40,7 +40,7 @@ def get_init_data( req ):
     data = {
         'data': collection.get_top_level(),
         'meta': {
-            'name': 'Nazwa na sztywno',
+            'name': collection.get_label(),
             'columns': collection.get_columns()
         }
     }
@@ -59,6 +59,46 @@ def get_children( req ):
 
     return HttpResponse( json.dumps( data ) )
 
+
+
+# url /search_count/
+def search_count( req ):
+    user_query = req.GET.get( 'user_query', None )
+    endpoints  = req.GET.get( 'endpoints', None ).split(',')
+
+    results = sqldb.search_count( user_query, endpoints )
+
+    return HttpResponse( json.dumps( results ))
+
+
+# url /search_data/
+def search_data( req ):
+    user_query = req.GET.get( 'user_query', None )
+    endpoint   = req.GET.get( 'endpoint', None )
+
+    results = sqldb.search_data( user_query, endpoint )
+
+    return HttpResponse( json.dumps( results ))
+
+
+
+# TODO can POST forms be handeled better?!
+@csrf_exempt
+def feedback_email( request ):
+    from django.core.mail import send_mail
+    e_from    = request.POST.get( 'email', 'NO EMAIL PROVIDED' )
+    e_message = request.POST.get( 'message', 'MESSAGE LEFT EMPTY' )
+
+    send_mail( 'Raw Salad Feedback',
+                e_message,
+                e_from,
+                ['ktrzewiczek@centrumcyfrowe.pl'] )
+
+    return HttpResponse( 'Email sent' )
+
+
+
+# ------------------------------------------------------------------
 
 # url: /download/
 # TODO can POST forms be handeled better?!
@@ -86,19 +126,6 @@ def download_data( request ):
     return response
 
 
-# TODO can POST forms be handeled better?!
-@csrf_exempt
-def feedback_email( request ):
-    from django.core.mail import send_mail
-    e_from    = request.POST.get( 'email', 'NO EMAIL PROVIDED' )
-    e_message = request.POST.get( 'message', 'MESSAGE LEFT EMPTY' )
-
-    send_mail( 'Raw Salad Feedback',
-                e_message,
-                e_from,
-                ['ktrzewiczek@centrumcyfrowe.pl'] )
-
-    return HttpResponse( 'Email sent' )
 
 
 # url: /store_state/
@@ -136,53 +163,3 @@ def restore_state( request ):
     groups = state_manager.get_state( int( permalink_id ) )
 
     return HttpResponse( json.dumps( groups ) )
-
-
-
-
-
-
-
-def search_data( request ):
-    '''Search engine enter point'''
-    query  = request.GET.get( 'query', None )
-    scope  = request.GET.get( 'scope', None ).split(',')
-
-    results = rsdb.Search( scope, query ).search()
-
-
-    if result['result']:
-        # rebuild { data: [ { idef: idef1 }, ..., { idef: idefN } ] }
-        # into    { data: [ idef1, ..., idefN ] }
-        # TODO why it doesn't come in a proper way? Use resources instead of data!
-        for collection in result['result']:
-            collection['data'] = map( lambda i: i['idef'], collection['data'] )
-
-    return HttpResponse( json.dumps( result ))
-
-
-# get initial_data + subtrees to searched nodes
-def get_searched_data( req ):
-    """Grabs the hit data from the first search step"""
-    d   = req.GET.get( 'dataset', None )
-    v   = req.GET.get( 'view', None )
-    i   = req.GET.get( 'issue', None )
-    ids = req.GET.get( 'ids', None ).split(',')
-
-    find_query = build_query( ids )
-
-    # TODO move it to session
-    db = rsdb.DBConnection().connect()
-    # TODO change Collection constructor to parametrized!
-    # TODO move queries from views!! Make it resource-based!!
-    col = rsdb.Collection( query = { 'idef': { '$regex': find_query }} )
-
-    # TODO after making it explicit calls, fullfill the object js-style
-    found_data = {}
-    found_data['rows'] = col.get_data( db, d, v, i )
-    # TODO change it to explicit function call!
-    # TODO change parameter name from perspective to view
-    found_data['perspective'] = col.metadata_complete
-
-    return HttpResponse( json.dumps( found_data ) )
-
