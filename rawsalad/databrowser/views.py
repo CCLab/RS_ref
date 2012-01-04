@@ -64,9 +64,9 @@ def get_children( req ):
 # url /search_count/
 def search_count( req ):
     user_query = req.GET.get( 'user_query', None )
-    endpoints  = req.GET.get( 'endpoints', None ).split(',')
+    scope      = json.loads( req.GET.get( 'scope', 'null' ) )
 
-    results = sqldb.search_count( user_query, endpoints )
+    results = sqldb.search_count( user_query, scope )
 
     return HttpResponse( json.dumps( results ))
 

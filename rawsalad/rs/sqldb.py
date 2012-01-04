@@ -36,7 +36,9 @@ def db_cursor():
 
 def get_db_tree():
     '''Get the navigation tree for all database collections'''
-    query = "SELECT * FROM dbtree ORDER BY id"
+    query = '''SELECT * FROM dbtree
+               ORDER BY id
+            '''
     # connect to db
     cursor = db_cursor()
     cursor.execute( query )
@@ -44,14 +46,14 @@ def get_db_tree():
     return cursor.fetchall()
 
 
-def search_count( user_query, endpoints ):
+def search_count( user_query, scope ):
     from django.conf import settings
     # >> DEBUG MODE
     if settings.DEBUG:
         from time import time
         import re
         assert len( user_query ) >= 3, 'User query too short: "%s"' % user_query
-        for endpoint in endpoints:
+        for endpoint in scope:
             assert re.match( '^data_\d{5}$', endpoint ), "Bad endpoint format: %s" % endpoint
 
         start = time()
@@ -62,7 +64,7 @@ def search_count( user_query, endpoints ):
     results = []
 
     # traverse through all requested endpoints
-    for endpoint in endpoints:
+    for endpoint in scope:
         # collect all searchable column's keys
         columns = '''SELECT key FROM columns
                      WHERE searchable IS TRUE
@@ -74,7 +76,7 @@ def search_count( user_query, endpoints ):
         keys = [ column['key'] for column in cursor.fetchall() ]
 
         # prepare a query to search throu them
-        where = 'WHERE ('
+        where = '('
         for i, key in enumerate( keys ):
             if i == 0:
                 where += "%s ILIKE '%%%s%%'" % ( key, user_query )
@@ -83,7 +85,9 @@ def search_count( user_query, endpoints ):
 
         where += ')'
 
-        query = "SELECT COUNT(*) FROM %s %s " % ( endpoint, where )
+        query = '''SELECT COUNT(*) FROM %s
+                   WHERE %s
+                ''' % ( endpoint, where )
         cursor.execute( query )
         # collect the results
         result = {
@@ -99,7 +103,7 @@ def search_count( user_query, endpoints ):
         print ">> ------ DEBUG ---------"
         print ">> Search count time for:"
         print "   query: %s" % user_query
-        print "   endpoints: %s" % str( endpoints )
+        print "   endpoints: %s" % str( scope )
         print ">> Time: %f" % end
         print ">> ------ DEBUG ---------"
     # >> EO DEBUG MODE
@@ -144,8 +148,10 @@ def search_data( user_query, endpoint ):
 
     # do the search once per searchable key
     for key in keys:
-        where = "WHERE %s ILIKE '%%%s%%'" % ( key, user_query )
-        query = "SELECT * FROM %s %s" % ( endpoint, where )
+        query = '''SELECT * FROM %s
+                   WHERE %s ILIKE '%%%s%%'
+                   ORDER BY id
+                ''' % ( endpoint, key, user_query )
 
         cursor.execute( query )
         results = cursor.fetchall()
@@ -198,12 +204,17 @@ class Collection:
         self.endpoint = endpoint
 
         # get the complete list of columns
-        query = "SELECT * FROM columns WHERE endpoints IS NULL OR '%s' = ANY( endpoints )" % ( self.endpoint, )
+        query = '''SELECT * FROM columns
+                   WHERE endpoints IS NULL
+                      OR '%s' = ANY( endpoints )
+                ''' % ( self.endpoint, )
         self.cursor.execute( query )
         self.columns = self.cursor.fetchall()
 
         # get label of the endpoint
-        query = "SELECT label FROM dbtree WHERE endpoint = '%s'" % ( self.endpoint, )
+        query = '''SELECT label FROM dbtree
+                   WHERE endpoint = '%s'
+                ''' % ( self.endpoint, )
         self.cursor.execute( query )
         self.label = self.cursor.fetchone()['label']
 
@@ -227,13 +238,18 @@ class Collection:
 
     def get_top_level( self ):
         '''Get the top level of the collection'''
-        query = "SELECT * FROM %s WHERE parent IS NULL" % ( self.endpoint, )
+        query = '''SELECT * FROM %s
+                   WHERE parent IS NULL
+                   ORDER BY id
+                ''' % ( self.endpoint, )
         return self.get_data( query )
 
 
     def get_node( self, _id ):
         '''Get the certain node in the collection'''
-        query = "SELECT * FROM %s WHERE id = %s" % ( self.endpoint, _id )
+        query = '''SELECT * FROM %s
+                   WHERE id = %s
+                ''' % ( self.endpoint, _id )
         data = self.get_data( query )
 
         return data[0]
@@ -249,7 +265,10 @@ class Collection:
 
     def get_children( self, _id ):
         '''Get children of the specified node'''
-        query = "SELECT * FROM %s WHERE parent = %s" % ( self.endpoint, _id )
+        query = '''SELECT * FROM %s
+                   WHERE parent = %s
+                   ORDER BY id
+                ''' % ( self.endpoint, _id )
         return self.get_data( query )
 
 
@@ -301,8 +320,4 @@ class Collection:
             node = self.get_node( parent_id )
 
             return [node] + self.get_unique_parents( node['parent'], visited )
-
-
-
-
 
