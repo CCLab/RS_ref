@@ -14,6 +14,10 @@ urlpatterns = patterns( 'databrowser.views',
     ( r'^download/$',      'download_data' ),
     ( r'^feedback/$',      'feedback_email' ),
 
+    ( r'^search_count/$',  'search_count' ),
+    ( r'^search_data/$',   'search_data' ),
+
+    # TODO get rid of them
     ( r'^search/$',        'search_data' ),
     ( r'^get_searched/$',  'get_searched_data' ),
 )

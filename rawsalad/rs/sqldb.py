@@ -132,3 +132,94 @@ class Collection:
 
         return result
 
+
+def search_count( user_query, endpoints ):
+    from django.conf import settings
+
+    # connect to db
+    cursor = DBConnection().connect()
+    results = []
+
+    # DEBUG MODE
+    if settings.DEBUG:
+        from time import time
+        start = time()
+
+    # traverse through requested endpoints
+    for endpoint in endpoints:
+        columns = '''SELECT key FROM columns
+                     WHERE searchable IS TRUE
+                       AND (endpoints IS NULL
+                          OR '%s' = ANY(endpoints))
+                  ''' % endpoint
+
+        cursor.execute( columns )
+        keys = [ column['key'] for column in cursor.fetchall() ]
+
+        where = 'WHERE ('
+        for i, key in enumerate( keys ):
+            if i == 0:
+                where += "%s ILIKE '%%%s%%'" % ( key, user_query )
+            else:
+                where += " OR %s ILIKE '%%%s%%'" % ( key, user_query )
+
+        where += ')'
+
+        query = "SELECT COUNT(*) FROM %s %s " % ( endpoint, where )
+        cursor.execute( query )
+        result = {
+            'endpoint' : endpoint,
+            'count'    : cursor.fetchone()['count']
+        }
+
+        results.append( result )
+
+    # DEBUG MODE
+    if settings.DEBUG:
+        end = time() - start
+        print end
+
+    return results
+
+
+def search_data( user_query, endpoint ):
+    from django.conf import settings
+
+    # connect to db
+    cursor = DBConnection().connect()
+    collection = Collection( endpoint, cursor )
+
+    # DEBUG MODE
+    if settings.DEBUG:
+        from time import time
+        start = time()
+
+    # collect of searchable columns' keys
+    columns = '''SELECT key FROM columns
+                 WHERE searchable IS TRUE
+                   AND (endpoints IS NULL
+                      OR '%s' = ANY(endpoints))
+              ''' % endpoint
+
+    cursor.execute( columns )
+    keys = [ column['key'] for column in cursor.fetchall() ]
+
+    where = 'WHERE ('
+    for i, key in enumerate( keys ):
+        if i == 0:
+            where += "%s ILIKE '%%%s%%'" % ( key, user_query )
+        else:
+            where += " OR %s ILIKE '%%%s%%'" % ( key, user_query )
+
+    where += ')'
+
+    query = "SELECT * FROM %s %s " % ( endpoint, where )
+    results = collection.get_data( query )
+
+    # DEBUG MODE
+    if settings.DEBUG:
+        end = time() - start
+        print end
+
+    return results
+
