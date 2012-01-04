@@ -67,7 +67,7 @@ class Collection:
         # define the endpoint
         self.endpoint = endpoint
         # get the complete list of columns
-        query = "SELECT * FROM columns WHERE endpoint IS NULL OR endpoint LIKE '%s'" % ( self.endpoint, )
+        query = "SELECT * FROM columns WHERE endpoints IS NULL OR '%s' = ANY( endpoints )" % ( self.endpoint, )
         self.cursor.execute( query )
         self.columns = self.cursor.fetchall()
 
