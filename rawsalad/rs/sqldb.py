@@ -80,8 +80,15 @@ class Collection:
 
 
     def get_columns( self ):
-        '''Get the columns of the collection'''
-        return self.columns
+        '''Get only these columns that are used by GUI'''
+        from copy import deepcopy
+        columns = deepcopy( self.columns )
+
+        for column in columns:
+            del column['endpoints']
+            del column['searchable']
+
+        return columns
 
 
     def get_label( self ):
