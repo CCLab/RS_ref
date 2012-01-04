@@ -64,17 +64,29 @@ class Collection:
     def __init__( self, endpoint, cursor=None ):
         # connect to db
         self.cursor = cursor or DBConnection().connect()
+
         # define the endpoint
         self.endpoint = endpoint
+
         # get the complete list of columns
         query = "SELECT * FROM columns WHERE endpoints IS NULL OR '%s' = ANY( endpoints )" % ( self.endpoint, )
         self.cursor.execute( query )
         self.columns = self.cursor.fetchall()
 
+        # get label of the endpoint
+        query = "SELECT label FROM dbtree WHERE endpoint = '%s'" % ( self.endpoint, )
+        self.cursor.execute( query )
+        self.label = self.cursor.fetchone()['label']
+
 
     def get_columns( self ):
         '''Get the columns of the collection'''
         return self.columns
+
+
+    def get_label( self ):
+        '''Get the label of the collection'''
+        return self.label
 
 
     def get_top_level( self, fields=None ):
@@ -135,15 +147,20 @@ class Collection:
 
 def search_count( user_query, endpoints ):
     from django.conf import settings
+    # >> DEBUG MODE
+    if settings.DEBUG:
+        from time import time
+        import re
+        assert len( user_query ) >= 3, 'User query too short: "%s"' % user_query
+        for endpoint in endpoints:
+            assert re.match( '^data_\d{5}$', endpoint ), "Bad endpoint format: %s" % endpoint
+
+        start = time()
+    # >> EO DEBUG MODE
 
     # connect to db
     cursor = DBConnection().connect()
     results = []
-
-    # DEBUG MODE
-    if settings.DEBUG:
-        from time import time
-        start = time()
 
     # traverse through requested endpoints
     for endpoint in endpoints:
@@ -174,25 +191,36 @@ def search_count( user_query, endpoints ):
 
         results.append( result )
 
-    # DEBUG MODE
+    # >> DEBUG MODE
     if settings.DEBUG:
         end = time() - start
-        print end
+        print ">> ------ DEBUG ---------"
+        print ">> Search count time for:"
+        print "   query: %s" % user_query
+        print "   endpoints: %s" % str( endpoints )
+        print ">> Time: %f" % end
+        print ">> ------ DEBUG ---------"
+    # >> EO DEBUG MODE
 
     return results
 
 
 def search_data( user_query, endpoint ):
     from django.conf import settings
+    # >> DEBUG MODE
+    if settings.DEBUG:
+        from time import time
+        import re
+        assert len( user_query ) >= 3, 'User query too short: "%s"' % user_query
+        assert re.match( '^data_\d{5}$', endpoint ), "Bad endpoint format: %s" % endpoint
+
+        start = time()
+    # >> EO DEBUG MODE
 
     # connect to db
     cursor = DBConnection().connect()
     collection = Collection( endpoint, cursor )
 
-    # DEBUG MODE
-    if settings.DEBUG:
-        from time import time
-        start = time()
 
     # collect of searchable columns' keys
     columns = '''SELECT key FROM columns
@@ -216,10 +244,16 @@ def search_data( user_query, endpoint ):
     query = "SELECT * FROM %s %s " % ( endpoint, where )
     results = collection.get_data( query )
 
-    # DEBUG MODE
+    # >> DEBUG MODE
     if settings.DEBUG:
         end = time() - start
-        print end
+        print ">> ------ DEBUG ---------"
+        print ">> Search data time for:"
+        print "   query: %s" % user_query
+        print "   endpoint: %s" % endpoint
+        print ">> Time: %f" % end
+        print ">> ------ DEBUG ---------"
+    # >> EO DEBUG MODE
 
     return results
 

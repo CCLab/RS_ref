@@ -5,6 +5,7 @@ CREATE TABLE dbtree (
     id              integer PRIMARY KEY, -- same as UNIQUE NOT NULL
     parent          integer REFERENCES dbtree ( id ), 
     name            varchar(100),
+    label           varchar(100),
     description     text,
     max_depth       integer,
     min_depth       integer,

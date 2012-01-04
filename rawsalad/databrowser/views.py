@@ -40,7 +40,7 @@ def get_init_data( req ):
     data = {
         'data': collection.get_top_level(),
         'meta': {
-            'name': 'Nazwa na sztywno',
+            'name': collection.get_label(),
             'columns': collection.get_columns()
         }
     }
