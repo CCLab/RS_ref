@@ -53,6 +53,7 @@ db_tree_node = {
     min_depth: integer,
     max_depth: integer,
     name: string,
+    label: string/null,
     description: string/null,
     visible: bool/null
 }
@@ -63,7 +64,7 @@ column_object = {
     label: string,
     type: string,
     processable: bool,
-    checkable: bool
+    basic: bool
 }
 
 row_object = {
