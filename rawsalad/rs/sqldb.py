@@ -130,6 +130,10 @@ class Collection:
         self.cursor.execute( query )
         data = self.cursor.fetchall()
 
+        return self.prepare_data( data )
+
+
+    def prepare_data( self, data ):
         result = []
         for row in data:
             new_row = {
@@ -150,6 +154,23 @@ class Collection:
             result.append( new_row )
 
         return result
+
+
+    def get_unique_parents( self, parent_id, visited ):
+        '''Traverse the tree from a certain parent up to the top level'''
+        # hit the top level
+        if not parent_id:
+            return []
+        # already been there
+        elif parent_id in visited:
+            return []
+        # get children
+        else:
+            visited[ parent_id ] = True
+            node = self.get_node( parent_id )
+
+            return [node] + self.get_unique_parents( node['parent'], visited )
+
 
 
 def search_count( user_query, endpoints ):
@@ -247,21 +268,36 @@ def search_data( user_query, endpoint ):
     cursor.execute( columns )
     keys = [ column['key'] for column in cursor.fetchall() ]
 
+    # do the search once per searchable key
     for key in keys:
-        # do the search one by one
         where = "WHERE %s ILIKE '%%%s%%'" % ( key, user_query )
         query = "SELECT * FROM %s %s" % ( endpoint, where )
 
         cursor.execute( query )
         results = cursor.fetchall()
 
-        final_data['data'] += [ r for r in results if boxes.get( r['id'], None ) == None ]
+        # get only unique results from current column
+        unique_data = [ r for r in results if not boxes.get( r['id'], None ) ]
+        # transform db data into resource objects
+        final_data['data'] += collection.prepare_data( unique_data )
+
+        # prepare a list of already collected parents
+        visited_parents = {}
+        [ visited_parents.setdefault( k, True ) for k in boxes ]
+        # for each result mark a hit column and collect parents
         for result in results:
             hit_id = result['id']
+
+            # collect the hit columns
             boxes.setdefault( hit_id, [] )
             boxes[ hit_id ].append( key )
 
+            # add uniq parents
+            final_data['data'] += collection.get_unique_parents( result['parent'], visited_parents )
+
+    # make boxes a list
     final_data['boxes'] = [ { 'id': k, 'hits': v } for k, v in  boxes.iteritems() ]
+
 
     # >> DEBUG MODE
     if settings.DEBUG:
@@ -275,3 +311,5 @@ def search_data( user_query, endpoint ):
     # >> EO DEBUG MODE
 
     return final_data
+
+
