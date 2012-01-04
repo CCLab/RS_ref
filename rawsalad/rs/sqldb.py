@@ -7,6 +7,33 @@ from ConfigParser import ConfigParser
 from time import time
 
 
+def db_cursor():
+    '''Define a connection object for a selected database'''
+    from django.conf import settings
+    conf_file = settings.DBCONF
+
+    cfg = ConfigParser()
+    cfg.read( conf_file )
+
+    host   = cfg.get( 'postgres', 'host' )
+    dbname = cfg.get( 'postgres', 'dbname' )
+    user   = cfg.get( 'postgres', 'user' )
+    try:
+        password = cfg.get( 'postgres', 'pass' )
+    except:
+        password = None
+
+
+    config = "host='"+ host +"' dbname='"+ dbname +"' user='"+ user +"'"
+    if password:
+        config += " password='"+ password +"'"
+
+    connection  = psql.connect( config )
+    cursor = connection.cursor( cursor_factory=psqlextras.RealDictCursor )
+
+    return cursor
+
+
 def get_db_tree():
     '''Get the navigation tree for all database collections'''
     query = "SELECT * FROM dbtree ORDER BY id"
@@ -158,34 +185,6 @@ def search_data( user_query, endpoint ):
     # >> EO DEBUG MODE
 
     return final_data
-
-
-def db_cursor():
-    '''Define a connection object for a selected database'''
-    # TODO move config file path into SETTINGS
-    dir_path  = os.path.dirname( __file__ )
-    conf_file = os.path.join( dir_path, 'rawsdata.conf' )
-
-    cfg = ConfigParser({ 'basedir': conf_file })
-    cfg.read( conf_file )
-
-    host   = cfg.get( 'postgres', 'host' )
-    dbname = cfg.get( 'postgres', 'dbname' )
-    user   = cfg.get( 'postgres', 'user' )
-    try:
-        password = cfg.get( 'postgres', 'pass' )
-    except:
-        password = None
-
-
-    config = "host='"+ host +"' dbname='"+ dbname +"' user='"+ user +"'"
-    if password:
-        config += " password='"+ password +"'"
-
-    connection  = psql.connect( config )
-    cursor = connection.cursor( cursor_factory=psqlextras.RealDictCursor )
-
-    return cursor
 
 
 class Collection:

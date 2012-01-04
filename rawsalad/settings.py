@@ -4,6 +4,8 @@ ROOT_PATH = os.path.dirname( __file__ )
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
+DBCONF = os.path.join( ROOT_PATH, 'rs', 'rawsdata.conf' )
+
 ADMINS = (
     ('Bartosz Stalewski', 'bartekstalewski@gmail.com'),
     ('Krzysztof Trzewiczek', 'ktrzewiczek@centrumcyfrowe.pl'),

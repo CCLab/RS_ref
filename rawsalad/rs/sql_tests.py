@@ -4,6 +4,7 @@ import psycopg2
 import psycopg2.extras
 from time import time
 from ConfigParser import ConfigParser
+from django.conf import settings
 
 if len( sys.argv ) < 2:
     print '''
@@ -22,7 +23,7 @@ if len( sys.argv ) < 2:
     '''
     sys.exit( 1 )
 
-cfg = ConfigParser({ 'basedir': 'rawsdata.conf' })
+cfg = ConfigParser()
 cfg.read( 'rawsdata.conf' )
 
 host   = cfg.get( 'postgres', 'host' )
