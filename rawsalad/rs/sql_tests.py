@@ -50,8 +50,8 @@ if len( sys.argv ) == 3:
     start = time()
     columns = '''SELECT key FROM columns
                  WHERE searchable IS TRUE
-                   AND (endpoint IS NULL
-                      OR endpoint = 'data_5000%d')
+                   AND (endpoints IS NULL
+                      OR 'data_5000%d' = ANY(endpoints))
               ''' % endpoint
 
     cursor.execute( columns )
@@ -78,13 +78,13 @@ if len( sys.argv ) == 3:
 else:
     start = time()
     # TODO make it with distinc endpoints count!!
-    cursor.execute( "SELECT COUNT(*) FROM dbtree WHERE endpoint IS NOT NULL" )
-    end_num = cursor.fetchone()['count']
-    for endpoint in range( 1, end_num+1 ):
+#    cursor.execute( "SELECT COUNT(*) FROM dbtree WHERE endpoints IS NOT NULL" )
+#    end_num = cursor.fetchone()['count']
+    for endpoint in range( 1, 7 ):
         columns = '''SELECT key FROM columns
                      WHERE searchable IS TRUE
-                       AND (endpoint IS NULL
-                          OR endpoint = 'data_5000%d')
+                       AND (endpoints IS NULL
+                          OR 'data_5000%d' = ANY(endpoints))
                   ''' % endpoint
 
         cursor.execute( columns )

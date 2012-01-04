@@ -14,7 +14,7 @@ CREATE TABLE dbtree (
 
 DROP TABLE columns;
 CREATE TABLE columns (
-    endpoint        varchar(10) REFERENCES dbtree ( endpoint ),
+    endpoints       text ARRAY,
     key             varchar(50),
     label           varchar(100),
     format          varchar(25),
