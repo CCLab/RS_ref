@@ -24,7 +24,7 @@ def app_page( request ):
 def get_db_tree( req ):
     '''Get the navigation tree for all database collections'''
     # create a navigator for the db collections
-    dbtree = sqldb.DBNavigator().get_db_tree()
+    dbtree = sqldb.get_db_tree()
 
     return HttpResponse( json.dumps( dbtree ) )
 
@@ -145,7 +145,7 @@ def store_state( request ):
 # url: /\d+
 def init_restore( request, idef ):
     '''Init application prepared to handle restore data'''
-    dbtree = sqldb.DBNavigator().get_db_tree()
+    dbtree = sqldb.get_db_tree()
 
     data = {
         'dbtree': json.dumps( dbtree ),
