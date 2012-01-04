@@ -28,6 +28,10 @@
       @datatable-cell-separator:                @gray;
       @datatable-hover-row:                     @green;
       @datatable-dim-row:                       @light-gray;
+      @datatble-selected-row-text:              @white;
+      @datatble-selected-row-background:        @dark-gray;
+      @datatble-inselected-row-border:          @dark-gray;
+      @datatble-after-selected-row-border:      @dark-gray;
       
       @odd-background:                          @white;
       @even-background:                         @light-silver;
@@ -160,6 +164,19 @@
   z-index: 1;
 }
 
+.selected {
+  color: @datatble-selected-row-text;
+  background-color: @datatble-selected-row-background !important;
+}      
+
+.in-selected {
+  border-right: 2px solid @datatble-inselected-row-border !important;
+  border-left: 2px solid @datatble-inselected-row-border !important;
+}
+
+.after-selected {
+  border-top: 2px solid @datatble-after-selected-row-border;
+}
 .a > .type {
   width: 138px;
 }
@@ -458,7 +475,7 @@
       > tr.dim {
         border-right: 2px solid @datatable-dim-row;
         border-left: 2px solid @datatable-dim-row;
-      }
+      }      
     }
   }
 

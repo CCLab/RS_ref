@@ -29,6 +29,7 @@ var _table = (function () {
 //  P U B L I C   I N T E R F A C E
     var that = {};
     
+
     that.create_table = function( data, callback ) {
         var type = data['type'];
         
@@ -48,35 +49,30 @@ var _table = (function () {
         };
     };
     
+
     that.add_node = function( row_id, data ) {
-        row = $( '#' + row_id );
-        var new_rows = '';    
+        var new_rows = create_rows( data );
+        return new_rows;        
     };
     
+
 //  P R I V A T E   I N T E R F A C E
+    
+    // CREATE FUNCTIONS
     function create_standard_table( data, callback ) {
         var header_code;
-        var rows_code;
+        var tbody_code;
         var table_code;
         var table_tag;
-
  
-        // prepare padding value for child rows
-        data['rows'] = data['rows'].map( function ( row ) { // TODO - test it                                       
-            if ( row['level'] > 1 ) {
-                row['data']['0']['padding']['value'] = ( row['level'] - 1 ) * 10;
-            } 
-            return row;
-        });
-                        
                                      
         header_code = create_standard_header( data );
-        rows_code = create_rows( data );
+        tbody_code = create_tbody( data );
         
-        table_code = header_code.concat( rows_code );
+        table_code = header_code.concat( tbody_code );
         
         callback( table_code);
-    };
+    }
 
     
     function create_standard_header( data ) {
@@ -95,16 +91,44 @@ var _table = (function () {
                                 .concat( head_row_code, total_row_code, '</thead>' );
 
         return standard_header_code;
-    };
+    }
+
+
+    function create_tbody( data ) {
+        var rows_code = create_rows( data );
+        var tbody_code = '<tbody>'.concat( rows_code, '</tbody>' );
+        
+        return tbody_code;
+    }
 
         
     function create_rows( data ) {
-        var tbody_code;
+        var rows_code;
+
+        add_rows_padding( data );                        
         
-        tbody_code = Mustache.to_html( standard_tbody_template, data );
+        rows_code = Mustache.to_html( standard_rows_template, data );
                 
-        return tbody_code;
-    };
+        return rows_code;
+    }
+
+    
+    //OTHER FUNCTIONS
+    // prepare padding value for child rows
+    function add_rows_padding( data ) {
+        data['rows'] = data['rows'].map( function ( row ) { // TODO - test it                                       
+            if ( row['level'] > 1 ) {
+                row['data']['0']['padding'] = { 'value': ( row['level'] - 1 ) * 10, };
+            } 
+            else {
+                row['top_level'] = 'top';
+            }
+            
+             
+            return row;
+        });    
+    }
+
 
 
     // T E M P L A T E S
@@ -128,23 +152,22 @@ var _table = (function () {
         '</tr>';
         
 
-    var standard_tbody_template = 
-        '<tbody>' +
-            '{{#rows}}' + //TODO add info panel
-                '<tr id="{{_id}}" data_open="{{is_open}}" ' +
-                  'class="{{selected}} {{parent}}">' +
-                    '{{#data}}' +
-                        '<td class="{{column_key}} {{column_type}} {{click}}"' + //TODO add click in object
-                          '{{#padding}}' +
-                            'style="padding-left= {{value}}px;" ' +
-                          '{{/padding}} '+
-                          '>' +
-                            '{{content}}' +
-                        '</td>' +
-                    '{{/data}}' +                                
-                '</tr>' +
-            '{{/rows}}' +
-        '</tbody>';
+    var standard_rows_template = 
+        '{{#rows}}' + //TODO add info panel
+          '<tr id="{{_id}}" data_open="{{is_open}}" ' +
+          'data-parent="{{parent}}" ' +
+          'class="{{selected}} {{top_level}}">' +
+            '{{#data}}' +
+              '<td class="{{column_key}} {{column_type}} {{click}}"' + 
+                '{{#padding}}' +
+                  'style="padding-left: {{value}}px;" ' +
+                '{{/padding}} '+
+              '>' +
+                '{{content}}' +
+              '</td>' +
+            '{{/data}}' +                                
+          '</tr>' +
+        '{{/rows}}';
             
     
     // return public interface

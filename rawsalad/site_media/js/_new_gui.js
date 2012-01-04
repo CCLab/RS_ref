@@ -124,7 +124,7 @@ var _gui = (function () {
 
     function display_table( table ) {
         var table_code = $(table);
-        prepare_table_interface( table_code );
+        prepare_rows_interface( table_code );
         $('#app-tb-datatable').empty();
         $('#app-tb-datatable').append( table_code );
         make_zebra();
@@ -148,8 +148,8 @@ var _gui = (function () {
     function preapare_tabs_interface( tabs_code ) {
 
         var copy_bt = tabs_code.closest('#app-tb-save-sheet');
-        var tabs = tabs_code.find('li');
-        var close_bt = tabs_code.find('.close-sheet-button');
+        var tabs = tabs_code.find( 'li' );
+        var close_bt = tabs_code.find( '.close-sheet-button' );
 
 
         // EVENTS
@@ -189,9 +189,9 @@ var _gui = (function () {
     }
 
 
-    function prepare_table_interface( table_code ) {
-        var clickable_rows = table_code.find('tr.click');
-        var info_bt = table_code.find('.app-tb-info-button>img');
+    function prepare_rows_interface( table_code ) {
+        var clickable_rows = table_code.find( 'td.click' ).parent();
+        var info_bt = table_code.find( '.app-tb-info-button>img' );
 
         // EVENTS
         clickable_rows
@@ -224,12 +224,12 @@ var _gui = (function () {
 
     function change_application_tab( button ){
 
-        if ( button.hasClass('active') ) {
+        if ( button.hasClass( 'active' ) ) {
             return false;
         }
 
-        button.siblings().removeClass('active');
-        button.addClass('active');
+        button.siblings().removeClass( 'active' );
+        button.addClass( 'active' );
         $('.app-container:visible').hide();
 
         return true;
@@ -239,7 +239,7 @@ var _gui = (function () {
     // TABS EVENTS
     function change_sheet() {
         var sheet_id;
-        if ( $(this).hasClass('active') ) {
+        if ( $(this).hasClass( 'active' ) ) {
             return;
         }
         sheet_id = get_sheet_id( $(this) );
@@ -271,12 +271,6 @@ var _gui = (function () {
     }
 
 
-    function change_active_tab_name( new_name ) {
-        var tab = $('#app-tb-sheets>.active>p');
-        tab.text( new_name );
-    }
-
-
     function active_tab_name() {
         var tab = $('#app-tb-sheets>.active');
 
@@ -290,12 +284,16 @@ var _gui = (function () {
         if ( $('#app-tb-tl-rename-input').is(":visible")){
             var new_name = $('#app-tb-tl-rename-input').val();
             var old_name = active_tab_name();
+            var callback = function(){
+                _resource.get_sheets_names( draw_tabs )
+            };
+            
+            
             if ( new_name !== old_name ) {
                 var sheet_id = active_sheet_id();
 
                 $('#app-tb-tl-title').html( new_name );
-                _resource.change_name( sheet_id, new_name );
-                change_active_tab_name( new_name );
+                _resource.change_name( sheet_id, new_name, callback );
             }
             $('#app-tb-tl-rename-form').hide();
             $('#app-tb-tl-title').show();
@@ -365,14 +363,27 @@ var _gui = (function () {
 
     // TABLE EVENTS
     function open_node() {  //TODO - test it 
-        alert('open node:' + this );
         var sheet_id = active_sheet_id();
-        var row_id = $(this).attr( 'id' );
+        var row = $(this);
+        var row_id = get_id( row );
         
-        
-        var callback = function ( data ) {
-            table.add_node( row_id, data )
-        
+        var callback = function ( new_data ) {
+
+            var new_rows;
+            var rows_code;
+                                
+            new_rows = _table.add_node( row_id, new_data );
+            rows_code = $(new_rows);
+            prepare_rows_interface( rows_code );
+            row.after( rows_code );
+            
+            set_selection( rows_code ); //TODO finish selection            
+
+            make_zebra();
+            row
+                .unbind()
+                .click( close_node );
+            
         }
         _resource.get_children( sheet_id, row_id, callback )
         
@@ -385,16 +396,13 @@ var _gui = (function () {
 
 
     // not used yet:
-    function close_node() {
+    function close_node() {// TODO
 
     }
 
 
     // PERMALINK EVNTS
     // not used yet:
-    function close_node() {
-
-    }
 
 
     // SHARE TABLE
@@ -408,8 +416,8 @@ var _gui = (function () {
         var close_bt = $(close_sheet_button);
         var siblings = button.siblings();
 
-        siblings.removeClass('active');
-        siblings.find('.close-sheet-button').remove();
+        siblings.removeClass( 'active' );
+        siblings.find( '.close-sheet-button' ).remove();
 
         button.addClass('active');
         if ( siblings.length > 0 ) {
@@ -463,7 +471,7 @@ var _gui = (function () {
 
     function after_close_id() {
         var new_sheet_id;
-        var active_tab = $('#app-tb-sheets').find('.active');
+        var active_tab = $('#app-tb-sheets').find( '.active' );
         var active_group = active_tab.attr( 'data-group' );
         var siblings = active_tab.siblings();
         var group_sheets = siblings.filter( function () {
@@ -477,35 +485,96 @@ var _gui = (function () {
             var siblings = active_tab.siblings();
             new_sheet_id = parse_id_num( siblings[0]['id'] );
         }
-        return new_sheet_id;
+        return  parseInt( new_sheet_id, 10 );
     }
 
 
     function active_sheet_id() {
-        var sheet_tab = $('#app-tb-sheets').find('.active');
-        var tab_id = sheet_tab.attr('id');
+        var sheet_tab = $('#app-tb-sheets').find( '.active' );
+        var tab_id = sheet_tab.attr( 'id' );
         var sheet_id = parse_id_num( tab_id );
 
-        return sheet_id;
+        return  parseInt( sheet_id, 10 );
     }
 
 
     function get_sheet_id( tab ) {
-        var tab_id = tab.attr('id');
+        var tab_id = tab.attr( 'id' );
         var sheet_id = parse_id_num( tab_id );
-        return sheet_id;
+        return  parseInt( sheet_id, 10 );
     }
 
 
     function parse_id_num( tab_id ) {
-        var sheet_id = tab_id.split('-')[1];
-        return sheet_id;
+        var sheet_id = tab_id.split( '-' )[1];
+        return  parseInt( sheet_id, 10 );
     }
 
 
+    // TABLE FUNCTIONS
+    function set_selection( rows_code ){
+        var top_row = get_prev_top_row( rows_code );
+        var top_row_id = get_id( top_row );
+        
+        var old_selected = $('tr.selected');
+        var old_selected_row_id;
+
+        var rows = rows_code.siblings();
+        var sheet_id = active_sheet_id();
+        
+        top_row.siblings().addClass( 'dim' );              
+                      
+        if ( old_selected.length === 1 ) {
+            old_selected_row_id = get_id( old_selected );
+        }
+        
+        if ( old_selected_row_id !== top_row_id ) {
+            rows.removeClass( 'selected' );
+            rows.removeClass( 'in-selected' );
+            rows.removeClass( 'after-selected' );
+            top_row
+                .removeClass( 'dim' )
+                .addClass( 'selected' );
+            var in_select = top_row.nextUntil( '.top' );
+            in_select
+                .removeClass( 'dim' )
+                .addClass( 'in-selected' );
+
+            var after = get_next_top_row( rows_code );
+            after
+                .addClass( 'after-selected' );                        
+        }
+        else {
+            rows_code.addClass( 'in-selected' );
+        }
+
+        _resource.row_selected( sheet_id, top_row_id, old_selected_row_id );
+    }
+
+    //get root for rows
+    function get_prev_top_row( rows_code ) {
+        var row = rows_code.first().prev();
+        while ( ! row.hasClass( 'top' ) ) {
+            row = row.prev();
+        } 
+        return row;
+    }
 
 
+    function get_next_top_row( rows_code ) {
+        var row = rows_code.last().next();
+        while ( ! row.hasClass( 'top' ) ){
+            row = row.next();
+        } 
+        return row;
+    }
 
+    
+    // get id num from jquery object
+    function get_id( obj ) {
+        var id = obj.attr( 'id' );
+        return parseInt( id, 10 );
+    }
 
 
 
