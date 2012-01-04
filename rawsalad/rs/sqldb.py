@@ -228,6 +228,14 @@ def search_data( user_query, endpoint ):
     cursor = DBConnection().connect()
     collection = Collection( endpoint, cursor )
 
+    final_data = {
+        'endpoint' : endpoint,
+        'query'    : user_query,
+        'data'     : [],
+        'boxes'    : []
+    }
+
+    boxes = {}
 
     # collect of searchable columns' keys
     columns = '''SELECT key FROM columns
@@ -239,17 +247,21 @@ def search_data( user_query, endpoint ):
     cursor.execute( columns )
     keys = [ column['key'] for column in cursor.fetchall() ]
 
-    where = 'WHERE ('
-    for i, key in enumerate( keys ):
-        if i == 0:
-            where += "%s ILIKE '%%%s%%'" % ( key, user_query )
-        else:
-            where += " OR %s ILIKE '%%%s%%'" % ( key, user_query )
+    for key in keys:
+        # do the search one by one
+        where = "WHERE %s ILIKE '%%%s%%'" % ( key, user_query )
+        query = "SELECT * FROM %s %s" % ( endpoint, where )
 
-    where += ')'
+        cursor.execute( query )
+        results = cursor.fetchall()
 
-    query = "SELECT * FROM %s %s " % ( endpoint, where )
-    results = collection.get_data( query )
+        final_data['data'] += [ r for r in results if boxes.get( r['id'], None ) == None ]
+        for result in results:
+            hit_id = result['id']
+            boxes.setdefault( hit_id, [] )
+            boxes[ hit_id ].append( key )
+
+    final_data['boxes'] = [ { 'id': k, 'hits': v } for k, v in  boxes.iteritems() ]
 
     # >> DEBUG MODE
     if settings.DEBUG:
@@ -262,5 +274,4 @@ def search_data( user_query, endpoint ):
         print ">> ------ DEBUG ---------"
     # >> EO DEBUG MODE
 
-    return results
-
+    return final_data
