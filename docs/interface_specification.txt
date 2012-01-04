@@ -37,14 +37,47 @@ Server --> _db
             ]
         }
         sheets: [
-            type: enum(integer),
-            name: string,
-            columns: [ visible_column_key1, visible_column_key2, ... ],
-            sheet_data: <sheet_data>
+            {
+                type: enum(integer),
+                name: string,
+                columns: [ visible_column_key1, visible_column_key2, ... ],
+                sheet_data: <sheet_data>
+            },
+            ...
         ]
     },
     ...
 ]
+
+5) search count, url:
+[
+    {
+        endpoint_id: int
+        found_count: int
+    },
+    ...
+]
+
+6) search results, url:
+[
+    {
+        endpoint_id: string/null,
+        data: [ <row_object>, ... ],
+        search_data:
+        {
+            query: string,
+            boxes: [
+                {
+                    id: string/integer,
+                    hit: [ column_key1, column_key2, ... ]
+                },
+                ...
+            ]
+        }
+    },
+    ...
+]
+
 
 db_tree_node = {
     id: integer,
@@ -99,8 +132,7 @@ c) searched sheet:
             rows: [
                 {
                     id: string/integer,
-                    hit: [ column_key1, column_key2, ... ],
-                    
+                    hit: [ column_key1, column_key2, ... ]
                 },
                 ...
             ],
@@ -120,10 +152,13 @@ _db --> Server
     {
         endpoint_id: string/null,
         sheets: [
-            type: enum(integer),
-            name: string,
-            columns: [ visible_column_key1, visible_column_key2, ... ],
-            sheet_data: <sheet_data>
+            {
+                type: enum(integer),
+                name: string,
+                columns: [ visible_column_key1, visible_column_key2, ... ],
+                sheet_data: <sheet_data>
+            },
+            ...
         ]
     },
     ...
@@ -173,7 +208,7 @@ _resource --> _gui
     ...
 ]
 
-2) top level rows, _resource.get_top_level
+2) rows in sheet in a gui-understandable form, _resource.get_sheet
 {
     columns: [
         {
@@ -187,22 +222,8 @@ _resource --> _gui
     id: integer,
     name: string,
     rows: [
-        {
-            _id: integer,
-            parent: string/integer/null, // should be integer/null, string is bug
-            leaf: bool,
-            level: integer,
-            is_open: bool,
-            data: [
-                {
-                click: string,
-                column_key: string,
-                column_type: string,
-                content: string
-                },
-                ...
-            ]
-        }
+        <gui_row_object>,
+        ...
     ],
     total: [
         {
@@ -215,26 +236,89 @@ _resource --> _gui
     type: enum(integer)
 }
 
-3) children of a node, _resource.get_children
+3) top level rows, _resource.get_top_level
+same as in get sheet
 
-4) all columns in collection represented by sheet, _resource.all_columns
+4) children of a node, _resource.get_children
+same as in top get_top_level
 
-5) show sheet with new columns, _resource.show_with_columns
+5) all columns in collection represented by sheet, _resource.all_columns
+[
+    {
+        key: string,
+        label: string,
+        selected: bool
+    },
+    ...
+]
 
-6) leave only top level nodes in sheet, _resource.clean_table
+6) show sheet with new columns, _resource.show_with_columns
+same as in get_sheet
 
-7) name of endpoint(original name of endpoint), _resource.get_end_name
+7) leave only top level nodes in sheet, _resource.clean_table
+same as in get sheet
 
-8) names of all sheets, _resource.get_sheets_names
+8) name of endpoint(original name of endpoint), _resource.get_end_name
+{
+    name: string
+}
 
-9) name of a sheet, _resource.get_sheet_name
+9) names of all sheets, _resource.get_sheets_names
+{
+    sheets: [
+        {
+            end_id: string,
+            group_id: integer,
+            name: string,
+            sheet_id: string
+        },
+        ...
+    ]
+}
 
-10) info assigned to a row in a sheet, _resource.get_info
+10) name of a sheet, _resource.get_sheet_name
+{
+    name: string
+}
 
-11) sortable columns in a sheet, _resource.sortable_columns
+11) info assigned to a row in a sheet, _resource.get_info
+string/undefined
 
-12) get sorted sheet, _resource.sort
+12) sortable columns in a sheet, _resource.sortable_columns
+[
+    {
+        key: string,
+        label: string
+    },
+    ...
+]
 
-13) rows in sheet in a gui-understandable form, _resource.get_sheet
+13) get sorted sheet, _resource.sort
+same as in get sheet
 
 14) copy sheet, _resource.copy_sheet
+{
+    end_id: string,
+    group_id: integer,
+    name: string,
+    sheet_id: integer
+}
+
+
+gui_row_object = {
+{
+    _id: integer,
+    parent: string/integer/null, // should be integer/null, string is bug
+    leaf: bool,
+    level: integer,
+    is_open: bool,
+    data: [
+        {
+            click: string,
+            column_key: string,
+            column_type: string,
+            content: string
+        },
+        ...
+    ]
+}

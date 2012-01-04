@@ -259,7 +259,7 @@ var _resource = (function () {
                 sheet = sheets[ sheet_id ];
                 sheet_descr = {
                     'name': sheet['name'],
-                    'sheet_id': sheet_id,
+                    'sheet_id': parseInt(sheet_id),
                     'group_id': sheet['group_id'],
                     'end_id': sheet['endpoint_id']
                 };
