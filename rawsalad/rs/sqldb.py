@@ -168,6 +168,7 @@ def search_data( user_query, endpoint, get_meta=False ):
         # get only unique results from current column
         unique_data = [ r for r in results if not boxes.get( r['id'], None ) ]
         # transform db data into resource objects
+        # TODO consider getting already collected ids from _store
         final_data['data'] += collection.prepare_data( unique_data )
 
         # prepare a list of already collected parents
@@ -186,8 +187,10 @@ def search_data( user_query, endpoint, get_meta=False ):
 
     # make boxes a list
     final_data['boxes'] = [ { 'id': k, 'hits': v } for k, v in  boxes.iteritems() ]
+    # sort results
     final_data['boxes'].sort( key=(lambda e: e['id']) )
     final_data['data'].sort( key=(lambda e: e['id']) )
+
     if get_meta:
         final_data['meta'] = {
             'name'    : collection.get_label(),

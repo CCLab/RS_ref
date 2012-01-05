@@ -32,12 +32,7 @@ var _resource = (function () {
     // Get db tree and return it as a list.
     that.get_db_tree = function ( callback ) {
         _store.get_db_tree( function ( db_tree ) {
-            var process_db_tree = function( db_tree ) {
-                return db_tree.toList();
-            };
-            var processed_db_tree = process_db_tree( db_tree );
-
-            callback( processed_db_tree );
+            callback( db_tree.toList() );
         });
     };
 
@@ -59,16 +54,21 @@ var _resource = (function () {
     };
 
     // Get children of row_id row from sheet_id sheet.
-    that.get_children = function ( sheet_id, row_id, callback ) {
-        var children;
+    // TODO: row_id ->parent_id
+    that.get_children = function ( sheet_id, parent_id, callback ) {
         var sheet = sheets[ sheet_id ];
         var endpoint_id = sheet['endpoint_id'];
 
-        if ( !!sheet['data'].children( row_id ).length ) {
-            children = sheet['data'].children( row_id, true );
-            callback( children );
+        var respond = function() {
+            var children = sheet['data'].children( parent_id, true );
+            gui_data = prepare_data_package_for_gui( sheet_id, children );
+            callback( gui_data );
+        };
+
+        if ( !!sheet['data'].children( parent_id ).length ) {
+            respond();
         } else {
-            _store.get_children( endpoint_id, row_id, function( data ) {
+            _store.get_children( endpoint_id, parent_id, function( data ) {
                 var cleaned_data;
                 var gui_data;
 
@@ -77,11 +77,7 @@ var _resource = (function () {
                 cleaned_data = clean_data( data, sheet['columns'] );
                 sheet['data'].updateTree( cleaned_data );
 
-                // Prepare children in gui-understandable form.
-                children = sheet['data'].children( row_id, true );
-                gui_data = prepare_data_package_for_gui( sheet_id, children );
-
-                callback( gui_data );
+                respond();
             });
         }
     };
@@ -383,7 +379,7 @@ var _resource = (function () {
 
         callback( sheet_descr );
     };
-    
+
     that.get_search_count = function ( endpoints_list, query, callback ) {
         _store.get_search_count( endpoints_list, query, function ( data ) {
             var gui_results = {
@@ -391,12 +387,12 @@ var _resource = (function () {
                 'results': []
             };
             var topparent_groups = {};
-            
+
             data.forEach( function( result ) {
                 var topparent;
                 var end_id = result['tree_id'];
                 var group = topparent_groups[ end_id ];
-                
+
                 if ( !group ) {
                     topparent = _store.get_topparent( end_id )['name'];
                     group = {
@@ -412,11 +408,11 @@ var _resource = (function () {
                     'found_count': result['count']
                 });
             });
-            
+
             callback( gui_results );
         });
     };
-    
+
     that.get_search_data = function ( endpoint_id, query, callback ) {
         _store.get_search_data( endpoint_id, query, function ( data ) {
             /*{
@@ -504,6 +500,7 @@ var _resource = (function () {
             'group_id': group_id,
             'endpoint_id': col_id,
             'data': cleaned_tree_data,
+            // TODO: check where name needs to be changed to label
             'name': name,
             'columns': active_columns,
             'type': _enum['STANDARD']
@@ -515,6 +512,7 @@ var _resource = (function () {
     // Add a new sheet and returns its id.
     function add_sheet( new_sheet ) {
         var generate_sheet_id = function() {
+            // TODO: next_sheet_id should be global?
             var new_id = next_sheet_id;
             next_sheet_id += 1;
             return new_id;
@@ -530,6 +528,7 @@ var _resource = (function () {
     function prepare_data_package_for_gui( sheet_id, data ) {
         var data_package;
 
+        // TODO: move them to another module
         switch ( sheets[sheet_id]['type'] ) {
             case _enum['STANDARD']:
                 data_package = prepare_standard_data_package_for_gui( sheet_id, data );
@@ -552,7 +551,7 @@ var _resource = (function () {
         var create_level_map = function( sheet_id ) {
             var id_map = {};
             var data = sheets[sheet_id]['data'].toList();
-            
+
             data.forEach( function ( row ) {
                 if ( !row['parent'] && row['parent'] !== 0 ) {
                     id_map[ row['id'] ] = 1;
@@ -560,7 +559,7 @@ var _resource = (function () {
                     id_map[ row['id'] ] = id_map[ row['parent'] ] + 1;
                 }
             });
-            
+
             return id_map;
         };
         var prepare_rows_for_gui = function( rows, columns, id_level_map ) {
@@ -694,7 +693,7 @@ var _resource = (function () {
             ///////////////////////////////////////////////////
             new_node['leaf'] = false;
             ///////////////////////////////////////////////////
-            
+
             for ( property in node['aux'] ) {
                 if ( node['aux'].hasOwnProperty( property )) {
                     new_node['aux'][ property ] = node[ property ];
@@ -715,7 +714,7 @@ var _resource = (function () {
         var cleaned_data = data.map( function( node ) {
             return clean_node( node, columns );
         });
-        
+
         return cleaned_data;
     }
 

@@ -52,19 +52,21 @@ var _gui = (function () {
 
     function draw_end_point( end_id ) {
 
-        _resource.get_top_level( end_id, function ( data ) {
-            console.log(data);
-            var names = { 'name': data['name'], };
-            draw_table( data );
-            _resource.get_sheets_names( draw_tabs );
-            draw_tools( names );
-        });
-
         prepare_aplication_interface();
         $('#application').show();
+
+        _resource.get_top_level( end_id, function ( data ) {
+            // TODO change for label  and put into draw_tools
+            var names = { 'name': data['name'], };
+            draw_table( data );
+            draw_tools( names );
+
+            _resource.get_sheets_names( draw_tabs );
+        });
+
     }
 
-
+// TODO check it out compare with draw_end_point
     function draw_sheet( sheet_id ){
         var callback = function ( data ) {
             draw_table( data );
@@ -76,6 +78,8 @@ var _gui = (function () {
 
 
     function draw_tabs( data ) {
+        // TODO change name adjust tabs length (verb)
+        var tabs;
         tabs_length( data );
         tabs = Mustache.to_html( app_table_header_template, data );
         display_tabs( tabs );
@@ -83,19 +87,15 @@ var _gui = (function () {
 
 
     function draw_tools( names ) {
-        var tools;
-        tools = Mustache.to_html( app_table_tools_template, names );
+        var tools = Mustache.to_html( app_table_tools_template, names );
         display_tools( tools );
     }
 
 
     function draw_table( data ) {
-        var table;
         var callback = function( table_html ) {
-            table = table_html;
-            display_table( table );
-
-        }
+            display_table( table_html );
+        };
         _table.create_table( data, callback );
     }
 
@@ -147,8 +147,8 @@ var _gui = (function () {
 
     function preapare_tabs_interface( tabs_code ) {
 
-        var copy_bt = tabs_code.closest('#app-tb-save-sheet');
-        var tabs = tabs_code.find( 'li' );
+        var copy_bt  = tabs_code.closest('#app-tb-save-sheet');
+        var tabs     = tabs_code.find( 'li' );
         var close_bt = tabs_code.find( '.close-sheet-button' );
 
 
@@ -165,10 +165,10 @@ var _gui = (function () {
 
 
     function prepare_tools_interface( tools_code ) {
-        var rename_bt = tools_code.find('#app-tb-tl-rename-button');
-        var clear_bt = tools_code.find('#app-tb-tl-clear-button');
-        var sort_bt = tools_code.find('#app-tb-tl-sort-button');
-        var filter_bt = tools_code.find('#app-tb-tl-filter-button');
+        var rename_bt  = tools_code.find('#app-tb-tl-rename-button');
+        var clear_bt   = tools_code.find('#app-tb-tl-clear-button');
+        var sort_bt    = tools_code.find('#app-tb-tl-sort-button');
+        var filter_bt  = tools_code.find('#app-tb-tl-filter-button');
         var columns_bt = tools_code.find('#app-tb-tl-columns-button');
 
         // EVENTS
@@ -239,10 +239,12 @@ var _gui = (function () {
     // TABS EVENTS
     function change_sheet() {
         var sheet_id;
-        if ( $(this).hasClass( 'active' ) ) {
+        var button = $(this);
+
+        if ( button.hasClass( 'active' ) ) {
             return;
         }
-        sheet_id = get_sheet_id( $(this) );
+        sheet_id = get_sheet_id( button );
         draw_sheet( sheet_id );
     }
 
@@ -264,13 +266,12 @@ var _gui = (function () {
         var sheet_id = active_sheet_id();
 
         var callback = function( data ) {
-            new_sheet_id = data['sheet_id'];
-            draw_sheet( new_sheet_id );
+            draw_sheet( data['sheet_id'] );
         }
         _resource.copy_sheet( sheet_id, callback );
     }
 
-
+    // TODO remove - get name from tools
     function active_tab_name() {
         var tab = $('#app-tb-sheets>.active');
 
@@ -283,12 +284,13 @@ var _gui = (function () {
 
         if ( $('#app-tb-tl-rename-input').is(":visible")){
             var new_name = $('#app-tb-tl-rename-input').val();
+            // TODO get old_name from tools
             var old_name = active_tab_name();
             var callback = function(){
                 _resource.get_sheets_names( draw_tabs )
             };
-            
-            
+
+
             if ( new_name !== old_name ) {
                 var sheet_id = active_sheet_id();
 
@@ -336,6 +338,7 @@ var _gui = (function () {
 
     }
 
+    // TODO remove it
     function rename_sheet() {
         var new_name = $('#app-tb-tl-rename-input').val();
         var sheet_id = active_sheet_id();
@@ -362,31 +365,31 @@ var _gui = (function () {
 
 
     // TABLE EVENTS
-    function open_node() {  //TODO - test it 
+    function open_node() {  //TODO - test it
         var sheet_id = active_sheet_id();
         var row = $(this);
         var row_id = get_id( row );
-        
+
         var callback = function ( new_data ) {
 
             var new_rows;
             var rows_code;
-                                
+
             new_rows = _table.add_node( row_id, new_data );
             rows_code = $(new_rows);
             prepare_rows_interface( rows_code );
             row.after( rows_code );
-            
-            set_selection( rows_code ); //TODO finish selection            
+
+            set_selection( rows_code ); //TODO finish selection
 
             make_zebra();
             row
-                .unbind()
+                .unbind() // TODO add click to unbind
                 .click( close_node );
-            
+
         }
         _resource.get_children( sheet_id, row_id, callback )
-        
+
     }
 
 
@@ -426,19 +429,19 @@ var _gui = (function () {
     }
 
 
-    function tabs_length( data ) { 
-        
+    function tabs_length( data ) {
+
         var sheets = data['sheets'];
         var max_length = tab_max_length( sheets.length );
 
         data['sheets'] = sheets.map( function( sheet ) {
             var name = sheet['name'];
-            
+
             if ( name.length > max_length ) {
-                sheet['name'] = name.slice( 0, max_length - 3 ) + '...'; 
+                sheet['name'] = name.slice( 0, max_length - 3 ) + '...';
             }
-            return sheet;            
-        } );    
+            return sheet;
+        } );
     }
 
 
@@ -450,7 +453,7 @@ var _gui = (function () {
                    6, 4, 4, 4, 4,      // 16-20
                    4, 4                // 21-22
                   ];
-        
+
         if ( tabs_num  > cut.length ){
             return 3;
         }
@@ -473,6 +476,7 @@ var _gui = (function () {
         var new_sheet_id;
         var active_tab = $('#app-tb-sheets').find( '.active' );
         var active_group = active_tab.attr( 'data-group' );
+        // TODO change name  'siblings'
         var siblings = active_tab.siblings();
         var group_sheets = siblings.filter( function () {
            return ( $(this).attr( 'data-group' ) === active_group );
@@ -482,7 +486,6 @@ var _gui = (function () {
             new_sheet_id = parse_id_num( group_sheets[0]['id'] );
         }
         else {
-            var siblings = active_tab.siblings();
             new_sheet_id = parse_id_num( siblings[0]['id'] );
         }
         return  parseInt( new_sheet_id, 10 );
@@ -515,19 +518,21 @@ var _gui = (function () {
     function set_selection( rows_code ){
         var top_row = get_prev_top_row( rows_code );
         var top_row_id = get_id( top_row );
-        
+
         var old_selected = $('tr.selected');
         var old_selected_row_id;
 
+        // TODO remove rows
         var rows = rows_code.siblings();
         var sheet_id = active_sheet_id();
-        
-        top_row.siblings().addClass( 'dim' );              
-                      
+
+        // TODO nextUntil
+        top_row.siblings().addClass( 'dim' );
+
         if ( old_selected.length === 1 ) {
             old_selected_row_id = get_id( old_selected );
         }
-        
+
         if ( old_selected_row_id !== top_row_id ) {
             rows.removeClass( 'selected' );
             rows.removeClass( 'in-selected' );
@@ -535,6 +540,7 @@ var _gui = (function () {
             top_row
                 .removeClass( 'dim' )
                 .addClass( 'selected' );
+            // TODO move var
             var in_select = top_row.nextUntil( '.top' );
             in_select
                 .removeClass( 'dim' )
@@ -542,7 +548,7 @@ var _gui = (function () {
 
             var after = get_next_top_row( rows_code );
             after
-                .addClass( 'after-selected' );                        
+                .addClass( 'after-selected' );
         }
         else {
             rows_code.addClass( 'in-selected' );
@@ -552,24 +558,25 @@ var _gui = (function () {
     }
 
     //get root for rows
+    // TODO check for first row
     function get_prev_top_row( rows_code ) {
         var row = rows_code.first().prev();
         while ( ! row.hasClass( 'top' ) ) {
             row = row.prev();
-        } 
+        }
         return row;
     }
 
-
+    // TODO check for last row
     function get_next_top_row( rows_code ) {
         var row = rows_code.last().next();
         while ( ! row.hasClass( 'top' ) ){
             row = row.next();
-        } 
+        }
         return row;
     }
 
-    
+
     // get id num from jquery object
     function get_id( obj ) {
         var id = obj.attr( 'id' );

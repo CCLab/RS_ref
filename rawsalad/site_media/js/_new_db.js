@@ -29,50 +29,6 @@ var _db = (function () {
 //  P U B L I C   I N T E R F A C E
     var that = {};
 
-    // Gets the top-level from db
-    // IN:
-    // col_id -- id of collection
-    that.get_init_data = function ( _id, callback ) {
-        _utils.create_preloader( translation['js_loading_data'] );
-
-        $.ajax({
-            url     : '/get_init_data/',
-            data    : { endpoint: _id },
-            dataType: "json",
-            success : function( received_data ) {
-                var data = {
-                    data     : received_data.data,
-                    metadata : received_data.meta
-                };
-
-                _utils.clear_preloader();
-                callback( data );
-            },
-            error   : function ( err ) {
-                _utils.clear_preloader();
-                console.log( err );
-            }
-        });
-    };
-    
-    that.get_children = function( endpoint_id, parent_id, callback ) {
-        _utils.create_preloader( translation['js_loading_data'] );
-
-        $.ajax({
-            url     : '/get_children/',
-            data    : { endpoint: endpoint_id, _id: parent_id },
-            dataType: "json",
-            success : function( received_data ) {
-                _utils.clear_preloader();
-                callback( received_data );
-            },
-            error   : function ( err ) {
-                _utils.clear_preloader();
-                console.log( err );
-            }
-        });
-    };
-
     that.get_db_tree = function ( callback ) {
         $.ajax({
             url     : '/get_db_tree/',
@@ -86,12 +42,63 @@ var _db = (function () {
             }
         });
     };
-    
-    that.get_search_count = function ( endpoints_list, query, callback ) {
-        var endpoints_str = JSON.stringify( endpoints_list );
+
+    // Gets the top-level from db
+    // IN:
+    // col_id -- id of collection
+    that.get_init_data = function ( _id, callback ) {
+        // TODO: move it to gui
+        _utils.create_preloader( translation['js_loading_data'] );
+
+        $.ajax({
+            url     : '/get_init_data/',
+            data    : { endpoint: _id },
+            dataType: "json",
+            success : function( received_data ) {
+                // TODO: metadata -> meta
+                var data = {
+                    data     : received_data.data,
+                    metadata : received_data.meta
+                };
+
+                _utils.clear_preloader();
+                callback( data );
+            },
+            // TODO: handle error situation
+            error   : function ( err ) {
+                _utils.clear_preloader();
+                console.log( err );
+            }
+        });
+    };
+
+    // TODO: tree_id --> endpoint
+    that.get_children = function( tree_id, parent_id, callback ) {
+        _utils.create_preloader( translation['js_loading_data'] );
+
+        $.ajax({
+            url     : '/get_children/',
+            // TODO: insert ciapki
+            // TODO: _id -> parent_id, also in backend
+            data    : { endpoint: endpoint_id, _id: parent_id },
+            dataType: "json",
+            success : function( received_data ) {
+                _utils.clear_preloader();
+                callback( received_data );
+            },
+            error   : function ( err ) {
+                _utils.clear_preloader();
+                console.log( err );
+            }
+        });
+    };
+
+
+    that.get_search_count = function ( scope, query, callback ) {
+        var scope_str = JSON.stringify( scope );
         $.ajax({
             url     : '/search_count/',
-            data    : { scope: endpoints_str, user_query: query },
+            data    : { 'scope': scope_str, 'user_query': query },
             dataType: 'json',
             type    : 'GET',
             success : function( received_data ) {
@@ -102,11 +109,12 @@ var _db = (function () {
             }
         });
     };
-    
+
+    // TODO: endpoint_id --> endpoint, need_meta --> get_meta
     that.get_search_data = function ( endpoint_id, query, need_meta, callback ) {
         $.ajax({
             url     : '/search_data/',
-            data    : { endpoint  : endpoint_id, 
+            data    : { endpoint  : endpoint_id,
                         user_query: query,
                         get_meta  : need_meta
             },

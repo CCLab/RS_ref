@@ -7,6 +7,7 @@ I TABLE:
 - sheet width
 - add node
 - info panel
+- add many sheets
 
 II SHARE PANEL
 
