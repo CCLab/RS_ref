@@ -100,6 +100,7 @@ var _store = (function () {
                 // downloads them and updates tree(inserting new nodes).
                 data_source = get_data_source( col_id );
                 data_source.updateTree( db_data );
+                all_children_downloaded( col_id, parent_id );
                 children = data_source.children( parent_id, true );
                 callback( children );
             });
@@ -146,17 +147,26 @@ var _store = (function () {
     
     that.get_search_data = function ( endpoint_id, query, callback ) {
         var need_meta = !has_meta_data( endpoint_id );
+        var node = db_tree.getNode( endpoint_id );
+        var endpoint = node['endpoint'];
 
-        if ( need_meta ) {
-            _db.get_search_data( endpoint_id, query, need_meta, function ( db_data ) {
-                store_meta_data( db_data['meta'], endpoint_id );
-                callback( db_data );
-            });
-        }
-        _db.get_search_data( endpoint_id, query, need_meta, callback );
+        
+        _db.get_search_data( endpoint, query, need_meta, function ( db_data ) {
+            data_source = get_data_source( endpoint_id );
+            if ( need_meta ) {
+                meta_data = store_meta_data( db_data['meta'], endpoint_id );
+            } else {
+                meta_data = get_meta_data_source( endpoint_id );
+            }
+            data_package = {
+                'data'    : //data_source.copy(),
+                'metadata': metadata
+            };
+            callback( data_package );
+        });
     };
     
-    // maybe add new function to monkey?
+    // maybe add a new function to monkey?
     that.get_topparent = function ( endpoint_id ) {
         var node = db_tree.getNode( endpoint_id );
         
