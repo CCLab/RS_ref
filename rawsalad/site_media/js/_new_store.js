@@ -52,7 +52,7 @@ var _store = (function () {
         if ( !has_dat( col_id ) ) {
             return undefined;
         } else {
-            return get_data_source[col_id].copy();
+            return get_data_source[ col_id ].copy();
         }
     };
 
@@ -68,7 +68,7 @@ var _store = (function () {
             data = monkey.createTree( data_source.children( data_source.root(), true ), 'id', 'parent' );
             data_package = {
                 'data'    : data.copy(),
-                'metadata': meta_data_sources[col_id]
+                'metadata': meta_data_sources[ col_id ]
             };
             callback( data_package );
         } else {
@@ -112,14 +112,13 @@ var _store = (function () {
     };
 
     that.get_collection_name = function( col_id, callback ) {
-        if ( !!has_data( col_id ) ) {
-            callback( meta_data_sources[ col_id ]['name'] );
-        } else {
-            // does not have collection, must download init data
-            that.get_init_data( col_id, function ( data ) {
-                callback( data['metadata']['name'] );
-            });
+        var node;
+        if ( !has_db_tree() ) {
+            get_db_tree( );
         }
+        
+        node = db_tree.getNode( col_id );
+        return !!node['label'] ? node['label'] : node['name'];
     };
 
     that.get_columns = function( col_id ) {
@@ -135,6 +134,40 @@ var _store = (function () {
         return columns;
     };
 
+    that.get_search_count = function ( endpoints, query, callback ) {
+        var names = endpoints.map( function ( endpoint_id ) {
+            var node = get_db_tree().getNode( endpoint_id );
+            
+            return node['endpoint'];
+        });
+
+        _db.get_search_count( names, query, callback );
+    };
+    
+    that.get_search_data = function ( endpoint_id, query, callback ) {
+        var need_meta = !has_meta_data( endpoint_id );
+
+        if ( need_meta ) {
+            _db.get_search_data( endpoint_id, query, need_meta, function ( db_data ) {
+                store_meta_data( db_data['meta'], endpoint_id );
+                callback( db_data );
+            });
+        }
+        _db.get_search_data( endpoint_id, query, need_meta, callback );
+    };
+    
+    // maybe add new function to monkey?
+    that.get_topparent = function ( endpoint_id ) {
+        var node = db_tree.getNode( endpoint_id );
+        
+        if ( !node ) return undefined;
+        
+        while ( db_tree.parent( node ) !== db_tree.root() ) {
+            node = db_tree.parent( node );
+        }
+        
+        return db_tree.value( node );
+    }
 
 
 // P R I V A T E   I N T E R F A C E
@@ -150,38 +183,42 @@ var _store = (function () {
 
     // Does store have children of parent_id(default root's id) in col_id collection.
     function has_data( col_id, parent_id ) {
-        if (parent_id === undefined) {
+        if ( parent_id === undefined ) {
             parent_id = '__root__';
         }
-        return !!data_sources[col_id] && has_all_children( col_id, parent_id );
+        return !!data_sources[ col_id ] && has_all_children( col_id, parent_id );
     }
 
     // Does store have all children of parent_id in col_id collection.
     function has_all_children( col_id, parent_id ) {
-        return !!complete_children[col_id] && !!complete_children[col_id][parent_id];
+        return !!complete_children[ col_id ] && !!complete_children[ col_id ][ parent_id ];
     }
 
     // Saves information about having downloaded all children of parent_id node in
     // col_id collection.
     function all_children_downloaded( col_id, parent_id ) {
-        if ( !complete_children[col_id] ) {
-            complete_children[col_id] = {};
+        if ( !complete_children[ col_id ] ) {
+            complete_children[ col_id ] = {};
         }
-        complete_children[col_id][parent_id] = true;
+        complete_children[ col_id ][ parent_id ] = true;
     }
 
     function get_data_source( col_id ) {
-        return data_sources[col_id];
+        return data_sources[ col_id ];
+    }
+    
+    function has_meta_data( col_id ) {
+        return !!meta_data_sources[ col_id ];
     }
 
     function get_meta_data_source( col_id ) {
-        return meta_data_sources[col_id];
+        return meta_data_sources[ col_id ];
     }
 
     // Save downloaded data and save information about having full first level.
     function store_data( db_data, col_id ) {
         var new_data_source = monkey.createTree( db_data, 'id', 'parent' );
-        data_sources[col_id] = new_data_source;
+        data_sources[ col_id ] = new_data_source;
         all_children_downloaded( col_id, '__root__' );
 
         return new_data_source;
@@ -190,12 +227,12 @@ var _store = (function () {
     function store_meta_data( db_meta_data, col_id ) {
         var extracted_meta_data = extract_meta_data( db_meta_data );
 
-        meta_data_sources[col_id] = extracted_meta_data;
+        meta_data_sources[ col_id ] = extracted_meta_data;
         return extracted_meta_data;
     }
 
     // Returns important metadata from data downloaded by db.
-    function extract_meta_data( db_meta_data, col_id ) {
+    function extract_meta_data( db_meta_data ) {
         return {
             'name': db_meta_data['name'],
             'columns': db_meta_data['columns']

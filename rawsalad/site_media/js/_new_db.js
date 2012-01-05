@@ -36,10 +36,10 @@ var _db = (function () {
         _utils.create_preloader( translation['js_loading_data'] );
 
         $.ajax({
-            url: '/get_init_data/',
-            data: { endpoint: _id },
+            url     : '/get_init_data/',
+            data    : { endpoint: _id },
             dataType: "json",
-            success: function( received_data ) {
+            success : function( received_data ) {
                 var data = {
                     data     : received_data.data,
                     metadata : received_data.meta
@@ -48,7 +48,7 @@ var _db = (function () {
                 _utils.clear_preloader();
                 callback( data );
             },
-            error: function ( err ) {
+            error   : function ( err ) {
                 _utils.clear_preloader();
                 console.log( err );
             }
@@ -59,14 +59,14 @@ var _db = (function () {
         _utils.create_preloader( translation['js_loading_data'] );
 
         $.ajax({
-            url: '/get_children/',
-            data: { endpoint: endpoint_id, _id: parent_id },
+            url     : '/get_children/',
+            data    : { endpoint: endpoint_id, _id: parent_id },
             dataType: "json",
-            success: function( received_data ) {
+            success : function( received_data ) {
                 _utils.clear_preloader();
                 callback( received_data );
             },
-            error: function ( err ) {
+            error   : function ( err ) {
                 _utils.clear_preloader();
                 console.log( err );
             }
@@ -75,13 +75,47 @@ var _db = (function () {
 
     that.get_db_tree = function ( callback ) {
         $.ajax({
-            url: '/get_db_tree/',
+            url     : '/get_db_tree/',
             dataType: 'json',
-            type: 'GET',
+            type    : 'GET',
             success : function ( received_data ) {
                 callback( received_data );
             },
             error   : function ( err ) {
+                console.log( err );
+            }
+        });
+    };
+    
+    that.get_search_count = function ( endpoints_list, query, callback ) {
+        var endpoints_str = JSON.stringify( endpoints_list );
+        $.ajax({
+            url     : '/search_count/',
+            data    : { scope: endpoints_str, user_query: query },
+            dataType: 'json',
+            type    : 'GET',
+            success : function( received_data ) {
+                callback( received_data );
+            },
+            error   : function( err ) {
+                console.log( err );
+            }
+        });
+    };
+    
+    that.get_search_data = function ( endpoint_id, query, need_meta, callback ) {
+        $.ajax({
+            url     : '/search_data/',
+            data    : { endpoint  : endpoint_id, 
+                        user_query: query,
+                        get_meta  : need_meta
+            },
+            dataType: 'json',
+            type    : 'GET',
+            success : function( received_data ) {
+                callback( received_data );
+            },
+            error   : function( err ) {
                 console.log( err );
             }
         });
