@@ -65,6 +65,13 @@ def search_count( user_query, scope ):
 
     # traverse through all requested endpoints
     for endpoint in scope:
+        # get endpoint's id in the dbtree
+        query = '''SELECT id FROM dbtree
+                   WHERE endpoint = '%s'
+                ''' % endpoint
+        cursor.execute( query )
+        tree_id = cursor.fetchone()['id']
+
         # collect all searchable column's keys
         columns = '''SELECT key FROM columns
                      WHERE searchable IS TRUE
@@ -85,12 +92,14 @@ def search_count( user_query, scope ):
 
         where += ')'
 
+        # get count of results in current endpoint
         query = '''SELECT COUNT(*) FROM %s
                    WHERE %s
                 ''' % ( endpoint, where )
         cursor.execute( query )
         # collect the results
         result = {
+            'tree_id'  : tree_id,
             'endpoint' : endpoint,
             'count'    : cursor.fetchone()['count']
         }
@@ -111,7 +120,7 @@ def search_count( user_query, scope ):
     return results
 
 
-def search_data( user_query, endpoint ):
+def search_data( user_query, endpoint, get_meta=False ):
     from django.conf import settings
     # >> DEBUG MODE
     if settings.DEBUG:
@@ -177,7 +186,11 @@ def search_data( user_query, endpoint ):
 
     # make boxes a list
     final_data['boxes'] = [ { 'id': k, 'hits': v } for k, v in  boxes.iteritems() ]
-
+    if get_meta:
+        final_data['meta'] = {
+            'name'    : collection.get_label(),
+            'columns' : collection.get_columns()
+        }
 
     # >> DEBUG MODE
     if settings.DEBUG:

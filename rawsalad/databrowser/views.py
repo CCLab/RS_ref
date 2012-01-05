@@ -66,6 +66,7 @@ def search_count( req ):
     user_query = req.GET.get( 'user_query', None )
     scope      = json.loads( req.GET.get( 'scope', 'null' ) )
 
+    print scope
     results = sqldb.search_count( user_query, scope )
 
     return HttpResponse( json.dumps( results ))
@@ -75,8 +76,9 @@ def search_count( req ):
 def search_data( req ):
     user_query = req.GET.get( 'user_query', None )
     endpoint   = req.GET.get( 'endpoint', None )
+    get_meta   = req.GET.get( 'get_meta', False )
 
-    results = sqldb.search_data( user_query, endpoint )
+    results = sqldb.search_data( user_query, endpoint, get_meta )
 
     return HttpResponse( json.dumps( results ))
 
