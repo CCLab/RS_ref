@@ -186,6 +186,8 @@ def search_data( user_query, endpoint, get_meta=False ):
 
     # make boxes a list
     final_data['boxes'] = [ { 'id': k, 'hits': v } for k, v in  boxes.iteritems() ]
+    final_data['boxes'].sort( key=(lambda e: e['id']) )
+    final_data['data'].sort( key=(lambda e: e['id']) )
     if get_meta:
         final_data['meta'] = {
             'name'    : collection.get_label(),
