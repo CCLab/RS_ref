@@ -241,9 +241,12 @@ var _resource = (function () {
 
     // Get endpoint name(name from store).
     that.get_end_name = function ( end_id, callback ) {
-        _store.get_collection_name( end_id, function ( name ) {
+        /*_store.get_collection_name( end_id, function ( name ) {
             callback( { 'name': name } );
-        });
+        });*/
+        return {
+            'name': _store.get_collection_name( end_id )
+        };
     };
 
     // Get names of sheets and sort them in order: ( group_id, sheet_id ).
@@ -380,7 +383,64 @@ var _resource = (function () {
 
         callback( sheet_descr );
     };
-    // END OF TEST FUNCTIONS
+    
+    that.get_search_count = function ( endpoints_list, query, callback ) {
+        _store.get_search_count( endpoints_list, query, function ( data ) {
+            var gui_results = {
+                'query': query,
+                'results': []
+            };
+            var topparent_groups = {};
+            
+            data.forEach( function( result ) {
+                var topparent;
+                var end_id = result['tree_id'];
+                var group = topparent_groups[ end_id ];
+                
+                if ( !group ) {
+                    topparent = _store.get_topparent( end_id )['name'];
+                    group = {
+                        'dbtree_topparent_name': topparent,
+                        'data': []
+                    };
+                    gui_results['results'].push( group );
+                    topparent_groups[ end_id ] = group;
+                }
+                group['data'].push({
+                    'endpoint_id': end_id,
+                    'endpoint_name': that.get_end_name( end_id )['name'],
+                    'found_count': result['count']
+                });
+            });
+            
+            callback( gui_results );
+        });
+    };
+    
+    that.get_search_data = function ( endpoint_id, query, callback ) {
+        _store.get_search_data( endpoint_id, query, function ( data ) {
+            /*{
+                sheet_id : int,
+                name   : str,
+                type   : enum.SEARCH,
+                query  : str,
+                boxes  : [
+                    {
+                        parents : str || list,
+                        columns : list,
+                        rows  : [
+                            {
+                                ...
+                                hit: column_key
+                            },
+                            ...
+                        ]
+                    }
+                ]
+            }*/
+            callback( data );
+        });
+    };
 
 
 // P R I V A T E   I N T E R F A C E

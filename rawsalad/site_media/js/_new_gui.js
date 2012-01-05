@@ -37,7 +37,7 @@ var _gui = (function () {
             draw_end_point( 'data_50003' );
         });
         // stupid testing environment
-//      _resource.get_db_tree( draw_db_tree_panels );
+        _resource.get_db_tree( draw_db_tree_panels );
     };
 
 

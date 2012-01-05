@@ -49,34 +49,29 @@ Server --> _db
     ...
 ]
 
-5) search count, url:
+5) search count, url: /search_count/
 [
     {
-        endpoint_id: int
-        found_count: int
+        tree_id: int,
+        endpoint: string,
+        count: int
     },
     ...
 ]
 
-6) search results, url:
-[
-    {
-        endpoint_id: string/null,
-        data: [ <row_object>, ... ],
-        search_data:
+6) search results, url: /search_data/
+{
+    endpoint_id: string/null,
+    data: [ <row_object>, ... ],
+    query: string,  
+    boxes: [
         {
-            query: string,
-            boxes: [
-                {
-                    id: string/integer,
-                    hit: [ column_key1, column_key2, ... ]
-                },
-                ...
-            ]
-        }
-    },
-    ...
-]
+            id: string/integer,
+            hit: [ column_key1, column_key2, ... ]
+        },
+        ...
+    ]
+}
 
 
 db_tree_node = {
@@ -200,6 +195,7 @@ string
 7) columns from collection, _store.get_columns()
 [ column_object, ... ]
 
+8) top parent in db tree, _store.get_topparent()
 
 
 _resource --> _gui
@@ -210,6 +206,8 @@ _resource --> _gui
 ]
 
 2) rows in sheet in a gui-understandable form, _resource.get_sheet
+depends on type of sheet:
+a) standard
 {
     columns: [
         {
@@ -236,6 +234,13 @@ _resource --> _gui
     ],
     type: enum(integer)
 }
+
+b) filtered
+
+
+c) searched
+
+
 
 3) top level rows, _resource.get_top_level
 same as in get sheet
