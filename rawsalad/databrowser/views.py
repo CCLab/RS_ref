@@ -35,12 +35,10 @@ def get_init_data( req ):
     endpoint = req.GET.get( 'endpoint', None )
 
     collection = sqldb.Collection( endpoint )
-    meta = 'to be implemented'#collection.get_metadata()
-
     data = {
         'data': collection.get_top_level(),
         'meta': {
-            'name': collection.get_label(),
+            'label'  : collection.get_label(),
             'columns': collection.get_columns()
         }
     }
@@ -51,11 +49,11 @@ def get_init_data( req ):
 # url: /get_children/
 def get_children( req ):
     '''Get children of the node'''
-    endpoint = req.GET.get( 'endpoint', None )
-    _id      = req.GET.get( '_id', None )
+    endpoint  = req.GET.get( 'endpoint', None )
+    parent_id = req.GET.get( 'parent_id', None )
 
     collection = sqldb.Collection( endpoint )
-    data = collection.get_children( _id )
+    data = collection.get_children( parent_id )
 
     return HttpResponse( json.dumps( data ) )
 
@@ -66,7 +64,6 @@ def search_count( req ):
     user_query = req.GET.get( 'user_query', None )
     scope      = json.loads( req.GET.get( 'scope', 'null' ) )
 
-    print scope
     results = sqldb.search_count( user_query, scope )
 
     return HttpResponse( json.dumps( results ))

@@ -113,7 +113,7 @@ def search_count( user_query, scope ):
         print ">> Search count time for:"
         print "   query: %s" % user_query
         print "   endpoints: %s" % str( scope )
-        print ">> Time: %f" % end
+        print ">> total_time: %f" % end
         print ">> ------ DEBUG ---------"
     # >> EO DEBUG MODE
 
@@ -183,7 +183,7 @@ def search_data( user_query, endpoint, get_meta=False ):
             boxes[ hit_id ].append( key )
 
             # add uniq parents
-            final_data['data'] += collection.get_unique_parents( result['parent'], visited_parents )
+            final_data['data'] += collection.get_unique_parents( result['parent'], visited_parents, 0 )
 
     # make boxes a list
     final_data['boxes'] = [ { 'id': k, 'hits': v } for k, v in  boxes.iteritems() ]
@@ -203,8 +203,9 @@ def search_data( user_query, endpoint, get_meta=False ):
         print ">> ------ DEBUG ---------"
         print ">> Search data time for:"
         print "   query: %s" % user_query
+        print "   count: %s" % len( final_data['boxes'] )
         print "   endpoint: %s" % endpoint
-        print ">> Time: %f" % end
+        print ">> total_time: %f" % end
         print ">> ------ DEBUG ---------"
     # >> EO DEBUG MODE
 
@@ -324,7 +325,7 @@ class Collection:
         return result
 
 
-    def get_unique_parents( self, parent_id, visited ):
+    def get_unique_parents( self, parent_id, visited, t ):
         '''Traverse the tree from a certain parent up to the top level'''
         # hit the top level
         if not parent_id:
@@ -337,5 +338,5 @@ class Collection:
             visited[ parent_id ] = True
             node = self.get_node( parent_id )
 
-            return [node] + self.get_unique_parents( node['parent'], visited )
+            return [node] + self.get_unique_parents( node['parent'], visited, t )
 
