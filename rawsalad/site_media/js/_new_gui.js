@@ -323,18 +323,25 @@ var _gui = (function () {
     }
 
 
+    // TODO - test it
     function clear_table() {
-
+        var sheet_id = active_sheet_id();
+        var callback = function() {
+            draw_sheet( sheet_id );
+        }
+        _resource.clean_table( sheet_id, callback )
     }
 
-
+    // TODO finish sort
     function display_sort_panel() {
-
+        var sort_form_code = $( sort_form_template );
+        preapare_sort_interface( sort_form_code );
+        $('#app-tb-tools>section').append( sort_form_code ); // TODO - add show and hide animations            
     }
 
 
     function display_filter_panel() {
-
+ 
     }
 
 
@@ -505,6 +512,29 @@ var _gui = (function () {
     function parse_id_num( tab_id ) {
         var sheet_id = tab_id.split( '-' )[1];
         return  parseInt( sheet_id, 10 );
+    }
+    
+    
+    // TOOLS FUNCTIONS
+    function preapare_sort_interface( sort_form ){
+        add_sort_key( sort_form );
+    }
+    
+    function add_sort_key( sort_form ) {
+        var sheet_id = active_sheet_id();
+        var callback = function ( data ) {
+//            var 
+
+//        html.push( '<tr id="sort-key-', key, '">' );
+//        html.push( '<td>' );
+//        html.push( '<select name="app-tb-tl-sort-form-columns" ');
+//        html.push( 'class="input-text key-', key, '">' );
+
+
+        };
+        
+        
+//        _resource.get_sort_columns( sheet_id, callback )
     }
 
 
@@ -775,6 +805,21 @@ var _gui = (function () {
             '</table>' +
         '</form>';
 
+    var sort_form_template = 
+        '<form id="app-tb-tl-sort-form" class="sort-filter-form left">' +
+            '<table>' +
+                '<thead>' +
+                    '<tr>' +
+                        '<th>Wybierz kolumnę</th>' +
+                        '<th>Wybierz porządek</th>' +
+                    '</tr>' +
+                '</thead>' +
+                '<tbody>' +
+                '</tbody>' +
+            '</table>' +
+            '<div id="app-tb-tl-sort-add" class="grey button">Dodaj kolejny klucz</div>' +
+            '<div id="app-tb-tl-sort-submit" class="blue button">Sortuj</div>' +
+        '</form>';
 
     // return public interface
     return that;

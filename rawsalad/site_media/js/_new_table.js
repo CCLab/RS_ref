@@ -95,7 +95,7 @@ var _table = (function () {
 
 
     function create_tbody( data ) {
-        var rows_code = create_rows( data );
+        var rows_code = create_rows( data );// TODO add and test selected
         var tbody_code = '<tbody>'.concat( rows_code, '</tbody>' );
         
         return tbody_code;
