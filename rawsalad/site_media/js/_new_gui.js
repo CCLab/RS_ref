@@ -59,7 +59,7 @@ var _gui = (function () {
             // TODO change for label  and put into draw_tools
             var names = { 'name': data['name'], };
             draw_table( data );
-            draw_tools( names );
+            draw_tools( data ); // TODO - test it - it was ( names ) 
 
             _resource.get_sheets_names( draw_tabs );
         });
@@ -68,19 +68,23 @@ var _gui = (function () {
 
 // TODO check it out compare with draw_end_point
     function draw_sheet( sheet_id ){
-        var callback = function ( data ) {
-            draw_table( data );
-            _resource.get_sheets_names( draw_tabs );
-        }
+
+// TODO test and remove old  
+//        var callback = function ( data ) {
+//            draw_table( data );
+//            _resource.get_sheets_names( draw_tabs );
+//        }
+//        _resource.get_sheet( sheet_id, callback );
+  
+        _resource.get_sheet( sheet_id, draw_table );
         _resource.get_sheet_name( sheet_id, draw_tools );
-        _resource.get_sheet( sheet_id, callback );
+        _resource.get_sheets_names( draw_tabs );  
     }
 
 
     function draw_tabs( data ) {
-        // TODO change name adjust tabs length (verb)
         var tabs;
-        tabs_length( data );
+        adjust_tabs_length( data );
         tabs = Mustache.to_html( app_table_header_template, data );
         display_tabs( tabs );
     }
@@ -101,7 +105,7 @@ var _gui = (function () {
 
 
     // D I S P L A Y   F U N C T I O N S
-    function display_tabs( tabs ) { // TODO - tabs length
+    function display_tabs( tabs ) { 
         // active table is loaded
         var tabs_code = $(tabs);
 
@@ -338,15 +342,6 @@ var _gui = (function () {
 
     }
 
-    // TODO remove it
-    function rename_sheet() {
-        var new_name = $('#app-tb-tl-rename-input').val();
-        var sheet_id = active_sheet_id();
-
-        _resource.change_name( sheet_id, new_name );
-        return false;
-    }
-
 
     // not used yet:
     function sort_table() {
@@ -384,7 +379,7 @@ var _gui = (function () {
 
             make_zebra();
             row
-                .unbind() // TODO add click to unbind
+                .unbind( click ) // TODO add click to unbind - test it
                 .click( close_node );
 
         }
@@ -429,7 +424,7 @@ var _gui = (function () {
     }
 
 
-    function tabs_length( data ) {
+    function adjust_tabs_length( data ) {
 
         var sheets = data['sheets'];
         var max_length = tab_max_length( sheets.length );
@@ -476,9 +471,8 @@ var _gui = (function () {
         var new_sheet_id;
         var active_tab = $('#app-tb-sheets').find( '.active' );
         var active_group = active_tab.attr( 'data-group' );
-        // TODO change name  'siblings'
-        var siblings = active_tab.siblings();
-        var group_sheets = siblings.filter( function () {
+        var all_tabs = active_tab.siblings();
+        var group_sheets = all_tabs.filter( function () {
            return ( $(this).attr( 'data-group' ) === active_group );
         } );
 
@@ -486,7 +480,7 @@ var _gui = (function () {
             new_sheet_id = parse_id_num( group_sheets[0]['id'] );
         }
         else {
-            new_sheet_id = parse_id_num( siblings[0]['id'] );
+            new_sheet_id = parse_id_num( all_tabs[0]['id'] );
         }
         return  parseInt( new_sheet_id, 10 );
     }
@@ -518,16 +512,23 @@ var _gui = (function () {
     function set_selection( rows_code ){
         var top_row = get_prev_top_row( rows_code );
         var top_row_id = get_id( top_row );
+        var in_select = top_row.nextUntil( '.top' );
+        var after_row = get_next_top_row( rows_code );
 
         var old_selected = $('tr.selected');
         var old_selected_row_id;
 
-        // TODO remove rows
-        var rows = rows_code.siblings();
+        // TODO test rows
+        var rows = top_row.prevAll().add( after_row.nextAll() );
+        if ( after_row !== null ) {
+            rows = after_row.add( rows );
+        }
+        
         var sheet_id = active_sheet_id();
-
-        // TODO nextUntil
-        top_row.siblings().addClass( 'dim' );
+        
+        // TODO test it
+        rows.addClass( 'dim' );
+//      rows.addClass( 'dim' ); TODO - test new and remove old
 
         if ( old_selected.length === 1 ) {
             old_selected_row_id = get_id( old_selected );
@@ -538,17 +539,18 @@ var _gui = (function () {
             rows.removeClass( 'in-selected' );
             rows.removeClass( 'after-selected' );
             top_row
-                .removeClass( 'dim' )
                 .addClass( 'selected' );
-            // TODO move var
-            var in_select = top_row.nextUntil( '.top' );
+            // TODO move var            
             in_select
-                .removeClass( 'dim' )
                 .addClass( 'in-selected' );
 
-            var after = get_next_top_row( rows_code );
-            after
+            if ( after_row !== null ) {
+            after_row
                 .addClass( 'after-selected' );
+            } 
+            else{
+            // TODO - add class for select last top row
+            }
         }
         else {
             rows_code.addClass( 'in-selected' );
@@ -556,6 +558,9 @@ var _gui = (function () {
 
         _resource.row_selected( sheet_id, top_row_id, old_selected_row_id );
     }
+
+
+// TODO - prepare table for selected draw
 
     //get root for rows
     // TODO check for first row
@@ -567,11 +572,15 @@ var _gui = (function () {
         return row;
     }
 
-    // TODO check for last row
+    // check for last row, if no - return null
     function get_next_top_row( rows_code ) {
         var row = rows_code.last().next();
         while ( ! row.hasClass( 'top' ) ){
             row = row.next();
+            if ( row.isEmptyObject() ) { // TODO test it and configure display.
+                row = null;
+                return;
+            }    
         }
         return row;
     }
