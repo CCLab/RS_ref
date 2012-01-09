@@ -31,8 +31,8 @@ var _resource = (function () {
 
     // Get db tree and return it as a list.
     that.get_db_tree = function ( callback ) {
-        _store.get_db_tree( function ( db_tree ) {
-            callback( db_tree.toList() );
+        _store.get_collections_list( function ( collections ) {
+            callback( collections );
         });
     };
 
@@ -40,6 +40,7 @@ var _resource = (function () {
     // Get top level data from store and prepare it for
     // gui-understandable form.
     that.get_top_level = function ( col_id, callback ) {
+        // TODO: col_id --> endpoint
         _store.get_init_data( col_id, function( data ) {
             var sheet_id;
             var sheet;
@@ -54,7 +55,6 @@ var _resource = (function () {
     };
 
     // Get children of row_id row from sheet_id sheet.
-    // TODO: row_id ->parent_id
     that.get_children = function ( sheet_id, parent_id, callback ) {
         var sheet = sheets[ sheet_id ];
         var endpoint_id = sheet['endpoint_id'];
@@ -146,6 +146,7 @@ var _resource = (function () {
         sheet['columns'].forEach( function ( column ) {
             selected_columns[ column['key'] ] = true;
         });
+        // TODO: endpoint_id --> endpoint
         full_columns_description = _store.get_columns( sheet['endpoint_id'] );
 
 
@@ -188,7 +189,8 @@ var _resource = (function () {
         sheet['columns'] = selected_columns;
 
         // Get list of all nodes with needed columns only
-        full_tree = _store.get_full_tree( sheet['endpoint_id'] );
+        // TODO: endpoint_id --> endpoint
+        full_tree = _store.get_collection_data_tree( sheet['endpoint_id'] );
         cleaned_full_data = clean_data( full_tree.toList(), sheet['columns'] );
 
         new_tree = monkey.createTree( [], 'id', 'parent' );
@@ -213,6 +215,7 @@ var _resource = (function () {
 
         sheet = sheets[sheet_id];
 
+        // first parameter is endpoint, not endpoint id
         _store.get_top_level( sheet['endpoint_id'], function ( data ) {
             var cleaned_data = clean_data( data, sheet['columns'] );
 
@@ -414,6 +417,7 @@ var _resource = (function () {
     };
 
     that.get_search_data = function ( endpoint_id, query, callback ) {
+        // TODO: endpoint_id --> endpoint
         _store.get_search_data( endpoint_id, query, function ( data ) {
             /*{
                 sheet_id : int,

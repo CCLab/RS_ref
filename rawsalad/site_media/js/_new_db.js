@@ -47,8 +47,6 @@ var _db = (function () {
 
     // Gets the top-level from db
     that.get_init_data = function ( endpoint, callback ) {
-        
-
         $.ajax({
             url     : '/get_init_data/',
             data    : { 'endpoint': endpoint },
