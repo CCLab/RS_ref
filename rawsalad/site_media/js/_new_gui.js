@@ -85,13 +85,13 @@ var _gui = (function () {
     function draw_tabs( data ) {
         var tabs;
         adjust_tabs_length( data );
-        tabs = Mustache.to_html( app_table_header_template, data );
+        tabs = Mustache.to_html( _templates.app_table_header, data );
         display_tabs( tabs );
     }
 
 
     function draw_tools( names ) {
-        var tools = Mustache.to_html( app_table_tools_template, names );
+        var tools = Mustache.to_html( _templates.app_table_tools, names );
         display_tools( tools );
     }
 
@@ -334,7 +334,7 @@ var _gui = (function () {
 
     // TODO finish sort
     function display_sort_panel() {
-        var sort_form_code = $( sort_form_template );
+        var sort_form_code = $( _templates.sort_form );
         preapare_sort_interface( sort_form_code );
         $('#app-tb-tools>section').append( sort_form_code ); // TODO - add show and hide animations            
     }
@@ -418,7 +418,7 @@ var _gui = (function () {
 
     // TABS FUNCTIONS
     function new_active_tab( button ) {
-        var close_bt = $(close_sheet_button);
+        var close_bt = $(_templates.close_sheet_button);
         var siblings = button.siblings();
 
         siblings.removeClass( 'active' );
@@ -642,7 +642,7 @@ var _gui = (function () {
         $(this).unbind;
         var callback = function( columns ){
 
-            var columns_form = $(Mustache.to_html( columns_form_template, { 'columns': columns, } ) );
+            var columns_form = $(Mustache.to_html( _templates.columns_form, { 'columns': columns, } ) );
 
             prepare_columns_form_bt( columns_form );    // TODO
 
@@ -725,101 +725,6 @@ var _gui = (function () {
                 }
             });
     }
-
-
-    // T E M P L A T E S
-
-    var app_table_header_template =
-        '<div id="app-tb-save-sheet" class="blue button left">Kopiuj do arkusza</div>' +
-        '<ul id="app-tb-sheets">' +
-            '{{#sheets}}' +
-                '<li id="snap-{{sheet_id}}" data-end-point="{{end_id}}" data-group="{{group_id}}" class="sheet tab button' +
-//                    '{{#active}}' + //TODO remove = not neaded
-//                        ' active' +
-//                    '{{/active}}' +
-                '" title="{{name}}">' +
-                    '<p>' +
-                    '{{name}}' +
-                    '</p>' +
-                    '{{#close}}' +
-                        '<div class="close-sheet-button button">x</div>' +
-                    '{{/close}}' +
-                '</li>' +
-            '{{/sheets}}' +
-        '</ul>';
-
-    var app_table_tools_template =
-        '<section>' +
-            '<h3 id="app-tb-tl-title" class="left">{{name}}</h3>' +
-            '<form id="app-tb-tl-rename-form" style="display: none;" class="left" >' +
-                '<input type="text" class="input-text" id="app-tb-tl-rename-input" />' +
-            '</form>' +
-            '{{#old_name}}' +
-                '<div id="app-tb-tl-old-title" class="left"> {{old_name}} </div>' +
-            '{{/old_name}}' +
-            '{{^old_name}}'+
-                '<div id="app-tb-tl-old-title" class="left" style="display: none;"> </div>' +
-            '{{/old_name}}' +
-            '<div id="app-tb-tl-old-title" class="left" style="display: none;"> </div>' +
-            '<div id="app-tb-tl-rename-button" class="button left">Zmień nazwę</div>' +
-            '<div id="app-tb-tl-bt-container" class="right">' +
-                '<div id="app-tb-tl-clear-button" class="button left">Wyczyść tabelę</div>' +
-                '<div id="app-tb-tl-sort-button" class="button left">Sortuj</div>' +
-                '<div id="app-tb-tl-filter-button" class="button left">Filtruj</div>' +
-            '</div>' +
-        '</section>' +
-        '<section>' +
-            '<div id="app-tb-tl-columns-button" class="button right">Dodaj/Usuń kolumny</div>' +
-            '<br class="clear"/>' +
-            '<div id="app-tb-tl-columns-list" class="right"></div>' +
-        '</section>';
-
-    var close_sheet_button = '<div class="close-sheet-button button">x</div>';
-
-
-    var columns_form_template =
-        '<form id="app-tb-tl-columns-form" style="display: none;">' +
-            '<div id="app-tb-tl-lt-select" class="grey button left">Zaznacz wszystkie</div>' +
-            '<div id="app-tb-tl-lt-unselect" class="grey button left">Odznacz wszystkie</div>' +
-            '<div id="app-tb-tl-lt-submit" class="blue button left">Dodaj/Usuń</div>' +
-            '<br class="clear" />' +
-            '<table>' +
-                '<tbody>' +
-                    '{{#columns}}' +
-                        '<tr>' +
-                            '<td class="columns">' +
-                                '<input type="checkbox" name="app-tb-tl-columns" value="{{key}}" id="column-id-{{key}}"' +
-                                    '{{#selected}}' +
-                                        'checked' +
-                                    '{{/selected}}' +
-                                '>' +
-                            '</td>' +
-                            '<td class="columns">' +
-                                '<label for="column-id-{{key}}">' +
-                                    '{{label}}' +
-                                '</label>' +
-                            '</td>' +
-                        '</tr>' +
-                    '{{/columns}}' +
-                '</tbody>' +
-            '</table>' +
-        '</form>';
-
-    var sort_form_template = 
-        '<form id="app-tb-tl-sort-form" class="sort-filter-form left">' +
-            '<table>' +
-                '<thead>' +
-                    '<tr>' +
-                        '<th>Wybierz kolumnę</th>' +
-                        '<th>Wybierz porządek</th>' +
-                    '</tr>' +
-                '</thead>' +
-                '<tbody>' +
-                '</tbody>' +
-            '</table>' +
-            '<div id="app-tb-tl-sort-add" class="grey button">Dodaj kolejny klucz</div>' +
-            '<div id="app-tb-tl-sort-submit" class="blue button">Sortuj</div>' +
-        '</form>';
 
     // return public interface
     return that;

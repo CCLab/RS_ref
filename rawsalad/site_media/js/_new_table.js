@@ -81,10 +81,10 @@ var _table = (function () {
         var total_row_code = '';        
         var total = data['total'] || false;
 
-        head_row_code = Mustache.to_html( standard_head_row_template, data );
+        head_row_code = Mustache.to_html( _templates.standard_head_row, data );
 
         if ( !!total ) {
-            total_row_code = Mustache.to_html( standard_total_row_template, data );
+            total_row_code = Mustache.to_html( _templates.standard_total_row, data );
         }
         
         standard_header_code = '<thead data-sheet-id="' + data['id'] + '">'
@@ -107,7 +107,7 @@ var _table = (function () {
 
         add_rows_padding( data );                        
         
-        rows_code = Mustache.to_html( standard_rows_template, data );
+        rows_code = Mustache.to_html( _templates.standard_rows, data );
                 
         return rows_code;
     }
@@ -129,46 +129,6 @@ var _table = (function () {
         });    
     }
 
-
-
-    // T E M P L A T E S
-    var standard_head_row_template = 
-        '<tr>' +
-            '{{#columns}}' +
-                '<td class="{{key}} {{type}}">' +
-                    '{{label}}' +
-                '</td>' +
-            '{{/columns}}' +
-        '</tr>';
-
-                
-    var standard_total_row_template =      
-        '<tr>' +
-            '{{#total}}' +        
-                '<td class="{{column_key}} {{column_type}}">' +
-                    '{{data}}' +
-                '</td>' +    
-            '{{/total}}' +
-        '</tr>';
-        
-
-    var standard_rows_template = 
-        '{{#rows}}' + //TODO add info panel
-          '<tr id="{{_id}}" data_open="{{is_open}}" ' +
-          'data-parent="{{parent}}" ' +
-          'class="{{selected}} {{top_level}}">' +
-            '{{#data}}' +
-              '<td class="{{column_key}} {{column_type}} {{click}}"' + 
-                '{{#padding}}' +
-                  'style="padding-left: {{value}}px;" ' +
-                '{{/padding}} '+
-              '>' +
-                '{{content}}' +
-              '</td>' +
-            '{{/data}}' +                                
-          '</tr>' +
-        '{{/rows}}';
-            
     
     // return public interface
     return that;
