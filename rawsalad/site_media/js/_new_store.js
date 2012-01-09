@@ -78,7 +78,7 @@ var _store = (function () {
             _db.get_init_data( col_id, function ( db_data ) {
                 // save data and meta data, return it in callback
                 data_source = store_data( db_data['data'], col_id );
-                metadata = store_meta_data( db_data['metadata'], col_id );
+                metadata = store_meta_data( db_data['meta'], col_id );
                 data_package = {
                     'data'    : data_source.copy(),
                     // TODO: copy

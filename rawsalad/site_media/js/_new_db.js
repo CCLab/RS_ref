@@ -24,6 +24,7 @@
 // LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+
 var _db = (function () {
 
 //  P U B L I C   I N T E R F A C E
@@ -39,56 +40,47 @@ var _db = (function () {
             },
             error   : function ( err ) {
                 console.log( err );
+                callback( { 'error': err } );
             }
         });
     };
 
     // Gets the top-level from db
-    // IN:
-    // col_id -- id of collection
-    that.get_init_data = function ( _id, callback ) {
-        // TODO: move it to gui
-        _utils.create_preloader( translation['js_loading_data'] );
+    that.get_init_data = function ( endpoint, callback ) {
+        
 
         $.ajax({
             url     : '/get_init_data/',
-            data    : { endpoint: _id },
+            data    : { 'endpoint': endpoint },
             dataType: "json",
             success : function( received_data ) {
-                // TODO: metadata -> meta
                 var data = {
-                    data     : received_data.data,
-                    metadata : received_data.meta
-                };
-
-                _utils.clear_preloader();
+                    data : received_data.data,
+                    meta : received_data.meta
+                }
                 callback( data );
             },
-            // TODO: handle error situation
             error   : function ( err ) {
-                _utils.clear_preloader();
                 console.log( err );
+                callback( { 'error': err } );
             }
         });
     };
 
-    // TODO: tree_id --> endpoint
-    that.get_children = function( tree_id, parent_id, callback ) {
-        _utils.create_preloader( translation['js_loading_data'] );
-
+    that.get_children = function( endpoint, parent_id, callback ) {
         $.ajax({
             url     : '/get_children/',
-            // TODO: insert ciapki
-            // TODO: _id -> parent_id, also in backend
-            data    : { endpoint: endpoint_id, _id: parent_id },
+            data    : {
+                'endpoint' : endpoint,
+                'parent_id': parent_id
+            },
             dataType: "json",
             success : function( received_data ) {
-                _utils.clear_preloader();
                 callback( received_data );
             },
             error   : function ( err ) {
-                _utils.clear_preloader();
                 console.log( err );
+                callback( { 'error': err } );
             }
         });
     };
@@ -98,7 +90,10 @@ var _db = (function () {
         var scope_str = JSON.stringify( scope );
         $.ajax({
             url     : '/search_count/',
-            data    : { 'scope': scope_str, 'user_query': query },
+            data    : {
+                'scope': scope_str,
+                'user_query': query
+            },
             dataType: 'json',
             type    : 'GET',
             success : function( received_data ) {
@@ -106,17 +101,18 @@ var _db = (function () {
             },
             error   : function( err ) {
                 console.log( err );
+                callback( { 'error': err } );
             }
         });
     };
 
-    // TODO: endpoint_id --> endpoint, need_meta --> get_meta
-    that.get_search_data = function ( endpoint_id, query, need_meta, callback ) {
+    that.get_search_data = function ( endpoint, query, get_meta, callback ) {
         $.ajax({
             url     : '/search_data/',
-            data    : { endpoint  : endpoint_id,
-                        user_query: query,
-                        get_meta  : need_meta
+            data    : {
+                'endpoint'  : endpoint,
+                'user_query': query,
+                'get_meta'  : get_meta
             },
             dataType: 'json',
             type    : 'GET',
@@ -125,6 +121,7 @@ var _db = (function () {
             },
             error   : function( err ) {
                 console.log( err );
+                callback( { 'error': err } );
             }
         });
     };
