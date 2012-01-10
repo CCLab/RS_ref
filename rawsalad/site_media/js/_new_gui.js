@@ -523,18 +523,37 @@ var _gui = (function () {
     function add_sort_key( sort_form ) {
         var sheet_id = active_sheet_id();
         var callback = function ( data ) {
-//            var 
-
-//        html.push( '<tr id="sort-key-', key, '">' );
-//        html.push( '<td>' );
-//        html.push( '<select name="app-tb-tl-sort-form-columns" ');
-//        html.push( 'class="input-text key-', key, '">' );
-
-
+            var keys = sort_form.find( 'tbody>tr' );
+            var placeholder = keys.paren();
+            var keys_num = keys.length; 
+            var key_html;
+            
+            if ( keys_num === data.columns.length ){
+                $('#app-tb-tl-sort-add').hide();
+            }
+// TODO not need it - remove
+//            else {
+//                $('#app-tb-tl-sort-add').show()
+//            }
+            
+            
+            data['keys_num'] = keys_num;
+      
+            eliminate_desame_keys( sort_form, data ); //TODO
+            key_html = Mustache.to_html( _templates.sort_key, data );
+            placeholder.append( key_html );            
         };
         
+        _resource.get_sort_columns( sheet_id, callback )
+    }
+    
+    //TODO
+    function eliminate_desame_keys( srt_form, data ) {
+        var columns_selector = srt_form.find( '#app-tb-tl-sort-form-columns' );
+        var selected_columns = columns_selector.find( 'select option:selected' );
+        // TODO remove from data if it's in selected columns
         
-//        _resource.get_sort_columns( sheet_id, callback )
+        
     }
 
 
