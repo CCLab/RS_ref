@@ -32,7 +32,7 @@ var _store = (function () {
     // Download db tree describing collections.
     that.get_collections_list = function ( callback ) {
         var respond = function () {
-            var data = get_db_tree();
+            var data = tree_to_list( get_db_tree() );
             callback( data );
         };
 
@@ -49,68 +49,66 @@ var _store = (function () {
 
     // Get copy of tree with all nodes from collection with id = col_id.
     that.get_collection_data_tree = function ( endpoint, callback ) {
-        // TODO: after search no full top level so will return false
-        if ( !has_data( endpoint ) ) {
+        if ( !has_meta_data( endpoint ) ) {
             return undefined;
         } else {
-            return get_data_source( endpoint ).copy();
+            return get_collection_tree_copy( endpoint );
         }
     };
 
     // Download meta data and first level nodes of collection with id = col_id.
     that.get_init_data = function ( endpoint, callback ) {
+        var respond = function ( data_source, meta_source ) {
+            var data = get_children_nodes( data_source );
+            var meta = $.extend( true, {}, meta_source );
+            callback( data, meta );
+        };
         var data_source;
-        var data;
-        var metadata;
-        var metadata_copy;
-        var data_package;
+        var meta_source;
 
         if ( has_data( endpoint ) ) {
             data_source = get_data_source( endpoint );
-            data = monkey.createTree( data_source.children( data_source.root(), true ), 'id', 'parent' );
-            metadata_copy = $.extend( true, {}, get_meta_data_source( endpoint ) );
-            data_package = {
-                'data'    : data.copy(),
-                'metadata': metadata_copy
-            };
-            callback( data_package );
+            meta_source = get_meta_data_source( endpoint );
+            respond( data_source, meta_source );
         } else {
             _db.get_init_data( endpoint, function ( db_data ) {
                 // save data and meta data, return it in callback
                 data_source = store_data( db_data['data'], endpoint );
-                metadata = store_meta_data( db_data['meta'], endpoint );
-                metadata_copy = $.extend( true, {}, metadata );
-                data_package = {
-                    'data'    : data_source.copy(),
-                    'metadata': metadata_copy
-                };
-                callback( data_package );
+                meta_source = store_meta_data( db_data['meta'], endpoint );
+                respond( data_source, meta_source );
             });
         }
     };
 
     // Get children of parent_id node from col_id collection.
     that.get_children = function ( endpoint, parent_id, callback ) {
+        var respond = function ( data_source ) {
+            var children;
+            
+            if ( parent_id === endpoint ) {
+                children = get_children_nodes( data_source );
+            } else {
+                children = get_children_nodes( data_source, parent_id );
+            }
+            
+            callback( children );
+        };
         var data_source;
         var children;
 
         if ( has_data( endpoint, parent_id ) ) {
             data_source = get_data_source( endpoint );
-            // TODO: interface it
-            children = data_source.children( parent_id, true );
-            callback( children );
+            respond( data_source );
         } else {
             _db.get_children( endpoint, parent_id, function ( db_data ) {
                 // Store is not sure if it has all children of parent_id,
                 // downloads them and updates tree(inserting new nodes).
                 data_source = get_data_source( endpoint );
                 // TODO: check execution time
-                // TODO: update_data_source
-                data_source.updateTree( db_data );
-                // change name: mark_parent_complete
-                all_children_downloaded( parent_id );
-                children = data_source.children( parent_id, true );
-                callback( children );
+                data_source.update_tree( db_data );
+                mark_parent_complete( parent_id );
+                
+                respond( data_source );
             });
         }
     };
@@ -119,10 +117,8 @@ var _store = (function () {
         that.get_children( endpoint, endpoint, callback );
     };
 
-    that.get_collection_name = function( col_id, callback ) {
-        var node;
-
-        node = db_tree.getNode( col_id );
+    that.get_collection_name = function( col_id ) {
+        var node = get_node( get_db_tree(), col_id );
         
         return node['label'];
     };
@@ -142,25 +138,30 @@ var _store = (function () {
     };
 
     that.get_search_data = function ( endpoint, query, callback ) {
-        var need_meta = !has_meta_data( endpoint );
+        var get_meta = !has_meta_data( endpoint );
+        var data_copy;
+        var meta;
+        var meta_copy;
 
-        _db.get_search_data( endpoint, query, need_meta, function ( db_data ) {
+        _db.get_search_data( endpoint, query, get_meta, function ( db_data ) {
             data_source = get_data_source( endpoint );
-            if ( need_meta ) {
-                meta_data = store_meta_data( db_data['meta'], endpoint );
+            if ( get_meta ) {
+                meta = store_meta_data( db_data['meta'], endpoint );
             } else {
-                meta_data = get_meta_data_source( endpoint );
+                meta = get_meta_data_source( endpoint );
             }
-            data_package = {
-                'data'    : data_source.copy(),
-                'metadata': metadata
-            };
-            callback( data_package );
+            data_copy = tree_to_list( data_source );
+            meta_copy = $.extend( true, {}, meta );
+            callback( data_copy, meta_copy );
         });
     };
 
-    // maybe add a new function to monkey? how in jquery
-    that.get_top_parent = function ( endpoint_id ) {
+    // TODO: add parents( count=inf ) to monkey
+    that.get_top_parent = function ( endpoint ) {
+        /* FUTURE CODE
+        var parents = get_parents( endpoint );
+        return parents.pop();
+        */
         var node = db_tree.getNode( endpoint_id );
 
         if ( !node ) return undefined;
@@ -182,8 +183,7 @@ var _store = (function () {
     // information about complete children
     var complete_children = {};
     // contains meta data for each collection
-    // TODO: change key to endpoint
-    var meta_data_sources = {};
+    var meta_sources = {};
 
     // Does store have children of parent_id(default parent is root) in col_id collection.
     function has_data( endpoint, parent_id ) {
@@ -200,7 +200,7 @@ var _store = (function () {
 
     // Saves information about having downloaded all children of parent_id node in
     // col_id collection.
-    function all_children_downloaded( parent_id ) {
+    function mark_parent_complete( parent_id ) {
         complete_children[ parent_id ] = true;
     }
 
@@ -209,41 +209,70 @@ var _store = (function () {
     }
 
     function has_meta_data( endpoint ) {
-        return !!meta_data_sources[ endpoint ];
+        return !!meta_sources[ endpoint ];
     }
 
     function get_meta_data_source( endpoint ) {
-        return meta_data_sources[ endpoint ];
+        return meta_sources[ endpoint ];
     }
 
     // Save downloaded data and save information about having full first level.
     function store_data( db_data, endpoint ) {
-        var new_data_source = monkey.createTree( db_data, 'id', 'parent' );
+        var new_data_source = create_tree( db_data, 'id', 'parent' );
         data_sources[ endpoint ] = new_data_source;
-        all_children_downloaded( endpoint );
+        mark_parent_complete( endpoint );
 
         return new_data_source;
     }
 
     function store_meta_data( db_meta_data, endpoint ) {
-        meta_data_sources[ endpoint ] = extracted_meta_data;
+        meta_sources[ endpoint ] = extracted_meta_data;
         
         return extracted_meta_data;
     }
 
-    // TODO: reconsider this
     function has_db_tree() {
         return !!db_tree;
     }
 
     function get_db_tree() {
-        return db_tree.copy();
+        return db_tree;
     }
 
     function save_db_tree( data ) {
-        db_tree = monkey.createTree( data, 'id', 'parent' );
+        db_tree = create_tree( data, 'id', 'parent' );
+    }
+    
+    // TODO: next module ?
+    // T R E E  I N T E R F A C E
+    function get_children_nodes( tree, parent_id ) {
+        if ( parent_id === undefined ) {
+            parent_id = tree.rootId();
+        }
+        return tree.children( parent_id, true );
+    }
+    
+    function get_collection_tree_copy( endpoint ) {
+        var data_source = get_data_source( endpoint );
+        return data_source.copy();
+    }
+    
+    function create_tree( data_list, id, parent_id ) {
+        return (!!parent_id ) ? monkey.createTree( data_list, id, parent_id ) :
+                                monkey.createTree( data_list, id );
+    }
+    
+    function update_tree( tree, data ) {
+        return tree.updateTree( data );
+    }
+    
+    function tree_to_list( tree ) {
+        return tree.toList();
+    }
+    
+    function get_node( tree, id ) {
+        return tree.getNode( id );
     }
 
     return that;
-// TODO: metadata --> meta
 }) ();

@@ -41,12 +41,13 @@ var _resource = (function () {
     // gui-understandable form.
     that.get_top_level = function ( col_id, callback ) {
         // TODO: col_id --> endpoint
-        _store.get_init_data( col_id, function( data ) {
+        // TODO: data is list
+        _store.get_init_data( col_id, function( data, meta ) {
             var sheet_id;
             var sheet;
             var gui_data;
 
-            sheet = create_sheet( col_id, data );
+            sheet = create_sheet( col_id, data, meta );
             sheet_id = add_sheet( sheet );
             gui_data = prepare_data_package_for_gui( sheet_id );
 
@@ -397,7 +398,7 @@ var _resource = (function () {
                 var group = topparent_groups[ end_id ];
 
                 if ( !group ) {
-                    topparent = _store.get_topparent( end_id )['name'];
+                    topparent = _store.get_top_parent( end_id )['name'];
                     group = {
                         'dbtree_topparent_name': topparent,
                         'data': []
@@ -418,7 +419,8 @@ var _resource = (function () {
 
     that.get_search_data = function ( endpoint_id, query, callback ) {
         // TODO: endpoint_id --> endpoint
-        _store.get_search_data( endpoint_id, query, function ( data ) {
+        // TODO: remember that data is a list
+        _store.get_search_data( endpoint_id, query, function ( data, meta ) {
             /*{
                 sheet_id : int,
                 name   : str,
@@ -482,20 +484,20 @@ var _resource = (function () {
     }
 
     // Create new sheet from data.
-    function create_sheet( col_id, data ) {
+    function create_sheet( col_id, data, meta ) {
         var new_sheet;
         var active_columns;
         var cleaned_data;
         var cleaned_tree_data;
-        var name = data['metadata']['name'];
+        var name = meta['name'];
         var group_id;
 
-        active_columns = data['metadata']['columns'].filter( function ( column ) {
+        active_columns = meta['columns'].filter( function ( column ) {
             return !!column['basic'];
         });
 
         // Remove unnecessary columns and inserts cleaned data into tree.
-        cleaned_data = clean_data( data['data'].toList(), active_columns );
+        cleaned_data = clean_data( data.toList(), active_columns );
         cleaned_tree_data = monkey.createTree( cleaned_data, 'id', 'parent' );
 
         group_id = get_group_id( col_id );
