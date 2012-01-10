@@ -64,12 +64,11 @@ var _resource = (function () {
             callback( gui_data );
         };
         var sheet = get_sheet( sheet_id );
-        var endpoint_id = sheet['endpoint'];
 
         if ( !!_tree.get_children_number( sheet['data'], parent_id ) ) {
             respond();
         } else {
-            _store.get_children( endpoint_id, parent_id, function( data ) {
+            _store.get_children( sheet['endpoint'], parent_id, function( data ) {
                 var cleaned_data;
 
                 // Remove unnecessary fields(not present in columns list) from children
@@ -129,21 +128,20 @@ var _resource = (function () {
 
     that.all_columns = function ( sheet_id, callback ) {
         var sheet;
-        var full_columns_description;
+        var full_columns_list;
         var selected_columns;
         var columns;
 
-        sheet = sheets[sheet_id];
+        sheet = get_sheet( sheet_id );
 
         selected_columns = {};
         sheet['columns'].forEach( function ( column ) {
             selected_columns[ column['key'] ] = true;
         });
-        // TODO: endpoint_id --> endpoint
-        full_columns_description = _store.get_columns( sheet['endpoint_id'] );
+        
+        full_columns_list = _store.get_columns( sheet['endpoint'] );
 
-
-        columns = full_columns_description.map( function ( column ) {
+        columns = full_columns_list.map( function ( column ) {
             return {
                 'key': column['key'],
                 'label': column['label'],
@@ -151,6 +149,7 @@ var _resource = (function () {
             };
         });
 
+        // TODO: callback( columns ); ???
         return columns;
     };
 
@@ -160,14 +159,14 @@ var _resource = (function () {
         var selected_column_keys;
         var all_columns;
         var sheet;
-        var full_tree;
+        var full_collection;
         var cleaned_full_data;
         var old_tree;
         var new_tree;
 
         // Get selected columns description.
         selected_column_keys = {};
-        selected_columns = columns.forEach( function ( column ) {
+        columns.forEach( function ( column ) {
             if ( column['selected'] ) {
                 selected_column_keys[ column['key'] ] = true;
             }
@@ -178,20 +177,19 @@ var _resource = (function () {
         });
 
         // Update columns in sheet.
-        sheet = sheets[sheet_id];
+        sheet = get_sheet( sheet_id );
         sheet['columns'] = selected_columns;
 
         // Get list of all nodes with needed columns only
-        // TODO: endpoint_id --> endpoint
-        full_tree = _store.get_collection_data_tree( sheet['endpoint_id'] );
-        cleaned_full_data = clean_data( full_tree.toList(), sheet['columns'] );
+        full_collection = _store.get_collection_data( sheet['endpoint'] );
+        cleaned_full_data = clean_data( full_collection, sheet['columns'] );
 
-        new_tree = monkey.createTree( [], 'id', 'parent' );
+        new_tree = _tree.create_tree( [], 'id', 'parent' );
         old_tree = sheet['data'];
         // Insert to new tree cleaned nodes(only those that were in old tree)
         cleaned_full_data.forEach( function ( node ) {
-            if ( !!old_tree.getNode( node['id'] ) ) {
-                new_tree.insertNode( node );
+            if ( _tree.has_node( old_tree, node['id'] ) ) {
+                _tree.insert_node( new_tree, node );
             }
         });
 
@@ -204,15 +202,13 @@ var _resource = (function () {
 
     // Clean sheet so that it contains only top level data.
     that.clean_table = function ( sheet_id, callback ) {
-        var sheet;
-
-        sheet = sheets[sheet_id];
+        var sheet = get_sheet( sheet_id );
 
         // first parameter is endpoint, not endpoint id
-        _store.get_top_level( sheet['endpoint_id'], function ( data ) {
+        _store.get_top_level( sheet['endpoint'], function ( data ) {
             var cleaned_data = clean_data( data, sheet['columns'] );
 
-            sheet['data'] = monkey.createTree( cleaned_data, 'id', 'parent' );
+            sheet['data'] = _tree.create_tree( cleaned_data, 'id', 'parent' );
 
             that.get_sheet_data( sheet_id, callback );
         });
@@ -221,28 +217,25 @@ var _resource = (function () {
 
 
     that.change_name = function ( sheet_id, new_name, callback ) {
-        var sheet = sheets[sheet_id];
+        var sheet = get_sheet( sheet_id );
 
         sheet['name'] = new_name;
 
         // for future possible implementations
-        if( !!callback ) {
+        if ( !!callback ) {
             callback();
         }
     };
 
     // Get endpoint name(name from store).
-    that.get_end_name = function ( end_id, callback ) {
-        /*_store.get_collection_name( end_id, function ( name ) {
-            callback( { 'name': name } );
-        });*/
-        return {
-            'name': _store.get_collection_name( end_id )
-        };
+    that.get_end_name = function ( endpoint, callback ) {
+        var endpoint_name = { 'name': _store.get_collection_name( endpoint ) };
+        callback( endpoint_name );
     };
 
     // Get names of sheets and sort them in order: ( group_id, sheet_id ).
-    that.get_sheets_names = function ( callback ){
+    // GUI-TODO: sheet[end_id] --> sheet[endpoint]
+    that.get_sheets_names = function ( callback ) {
         var sheet_id;
         var sheet;
         var sheet_descr;
@@ -251,12 +244,12 @@ var _resource = (function () {
 
         for ( sheet_id in sheets ) {
             if ( sheets.hasOwnProperty( sheet_id ) ) {
-                sheet = sheets[ sheet_id ];
+                sheet = get_sheet( sheet_id );
                 sheet_descr = {
                     'name': sheet['name'],
-                    'sheet_id': parseInt(sheet_id),
+                    'sheet_id': parseInt( sheet_id ),
                     'group_id': sheet['group_id'],
-                    'end_id': sheet['endpoint_id']
+                    'endpoint': sheet['endpoint']
                 };
                 sheets_names.push( sheet_descr );
             }
@@ -275,7 +268,7 @@ var _resource = (function () {
     };
 
     that.get_sheet_name = function ( sheet_id, callback ) {
-        var sheet = sheets[ sheet_id ];
+        var sheet = get_sheet( sheet_id );
 
         callback( { 'name': sheet['name'] } );
     };
@@ -287,8 +280,8 @@ var _resource = (function () {
         var row;
         var info;
 
-        sheet = sheets[sheet_id];
-        row = sheet['data'].getNode( row_id );
+        sheet = get_sheet( sheet_id );
+        row = _tree.get_node( sheet['data'], row_id );
         info = row['aux']['info'];
 
         return info;
@@ -300,7 +293,7 @@ var _resource = (function () {
         var sheet;
         var sortable_columns;
 
-        sheet = sheets[sheet_id];
+        sheet = get_sheet( sheet_id );
         sortable_columns = sheet['columns'].filter( function ( column ) {
             return !!column['processable'];
         }).map( function ( column ) {
@@ -329,9 +322,9 @@ var _resource = (function () {
         var sorted_tree;
         var sort_fun;
 
-        sheet = sheets[sheet_id];
+        sheet = get_sheet( sheet_id );
         sort_fun = query_to_function( query );
-        sorted_tree = sheet['data'].sort( sort_fun );
+        sorted_tree = _tree.sort( sheet['data'], sort_fun );
         sheet['data'] = sorted_tree;
 
         that.get_sheet_data( sheet_id, callback );
@@ -343,15 +336,15 @@ var _resource = (function () {
         var sheet;
         var gui_data;
 
-        sheet = sheets['sheet_id'];
-        gui_data = prepare_data_package_for_gui( sheet_id );
+        sheet = get_sheet( sheet_id );
+        gui_data = prepare_data_package_for_gui( sheet_id, sheet['data'] );
 
         callback( gui_data );
     };
 
 
     that.close_sheet = function ( sheet_id, callback ){
-        delete sheets[ sheet_id ];
+        remove_sheet( sheet_id );
         if( !!callback ) {
             callback();
         }
@@ -363,7 +356,7 @@ var _resource = (function () {
         var copied_sheet_id;
         var sheet_descr;
 
-        sheet = sheets[sheet_id];
+        sheet = get_sheet( sheet_id );
         copied_sheet = $.extend( true, {}, sheet );
         copied_sheet_id = add_sheet( copied_sheet );
 
@@ -371,7 +364,7 @@ var _resource = (function () {
             'name': copied_sheet['name'],
             'sheet_id': copied_sheet_id,
             'group_id': copied_sheet['group_id'],
-            'end_id': copied_sheet['endpoint_id']
+            'endpoint': copied_sheet['endpoint_id']
         };
 
         callback( sheet_descr );
@@ -383,21 +376,21 @@ var _resource = (function () {
                 'query': query,
                 'results': []
             };
-            var topparent_groups = {};
+            var top_parent_groups = {};
 
             data.forEach( function( result ) {
-                var topparent;
+                var top_parent;
                 var end_id = result['tree_id'];
-                var group = topparent_groups[ end_id ];
+                var group = top_parent_groups[ end_id ];
 
                 if ( !group ) {
-                    topparent = _store.get_top_parent( end_id )['name'];
+                    top_parent = _store.get_top_parent( end_id )['name'];
                     group = {
-                        'dbtree_topparent_name': topparent,
+                        'dbtree_topparent_name': top_parent,
                         'data': []
                     };
                     gui_results['results'].push( group );
-                    topparent_groups[ end_id ] = group;
+                    top_parent_groups[ end_id ] = group;
                 }
                 group['data'].push({
                     'endpoint_id': end_id,
@@ -444,6 +437,10 @@ var _resource = (function () {
     
     function get_sheet( sheet_id ) {
         return sheets[ sheet_id ];
+    }
+    
+    function remove_sheet( sheet_id ) {
+        delete sheets[ sheet_id ];
     }
 
     // Return group id assigned to endpoint_id endpoint.
@@ -722,6 +719,6 @@ var _resource = (function () {
 
         return cleaned_data;
     }
-
+// TODO: endpoint_id --> endpoint
     return that;
 }) ();

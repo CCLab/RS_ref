@@ -28,44 +28,54 @@
 var _tree = (function () {
     var that = {};
 
+    that.create_tree = function( data_list, id, parent_id ) {
+        return (!!parent_id ) ? monkey.createTree( data_list, id, parent_id ) :
+                                monkey.createTree( data_list, id );
+    };
+    
+    
+    that.get_node = function( tree, id ) {
+        return tree.getNode( id );
+    };
+    
+    that.has_node = function( tree, id ) {
+        return !!that.get_node( tree, id );
+    };
+    
     that.get_children_nodes = function( tree, parent_id ) {
         if ( parent_id === undefined ) {
             parent_id = tree.rootId();
         }
         return tree.children( parent_id, true );
-    }
+    };
     
-    that.get_tree_copy = function( endpoint ) {
-        var data_source = get_data_source( endpoint );
-        return data_source.copy();
-    }
     
-    that.create_tree = function( data_list, id, parent_id ) {
-        return (!!parent_id ) ? monkey.createTree( data_list, id, parent_id ) :
-                                monkey.createTree( data_list, id );
-    }
+    that.insert_node = function( tree, node ) {
+        return tree.insertNode( node );
+    };
     
     that.update_tree = function( tree, data ) {
         return tree.updateTree( data );
-    }
-    
-    that.tree_to_list = function( tree ) {
-        return tree.toList();
-    }
-    
-    that.get_node = function( tree, id ) {
-        return tree.getNode( id );
-    }
+    };
     
     that.remove_node = function( tree, id ) {
         return tree.removeNode( id );
-    }
+    };
+    
+    
+    that.tree_to_list = function( tree ) {
+        return tree.toList();
+    };
     
     that.get_children_number = function( tree, parent_id ) {
         if ( parent_id === undefined ) {
             parent_id = tree.rootId();
         }
         return tree.children( parent_id ).length;
+    };
+    
+    that.sort = function( tree, sort_fun ) {
+        return tree.sort( sort_fun );
     }
 
     return that;
