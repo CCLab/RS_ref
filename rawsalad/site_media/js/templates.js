@@ -120,6 +120,25 @@ var _teplates = (function () {
             '<div id="app-tb-tl-sort-add" class="grey button">Dodaj kolejny klucz</div>' +
             '<div id="app-tb-tl-sort-submit" class="blue button">Sortuj</div>' +
         '</form>';
+        
+    that.sort_key = //TODO test it ( key_num! )
+        '<tr id="sort-key-{{keys_num}}">' +
+            '<td>' +
+                '<select name="app-tb-tl-sort-form-columns" class="input-text key-{{keys_num}}">' +
+                    '<option value="null" class="column-key-{{keys_num}}" ></option>' + 
+                    '{{#columns}}' +
+                        '<option value="{{column_key}}" class="column-key-{{keys_num}}"> {{column_label}} </option>' +
+                    '{{/columns}}' +
+                '</select>' +
+            '</td>' +
+            '<td>' +
+                '<select name="name="app-tb-tl-sort-order" class="input-text key-{{keys_num}}">' +
+                    '<option value="null" class="order-key-{{keys_num}}" ></option>' + 
+                    '<option value="-1" class="order-key-{{keys_num}}" >Rosnąco</option>' + 
+                    '<option value="1" class="order-key-{{keys_num}}" >Malejąco</option>' + 
+                '</select>' +
+            '</td>' +
+         '</tr>'; 
 
     that.close_sheet_button = '<div class="close-sheet-button button">x</div>';
 
