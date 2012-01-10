@@ -48,11 +48,11 @@ var _store = (function () {
     };
 
     // Get copy of tree with all nodes from collection with id = col_id.
-    that.get_collection_data_tree = function ( endpoint, callback ) {
+    that.get_collection_data = function ( endpoint, callback ) {
         if ( !has_meta_data( endpoint ) ) {
             return undefined;
         } else {
-            return _tree.get_tree_copy( endpoint );
+            return _tree.to_list( get_data_source[ endpoint ] );
         }
     };
 
