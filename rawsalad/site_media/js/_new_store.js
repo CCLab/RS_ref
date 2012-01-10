@@ -32,7 +32,7 @@ var _store = (function () {
     // Download db tree describing collections.
     that.get_collections_list = function ( callback ) {
         var respond = function () {
-            var data = tree_to_list( get_db_tree() );
+            var data = _tree.tree_to_list( get_db_tree() );
             callback( data );
         };
 
@@ -52,14 +52,14 @@ var _store = (function () {
         if ( !has_meta_data( endpoint ) ) {
             return undefined;
         } else {
-            return get_collection_tree_copy( endpoint );
+            return _tree.get_tree_copy( endpoint );
         }
     };
 
     // Download meta data and first level nodes of collection with id = col_id.
     that.get_init_data = function ( endpoint, callback ) {
         var respond = function ( data_source, meta_source ) {
-            var data = get_children_nodes( data_source );
+            var data = _tree.get_children_nodes( data_source );
             var meta = $.extend( true, {}, meta_source );
             callback( data, meta );
         };
@@ -86,9 +86,9 @@ var _store = (function () {
             var children;
             
             if ( parent_id === endpoint ) {
-                children = get_children_nodes( data_source );
+                children = _tree.get_children_nodes( data_source );
             } else {
-                children = get_children_nodes( data_source, parent_id );
+                children = _tree.get_children_nodes( data_source, parent_id );
             }
             
             callback( children );
@@ -105,7 +105,7 @@ var _store = (function () {
                 // downloads them and updates tree(inserting new nodes).
                 data_source = get_data_source( endpoint );
                 // TODO: check execution time
-                data_source.update_tree( db_data );
+                _tree.update_tree( data_source, db_data );
                 mark_parent_complete( parent_id );
                 
                 respond( data_source );
@@ -118,7 +118,7 @@ var _store = (function () {
     };
 
     that.get_collection_name = function( col_id ) {
-        var node = get_node( get_db_tree(), col_id );
+        var node = _tree.get_node( get_db_tree(), col_id );
         
         return node['label'];
     };
@@ -150,7 +150,7 @@ var _store = (function () {
             } else {
                 meta = get_meta_data_source( endpoint );
             }
-            data_copy = tree_to_list( data_source );
+            data_copy = _tree.tree_to_list( data_source );
             meta_copy = $.extend( true, {}, meta );
             callback( data_copy, meta_copy );
         });
@@ -203,6 +203,10 @@ var _store = (function () {
     function mark_parent_complete( parent_id ) {
         complete_children[ parent_id ] = true;
     }
+    
+    function has_data_source( endpoint ) {
+        return !!data_source[ endpoint ];
+    }
 
     function get_data_source( endpoint ) {
         return data_sources[ endpoint ];
@@ -218,7 +222,7 @@ var _store = (function () {
 
     // Save downloaded data and save information about having full first level.
     function store_data( db_data, endpoint ) {
-        var new_data_source = create_tree( db_data, 'id', 'parent' );
+        var new_data_source = _tree.create_tree( db_data, 'id', 'parent' );
         data_sources[ endpoint ] = new_data_source;
         mark_parent_complete( endpoint );
 
@@ -240,38 +244,7 @@ var _store = (function () {
     }
 
     function save_db_tree( data ) {
-        db_tree = create_tree( data, 'id', 'parent' );
-    }
-    
-    // TODO: next module ?
-    // T R E E  I N T E R F A C E
-    function get_children_nodes( tree, parent_id ) {
-        if ( parent_id === undefined ) {
-            parent_id = tree.rootId();
-        }
-        return tree.children( parent_id, true );
-    }
-    
-    function get_collection_tree_copy( endpoint ) {
-        var data_source = get_data_source( endpoint );
-        return data_source.copy();
-    }
-    
-    function create_tree( data_list, id, parent_id ) {
-        return (!!parent_id ) ? monkey.createTree( data_list, id, parent_id ) :
-                                monkey.createTree( data_list, id );
-    }
-    
-    function update_tree( tree, data ) {
-        return tree.updateTree( data );
-    }
-    
-    function tree_to_list( tree ) {
-        return tree.toList();
-    }
-    
-    function get_node( tree, id ) {
-        return tree.getNode( id );
+        db_tree = _tree.create_tree( data, 'id', 'parent' );
     }
 
     return that;

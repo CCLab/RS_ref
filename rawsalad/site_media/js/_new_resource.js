@@ -39,15 +39,14 @@ var _resource = (function () {
 
     // Get top level data from store and prepare it for
     // gui-understandable form.
-    that.get_top_level = function ( col_id, callback ) {
-        // TODO: col_id --> endpoint
-        // TODO: data is list
-        _store.get_init_data( col_id, function( data, meta ) {
+    // GUI-TODO: col_id --> endpoint
+    that.get_top_level = function ( endpoint, callback ) {
+        _store.get_init_data( endpoint, function( data, meta ) {
             var sheet_id;
             var sheet;
             var gui_data;
 
-            sheet = create_sheet( col_id, data, meta );
+            sheet = create_sheet( endpoint, data, meta );
             sheet_id = add_sheet( sheet );
             gui_data = prepare_data_package_for_gui( sheet_id );
 
@@ -55,28 +54,28 @@ var _resource = (function () {
         });
     };
 
-    // Get children of row_id row from sheet_id sheet.
+    // Get children of parent_id row from sheet_id sheet.
     that.get_children = function ( sheet_id, parent_id, callback ) {
-        var sheet = sheets[ sheet_id ];
-        var endpoint_id = sheet['endpoint_id'];
-
         var respond = function() {
-            var children = sheet['data'].children( parent_id, true );
+            var gui_data;
+            var children = _tree.get_children_nodes( sheet['data'], parent_id );
+            
             gui_data = prepare_data_package_for_gui( sheet_id, children );
             callback( gui_data );
         };
+        var sheet = get_sheet( sheet_id );
+        var endpoint_id = sheet['endpoint'];
 
-        if ( !!sheet['data'].children( parent_id ).length ) {
+        if ( !!_tree.get_children_number( sheet['data'], parent_id ) ) {
             respond();
         } else {
             _store.get_children( endpoint_id, parent_id, function( data ) {
                 var cleaned_data;
-                var gui_data;
 
                 // Remove unnecessary fields(not present in columns list) from children
                 // and update tree.
                 cleaned_data = clean_data( data, sheet['columns'] );
-                sheet['data'].updateTree( cleaned_data );
+                _tree.update_tree( sheet['data'], cleaned_data );
 
                 respond();
             });
@@ -84,25 +83,20 @@ var _resource = (function () {
     };
 
     // Remove children of node_id node.
-    that.remove_child = function ( sheet_id, node_id ) {
+    that.remove_child = function ( sheet_id, parent_id ) {
         var sheet;
         var children;
-        var children_ids;
 
-        sheet = sheets[sheet_id];
-        children = sheet['data'].children( node_id, true);
-        children_ids = children.map( function ( node ) {
-            return node['id'];
-        });
-
-        children_ids.forEach( function ( id ) {
-            sheet['data'].removeNode( id );
+        sheet = get_sheet( sheet_id );
+        children = _tree.get_children_nodes( sheet['data'], parent_id );
+        children.forEach( function ( node ) {
+            _tree.remove_node( sheet['data'], node['id'] );
         });
     };
 
 
 
-    that.row_selected = function ( sheet_id, new_row_id, old_row_id ) {
+    that.row_selected = function ( sheet_id, selected_id, prev_selected_id ) {
         // selected row get 'selected' attribute, his descdendants 'inside'
         // attribute, next row after his last descendant 'after' attribute
         var set_selection = function ( tree, root_id, selected, inside, after ) {
@@ -121,16 +115,14 @@ var _resource = (function () {
             }
         };
         var sheet;
-        var data_tree;
 
-        sheet = sheets[sheet_id];
-        data_tree = sheet['data'];
+        sheet = get_sheet( sheet_id );
 
         // if there was no selected row
-        if ( old_row_id !== undefined ) {
-            set_selection( data_tree, old_row_id, '', '', '' );
+        if ( prev_selected_id !== undefined ) {
+            set_selection( sheet['data'], prev_selected_id, '', '', '' );
         }
-        set_selection( data_tree, new_row_id, 'selected', 'in-selected', 'after-selected' );
+        set_selection( sheet['data'], selected_id, 'selected', 'in-selected', 'after-selected' );
     };
 
 
@@ -206,7 +198,7 @@ var _resource = (function () {
         // Update tree
         sheet['data'] = new_tree;
 
-        that.get_sheet( sheet_id, callback );
+        that.get_sheet_data( sheet_id, callback );
     };
 
 
@@ -222,7 +214,7 @@ var _resource = (function () {
 
             sheet['data'] = monkey.createTree( cleaned_data, 'id', 'parent' );
 
-            that.get_sheet( sheet_id, callback );
+            that.get_sheet_data( sheet_id, callback );
         });
     };
 
@@ -342,11 +334,12 @@ var _resource = (function () {
         sorted_tree = sheet['data'].sort( sort_fun );
         sheet['data'] = sorted_tree;
 
-        that.get_sheet( sheet_id, callback );
+        that.get_sheet_data( sheet_id, callback );
     };
 
     // Return gui-understandable data from sheet_id sheet.
-    that.get_sheet = function ( sheet_id, callback ) {
+    // GUI-TODO: --> get_sheet_data
+    that.get_sheet_data = function ( sheet_id, callback ) {
         var sheet;
         var gui_data;
 
@@ -448,6 +441,10 @@ var _resource = (function () {
 // P R I V A T E   I N T E R F A C E
     var sheets = {};
     var next_sheet_id = 10000;
+    
+    function get_sheet( sheet_id ) {
+        return sheets[ sheet_id ];
+    }
 
     // Return group id assigned to endpoint_id endpoint.
     // If there is no group with data from this endpoint, next
@@ -483,8 +480,9 @@ var _resource = (function () {
         return group_id;
     }
 
+    // GUI-TODO: sheet[endpoint_id] --> sheet[endpoint]
     // Create new sheet from data.
-    function create_sheet( col_id, data, meta ) {
+    function create_sheet( endpoint, data, meta ) {
         var new_sheet;
         var active_columns;
         var cleaned_data;
@@ -497,14 +495,15 @@ var _resource = (function () {
         });
 
         // Remove unnecessary columns and inserts cleaned data into tree.
-        cleaned_data = clean_data( data.toList(), active_columns );
+        cleaned_data = clean_data( data, active_columns );
         cleaned_tree_data = monkey.createTree( cleaned_data, 'id', 'parent' );
 
-        group_id = get_group_id( col_id );
-
+        group_id = get_group_id( endpoint );
+// TODO: add selected_id
         new_sheet = {
             'group_id': group_id,
-            'endpoint_id': col_id,
+            // TODO: endpoint_id --> endpoint
+            'endpoint': endpoint,
             'data': cleaned_tree_data,
             // TODO: check where name needs to be changed to label
             'name': name,
