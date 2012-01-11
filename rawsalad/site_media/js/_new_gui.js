@@ -70,9 +70,7 @@ var _gui = (function () {
     function add_tree_node( data, parent_id, choose_list ){
         var id = parent_id; 
         var leafs_html;
-        var children = data.filter( function( node ) {
-            return node['parent'] === id;
-        } );
+        var children = get_tree_children( data, id );
         
         // TODO add min depth 
         // TODO add leaf template and Mustache
@@ -82,18 +80,25 @@ var _gui = (function () {
                 choose_list.append( leafs_html );
             }
             else if( node['max_depth'] === 2 ) {
-                leafs_html = add_two_to_dbtree( node );
+                leafs_html = add_two_to_dbtree( node, data );
                 choose_list.append( leafs_html );
             }
             else {
                 var new_node_list;
                 choose_list.append( '<ul class="left"> </ul>' );
-                new_node_list = chose_list.find( 'ul' );
+                new_node_list = choose_list.find( 'ul' );
                 add_tree_node( data, node['id'], new_node_list );
             }
         } );
     }
     
+    //TODO move to beter place    
+    function get_tree_children( data, id ){
+        var children = data.filter( function( node ) {
+            return node['parent'] === id;
+        } );
+        return children;         
+    }
     
     //TODO move to beter place
     function add_one_to_dbtree( node ) {
@@ -103,17 +108,62 @@ var _gui = (function () {
 
 
     //TODO move to beter place
-    function add_two_to_dbtree( node ) {
+    function add_two_to_dbtree( node, data ) {
     
         var html = Mustache.to_html( _templates.tree_node, node );
         var html_code = $(html);
         var table_placeholder = html_code.find( '.pl-tree-end-det' );
+        var nodes_leafs = prepare_double_ends( node['id'], data );
         var end = Mustache.to_html( _templates.double_end, node ) //TODO prepare real table
         
         table_placeholder.append( end );
         
-        
         return html_code;    
+    }
+    
+    
+    //TODO move to beter place
+    // TODO - think about this...
+    function prepare_double_ends( parent_id, data ) {
+        var level_one = get_tree_children( data, parent_id );
+        var endpoints;
+        var end_names = [];
+        
+        level_one.forEach( function( node ) {
+            endpoints = get_tree_children( data, node['id'] );
+            endpoints.forEach( function ( endpoint ){
+                if( ! is_in_array( end_names, endpoint['name'] ) ) {
+                    end_names.push( endpoint['name'] );
+                }
+            });
+            node['end_points'] = endpoints
+        } );
+        end_names.sort();
+        
+//        level_one.forEach( function( node ) {
+//            end_names.forEach( function( name ) {
+            
+                
+        
+        
+        
+        return {
+                'end_names': end_names,
+                
+        
+                }    
+    }
+    
+    
+    //TODO move to beter place
+    function is_in_array( list, string ){
+        var i;
+        for ( i = 0; i < list.length; i++ ) {
+            if ( string === list[i] ) {
+                return true;
+            }
+        }
+        return false;
     }
 
 
