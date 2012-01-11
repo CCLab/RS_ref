@@ -39,7 +39,6 @@ var _resource = (function () {
 
     // Get top level data from store and prepare it for
     // gui-understandable form.
-    // GUI-TODO: col_id --> endpoint
     that.get_top_level = function ( endpoint, callback ) {
         _store.get_init_data( endpoint, function( data, meta ) {
             var sheet_id;
@@ -82,7 +81,7 @@ var _resource = (function () {
     };
 
     // Remove children of node_id node.
-    that.remove_child = function ( sheet_id, parent_id ) {
+    that.remove_children = function ( sheet_id, parent_id ) {
         var sheet;
         var children;
 
@@ -121,7 +120,14 @@ var _resource = (function () {
         if ( prev_selected_id !== undefined ) {
             set_selection( sheet['data'], prev_selected_id, '', '', '' );
         }
-        set_selection( sheet['data'], selected_id, 'selected', 'in-selected', 'after-selected' );
+        
+        // if selected_id is not previous one, which would be deselection
+        if ( prev_selected_id !== selected_id ) {
+            set_selection( sheet['data'], selected_id, 'selected', 'in-selected', 'after-selected' );
+            sheet['any_selected'] = true;
+        }
+        
+        sheet['any_selected'] = false;
     };
 
 
@@ -149,8 +155,7 @@ var _resource = (function () {
             };
         });
 
-        // TODO: callback( columns ); ???
-        return columns;
+        callback( columns );
     };
 
     // Update columns in sheet. Return sheet data with new columns.
@@ -234,7 +239,6 @@ var _resource = (function () {
     };
 
     // Get names of sheets and sort them in order: ( group_id, sheet_id ).
-    // GUI-TODO: sheet[end_id] --> sheet[endpoint]
     that.get_sheets_names = function ( callback ) {
         var sheet_id;
         var sheet_descr;
@@ -324,7 +328,6 @@ var _resource = (function () {
     };
 
     // Return gui-understandable data from sheet_id sheet.
-    // GUI-TODO: --> get_sheet_data
     that.get_sheet_data = function ( sheet_id, callback ) {
         var sheet;
         var gui_data;
@@ -357,8 +360,6 @@ var _resource = (function () {
         callback( sheet_descr );
     };
 
-    // GUI-TODO: group['data']['endpoint_id'] --> group['data']['endpoint']
-    // GUI-TODO: group['data']['endpoint_name'] --> group['data']['label']
     that.get_search_count = function ( endpoints_list, query, callback ) {
         _store.get_search_count( endpoints_list, query, function ( data ) {
             var gui_results = {
@@ -464,7 +465,6 @@ var _resource = (function () {
         return group_id;
     }
 
-    // GUI-TODO: sheet[endpoint_id] --> sheet[endpoint]
     // Create new sheet from data.
     function create_sheet( endpoint, data, meta ) {
         var new_sheet;
@@ -530,7 +530,6 @@ var _resource = (function () {
         return data_package;
     }
 
-    // GUI-TODO: _id --> id
     // Prepare data for standard sheet.
     function prepare_standard_data_package_for_gui( sheet_id, data ) {
         // Used to generate gui row levels. If row does not have parent,
@@ -553,7 +552,6 @@ var _resource = (function () {
             // Returns row prepared for gui(columns data + state).
             var prepare_row = function( row, id_level_map ) {
                 var new_row = {
-                    // TODO: SEND id not _id
                     'id'      : row['id'],
                     'parent'  : row['parent'],
                     'leaf'    : row['leaf'],
