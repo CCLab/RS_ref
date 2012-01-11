@@ -44,7 +44,7 @@ var _tree = (function () {
     
     that.get_children_nodes = function( tree, parent_id ) {
         if ( parent_id === undefined ) {
-            parent_id = tree.rootId();
+            parent_id = tree.root();
         }
         return tree.children( parent_id, true );
     };

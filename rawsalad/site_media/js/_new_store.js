@@ -230,9 +230,8 @@ var _store = (function () {
     }
 
     function store_meta_data( db_meta_data, endpoint ) {
-        meta_sources[ endpoint ] = extracted_meta_data;
-        
-        return extracted_meta_data;
+        meta_sources[ endpoint ] = db_meta_data;
+        return db_meta_data;
     }
 
     function has_db_tree() {
