@@ -36,14 +36,26 @@ def db_cursor():
 
 def get_db_tree():
     '''Get the navigation tree for all database collections'''
-    query = '''SELECT * FROM dbtree
-               ORDER BY id
-            '''
+    from django.conf import settings
+    if settings.DEBUG:
+        query = '''SELECT * FROM dbtree
+                   ORDER BY id
+                '''
+    else:
+        query = '''SELECT * FROM dbtree
+                   WHERE visible = TRUE
+                   ORDER BY id
+                '''
+
     # connect to db
     cursor = db_cursor()
     cursor.execute( query )
 
-    return cursor.fetchall()
+    db_tree = cursor.fetchall()
+    for node in db_tree:
+        del node['visible']
+
+    return db_tree
 
 
 def search_count( user_query, scope ):

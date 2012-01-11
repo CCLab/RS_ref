@@ -45,8 +45,67 @@ var _gui = (function () {
 
     // D R A W   F U N C T I O N S
     function draw_db_tree_panels( data ) {
-
+        var tree_panel = '';
+        var choose_panel = $('#pl-ch-datasets');
+        var choose_list = $('<ul class="left"> </ul>');
+        add_tree_node( data, '', choose_list );
+        
+//        var children = data.filter( function( node ) {
+//            return node['parent'] === parent_id; 
+//        } );
+//        
+//        
+//        
+//        children.forEach( function( node ) {
+//            add_tree_node( node, data );
+//        } );
+        
+        choose_panel.append( choose_list );
         console.log( data );
+        
+    }
+    
+    
+    // TODO move to beter place
+    function add_tree_node( data, parent_id, choose_list ){
+        var id = parent_id; 
+        var leafs_html;
+        var children = data.filter( function( node ) {
+            return node['parent'] === id;
+        } );
+        
+        // TODO add min depth 
+        // TODO add leaf template and Mustache
+        children.forEach( function( node ) {
+            if ( node['max_depth'] === 1 ) {
+                leafs_html = add_one_to_dbtree( node );
+                choose_list.append( leafs_html );
+            }
+            else if( node['max_depth'] === 2 ) {
+                leafs_html = add_two_to_dbtree( node );
+                choose_list.append( leafs_html );
+            }
+            else {
+                var new_node_list;
+                choose_list.append( '<ul class="left"> </ul>' );
+                new_node_list = chose_list.find( 'ul' );
+                add_tree_node( data, node['id'], new_node_list );
+            }
+        } );
+    }
+    
+    
+    //TODO move to beter placeholder
+    function add_one_to_dbtree( node ) {
+        var html = '<li> to bedzie 1 </li>';
+        return html;
+    }
+
+
+    //TODO move to beter placeholder
+    function add_two_to_dbtree( node ) {
+        var html = '<li> to bedzie 2 </li>';
+        return html;    
     }
 
 
