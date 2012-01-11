@@ -95,17 +95,25 @@ var _gui = (function () {
     }
     
     
-    //TODO move to beter placeholder
+    //TODO move to beter place
     function add_one_to_dbtree( node ) {
         var html = '<li> to bedzie 1 </li>';
         return html;
     }
 
 
-    //TODO move to beter placeholder
+    //TODO move to beter place
     function add_two_to_dbtree( node ) {
-        var html = '<li> to bedzie 2 </li>';
-        return html;    
+    
+        var html = Mustache.to_html( _templates.tree_node, node );
+        var html_code = $(html);
+        var table_placeholder = html_code.find( '.pl-tree-end-det' );
+        var end = Mustache.to_html( _templates.double_end, node ) //TODO prepare real table
+        
+        table_placeholder.append( end );
+        
+        
+        return html_code;    
     }
 
 

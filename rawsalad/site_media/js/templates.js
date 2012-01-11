@@ -24,7 +24,7 @@
 // LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-var _teplates = (function () {
+var _templates = (function () {
 
 // P U B L I C   I N T E R F A C E
     var that = {};
@@ -49,6 +49,68 @@ var _teplates = (function () {
                 '</li>' +
             '{{/sheets}}' +
         '</ul>';
+    
+    // D B   T R E E
+    that.tree_node=
+        '<li>' +
+            '<div data-node="{{id}}" class="pl-tree-node-unchecked pl-tree-node">' + //TODO change classes names
+            '</div>' +
+            '<section class="pl-tree-det">' +
+                '<img src="/site_media/img/corner.png" class="pl-tree-pointer" style="display: inline-block; ">' +
+                '<img src="/site_media/img/triangle-down.png" alt="triangle" class="pl-tree-arrow" data-node="{{id}}">' +
+                '<section class="pl-tree-node-info">' +
+                    '<header>' +
+                        '<h3>{{name}}</h3>' +
+                    '</header>' +
+                    '<section class="pl-tree-node-des" style="display: none; ">' +
+                        '<p>{{description}}</p>' +
+                    '</section>' +
+                '</section>' +
+                '<section class="pl-tree-end-det" style="display: inline-block; ">' +
+                '</section>' +
+            '</section>' +
+        '</li>';
+
+    that.double_end = 
+        '<table>' +
+            '<thead>' +
+                '<tr>' +
+                    '<th></th>' +
+                    '<th>2010</th>' +
+                    '<th>2011</th>' +
+                    '<th>2012</th>' +
+                '</tr>' +
+            '</thead>' +
+            '<tbody>' +
+                '<tr>' +
+                    '<td> Budżet tradycyjny </td>' +
+                    '<td> <div class="pl-tree-end-nocheck pl-tree-end-checkbox"> </div> </td>' +
+                    '<td> <div data-endpoint="{{endpoint}}" class="pl-tree-end-unchecked pl-tree-end-checkbox"> </div> </td>' +
+                    '<td> <div class="pl-tree-end-nocheck pl-tree-end-checkbox"> </div> </td>' +
+                '</tr>' +
+                '<tr>' +
+                    '<td> Budżet zadaniowy </td>' +
+                    '<td> <div class="pl-tree-end-nocheck pl-tree-end-checkbox"> </div> </td>' +
+                    '<td> <div data-endpoint="{{endpoint}}" class="pl-tree-end-unchecked pl-tree-end-checkbox"> </div> </td>' +
+                    '<td> <div data-endpoint="{{endpoint}}" class="pl-tree-end-unchecked pl-tree-end-checkbox"> </div> </td>' +
+                '</tr>' +
+                '<tr>' +
+                    '<td> Budżet instytucjonalny </td>' +
+                    '<td> <div class="pl-tree-end-nocheck pl-tree-end-checkbox"> </div> </td>' +
+                    '<td> <div data-endpoint="{{endpoint}}" class="pl-tree-end-unchecked pl-tree-end-checkbox"> </div> </td>' +
+                    '<td> <div data-endpoint="{{endpoint}}" class="pl-tree-end-unchecked pl-tree-end-checkbox"> </div> </td>' +
+                '</tr>' +
+                '<tr>' +
+                    '<td> Sprawozdanie z wykonania - wydatki </td>' +
+                    '<td> <div data-endpoint="{{endpoint}}" class="pl-tree-end-unchecked pl-tree-end-checkbox"> </div> </td>' +
+                    '<td> <div class="pl-tree-end-nocheck pl-tree-end-checkbox"> </div> </td>' +
+                    '<td> <div class="pl-tree-end-nocheck pl-tree-end-checkbox"> </div> </td>' +
+                '</tr>' +
+            '</tbody>'
+        '</table>'
+        
+    
+    
         
     // T O O L S
     that.app_table_tools =
@@ -180,6 +242,8 @@ var _teplates = (function () {
                 '</td>' +
             '{{/columns}}' +
         '</tr>';
+    
+    
 
 
     // return public interface

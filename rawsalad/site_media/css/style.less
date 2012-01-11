@@ -370,8 +370,164 @@ textarea {
       color: @panel-close-bar-hover-text;
     }
   }
+  /* DBTREE PANEL */
+  #pl-choose {  /* TODO check - it's from old choose panel */
+    position: relative;
+    
+    li {
+      overflow: hidden;
+      margin: 15px;
+      padding: 10px;
+    
+      &:hover {
+        background-color: @choose-view-background;
+      }
+    }
+    
+    > header {
+      border-bottom: 1px solid @chose-header-border;
+    }
+    
+    .button+.button {
+      margin-right: 5px;
+    }
+    
+    li > p {
+      margin-bottom: 20px;
+    }
+  }
+    
+  .pl-tree-node {
+    float: left;
 
-  /* CHOOSE PANEL */
+    width: 28px;
+    height: 22px;
+
+    margin-right: 15px;
+    margin-top: 10px;
+  }
+  
+  .pl-tree-node-unchecked {
+    background-image: url("/site_media/img/checkbox01_normal.png");
+    
+    &:hover {
+      background-image: url("/site_media/img/checkbox01_hover.png");    
+    }
+  }
+  
+  .pl-tree-node-checked {
+    background-image: url("/site_media/img/checkbox01_cheked.png");
+
+    &:hover {
+      background-image: url("/site_media/img/checkbox01_checkedHover.png");    
+    }
+  }
+  
+  .pl-tree-det {
+    overflow: auto;
+
+    padding: 5px;
+
+    background-color: white; /*TODO work on colors in tree */
+
+    border-width: 1px;
+    border-style: solid;
+    border-color: #919191;  /*TODO work on colors in tree */
+  }
+
+  .pl-tree-pointer {
+    float: left;
+
+    margin-left: -14px !important;
+    margin-top: 5px;
+    
+    position: absolute;  
+  }
+
+  .pl-tree-arrow {
+    float: left;
+    
+    margin-left: 5px;
+    margin-right: 20px;
+    margin-top: 4px;
+  }
+  
+  .pl-tree-node-info {
+    max-width: 320px;  
+    
+    header {
+      margin-top: 8px;
+    }
+  }
+
+  .pl-tree-end-det {
+    overflow: auto;
+    display: none;
+    
+    table {
+      overflow: auto;
+      border-collapse: collapse;
+    }
+    th {
+      padding: 10px;
+      text-align: center;
+      font-weight: bold;
+      border-bottom: solid;
+      border-bottom-width: 1px;
+      border-bottom-color: #8B8B8B; /*TODO prepare color */    
+    }
+    
+    td {
+      padding-top: 10px;
+      padding-bottom: 10px;
+      padding-right: 15px;
+      padding-left: 15px;
+
+      border-bottom: solid;
+      border-bottom-style: solid;
+      border-bottom-width: 1px;
+      border-bottom-color: #C8C8C8;
+    }
+    
+    > table > tbody {
+      
+      > tr:last-child > td {
+        border-bottom: none;
+      }
+
+      td:first-child {
+        width: 180px;
+        padding-right: 30px;
+        text-align: left;
+      }      
+    }    
+  }
+  
+  
+  .pl-tree-end-checkbox {
+    float: left;
+    width: 38px;
+    height: 19px;
+  }
+  
+  .pl-tree-end-nocheck {
+    background-image: url("/site_media/img/checkbox02_inactive.png");
+  }
+
+  .pl-tree-end-unchecked {
+    background-image: url("/site_media/img/checkbox02_normal.png"); 
+    
+    &:hover {
+      background-image: url("/site_media/img/checkbox02_hover.png");     
+    } 
+  }
+  
+  .pl-tree-end-checked {
+    background-image: url("/site_media/img/checkbox02_checked.png");
+  }
+
+
+  /* CHOOSE PANEL */ /* TODO - remove - it's from old choose panel*/
   #pl-ch-views {
     float: left;
     width: 940px;
@@ -384,32 +540,6 @@ textarea {
     clear: none;
   }
 
-  #pl-choose {
-    position: relative;
-    
-    li {
-      overflow: hidden;
-      width: 350px;
-      margin: 15px;
-      padding: 10px;
-    
-      &:hover {
-        background-color: @choose-view-background;
-      }
-    }
-    
-    header {
-      border-bottom: 1px solid @chose-header-border;
-    }
-    
-    .button+.button {
-      margin-right: 5px;
-    }
-    
-    li > p {
-      margin-bottom: 20px;
-    }
-  }
 
   .pl-ch-back {
     width: 120px;
