@@ -38,6 +38,10 @@ var _tree = (function () {
         return tree.getNode( id );
     };
     
+    that.get_top_parent = function( tree, id ) {
+        return tree.topParent( id, true );
+    };
+    
     that.has_node = function( tree, id ) {
         return !!that.get_node( tree, id );
     };

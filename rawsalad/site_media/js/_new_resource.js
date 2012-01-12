@@ -47,7 +47,7 @@ var _resource = (function () {
 
             sheet = create_sheet( endpoint, data, meta );
             sheet_id = add_sheet( sheet );
-            gui_data = prepare_data_package_for_gui( sheet_id );
+            gui_data = prepare_table_data( sheet_id );
 
             callback( gui_data );
         });
@@ -59,7 +59,7 @@ var _resource = (function () {
             var gui_data;
             var children = _tree.get_children_nodes( sheet['data'], parent_id );
             
-            gui_data = prepare_data_package_for_gui( sheet_id, children );
+            gui_data = prepare_table_data( sheet_id, children );
             callback( gui_data );
         };
         var sheet = get_sheet( sheet_id );
@@ -333,7 +333,7 @@ var _resource = (function () {
         var gui_data;
 
         sheet = get_sheet( sheet_id );
-        gui_data = prepare_data_package_for_gui( sheet_id, sheet['data'] );
+        gui_data = prepare_table_data( sheet_id );
 
         callback( gui_data );
     };
@@ -376,7 +376,7 @@ var _resource = (function () {
                 if ( !group ) {
                     top_parent = _store.get_top_parent( tree_id )['label'];
                     group = {
-                        'dbtree_topparent_name': top_parent,
+                        'dbtree_top_parent_name': top_parent,
                         'data': []
                     };
                     gui_results['results'].push( group );
@@ -421,7 +421,6 @@ var _resource = (function () {
 
 // P R I V A T E   I N T E R F A C E
     var sheets = {};
-    var next_sheet_id = 10000;
     
     function get_sheet( sheet_id ) {
         return sheets[ sheet_id ];
@@ -494,179 +493,41 @@ var _resource = (function () {
 
         return new_sheet;
     }
+    
+    generate_sheet_id = ( function () {
+        var next_sheet_id = 10000;
+        return (function() {
+            return function() {
+                var new_sheet_id = next_sheet_id;
+                next_sheet_id += 1;
+                return new_sheet_id;
+            }
+        })();
+    })();
 
     // Add a new sheet and return its id.
     function add_sheet( new_sheet ) {
-        var generate_sheet_id = function() {
-            // TODO: next_sheet_id should be global?
-            var new_id = next_sheet_id;
-            next_sheet_id += 1;
-            return new_id;
-        };
         var sheet_id = generate_sheet_id();
 
-        sheets[sheet_id] = new_sheet;
+        sheets[ sheet_id ] = new_sheet;
 
         return sheet_id;
     }
-
-    // Prepare data from sheet_id sheet.
-    function prepare_data_package_for_gui( sheet_id, data ) {
-        var data_package;
-
-        // TODO: move them to another module
-        switch ( sheets[sheet_id]['type'] ) {
-            case _enum['STANDARD']:
-                data_package = prepare_standard_data_package_for_gui( sheet_id, data );
-                break;
-            case _enum['FILTERED']:
-                data_package = prepare_filtered_data_package_for_gui( sheet_id, data );
-                break;
-            case _enum['SEARCHED']:
-                data_package = prepare_searched_data_package_for_gui( sheet_id, data );
-                break;
-        };
-
-        return data_package;
-    }
-
-    // Prepare data for standard sheet.
-    function prepare_standard_data_package_for_gui( sheet_id, data ) {
-        // Used to generate gui row levels. If row does not have parent,
-        // it's on first level, otherwise is one level lower.
-        var create_level_map = function( sheet_id ) {
-            var id_map = {};
-            var data = sheets[ sheet_id ]['data'].toList();
-
-            data.forEach( function ( row ) {
-                if ( !row['parent'] && row['parent'] !== 0 ) {
-                    id_map[ row['id'] ] = 1;
-                } else {
-                    id_map[ row['id'] ] = id_map[ row['parent'] ] + 1;
-                }
-            });
-
-            return id_map;
-        };
-        var prepare_rows_for_gui = function( rows, columns, id_level_map ) {
-            // Returns row prepared for gui(columns data + state).
-            var prepare_row = function( row, id_level_map ) {
-                var new_row = {
-                    'id'      : row['id'],
-                    'parent'  : row['parent'],
-                    'leaf'    : row['leaf'],
-                    'is_open' : row['state']['is_open']
-                };
-                if ( !!row['aux']['info'] ) {
-                    new_row['aux']['info'] = row['aux']['info'];
-                }
-                if ( !!row['state']['selected'] ) {
-                    new_row['selected'] = row['state']['selected'];
-                }
-                new_row['level'] = id_level_map[ new_row['id'] ];
-
-                // data field contains information to generate cells in table
-                // for this row
-                new_row['data'] = columns.map( function( e ) {
-                    return {
-                        'column_key'  : e['key'],
-                        'column_type' : e['type'],
-                        'click'       : (e['key'] === 'type' && !new_row['leaf']) ? 'click' : '',
-                        'content'     : format_value( row['data'][ e['key'] ], e['type'], e['format'] )
-                    };
-                });
-
-                return new_row;
-            };
-            var new_rows = [];
-
-            // create array with gui prepared rows
-            rows.forEach( function( row ) {
-                new_rows.push( prepare_row( row, id_level_map ) );
-            });
-
-            return new_rows;
-        };
-        // Return total row(if there is no total row, returns undefined).
-        var prepare_total_row = function( rows, columns ) {
-            var total_row = [];
-            var last_row = rows.pop();
-            if ( last_row['data']['type'] !== 'Total' ) {
-                rows.push( last_row );
-                return undefined;
-            }
-            columns.forEach( function ( column ) {
-                total_row.push( {
-                    'data': format_value( last_row['data'][ column['key'] ], column['type'], column['key'] ),
-                    'column_type': column['type'],
-                    'column_key': column['key']
-                });
-            });
-
-            return total_row;
-        };
-        var sheet;
-        var columns_for_gui;
-        var data_fot_gui;
-        var total_row;
-        var data = data || [];
-        var total_row;
-        var rows_for_gui;
-        var data_package;
-        var id_map;
-
-        sheet = sheets[sheet_id];
-
-        columns_for_gui = sheet['columns'].map( function ( column ) {
-            return {
-                'key': column['key'],
-                'label': column['label'],
-                'type': column['type']
-            };
-        });
-
-        // if data to prepare was not passed, use full tree from sheet
-        if ( !data.length ) {
-            data = sheet['data'].toList();
-        }
-        total_row = prepare_total_row( data, columns_for_gui );
-        id_map = create_level_map( sheet_id );
-        rows_for_gui = prepare_rows_for_gui( data, columns_for_gui, id_map );
-
-        // object for gui
-        data_package = {
-            'group': sheet['group_id'],
-            'id': sheet_id,
-            'type': sheet['type'],
-            'label': sheet['label'],
-            'total': total_row,
-            'columns': columns_for_gui,
-            'rows': rows_for_gui
-        };
-
-        return data_package;
-    }
-
-    function prepare_filtered_data_package_for_gui( sheet_id, data ) {
-        return 'TODO';
-    }
-
-    function prepare_searched_data_package_for_gui( sheet_id, data ) {
-        return 'TODO';
-    }
-
-    function format_value( value, type, format ) {
-        if ( type !== 'string' ) {
-            value = value + '';
-        }
-        return value;
+    
+    function prepare_table_data( sheet_id, data ) {
+        var sheet = get_sheet( sheet_id );
+        var full_data = _tree.tree_to_list( sheet['data'] );
+        // if data to prepare was not passed, use full data from sheet
+        var data = data || full_data;
+        
+        return _ui.prepare_data_package( sheet, sheet_id, data, full_data );
     }
     
     function get_sheet_description( sheet_id ) {
         var sheet = get_sheet( sheet_id );
         
         return {
-            'name': sheet['name'],
+            'name': sheet['label'],
             'sheet_id': sheet_id,
             'group_id': sheet['group_id'],
             'endpoint': sheet['endpoint']
@@ -684,6 +545,7 @@ var _resource = (function () {
 
             new_node['id'] = node['id'];
             new_node['parent'] = node['parent'];
+            // TODO
             ///////////////////////////////////////////////////
             // DELETE IT ASAP
             ///////////////////////////////////////////////////
