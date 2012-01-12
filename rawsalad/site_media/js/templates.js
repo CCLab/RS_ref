@@ -76,38 +76,29 @@ var _templates = (function () {
             '<thead>' +
                 '<tr>' +
                     '<th></th>' +
-                    '<th>2010</th>' +
-                    '<th>2011</th>' +
-                    '<th>2012</th>' +
+                    '{{#end_names}}' +
+                        '<th>{{name}}</th>' +
+                    '{{/end_names}}' +
                 '</tr>' +
             '</thead>' +
             '<tbody>' +
-                '<tr>' +
-                    '<td> Budżet tradycyjny </td>' +
-                    '<td> <div class="pl-tree-end-nocheck pl-tree-end-checkbox"> </div> </td>' +
-                    '<td> <div data-endpoint="{{endpoint}}" class="pl-tree-end-unchecked pl-tree-end-checkbox"> </div> </td>' +
-                    '<td> <div class="pl-tree-end-nocheck pl-tree-end-checkbox"> </div> </td>' +
-                '</tr>' +
-                '<tr>' +
-                    '<td> Budżet zadaniowy </td>' +
-                    '<td> <div class="pl-tree-end-nocheck pl-tree-end-checkbox"> </div> </td>' +
-                    '<td> <div data-endpoint="{{endpoint}}" class="pl-tree-end-unchecked pl-tree-end-checkbox"> </div> </td>' +
-                    '<td> <div data-endpoint="{{endpoint}}" class="pl-tree-end-unchecked pl-tree-end-checkbox"> </div> </td>' +
-                '</tr>' +
-                '<tr>' +
-                    '<td> Budżet instytucjonalny </td>' +
-                    '<td> <div class="pl-tree-end-nocheck pl-tree-end-checkbox"> </div> </td>' +
-                    '<td> <div data-endpoint="{{endpoint}}" class="pl-tree-end-unchecked pl-tree-end-checkbox"> </div> </td>' +
-                    '<td> <div data-endpoint="{{endpoint}}" class="pl-tree-end-unchecked pl-tree-end-checkbox"> </div> </td>' +
-                '</tr>' +
-                '<tr>' +
-                    '<td> Sprawozdanie z wykonania - wydatki </td>' +
-                    '<td> <div data-endpoint="{{endpoint}}" class="pl-tree-end-unchecked pl-tree-end-checkbox"> </div> </td>' +
-                    '<td> <div class="pl-tree-end-nocheck pl-tree-end-checkbox"> </div> </td>' +
-                    '<td> <div class="pl-tree-end-nocheck pl-tree-end-checkbox"> </div> </td>' +
-                '</tr>' +
-            '</tbody>'
-        '</table>'
+                '{{#nodes}}' +
+                    '<tr>' +
+                        '<td>{{name}}</td>' +
+                        '{{#children}}' +
+                            '<td>' +
+                                '{{#end}}' +
+                                    '<div data-endpoint="{{endpoint}}" class="pl-tree-end-unchecked pl-tree-end-checkbox"> </div>' +
+                                '{{/end}}' +
+                                '{{^end}}' +
+                                    '<div class="pl-tree-end-nocheck pl-tree-end-checkbox"> </div>' +                            
+                                '{{/end}}' +                            
+                            '</td>' +
+                        '{{/children}}' +
+                    '</tr>' +
+                '{{/nodes}}' +
+            '</tbody>' +
+        '</table>';
         
     
     

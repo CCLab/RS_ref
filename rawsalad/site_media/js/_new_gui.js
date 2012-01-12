@@ -114,7 +114,7 @@ var _gui = (function () {
         var html_code = $(html);
         var table_placeholder = html_code.find( '.pl-tree-end-det' );
         var nodes_leafs = prepare_double_ends( node['id'], data );
-        var end = Mustache.to_html( _templates.double_end, node ) //TODO prepare real table
+        var end = Mustache.to_html( _templates.double_end, nodes_leafs )
         
         table_placeholder.append( end );
         
@@ -123,37 +123,60 @@ var _gui = (function () {
     
     
     //TODO move to beter place
-    // TODO - think about this...
     function prepare_double_ends( parent_id, data ) {
         var level_one = get_tree_children( data, parent_id );
-        var endpoints;
+        var end_points = [];
         var end_names = [];
         
         level_one.forEach( function( node ) {
-            endpoints = get_tree_children( data, node['id'] );
-            endpoints.forEach( function ( endpoint ){
-                if( ! is_in_array( end_names, endpoint['name'] ) ) {
-                    end_names.push( endpoint['name'] );
-                }
-            });
-            node['end_points'] = endpoints
+            end_points.push( get_tree_children( data, node['id'] )[0] );
         } );
-        end_names.sort();
-        
-//        level_one.forEach( function( node ) {
-//            end_names.forEach( function( name ) {
-            
-                
         
         
+        end_points.forEach( function( node ) {
+            var node_name = node['name'];
+            if ( !!node['endpoint'] &&  ! is_in_array( end_names, node_name ) ) {
+                end_names.push( node_name );
+            } 
+        });
+
+        end_names.sort();                
         
+        level_one.forEach( function( node ) {
+            var children = get_tree_children( end_points, node['id'] );
+            var list = [];
+            node['children'] = [];            
+            end_names.forEach( function ( end_name ) {
+                list.push( { 'end': get_node( children, end_name ), } );
+            } );            
+            node['children'] = list;
+        } );
+        
+        end_names = end_names.map( function( name ) {
+            return { 'name': name, };
+        } );        
+     
         return {
                 'end_names': end_names,
-                
-        
+                'nodes': level_one,        
                 }    
     }
     
+    //TODO move to beter place
+    function get_node( children, end_name ) {
+        var i;
+        for ( i= 0; i < children.length; i++ ) {
+            if ( children[i]['name'] === end_name ) {
+                return children[i];
+            }
+        }
+        return false;   
+    }    
+
+
+    function name_object_list( list ){
+        
+    }
     
     //TODO move to beter place
     function is_in_array( list, string ){
