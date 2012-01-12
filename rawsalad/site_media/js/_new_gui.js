@@ -44,39 +44,32 @@ var _gui = (function () {
 // P R I V A T E   I N T E R F A C E
 
     // D R A W   F U N C T I O N S
+    
+    /***** D B   T R E E ******/
+        
     function draw_db_tree_panels( data ) {
         var tree_panel = '';
         var choose_panel = $('#pl-ch-datasets');
         var choose_list = $('<ul class="left"> </ul>');
         add_tree_node( data, '', choose_list );
-        
-//        var children = data.filter( function( node ) {
-//            return node['parent'] === parent_id; 
-//        } );
-//        
-//        
-//        
-//        children.forEach( function( node ) {
-//            add_tree_node( node, data );
-//        } );
-        
+                
         choose_panel.append( choose_list );
         console.log( data );
         
     }
-    
-    
+
     // TODO move to beter place
     function add_tree_node( data, parent_id, choose_list ){
         var id = parent_id; 
         var leafs_html;
         var children = get_tree_children( data, id );
         
+        
         // TODO add min depth 
         // TODO add leaf template and Mustache
         children.forEach( function( node ) {
             if ( node['max_depth'] === 1 ) {
-                leafs_html = add_one_to_dbtree( node );
+                leafs_html = add_one_to_dbtree( node, data );
                 choose_list.append( leafs_html );
             }
             else if( node['max_depth'] === 2 ) {
@@ -85,9 +78,15 @@ var _gui = (function () {
             }
             else {
                 var new_node_list;
-                choose_list.append( '<ul class="left"> </ul>' );
-                new_node_list = choose_list.find( 'ul' );
-                add_tree_node( data, node['id'], new_node_list );
+                var list_code = $('<ul class="left"> </ul>');
+                var html = Mustache.to_html( _templates.tree_node, node );
+                var html_code = $(html);
+                var new_placeholder ;
+                
+                choose_list.append( html_code );
+                new_placeholder = choose_list.find( '.pl-tree-det' );
+                new_placeholder.append( list_code );
+                add_tree_node( data, node['id'], list_code );
             }
         } );
     }
@@ -100,12 +99,15 @@ var _gui = (function () {
         return children;         
     }
     
-    //TODO move to beter place
-    function add_one_to_dbtree( node ) {
-        var html = '<li> to bedzie 1 </li>';
-        return html;
+    //TODO move to beter place 
+    // TODO remove redundancy from add_two, add_one and add_tree_node
+    function add_one_to_dbtree( node, data ) {
+        
+        var nodes_leafs = prepare_ends( node, data );
+        var html = Mustache.to_html( _templates.double_end, nodes_leafs )
+        var html_code = $(html);
+        return html_code;
     }
-
 
     //TODO move to beter place
     function add_two_to_dbtree( node, data ) {
@@ -113,7 +115,7 @@ var _gui = (function () {
         var html = Mustache.to_html( _templates.tree_node, node );
         var html_code = $(html);
         var table_placeholder = html_code.find( '.pl-tree-end-det' );
-        var nodes_leafs = prepare_double_ends( node['id'], data );
+        var nodes_leafs = prepare_ends( node, data, true );
         var end = Mustache.to_html( _templates.double_end, nodes_leafs )
         
         table_placeholder.append( end );
@@ -121,10 +123,10 @@ var _gui = (function () {
         return html_code;    
     }
     
-    
     //TODO move to beter place
-    function prepare_double_ends( parent_id, data ) {
-        var level_one = get_tree_children( data, parent_id );
+    function prepare_ends( node, data, double ) {
+        var parent_id = node['id'];
+        var level_one = ( !! double ) ? get_tree_children( data, parent_id ) : [ node ];
         var end_points = [];
         var end_names = [];
         
@@ -147,7 +149,7 @@ var _gui = (function () {
             var list = [];
             node['children'] = [];            
             end_names.forEach( function ( end_name ) {
-                list.push( { 'end': get_node( children, end_name ), } );
+                list.push( { 'end': get_node_by_name( children, end_name ), } );
             } );            
             node['children'] = list;
         } );
@@ -163,7 +165,7 @@ var _gui = (function () {
     }
     
     //TODO move to beter place
-    function get_node( children, end_name ) {
+    function get_node_by_name( children, end_name ) {
         var i;
         for ( i= 0; i < children.length; i++ ) {
             if ( children[i]['name'] === end_name ) {
@@ -172,11 +174,6 @@ var _gui = (function () {
         }
         return false;   
     }    
-
-
-    function name_object_list( list ){
-        
-    }
     
     //TODO move to beter place
     function is_in_array( list, string ){
@@ -188,6 +185,10 @@ var _gui = (function () {
         }
         return false;
     }
+
+    /***** D B   T R E E   E N D ******/
+
+
 
 
     function draw_end_point( end_id ) {
