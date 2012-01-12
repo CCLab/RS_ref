@@ -156,21 +156,13 @@ var _store = (function () {
         });
     };
 
-    // TODO: add parents( count=inf ) to monkey
     that.get_top_parent = function ( endpoint ) {
-        /* FUTURE CODE
-        var parents = get_parents( endpoint );
-        return parents.pop();
-        */
-        var node = db_tree.getNode( endpoint_id );
+        var tree_id = get_endpoint_id( endpoint );
+        var top_parent = _tree.get_top_parent( get_db_tree(), tree_id );
 
-        if ( !node ) return undefined;
+        if ( !top_parent ) return undefined;
 
-        while ( db_tree.parent( node ) !== db_tree.root() ) {
-            node = db_tree.parent( node );
-        }
-
-        return db_tree.value( node );
+        return top_parent;
     };
 
 
@@ -184,6 +176,8 @@ var _store = (function () {
     var complete_children = {};
     // contains meta data for each collection
     var meta_sources = {};
+    // maps endpoints to their id in collection tree
+    var endpoint_map = {};
 
     // Does store have children of parent_id(default parent is root) in col_id collection.
     function has_data( endpoint, parent_id ) {
@@ -219,6 +213,14 @@ var _store = (function () {
     function get_meta_data_source( endpoint ) {
         return meta_sources[ endpoint ];
     }
+    
+    function add_endpoint_id( endpoint, tree_id ) {
+        endpoint_map[ endpoint ] = tree_id;
+    }
+    
+    function get_endpoint_id( endpoint ) {
+        return endpoint_map[ endpoint ];
+    }
 
     // Save downloaded data and save information about having full first level.
     function store_data( db_data, endpoint ) {
@@ -230,9 +232,8 @@ var _store = (function () {
     }
 
     function store_meta_data( db_meta_data, endpoint ) {
-        meta_sources[ endpoint ] = extracted_meta_data;
-        
-        return extracted_meta_data;
+        meta_sources[ endpoint ] = db_meta_data;
+        return db_meta_data;
     }
 
     function has_db_tree() {
@@ -245,6 +246,12 @@ var _store = (function () {
 
     function save_db_tree( data ) {
         db_tree = _tree.create_tree( data, 'id', 'parent' );
+        db_tree.forEach( function ( node ) {
+            if ( !!node['endpoint'] ) {
+                add_endpoint_id( node['endpoint'], node['id'] );
+            }
+        });
+        
     }
 
     return that;

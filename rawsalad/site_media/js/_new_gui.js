@@ -70,9 +70,7 @@ var _gui = (function () {
     function add_tree_node( data, parent_id, choose_list ){
         var id = parent_id; 
         var leafs_html;
-        var children = data.filter( function( node ) {
-            return node['parent'] === id;
-        } );
+        var children = get_tree_children( data, id );
         
         // TODO add min depth 
         // TODO add leaf template and Mustache
@@ -82,30 +80,113 @@ var _gui = (function () {
                 choose_list.append( leafs_html );
             }
             else if( node['max_depth'] === 2 ) {
-                leafs_html = add_two_to_dbtree( node );
+                leafs_html = add_two_to_dbtree( node, data );
                 choose_list.append( leafs_html );
             }
             else {
                 var new_node_list;
                 choose_list.append( '<ul class="left"> </ul>' );
-                new_node_list = chose_list.find( 'ul' );
+                new_node_list = choose_list.find( 'ul' );
                 add_tree_node( data, node['id'], new_node_list );
             }
         } );
     }
     
+    //TODO move to beter place    
+    function get_tree_children( data, id ){
+        var children = data.filter( function( node ) {
+            return node['parent'] === id;
+        } );
+        return children;         
+    }
     
-    //TODO move to beter placeholder
+    //TODO move to beter place
     function add_one_to_dbtree( node ) {
         var html = '<li> to bedzie 1 </li>';
         return html;
     }
 
 
-    //TODO move to beter placeholder
-    function add_two_to_dbtree( node ) {
-        var html = '<li> to bedzie 2 </li>';
-        return html;    
+    //TODO move to beter place
+    function add_two_to_dbtree( node, data ) {
+    
+        var html = Mustache.to_html( _templates.tree_node, node );
+        var html_code = $(html);
+        var table_placeholder = html_code.find( '.pl-tree-end-det' );
+        var nodes_leafs = prepare_double_ends( node['id'], data );
+        var end = Mustache.to_html( _templates.double_end, nodes_leafs )
+        
+        table_placeholder.append( end );
+        
+        return html_code;    
+    }
+    
+    
+    //TODO move to beter place
+    function prepare_double_ends( parent_id, data ) {
+        var level_one = get_tree_children( data, parent_id );
+        var end_points = [];
+        var end_names = [];
+        
+        level_one.forEach( function( node ) {
+            end_points.push( get_tree_children( data, node['id'] )[0] );
+        } );
+        
+        
+        end_points.forEach( function( node ) {
+            var node_name = node['name'];
+            if ( !!node['endpoint'] &&  ! is_in_array( end_names, node_name ) ) {
+                end_names.push( node_name );
+            } 
+        });
+
+        end_names.sort();                
+        
+        level_one.forEach( function( node ) {
+            var children = get_tree_children( end_points, node['id'] );
+            var list = [];
+            node['children'] = [];            
+            end_names.forEach( function ( end_name ) {
+                list.push( { 'end': get_node( children, end_name ), } );
+            } );            
+            node['children'] = list;
+        } );
+        
+        end_names = end_names.map( function( name ) {
+            return { 'name': name, };
+        } );        
+     
+        return {
+                'end_names': end_names,
+                'nodes': level_one,        
+                }    
+    }
+    
+    //TODO move to beter place
+    function get_node( children, end_name ) {
+        var i;
+        for ( i= 0; i < children.length; i++ ) {
+            if ( children[i]['name'] === end_name ) {
+                return children[i];
+            }
+        }
+        return false;   
+    }    
+
+
+    function name_object_list( list ){
+        
+    }
+    
+    //TODO move to beter place
+    function is_in_array( list, string ){
+        var i;
+        for ( i = 0; i < list.length; i++ ) {
+            if ( string === list[i] ) {
+                return true;
+            }
+        }
+        return false;
     }
 
 

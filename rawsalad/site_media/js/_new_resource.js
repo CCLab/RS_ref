@@ -39,7 +39,6 @@ var _resource = (function () {
 
     // Get top level data from store and prepare it for
     // gui-understandable form.
-    // GUI-TODO: col_id --> endpoint
     that.get_top_level = function ( endpoint, callback ) {
         _store.get_init_data( endpoint, function( data, meta ) {
             var sheet_id;
@@ -48,7 +47,7 @@ var _resource = (function () {
 
             sheet = create_sheet( endpoint, data, meta );
             sheet_id = add_sheet( sheet );
-            gui_data = prepare_data_package_for_gui( sheet_id );
+            gui_data = prepare_table_data( sheet_id );
 
             callback( gui_data );
         });
@@ -60,7 +59,7 @@ var _resource = (function () {
             var gui_data;
             var children = _tree.get_children_nodes( sheet['data'], parent_id );
             
-            gui_data = prepare_data_package_for_gui( sheet_id, children );
+            gui_data = prepare_table_data( sheet_id, children );
             callback( gui_data );
         };
         var sheet = get_sheet( sheet_id );
@@ -82,7 +81,7 @@ var _resource = (function () {
     };
 
     // Remove children of node_id node.
-    that.remove_child = function ( sheet_id, parent_id ) {
+    that.remove_children = function ( sheet_id, parent_id ) {
         var sheet;
         var children;
 
@@ -121,7 +120,14 @@ var _resource = (function () {
         if ( prev_selected_id !== undefined ) {
             set_selection( sheet['data'], prev_selected_id, '', '', '' );
         }
-        set_selection( sheet['data'], selected_id, 'selected', 'in-selected', 'after-selected' );
+        
+        // if selected_id is not previous one, which would be deselection
+        if ( prev_selected_id !== selected_id ) {
+            set_selection( sheet['data'], selected_id, 'selected', 'in-selected', 'after-selected' );
+            sheet['any_selected'] = true;
+        }
+        
+        sheet['any_selected'] = false;
     };
 
 
@@ -149,8 +155,7 @@ var _resource = (function () {
             };
         });
 
-        // TODO: callback( columns ); ???
-        return columns;
+        callback( columns );
     };
 
     // Update columns in sheet. Return sheet data with new columns.
@@ -219,7 +224,7 @@ var _resource = (function () {
     that.change_name = function ( sheet_id, new_name, callback ) {
         var sheet = get_sheet( sheet_id );
 
-        sheet['name'] = new_name;
+        sheet['label'] = new_name;
 
         // for future possible implementations
         if ( !!callback ) {
@@ -234,23 +239,15 @@ var _resource = (function () {
     };
 
     // Get names of sheets and sort them in order: ( group_id, sheet_id ).
-    // GUI-TODO: sheet[end_id] --> sheet[endpoint]
     that.get_sheets_names = function ( callback ) {
         var sheet_id;
-        var sheet;
         var sheet_descr;
         var sheets_names = [];
         var sorted_sheets_names;
 
         for ( sheet_id in sheets ) {
             if ( sheets.hasOwnProperty( sheet_id ) ) {
-                sheet = get_sheet( sheet_id );
-                sheet_descr = {
-                    'name': sheet['name'],
-                    'sheet_id': parseInt( sheet_id ),
-                    'group_id': sheet['group_id'],
-                    'endpoint': sheet['endpoint']
-                };
+                sheet_descr = get_sheet_description( sheet_id );
                 sheets_names.push( sheet_descr );
             }
         }
@@ -270,7 +267,7 @@ var _resource = (function () {
     that.get_sheet_name = function ( sheet_id, callback ) {
         var sheet = get_sheet( sheet_id );
 
-        callback( { 'name': sheet['name'] } );
+        callback( { 'name': sheet['label'] } );
     };
 
 
@@ -331,13 +328,12 @@ var _resource = (function () {
     };
 
     // Return gui-understandable data from sheet_id sheet.
-    // GUI-TODO: --> get_sheet_data
     that.get_sheet_data = function ( sheet_id, callback ) {
         var sheet;
         var gui_data;
 
         sheet = get_sheet( sheet_id );
-        gui_data = prepare_data_package_for_gui( sheet_id, sheet['data'] );
+        gui_data = prepare_table_data( sheet_id );
 
         callback( gui_data );
     };
@@ -359,14 +355,8 @@ var _resource = (function () {
         sheet = get_sheet( sheet_id );
         copied_sheet = $.extend( true, {}, sheet );
         copied_sheet_id = add_sheet( copied_sheet );
-
-        sheet_descr = {
-            'name': copied_sheet['name'],
-            'sheet_id': copied_sheet_id,
-            'group_id': copied_sheet['group_id'],
-            'endpoint': copied_sheet['endpoint_id']
-        };
-
+        sheet_descr = get_sheet_description( copied_sheet_id );
+        
         callback( sheet_descr );
     };
 
@@ -380,21 +370,21 @@ var _resource = (function () {
 
             data.forEach( function( result ) {
                 var top_parent;
-                var end_id = result['tree_id'];
-                var group = top_parent_groups[ end_id ];
+                var tree_id = result['tree_id'];
+                var group = top_parent_groups[ tree_id ];
 
                 if ( !group ) {
-                    top_parent = _store.get_top_parent( end_id )['name'];
+                    top_parent = _store.get_top_parent( tree_id )['label'];
                     group = {
-                        'dbtree_topparent_name': top_parent,
+                        'dbtree_top_parent_name': top_parent,
                         'data': []
                     };
                     gui_results['results'].push( group );
-                    top_parent_groups[ end_id ] = group;
+                    top_parent_groups[ tree_id ] = group;
                 }
                 group['data'].push({
-                    'endpoint_id': end_id,
-                    'endpoint_name': that.get_end_name( end_id )['name'],
+                    'endpoint': tree_id,
+                    'name': that.get_end_name( tree_id )['label'],
                     'found_count': result['count']
                 });
             });
@@ -403,10 +393,8 @@ var _resource = (function () {
         });
     };
 
-    that.get_search_data = function ( endpoint_id, query, callback ) {
-        // TODO: endpoint_id --> endpoint
-        // TODO: remember that data is a list
-        _store.get_search_data( endpoint_id, query, function ( data, meta ) {
+    that.get_search_data = function ( endpoint, query, callback ) {
+        _store.get_search_data( endpoint, query, function ( data, meta ) {
             /*{
                 sheet_id : int,
                 name   : str,
@@ -433,7 +421,6 @@ var _resource = (function () {
 
 // P R I V A T E   I N T E R F A C E
     var sheets = {};
-    var next_sheet_id = 10000;
     
     function get_sheet( sheet_id ) {
         return sheets[ sheet_id ];
@@ -443,10 +430,10 @@ var _resource = (function () {
         delete sheets[ sheet_id ];
     }
 
-    // Return group id assigned to endpoint_id endpoint.
+    // Return group id assigned to endpoint.
     // If there is no group with data from this endpoint, next
     // group id will be returned.
-    function get_group_id( endpoint_id ) {
+    function get_group_id( endpoint ) {
         var sheet_id;
         var sheet;
         var group_id;
@@ -456,9 +443,9 @@ var _resource = (function () {
         max_group_id = -1;
         for ( sheet_id in sheets ) {
             if ( sheets.hasOwnProperty( sheet_id ) ) {
-                sheet = sheets[sheet_id];
+                sheet = sheets[ sheet_id ];
                 // group with this endpoint is found
-                if ( sheet['endpoint_id'] === endpoint_id ) {
+                if ( sheet['endpoint'] === endpoint ) {
                     group_found = true;
                     group_id = sheet['group_id'];
                     break;
@@ -477,14 +464,12 @@ var _resource = (function () {
         return group_id;
     }
 
-    // GUI-TODO: sheet[endpoint_id] --> sheet[endpoint]
     // Create new sheet from data.
     function create_sheet( endpoint, data, meta ) {
         var new_sheet;
         var active_columns;
         var cleaned_data;
         var cleaned_tree_data;
-        var name = meta['name'];
         var group_id;
 
         active_columns = meta['columns'].filter( function ( column ) {
@@ -493,190 +478,60 @@ var _resource = (function () {
 
         // Remove unnecessary columns and inserts cleaned data into tree.
         cleaned_data = clean_data( data, active_columns );
-        cleaned_tree_data = monkey.createTree( cleaned_data, 'id', 'parent' );
+        cleaned_tree_data = _tree.create_tree( cleaned_data, 'id', 'parent' );
 
         group_id = get_group_id( endpoint );
-// TODO: add selected_id
         new_sheet = {
             'group_id': group_id,
-            // TODO: endpoint_id --> endpoint
             'endpoint': endpoint,
             'data': cleaned_tree_data,
-            // TODO: check where name needs to be changed to label
-            'name': name,
+            'label': meta['label'],
             'columns': active_columns,
-            'type': _enum['STANDARD']
+            'type': _enum['STANDARD'],
+            'any_selected': false
         };
 
         return new_sheet;
     }
+    
+    generate_sheet_id = ( function () {
+        var next_sheet_id = 10000;
+        return (function() {
+            return function() {
+                var new_sheet_id = next_sheet_id;
+                next_sheet_id += 1;
+                return new_sheet_id;
+            }
+        })();
+    })();
 
-    // Add a new sheet and returns its id.
+    // Add a new sheet and return its id.
     function add_sheet( new_sheet ) {
-        var generate_sheet_id = function() {
-            // TODO: next_sheet_id should be global?
-            var new_id = next_sheet_id;
-            next_sheet_id += 1;
-            return new_id;
-        };
         var sheet_id = generate_sheet_id();
 
-        sheets[sheet_id] = new_sheet;
+        sheets[ sheet_id ] = new_sheet;
 
         return sheet_id;
     }
-
-    // Prepare data from sheet_id sheet.
-    function prepare_data_package_for_gui( sheet_id, data ) {
-        var data_package;
-
-        // TODO: move them to another module
-        switch ( sheets[sheet_id]['type'] ) {
-            case _enum['STANDARD']:
-                data_package = prepare_standard_data_package_for_gui( sheet_id, data );
-                break;
-            case _enum['FILTERED']:
-                data_package = prepare_filtered_data_package_for_gui( sheet_id, data );
-                break;
-            case _enum['SEARCHED']:
-                data_package = prepare_searched_data_package_for_gui( sheet_id, data );
-                break;
-        };
-
-        return data_package;
+    
+    function prepare_table_data( sheet_id, data ) {
+        var sheet = get_sheet( sheet_id );
+        var full_data = _tree.tree_to_list( sheet['data'] );
+        // if data to prepare was not passed, use full data from sheet
+        var data = data || full_data;
+        
+        return _ui.prepare_data_package( sheet, sheet_id, data, full_data );
     }
-
-    // Prepare data for standard sheet.
-    function prepare_standard_data_package_for_gui( sheet_id, data ) {
-        // Used to generate gui row levels. If row does not have parent,
-        // it's on first level, otherwise is one level lower.
-        var create_level_map = function( sheet_id ) {
-            var id_map = {};
-            var data = sheets[sheet_id]['data'].toList();
-
-            data.forEach( function ( row ) {
-                if ( !row['parent'] && row['parent'] !== 0 ) {
-                    id_map[ row['id'] ] = 1;
-                } else {
-                    id_map[ row['id'] ] = id_map[ row['parent'] ] + 1;
-                }
-            });
-
-            return id_map;
+    
+    function get_sheet_description( sheet_id ) {
+        var sheet = get_sheet( sheet_id );
+        
+        return {
+            'name': sheet['label'],
+            'sheet_id': sheet_id,
+            'group_id': sheet['group_id'],
+            'endpoint': sheet['endpoint']
         };
-        var prepare_rows_for_gui = function( rows, columns, id_level_map ) {
-            // Returns row prepared for gui(columns data + state).
-            var prepare_row = function( row, id_level_map ) {
-                var new_row = {
-                    // SEND id not _id
-                    '_id'      : row['id'],
-                    'parent'  : row['parent'],
-                    'leaf'    : row['leaf'],
-                    'is_open' : row['state']['is_open']
-                };
-                if ( !!row['aux']['info'] ) {
-                    new_row['aux']['info'] = row['aux']['info'];
-                }
-                if ( !!row['state']['selected'] ) {
-                    new_row['selected'] = row['state']['selected'];
-                }
-                new_row['level'] = id_level_map[ new_row['_id'] ];
-
-                // data field contains information to generate cells in table
-                // for this row
-                new_row['data'] = columns.map( function( e ) {
-                    return {
-                        'column_key'  : e['key'],
-                        'column_type' : e['type'],
-                        'click'       : (e['key'] === 'type' && !new_row['leaf']) ? 'click' : '',
-                        'content'     : format_value( row['data'][ e['key'] ], e['type'], e['format'] )
-                    };
-                });
-
-                return new_row;
-            };
-            var new_rows = [];
-
-            // create array with gui prepared rows
-            rows.forEach( function( row ) {
-                new_rows.push( prepare_row( row, id_level_map ) );
-            });
-
-            return new_rows;
-        };
-        // Return total row(if there is no total row, returns undefined).
-        var prepare_total_row = function( rows, columns ) {
-            var total_row = [];
-            var last_row = rows.pop();
-            if ( last_row['data']['type'] !== 'Total' ) {
-                rows.push( last_row );
-                return undefined;
-            }
-            columns.forEach( function ( column ) {
-                total_row.push( {
-                    'data': format_value( last_row['data'][ column['key'] ], column['type'], column['key'] ),
-                    'column_type': column['type'],
-                    'column_key': column['key']
-                });
-            });
-
-            return total_row;
-        };
-        var sheet;
-        var columns_for_gui;
-        var data_fot_gui;
-        var total_row;
-        var data = data || [];
-        var total_row;
-        var rows_for_gui;
-        var data_package;
-        var id_map;
-
-        sheet = sheets[sheet_id];
-
-        columns_for_gui = sheet['columns'].map( function ( column ) {
-            return {
-                'key': column['key'],
-                'label': column['label'],
-                'type': column['type']
-            };
-        });
-
-        // if data to prepare was not passed, use full tree from sheet
-        if ( !data.length ) {
-            data = sheet['data'].toList();
-        }
-        total_row = prepare_total_row( data, columns_for_gui );
-        id_map = create_level_map( sheet_id );
-        rows_for_gui = prepare_rows_for_gui( data, columns_for_gui, id_map );
-
-        // object for gui
-        data_package = {
-            'group': sheet['group_id'],
-            'id': sheet_id,
-            'type': sheet['type'],
-            'name': sheet['name'],
-            'total': total_row,
-            'columns': columns_for_gui,
-            'rows': rows_for_gui
-        };
-
-        return data_package;
-    }
-
-    function prepare_filtered_data_package_for_gui( sheet_id, data ) {
-        return 'TODO';
-    }
-
-    function prepare_searched_data_package_for_gui( sheet_id, data ) {
-        return 'TODO';
-    }
-
-    function format_value( value, type, format ) {
-        if ( type !== 'string' ) {
-            value = value + '';
-        }
-        return value;
     }
 
     // Return data that contains columns that are in columns list
@@ -690,6 +545,7 @@ var _resource = (function () {
 
             new_node['id'] = node['id'];
             new_node['parent'] = node['parent'];
+            // TODO
             ///////////////////////////////////////////////////
             // DELETE IT ASAP
             ///////////////////////////////////////////////////
@@ -719,6 +575,6 @@ var _resource = (function () {
 
         return cleaned_data;
     }
-// TODO: endpoint_id --> endpoint
+
     return that;
 }) ();
