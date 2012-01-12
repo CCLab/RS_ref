@@ -19,7 +19,7 @@ INSERT INTO dbtree VALUES( 1003, 1002, '2011', 'Budżet księgowy 2011', NULL, 0
 INSERT INTO dbtree VALUES( 1004, 1001, 'Sprawozdanie', NULL, 'Sprawozdanie części wydatkowej', 1, 1, NULL, TRUE );
 INSERT INTO dbtree VALUES( 1005, 1004, '2010', 'Wykonanie wydatków budżetu 2010', NULL, 0, 0, 'data_50006', TRUE );
 INSERT INTO dbtree VALUES( 1006, 1000, 'Budżet zadaniowy', NULL, 'Układ zadaniowy budżetu', 1, 1, NULL, TRUE );
-INSERT INTO dbtree VALUES( 1007, 1006, '2011', 'Budżet zadaniowy 2011', NULL, 0, 0, 'data_50001', TRUE );
+INSERT INTO dbtree VALUES( 1007, 1006, '2011', 'Budżet zadaniowy 2011', NULL, 0, 0, 'data_50007', TRUE );
 INSERT INTO dbtree VALUES( 1008, NULL, 'NFZ', NULL, 'Dane budżetowe NFZ', 2, 2, NULL, TRUE );
 INSERT INTO dbtree VALUES( 1009, 1008, 'Dane zagregowane', NULL, 'Dane centrali i ośrodków wojewódzkich', 1, 1, NULL, TRUE );
 INSERT INTO dbtree VALUES( 1010, 1009, '2011', 'Budżet NFZ 2011', NULL, 0, 0, 'data_50002', TRUE );
