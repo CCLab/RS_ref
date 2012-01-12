@@ -48,6 +48,8 @@ var _ui = (function () {
         return data_package;
     }
     
+//  P R I V A T E   I N T E R F A C E
+    
     // Prepare data for standard sheet.
     function prepare_standard_data_package( sheet, sheet_id, data, full_data ) {
         // Used to generate gui row levels. If row does not have parent,

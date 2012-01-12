@@ -417,6 +417,19 @@ var _resource = (function () {
             callback( data );
         });
     };
+    
+    that.create_permalink = function ( sheet_id, callback ) {
+        var all_ids = get_sorted_ids();
+        var all_sheets = [];
+        
+        all_ids.forEach( function ( id ) {
+            all_sheets.push( get_sheet( id ) );
+        });
+        
+        var permalink_data = _permalinks.prepare_permalink( all_sheets, all_ids );
+        
+        callback( permalink_data );
+    };
 
 
 // P R I V A T E   I N T E R F A C E
@@ -428,6 +441,24 @@ var _resource = (function () {
     
     function remove_sheet( sheet_id ) {
         delete sheets[ sheet_id ];
+    }
+    
+    function get_sorted_ids() {
+        var sheet_id;
+        var ids = [];
+        var sorted_ids = [];
+        
+        for ( sheet_id in sheets ) {
+            if ( sheets.hasOwnProperty( sheet_id ) ) {
+                ids.push( parseInt( sheet_id ) );
+            }
+        }
+        
+        sorted_ids = ids.sort( function ( id1, id2 ) {
+            return id1 - id2;
+        });
+        
+        return sorted_ids;
     }
 
     // Return group id assigned to endpoint.
