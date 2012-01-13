@@ -67,6 +67,11 @@ var _store = (function () {
         return top_parent;
     };
     
+    that.get_collection_name = function( endpoint ) {
+        var node = _tree.get_node( get_db_tree(), endpoint );
+        
+        return node['label'];
+    };
     
     // DATA TREE FUNCTIONS
     // Download meta data and first level nodes of collection with id = col_id.
@@ -130,12 +135,6 @@ var _store = (function () {
         that.get_children( endpoint, endpoint, callback );
     };
 
-    that.get_collection_name = function( col_id ) {
-        var node = _tree.get_node( get_db_tree(), col_id );
-        
-        return node['label'];
-    };
-
     that.get_columns = function( endpoint ) {
         var meta_data;
         var columns_copy;
@@ -144,6 +143,16 @@ var _store = (function () {
         columns_copy = $.extend( true, {}, meta_data['columns'] );
 
         return columns_copy;
+    };
+    
+    that.get_ancestors_ids = function( endpoint, id ) {
+        var data_source = get_data_source( endpoint );
+        var ancestors = _tree.get_ancestors( data_source, id );
+        ids_list = ancestors.map( function ( node ) {
+            return node['id'];
+        });
+        
+        return ids_list;
     };
 
     

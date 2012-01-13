@@ -55,6 +55,26 @@ var _permalinks = (function () {
         
         return permalink_data;
     };
+    
+    that.restore_sheet_data = function( sheet, get_top_level_fun, get_children_fun,
+                                        get_ancestors_fun ) {
+        var sheet_data;
+        
+        switch ( sheet['type'] ) {
+            case _enum['STANDARD']:
+                sheet_data = get_standard_sheet_data( sheet['data'], get_top_level_fun,
+                                get_children_fun, get_ancestors_fun );
+                break;
+            case _enum['FILTERED']:
+                sheet_data = get_filtered_sheet_data( data_tree );
+                break;
+            case _enum['SEARCHED']:
+                sheet_data = get_searched_sheet_data( data_tree );
+                break;
+        };
+        
+        return sheet_data;
+    };
 
 //  P R I V A T E   I N T E R F A C E
 
@@ -173,6 +193,39 @@ var _permalinks = (function () {
         });
         
         return sorted_ids;
+    }
+    
+    // Get nodes for standard sheet using passed functions.
+    // Permalink_sheet_data contains information which nodes are needed.
+    // Uses passed functions to get top level data, children nodes and ancestors.
+    // Returns a list with nodes that need to be inserted into a tree.
+    function get_standard_sheet_data( permalink_sheet_data, get_top_level_fun,
+                                      get_children_fun, get_ancestors_fun ) {
+        var get_branch = function( node_id ) {
+            var new_rows = [];
+            var ancestors_ids = get_ancestors_fun( node_id );
+            ancestors_ids.push( node_id );
+            
+            ancestors_ids.forEach( function ( id ) {
+                if ( !node_ids[ id ] ) {
+                    new_rows = new_rows.concat( get_children_fun( id ) );
+                    node_ids[ id ] = true;
+                }
+            });
+            
+            return new_rows;
+        };
+        var sheet_data = [];
+        var node_ids = {};
+        
+        sheet_data = get_top_level_fun();
+        
+        permalink_sheet_data.forEach( function ( id ) {
+            var branch_new_nodes = get_branch( node_id );
+            sheet_data = sheet_data.concat( get_branch( node_id ) );
+        });
+        
+        return sheet_data;
     }
     
 
