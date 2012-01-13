@@ -418,15 +418,18 @@ var _resource = (function () {
         });
     };
     
-    that.create_permalink = function ( sheet_id, callback ) {
-        var all_ids = get_sorted_ids();
+    // Creates permalink from sheets which id is in list sheet_id.
+    // If sheet_id is undefined, then all sheets will be used to
+    // create permalink.
+    that.create_permalink = function ( sheet_ids, callback ) {
+        var sheet_ids = sheet_ids || get_sorted_ids();
         var all_sheets = [];
         
-        all_ids.forEach( function ( id ) {
+        sheet_ids.forEach( function ( id ) {
             all_sheets.push( get_sheet( id ) );
         });
         
-        var permalink_data = _permalinks.prepare_permalink( all_sheets, all_ids );
+        var permalink_data = _permalinks.prepare_permalink( all_sheets, sheet_ids );
         
         callback( permalink_data );
     };
