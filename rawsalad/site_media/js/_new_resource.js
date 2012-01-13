@@ -431,7 +431,7 @@ var _resource = (function () {
         
         var permalink_data = _permalinks.prepare_permalink( all_sheets, sheet_ids );
         
-        callback( permalink_data );
+        _store.store_state( permalink_data, callback );
     };
 
 

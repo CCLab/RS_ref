@@ -29,6 +29,8 @@ var _store = (function () {
 //  P U B L I C   I N T E R F A C E
     var that = {};
 
+    // DBTREE FUNCTIONS
+    
     // Download db tree describing collections.
     that.get_collections_list = function ( callback ) {
         var respond = function () {
@@ -55,7 +57,18 @@ var _store = (function () {
             return _tree.to_list( get_data_source[ endpoint ] );
         }
     };
+    
+    that.get_top_parent = function ( endpoint ) {
+        var tree_id = get_endpoint_id( endpoint );
+        var top_parent = _tree.get_top_parent( get_db_tree(), tree_id );
 
+        if ( !top_parent ) return undefined;
+
+        return top_parent;
+    };
+    
+    
+    // DATA TREE FUNCTIONS
     // Download meta data and first level nodes of collection with id = col_id.
     that.get_init_data = function ( endpoint, callback ) {
         var respond = function ( data_source, meta_source ) {
@@ -113,7 +126,7 @@ var _store = (function () {
         }
     };
 
-    that.get_top_level = function ( endpoint, callback ) {
+    that.get_top_level = function( endpoint, callback ) {
         that.get_children( endpoint, endpoint, callback );
     };
 
@@ -133,11 +146,13 @@ var _store = (function () {
         return columns_copy;
     };
 
-    that.get_search_count = function ( endpoints, query, callback ) {
+    
+    // SEARCH FUNCTIONS
+    that.get_search_count = function( endpoints, query, callback ) {
         _db.get_search_count( endpoints, query, callback );
     };
 
-    that.get_search_data = function ( endpoint, query, callback ) {
+    that.get_search_data = function( endpoint, query, callback ) {
         var get_meta = !has_meta_data( endpoint );
         var data_copy;
         var meta;
@@ -155,14 +170,11 @@ var _store = (function () {
             callback( data_copy, meta_copy );
         });
     };
-
-    that.get_top_parent = function ( endpoint ) {
-        var tree_id = get_endpoint_id( endpoint );
-        var top_parent = _tree.get_top_parent( get_db_tree(), tree_id );
-
-        if ( !top_parent ) return undefined;
-
-        return top_parent;
+    
+    
+    // PERMALINK FUNCTIONS
+    that.store_state = function( permalink_data, callback ) {
+        _db.store_state( permalink_data, callback );
     };
 
 
