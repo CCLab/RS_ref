@@ -180,7 +180,6 @@ def search_data( user_query, endpoint, get_meta=False ):
         # get only unique results from current column
         unique_data = [ r for r in results if not boxes.get( r['id'], None ) ]
         # transform db data into resource objects
-        # TODO consider getting already collected ids from _store
         final_data['data'] += collection.prepare_data( unique_data )
 
         # prepare a list of already collected parents
@@ -243,11 +242,12 @@ class Collection:
         self.columns = self.cursor.fetchall()
 
         # get label of the endpoint
-        query = '''SELECT label FROM dbtree
-                   WHERE endpoint = '%s'
-                ''' % ( self.endpoint, )
-        self.cursor.execute( query )
-        self.label = self.cursor.fetchone()['label']
+#        query = '''SELECT label FROM dbtree
+#                   WHERE endpoint = '%s'
+#                ''' % ( self.endpoint, )
+#        self.cursor.execute( query )
+#        self.label = self.cursor.fetchone()['label']
+        self.label = "CAS"
 
 
     def get_columns( self ):
