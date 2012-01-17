@@ -29,573 +29,251 @@ var _store = (function () {
 //  P U B L I C   I N T E R F A C E
     var that = {};
 
-    // meta_data setter/getter
-    that.meta_data = function ( value ) {
-        // set it just once
-//        _assert.is_equal( meta_data.length, 0,
-//                          "meta_data already assigned" );
+    // DBTREE FUNCTIONS
+    
+    // Download db tree describing collections.
+    that.get_collections_list = function ( callback ) {
+        var respond = function () {
+            var data = _tree.tree_to_list( get_db_tree() );
+            callback( data );
+        };
 
-        meta_data = value;
-    };
-
-
-    // get metadata about available datasets
-    that.meta_datasets = function () {
-        return meta_data;
-    };
-
-
-    // get metadata about views available in a cerain dataset (name perspectives comes from db!)
-    that.meta_views = function ( dataset_id ) {
-        return meta_data[ dataset_id ]['perspectives'];
-    };
-
-
-    // check if group exists
-    that.group_exists = function ( data ) {
-        if( find_group( data ) === -1) {
-            return false;
+        if( has_db_tree() ) {
+            respond();
         }
-        return true;
-    };
-
-
-    that.non_filtered_exists = function ( data ) {
-        var i;
-        var sheets;
-        var grp_number = find_group( data );
-
-        // no such group exists yet
-        if( grp_number === -1 ) {
-            return false;
-        }
-
-        sheets = that.get_group( grp_number )['sheets'];
-        for( i = 0; i < sheets.length; ++i ) {
-            if( sheets[i]['filtered'] === false ) {
-                // the group exists and there is a non-filtered sheet present
-                return true;
-            }
-        }
-
-        // though group exists, there are only filtered sheets
-        return false;
-    };
-
-    // creates a new group and sets an activ group index
-    that.create_group = function (data) {
-        // create a group for new data collection
-        groups.push( group( data ));
-        that.active_group( groups.length - 1 );
-    };
-
-
-    // creates a new group or sets an active group index to apropriate group
-    that.create_new_group = function ( data ) {
-        var found = find_group( data );
-
-        if( found !== -1 ) {
-            that.active_group( found );
-            return false;
-        }
-
-        // create a group for new data collection
-        groups.push( group( data ));
-        that.active_group( groups.length - 1 );
-
-        return true;
-    };
-
-
-    that.dataset = function () {
-        return that.active_group()['dataset'];
-    };
-
-
-    that.view = function () {
-        return that.active_group()['view'];
-    };
-
-
-    that.issue = function () {
-        return that.active_group()['issue'];
-    };
-
-
-    that.init_basic_sheet = function ( data ) {
-        var active_grp = that.active_group();
-
-        // store original version of collection
-        active_grp['name'] = data['name'];
-        active_grp['basic_rows'] = sheet( data, true );
-        // add data to mutable list of sheets
-        active_grp['sheets'].push( sheet( data ) );
-    };
-
-
-    that.set_active_columnes = function ( columns ) {
-        that.active_sheet()['columns'] = columns;
-    };
-
-
-    that.get_column_from_group = function( id ) {
-        var columns = that.active_group()['columns'];
-        return columns.filter( function ( col ) {
-            return col['key'] === id;
-        })[0];
-    };
-
-
-    that.active_columns = function () {
-        return that.active_sheet()['columns'];
-    };
-
-
-    that.group_columns = function () {
-        return that.active_group()['columns'];
-    };
-
-
-    //TODO not needed
-    that.basic_schema = function () {
-        var full_schema = that.active_columns();
-
-        return full_schema.filter( function ( element ) {
-            return element['basic'] === true;
-        });
-    };
-
-
-    that.set_selected = function ( id, state ) {
-        var node, rows = that.active_rows();
-        var i, len = rows.length;
-
-        for( i = 0; i < len; i += 1 ) {
-            node = rows[i];
-            if( node['data']['idef'] === id ) {
-                node['state']['selected'] = state;
-                return;
-            }
-        }
-//        that.active_rows().forEach( function ( node ) {
-//            if( node['data']['idef'] === id ) {
-//                node['state']['selected'] = true;
-//            }
-//            else {
-//                node['state']['selected'] = false;
-//            }
-//        });
-    };
-
-
-    that.set_open = function ( id, state ) {
-        var node, rows = that.active_rows();
-        var i, len = rows.length;
-
-        for( i = 0; i < len; i += 1 ) {
-            node = rows[i];
-            if( node['data']['idef'] === id ) {
-                node['state']['open'] = state;
-                return;
-            }
-        }
-    };
-
-
-    that.set_visible = function ( id, state ) {
-        var node, rows = that.active_rows();
-        var i, len = rows.length;
-        for ( i = 0; i < len; i += 1 ) {
-            node = rows[i];
-            if ( node['data']['idef'] === id ) {
-                node['state']['visible'] = state;
-                return;
-            }
-
-        }
-
-    };
-
-
-    that.active_sheet_index = function ( new_active_sheet_num ) {
-        if( arguments.length === 0 ) {
-            return that.active_group()['active_sheet_number'];
-        }
-        that.active_group()['active_sheet_number'] = new_active_sheet_num;
-    };
-
-
-    that.active_group_index = function () {
-        return active_group_number;
-    };
-
-
-    that.next_sheet_number = function () {
-        return that.active_group()['sheets'].length;
-    };
-
-
-    that.max_group_number = function () {
-        return groups.length;
-    };
-
-
-    that.active_rows = function () {
-        return that.active_sheet()['rows'];
-    };
-
-
-    that.get_node_from_active_sheet = function ( id ) {
-        var rows = that.active_rows();
-        var node;
-        var i;
-
-        for ( i=0; i < rows.length ; i += 1 ) {
-            node = rows[i];
-            if ( node['data']['idef'] === id ){
-                return node;
-            }
-        }
-        return null;
-    };
-
-    that.get_node_name = function ( id ) {
-        var node = that.get_node_from_active_sheet( id );
-        var name = node['data']['name'];
-        if (typeof name === 'string'){
-            return name;
-        }
-        return null;
-    };
-
-//    that.active_pending_nodes = function () {
-//        return that.active_sheet()['pending_nodes'];
-//    };
-
-
-    that.active_basic_changed = function ( value ) {
-        that.active_group()['basic_changed'] = value;
-    };
-
-    that.active_filtered = function () {
-        return that.active_sheet()['filtered'];
-    };
-
-    that.active_sorted = function () {
-        return that.active_sheet()['sorted'];
-    };
-
-    that.set_sorted = function ( is_sorted ) {
-        that.active_sheet()['sorted'] = is_sorted;
-    }
-
-
-    // active sheet getter / setter
-    that.active_sheet = function ( value ) {
-        var active_grp = that.active_group();
-
-        if( arguments.length === 0 ) {
-            return active_grp['sheets'][active_grp['active_sheet_number']];
-        }
-
-        active_grp['active_sheet_number'] = value;
-    };
-
-    // active group getter / setter
-    that.active_group = function ( value ) {
-        var num;
-        if( arguments.length === 0 ) {
-            return groups[ active_group_number ];
-
-        }else if ( typeof value === 'number' ){
-
-            active_group_number = value;
-
-        }else if ( typeof value === 'object' &&
-            typeof value.dataset === 'string' &&
-            typeof value.view === 'string' ){
-
-                num = find_group( value );
-                if ( num === -1 ) {
-                    return -1
-                }
-                else {
-                    active_group_number = num;
-                }
-        }
-    };
-
-    that.active_group_name = function () {
-        return that.active_group()['name'];
-    };
-
-    that.add_data = function ( new_data ) {
-        var rows = that.active_rows();
-
-        new_data
-            .map( function ( row ) {
-                return {
-                    data: row,
-                    state: { open: false, selected: false, visible: true }
-                };
-            })
-            .forEach( function ( e ) {
-                rows.push( e );
+        else {
+            _db.get_db_tree( function ( data ) {
+                save_db_tree( data );
+                respond();
             });
-    };
-
-    that.add_new_sheet = function ( sheet ) {
-        var active_grp = that.active_group();
-        var next_sheet_number = that.next_sheet_number() ;
-
-        active_grp['sheets'].push( sheet );
-        that.active_sheet_index( next_sheet_number );
-    };
-
-    that.get_all_groups = function () {
-        return groups;
-    };
-
-    // check if column exists in active_sheet
-    that.is_column_in_active_sheet = function( key ){
-        var i;
-        var cols = that.active_columns();
-
-        for( i = 0; i < cols.length; i += 1 ) {
-            if( cols[i]['key'] === key ){
-                    return true;
-            }
         }
-        return false;
     };
 
-    that.get_group = function ( group ) {
-        return groups[group];
-    };
-
-    that.get_sheet = function ( group, sheet ) {
-        return groups[group]['sheets'][sheet];
-    };
-
-    that.remove_active_group = function() {
-        if (groups.length === 1){
-            return false;
+    // Get copy of tree with all nodes from collection with id = col_id.
+    that.get_collection_data = function ( endpoint, callback ) {
+        if ( !has_meta_data( endpoint ) ) {
+            return undefined;
+        } else {
+            return _tree.to_list( get_data_source[ endpoint ] );
         }
-        groups.splice ( that.active_group_index(), 1 );
-        if (that.active_group_index() !== 0){
-            active_group_number = that.active_group_index()-1;
-        }
-        return true;
-    }
-
-    that.remove_active_sheet = function () {
-        var active_grp = that.active_group();
-        var active_group_sheets = active_grp['sheets'];
-        var active_sheet_num = that.active_sheet_index();
-        if (groups.length === 1 && active_group_sheets.length === 1 ){
-            return false;
-        }
-        active_group_sheets.splice(active_sheet_num, 1 );
-        if (active_group_sheets.length === 0 ){
-            that.remove_active_group();
-        }else if (active_sheet_num !== 0 ) {
-                active_grp['active_sheet_number'] = active_sheet_num - 1  ;
-            }
-        return true;
     };
+    
+    that.get_top_parent = function ( endpoint ) {
+        var tree_id = get_endpoint_id( endpoint );
+        var top_parent = _tree.get_top_parent( get_db_tree(), tree_id );
 
-    that.active_sheet_name = function (sheet_name) {
-        if( arguments.length === 0 ) {
-            return that.active_sheet()['name'];
-        }
-        that.active_sheet()['name'] = sheet_name;
+        if ( !top_parent ) return undefined;
+
+        return top_parent;
     };
-
-    that.reset_sheet = function () {
-        var active_sheet = that.active_sheet();
-        var basic_rows = $.extend( true, [], that.active_group()['basic_rows'] );
-        var total = active_sheet['rows']['total'];
-
-        active_sheet['rows'] = basic_rows;
-        active_sheet['rows']['total'] = total;
+    
+    that.get_collection_name = function( endpoint ) {
+        var node = _tree.get_node( get_db_tree(), endpoint );
+        
+        return node['label'];
     };
+    
+    // DATA TREE FUNCTIONS
+    // Download meta data and first level nodes of collection with id = col_id.
+    that.get_init_data = function ( endpoint, callback ) {
+        var respond = function ( data_source, meta_source ) {
+            var data = _tree.get_children_nodes( data_source );
+            var meta = $.extend( true, {}, meta_source );
+            callback( data, meta );
+        };
+        var data_source;
+        var meta_source;
 
-    that.next_sheet_name = function () {
-        var next_num=1;
-        var sheet_name;
-        that.active_group()['sheets'].forEach( function (sheet, sheet_num){
-            if ( sheet['name'].indexOf(translation['js_sheet']) !== -1 ) {
-                sheet_name = sheet['name'].split(' ');
-                if ( sheet_name[1] >= next_num ){
-                    next_num = sheet_name[1];
-                    next_num++;
-                   };
-            }
-        });
-
-        return translation['js_sheet'] + next_num;
-    };
-
-    that.get_info = function ( id ) {
-        var node = that.active_rows().filter( function ( e ) {
-                return e['data']['idef'] === id;
-                })
-                .pop();
-
-        return node['data']['info'];
-    };
-
-    that.get_all_sheets_num = function () {
-        var groups = that.get_all_groups();
-        var num = 0;
-        groups.forEach( function ( group ){
-            num += group['sheets'].length;
-        });
-        return num;
-    };
-
-    that.restore_state = function ( state ) {
-        // traverse the state list and prepare data to proper format
-        state.forEach( function( group ) {
-            group['sheets'].forEach( function ( sheet ) {
-                // assign a proper node state
-                sheet['rows'] = add_state( sheet['rows'] );
-                // if 'Total' available, move it to separate field
-                if( sheet['rows'][ sheet['rows'].length - 1 ]['data']['idef'].indexOf( '9999' ) !== -1 ) {
-                    sheet['rows']['total'] = sheet['rows'].pop();
-                }
+        if ( has_data( endpoint ) ) {
+            data_source = get_data_source( endpoint );
+            meta_source = get_meta_data_source( endpoint );
+            respond( data_source, meta_source );
+        } else {
+            _db.get_init_data( endpoint, function ( db_data ) {
+                // save data and meta data, return it in callback
+                data_source = store_data( db_data['data'], endpoint );
+                meta_source = store_meta_data( db_data['meta'], endpoint );
+                respond( data_source, meta_source );
             });
-
-            // create a basic_rows on the basis of the first row in the group
-            group['basic_rows'] = [];
-            $.extend( true,
-                      group['basic_rows'],
-                      group['sheets'][0]['rows'].filter( function ( e ) {
-                                                    return e['data']['level'] === 'a';
-                                                })
-                                                .map( function ( e ) {
-                                                    return {
-                                                            'data': e['data'],
-                                                            'state': {
-                                                                'open': false,
-                                                                'selected': false,
-                                                                'visible': true
-                                                            }
-                                                    }
-                                                })
-                      );
-
-            // create easy-to-access name field in the group
-            group['name'] = group['sheets'][0]['name'];
-            // reset active sheet
-            group['active_sheet_number'] = 0;
-        });
-        // assign state to groups obejct
-        groups = state;
-        active_group_number = 0;
-        that.active_sheet_index( 0 );
+        }
     };
+
+    // Get children of parent_id node from col_id collection.
+    that.get_children = function ( endpoint, parent_id, callback ) {
+        var respond = function ( data_source ) {
+            var children;
+            
+            if ( parent_id === endpoint ) {
+                children = _tree.get_children_nodes( data_source );
+            } else {
+                children = _tree.get_children_nodes( data_source, parent_id );
+            }
+            
+            callback( children );
+        };
+        var data_source;
+        var children;
+
+        if ( has_data( endpoint, parent_id ) ) {
+            data_source = get_data_source( endpoint );
+            respond( data_source );
+        } else {
+            _db.get_children( endpoint, parent_id, function ( db_data ) {
+                // Store is not sure if it has all children of parent_id,
+                // downloads them and updates tree(inserting new nodes).
+                data_source = get_data_source( endpoint );
+                // TODO: check execution time
+                _tree.update_tree( data_source, db_data );
+                mark_parent_complete( parent_id );
+                
+                respond( data_source );
+            });
+        }
+    };
+
+    that.get_top_level = function( endpoint, callback ) {
+        that.get_children( endpoint, endpoint, callback );
+    };
+
+    that.get_columns = function( endpoint ) {
+        var meta_data;
+        var columns_copy;
+
+        meta_data = get_meta_data_source( endpoint );
+        columns_copy = $.extend( true, {}, meta_data['columns'] );
+
+        return columns_copy;
+    };
+    
+    that.get_ancestors_ids = function( endpoint, id ) {
+        var data_source = get_data_source( endpoint );
+        var ancestors = _tree.get_ancestors( data_source, id );
+        ids_list = ancestors.map( function ( node ) {
+            return node['id'];
+        });
+        
+        return ids_list;
+    };
+
+    
+    // SEARCH FUNCTIONS
+    that.get_search_count = function( endpoints, query, callback ) {
+        _db.get_search_count( endpoints, query, callback );
+    };
+
+    that.get_search_data = function( endpoint, query, callback ) {
+        var get_meta = !has_meta_data( endpoint );
+        var data_copy;
+        var meta;
+        var meta_copy;
+
+        _db.get_search_data( endpoint, query, get_meta, function ( db_data ) {
+            data_source = get_data_source( endpoint );
+            if ( get_meta ) {
+                meta = store_meta_data( db_data['meta'], endpoint );
+            } else {
+                meta = get_meta_data_source( endpoint );
+            }
+            data_copy = _tree.tree_to_list( data_source );
+            meta_copy = $.extend( true, {}, meta );
+            callback( data_copy, meta_copy );
+        });
+    };
+    
+    
+    // PERMALINK FUNCTIONS
+    that.store_state = function( permalink_data, callback ) {
+        _db.store_state( permalink_data, callback );
+    };
+
 
 // P R I V A T E   I N T E R F A C E
 
-    function add_state( rows ) {
-        var open_nodes = {};
-        rows.forEach( function ( e ) {
-            if ( !!e['parent'] ) {
-                open_nodes[ e['parent'] ] = true;
+    // data tree about data
+    var db_tree;
+    // tree for each collection
+    var data_sources = {};
+    // information about complete children
+    var complete_children = {};
+    // contains meta data for each collection
+    var meta_sources = {};
+    // maps endpoints to their id in collection tree
+    var endpoint_map = {};
+
+    // Does store have children of parent_id(default parent is root) in col_id collection.
+    function has_data( endpoint, parent_id ) {
+        if ( parent_id === undefined ) {
+            parent_id = endpoint;
+        }
+        return has_all_children( parent_id );
+    }
+
+    // Does store have all children of parent_id in col_id collection.
+    function has_all_children( parent_id ) {
+        return !!complete_children[ parent_id ];
+    }
+
+    // Saves information about having downloaded all children of parent_id node in
+    // col_id collection.
+    function mark_parent_complete( parent_id ) {
+        complete_children[ parent_id ] = true;
+    }
+    
+    function has_data_source( endpoint ) {
+        return !!data_source[ endpoint ];
+    }
+
+    function get_data_source( endpoint ) {
+        return data_sources[ endpoint ];
+    }
+
+    function has_meta_data( endpoint ) {
+        return !!meta_sources[ endpoint ];
+    }
+
+    function get_meta_data_source( endpoint ) {
+        return meta_sources[ endpoint ];
+    }
+    
+    function add_endpoint_id( endpoint, tree_id ) {
+        endpoint_map[ endpoint ] = tree_id;
+    }
+    
+    function get_endpoint_id( endpoint ) {
+        return endpoint_map[ endpoint ];
+    }
+
+    // Save downloaded data and save information about having full first level.
+    function store_data( db_data, endpoint ) {
+        var new_data_source = _tree.create_tree( db_data, 'id', 'parent' );
+        data_sources[ endpoint ] = new_data_source;
+        mark_parent_complete( endpoint );
+
+        return new_data_source;
+    }
+
+    function store_meta_data( db_meta_data, endpoint ) {
+        meta_sources[ endpoint ] = db_meta_data;
+        return db_meta_data;
+    }
+
+    function has_db_tree() {
+        return !!db_tree;
+    }
+
+    function get_db_tree() {
+        return db_tree;
+    }
+
+    function save_db_tree( data ) {
+        db_tree = _tree.create_tree( data, 'id', 'parent' );
+        db_tree.forEach( function ( node ) {
+            if ( !!node['endpoint'] ) {
+                add_endpoint_id( node['endpoint'], node['id'] );
             }
         });
-
-        return rows.map( function ( e ) {
-            return {
-                'data': e,
-                'state': {
-                    'open': !!open_nodes[ e['idef'] ],
-                    'selected': false,
-                    'visible': true
-                }
-            };
-        });
-    }
-
-    // data about available datasets and their views
-    var meta_data = [];
-
-    // a store for a sheets tab in the GUI
-    var groups = [];
-    var active_group_number = null;
-
-
-
-    // returns group id if it exists or -1 if there is no such a group
-    function find_group( data ) {
-        var i;
-
-        for( i = 0; i < groups.length; i += 1 ) {
-            if( data['dataset'] === groups[i]['dataset'] &&
-                data['view'] === groups[i]['view'] &&
-                data['issue'] === groups[i]['issue'] ) {
-
-                return i;
-            }
-        }
-
-        return -1;
-    }
-
-
-
-// O B J E C T   F A C T O R I E S
-    // a single sheet
-    function sheet( data, basic ) {
-        var cols = that.active_group()['columns'].filter( function ( e ) {
-                    return e['basic'] === true;
-                });
-        var rows = data['rows'].map( function ( row ) {
-                                    return {
-                                        data: row,
-                                        state: {
-                                            open: false,
-                                            selected: false,
-                                            visible: true
-                                        }
-                                    };
-                                });
-
-        // if total present in collection move it to special position
-        if( rows[ rows.length - 1 ]['data']['idef'].indexOf( '9999' ) !== -1 ) {
-            rows['total'] = rows.pop();
-        }
-
-        if( !!basic ) {
-            return rows;
-        }
-
-        return {
-            'columns': cols,
-            'rows': rows,
-            'name': data['name'],
-            'filtered': false,
-            'sorted': false
-        };
-    }
-
-
-    // list of all sheets of the same dataset/view/issue
-    function group( data ) {
-        return {
-            'name': null,
-            'dataset': data['dataset'].toString(),
-            'view': ( data['view'] || data['perspective'] ).toString(),
-            'issue': data['issue'].toString(),
-            'columns': data['columns'],
-            'active_sheet_number': 0,
-            'sheets': [],
-            'basic_rows': null,
-            'basic_changed': false
-        };
+        
     }
 
     return that;
-
 }) ();
