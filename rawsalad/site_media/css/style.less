@@ -370,18 +370,14 @@ textarea {
       color: @panel-close-bar-hover-text;
     }
   }
+  
   /* DBTREE PANEL */
   #pl-choose {  /* TODO check - it's from old choose panel */
     position: relative;
     
     li {
-      overflow: hidden;
       margin: 15px;
       padding: 10px;
-    
-      &:hover {
-        background-color: @choose-view-background;
-      }
     }
     
     > header {
@@ -416,58 +412,27 @@ textarea {
   }
   
   .pl-tree-node-checked {
-    background-image: url("/site_media/img/checkbox01_cheked.png");
+    background-image: url("/site_media/img/checkbox01_checked.png");
 
     &:hover {
       background-image: url("/site_media/img/checkbox01_checkedHover.png");    
     }
   }
   
-  .pl-tree-det {
+  .pl-tree {
     overflow: auto;
 
     padding: 5px;
 
-    background-color: white; /*TODO work on colors in tree */
-
     border-width: 1px;
     border-style: solid;
-    border-color: #919191;  /*TODO work on colors in tree */
-  }
-
-  .pl-tree-pointer {
-    float: left;
-
-    margin-left: -14px !important;
-    margin-top: 5px;
-    
-    position: absolute;  
-  }
-
-  .pl-tree-arrow {
-    float: left;
-    
-    margin-left: 5px;
-    margin-right: 20px;
-    margin-top: 4px;
-  }
-  
-  .pl-tree-node-info {
-    max-width: 320px;  
-    
-    header {
-      margin-top: 8px;
-    }
-  }
-
-  .pl-tree-end-det {
-    overflow: auto;
-    display: none;
+    border-color: #E3E3E3;  /*TODO work on colors in tree */
     
     table {
       overflow: auto;
       border-collapse: collapse;
     }
+
     th {
       padding: 10px;
       text-align: center;
@@ -489,7 +454,7 @@ textarea {
       border-bottom-color: #C8C8C8;
     }
     
-    > table > tbody {
+    table > tbody {
       
       > tr:last-child > td {
         border-bottom: none;
@@ -501,6 +466,60 @@ textarea {
         text-align: left;
       }      
     }    
+
+    ul {
+      display: none;
+    }
+
+    > ul > table {
+      margin-left: 74px;
+    }    
+  }
+  
+  .pl-tree-det {
+    background-color: white; /*TODO - LESS COLORS */
+    border-color: #919191;
+    
+    > ul {
+        display: block;
+        clear: both;
+    }
+    
+  }
+  
+  .pl-tree-pointer {
+    float: left;
+
+    margin-left: -14px !important;
+    margin-top: 5px;
+    
+    position: absolute;  
+  }
+
+  .pl-tree-arrow {
+    float: left;
+    
+    margin-left: 5px;
+    margin-right: 20px;
+    margin-top: 4px;
+  }
+  
+  .pl-tree-node-info {
+    max-width: 320px;  
+    float: left;    
+        
+    header {
+      margin-top: 8px;
+    }
+  }
+
+  .pl-tree-end-det {
+    overflow: auto;
+    display: none;
+
+    clear: both;
+
+    margin-left: 39px;
   }
   
   
@@ -536,7 +555,7 @@ textarea {
   
   #pl-ch-datasets {
     float: left;
-    width: 940px;
+    width: 98%;
     clear: none;
   }
 
@@ -554,7 +573,6 @@ textarea {
   #pl-ch-area {
     left: 0px;
     top: 0px;
-    width: 2000px;
     position: relative;
   }
 
