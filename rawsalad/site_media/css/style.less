@@ -47,7 +47,9 @@
       @panel-close-bar-top-border:              @blue;
       
       @panel-close-bar-hover-background:        @white; 
-      @panel-close-bar-hover-text:                    @blue;
+      @panel-close-bar-hover-text:              @blue;
+      
+      @tree-even-background:                    @very-light-silver;
       
       @choose-view-background:                  @silver;
       @chose-header-border:                     @gray;
@@ -398,6 +400,7 @@ textarea {
 
     width: 28px;
     height: 22px;
+    cursor: pointer;
 
     margin-right: 15px;
     margin-top: 10px;
@@ -473,7 +476,15 @@ textarea {
 
     > ul > table {
       margin-left: 74px;
-    }    
+    }
+    
+    .pl-tree-list-even {
+        
+      > li > section.pl-tree {
+        background-color: @tree-even-background;      
+      }
+    }
+        
   }
   
   .pl-tree-det {
@@ -502,6 +513,8 @@ textarea {
     margin-left: 5px;
     margin-right: 20px;
     margin-top: 4px;
+    
+    cursor: pointer;
   }
   
   .pl-tree-node-info {
@@ -527,10 +540,13 @@ textarea {
     float: left;
     width: 38px;
     height: 19px;
+    
+    cursor: pointer;
   }
   
   .pl-tree-end-nocheck {
     background-image: url("/site_media/img/checkbox02_inactive.png");
+    cursor: auto;
   }
 
   .pl-tree-end-unchecked {

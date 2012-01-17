@@ -52,7 +52,11 @@ var _templates = (function () {
     
     // D B   T R E E
     that.tree_list = 
-        '<ul class="left pl-tree-list">' +
+        '<ul class="left pl-tree-list' +
+            '{{#even}}' +
+                ' pl-tree-list-even' +
+            '{{/even}}' +
+        '">' +
         '</ul>';
     
     that.tree_node=

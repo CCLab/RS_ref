@@ -49,46 +49,45 @@ var _gui = (function () {
         
     function draw_db_tree_panels( data ) {
         var tree_panel = '';
-        var choose_panel = $('#pl-ch-datasets');
-        var choose_list = $( _templates.tree_list );
-        add_tree_node( data, '', choose_list );
+        var choose_panel = $('#pl-ch-datasets'); 
+        var choose_list = $( Mustache.to_html( _templates.tree_list, { 'even': false, } ) );
+        add_tree_node( data, '', choose_list, true );
         prepare_tree_interface( choose_list );
                 
         choose_panel.append( choose_list );
-        console.log( data );
-        
+        console.log( data );        
     }
 
     // TODO move to beter place
-    function add_tree_node( data, parent_id, choose_list ){
+    function add_tree_node( data, parent_id, choose_list, even ){
         var id = parent_id; 
-        var leafs_html;
+        var html;
         var children = get_tree_children( data, id );
         
         
         // TODO add min depth 
         // TODO add leaf template and Mustache
-        children.forEach( function( node ) {
-            if ( node['max_depth'] === 1 ) {
-                leafs_html = add_one_to_dbtree( node, data );
-                choose_list.append( leafs_html );
-            }
-            else if( node['max_depth'] === 2 ) {
-                leafs_html = add_two_to_dbtree( node, data );
-                choose_list.append( leafs_html );
-            }
-            else {
-                var new_node_list;
-                var list_code = $( _templates.tree_list );
-                var html = Mustache.to_html( _templates.tree_node, node );
-                var html_code = $(html);
-                var new_placeholder ;
-                
-                choose_list.append( html_code );
-                new_placeholder = choose_list.find( '.pl-tree' );
-                new_placeholder.append( list_code );
-                add_tree_node( data, node['id'], list_code );
-            }
+        children.forEach( function( node ) {        
+            var max_depth = node['max_depth'];
+            
+            switch ( max_depth ) {
+                case 1:
+                    html = add_one_to_dbtree( node, data );
+                    break;
+                case 2 :
+                    html = add_two_to_dbtree( node, data );
+                    break;
+                default:
+                    var new_placeholder ;
+                    var even_level = { 'even': even, };
+                    var list_code = $( Mustache.to_html( _templates.tree_list, even_level ) );
+
+                    html = $( Mustache.to_html( _templates.tree_node, node ) );                                
+                    new_placeholder = html.find( '.pl-tree' );
+                    new_placeholder.append( list_code );
+                    add_tree_node( data, node['id'], list_code, ! even );
+            } ;
+            choose_list.append( html );
         } );
     }
     
