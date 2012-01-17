@@ -51,22 +51,26 @@ var _templates = (function () {
         '</ul>';
     
     // D B   T R E E
+    that.tree_list = 
+        '<ul class="left pl-tree-list">' +
+        '</ul>';
+    
     that.tree_node=
         '<li>' +
             '<div data-node="{{id}}" class="pl-tree-node-unchecked pl-tree-node">' + //TODO change classes names
             '</div>' +
-            '<section class="pl-tree-det">' +
-                '<img src="/site_media/img/corner.png" class="pl-tree-pointer" style="display: inline-block; ">' +
-                '<img src="/site_media/img/triangle-down.png" alt="triangle" class="pl-tree-arrow" data-node="{{id}}">' +
+            '<section class="pl-tree">' +
+                '<img src="/site_media/img/corner.png" class="pl-tree-pointer" style="display: none; ">' +
+                '<img src="/site_media/img/triangle.png" alt="triangle" class="pl-tree-arrow" data-node="{{id}}">' +
                 '<section class="pl-tree-node-info">' +
                     '<header>' +
                         '<h3>{{name}}</h3>' +
                     '</header>' +
-                    '<section class="pl-tree-node-des" style="display: none; ">' +
+                    '<section class="pl-tree-node-des" style="display: block; ">' +
                         '<p>{{description}}</p>' +
                     '</section>' +
                 '</section>' +
-                '<section class="pl-tree-end-det" style="display: inline-block; ">' +
+                '<section class="pl-tree-end-det" style="display: none; ">' +
                 '</section>' +
             '</section>' +
         '</li>';

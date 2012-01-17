@@ -50,8 +50,9 @@ var _gui = (function () {
     function draw_db_tree_panels( data ) {
         var tree_panel = '';
         var choose_panel = $('#pl-ch-datasets');
-        var choose_list = $('<ul class="left"> </ul>');
+        var choose_list = $( _templates.tree_list );
         add_tree_node( data, '', choose_list );
+        prepare_tree_interface( choose_list );
                 
         choose_panel.append( choose_list );
         console.log( data );
@@ -78,13 +79,13 @@ var _gui = (function () {
             }
             else {
                 var new_node_list;
-                var list_code = $('<ul class="left"> </ul>');
+                var list_code = $( _templates.tree_list );
                 var html = Mustache.to_html( _templates.tree_node, node );
                 var html_code = $(html);
                 var new_placeholder ;
                 
                 choose_list.append( html_code );
-                new_placeholder = choose_list.find( '.pl-tree-det' );
+                new_placeholder = choose_list.find( '.pl-tree' );
                 new_placeholder.append( list_code );
                 add_tree_node( data, node['id'], list_code );
             }
@@ -347,7 +348,153 @@ var _gui = (function () {
     }
 
 
+    function prepare_tree_interface( tree_code ) {
+        var tree_arow = tree_code.find( '.pl-tree-arrow' );
+        var uchecked_endpoints = tree_code.find( '.pl-tree-end-unchecked' );
+        var unchecked_nodes = tree_code.find( '.pl-tree-node-unchecked' );
+        
+        tree_arow
+            .click( show_next_level );
+
+        unchecked_nodes.
+            click( function () {
+                select_node( $(this) );
+               // check_node( $(this) );
+            } );
+            
+        uchecked_endpoints
+            .click( check_endpoint );
+
+    }
+
     // E V E N T S   F U N C T I O N S
+    function check_endpoint() {
+        var node_det = $(this).closest( '.pl-tree' );
+        var node_checkbox = node_det.prev( 'div.pl-tree-node' );
+
+        $(this)
+            .removeClass( 'pl-tree-end-unchecked' )
+            .addClass( 'pl-tree-end-checked' )
+            .unbind( 'click' )
+            .click( uncheck_endpoint );
+            
+       check_parent_nodes( node_checkbox );     
+    };
+    
+    function uncheck_endpoint() {
+        var node_det = $(this).closest( '.pl-tree' );
+        var node_checkbox = node_det.prev( 'div.pl-tree-node' );
+
+        $(this)
+            .removeClass( 'pl-tree-end-checked' )
+            .addClass( 'pl-tree-end-unchecked' )
+            .unbind( 'click' )
+            .click( check_endpoint );
+
+        uncheck_parent_nodes( node_checkbox )
+    };
+
+    
+    
+    
+    // TODO uncheck_parent_nodes and check_parent_nodes in one ???
+    function uncheck_parent_nodes( node_checkbox ) {
+        if ( node_checkbox.hasClass( 'pl-tree-node-checked' ) ) {
+            var parent_node = node_checkbox.closest( 'section.pl-tree' );
+            uncheck_node( node_checkbox );
+            if ( parent_node.length === 1 ) {
+                 var new_checkbox = parent_node.prev( 'div.pl-tree-node' );
+                 uncheck_parent_nodes( new_checkbox );            
+            }
+        }
+    };
+
+    function check_parent_nodes( node_checkbox ) {
+        var node_list = node_checkbox.parent();
+        var unmark_ends = node_list.find( '.pl-tree-end-unchecked' );
+        
+        if ( ( unmark_ends.length === 0 ) &&
+             ( node_checkbox.hasClass( 'pl-tree-node-unchecked' ) ) ){
+                 
+                 var parent_node = node_checkbox.closest( 'section.pl-tree' );
+                 check_node( node_checkbox );                 
+                 
+                 if ( parent_node.length === 1 ) {
+                     var new_checkbox = parent_node.prev( 'div.pl-tree-node' );
+                     check_parent_nodes( new_checkbox );
+                 }
+        }
+    }
+    
+    function select_node( node_checkbox ) {
+        var node_child = node_checkbox.next( 'section.pl-tree' );
+        var unmark_ends = node_child.find( '.pl-tree-end-unchecked' );
+        
+        unmark_ends.trigger( 'click' );
+    }
+
+    function unselect_node( node_checkbox ) {
+        var node_child = node_checkbox.next( 'section.pl-tree' );
+        var mark_ends = node_child.find( '.pl-tree-end-checked' );
+        
+        mark_ends.trigger( 'click' );
+    }
+
+    
+    function uncheck_node( node_checkbox ) {
+        node_checkbox
+            .removeClass( 'pl-tree-node-checked' )
+            .addClass( 'pl-tree-node-unchecked' )
+            .unbind( 'click' )
+            .click( function() {
+                select_node( node_checkbox );
+            });
+    };
+
+
+    function check_node( node_checkbox ) {
+        node_checkbox
+            .removeClass( 'pl-tree-node-unchecked' )
+            .addClass( 'pl-tree-node-checked' )
+            .unbind( 'click' )
+            .click( function() {
+                unselect_node( node_checkbox );
+            });
+    };
+
+    
+    
+    
+    function show_next_level(){
+	    $(this).parent( '.pl-tree' ).addClass( 'pl-tree-det' );
+//	    $(this).addClass( 'open' ); TODO ask Blazej about this
+    	$(this).prev().show();
+	    $(this).siblings( '.pl-tree-node-info' ).find( '.pl-tree-node-des' ).css({ display: "none" });
+	    $(this).siblings( '.pl-tree-end-det' ).css({ display: "block" });
+	    $(this).siblings( '.pl-tree-pointer' ).css({ display: "inline-block" });
+	    $(this).attr('src', '/site_media/img/triangle-down.png' );
+	    $(this).unbind( 'click' ).click( hide_level );// TODO - hide
+    };
+    
+    
+    function hide_level(){
+        var current_level = $(this).parent( '.pl-tree' )
+        
+//        $(this).removeClass( 'open' ); // TODO ask Blazej about this
+//        var others = $(this).siblings( 'ul' ).find( 'open' );
+//        others.trigger( 'click' );
+
+	    $(this).prev().hide();
+	    $(this).siblings('.pl-tree-node-info').find('.pl-sr-tree-node-des').css({ display: "block" });
+	    $(this).siblings('.pl-tree-end-det').css({ display: 'none' });
+
+        current_level.removeClass('pl-tree-det');
+        current_level.find('pl-tree-det').trigger( 'click' );
+        
+	    $(this).attr('src', '/site_media/img/triangle.png' );
+	    $(this).unbind( 'click' ).click( show_next_level );
+    };
+
 
     // APPLICATION TABS
     function display_share_panel() {
@@ -527,7 +674,7 @@ var _gui = (function () {
 
             make_zebra();
             row
-                .unbind( click ) // TODO add click to unbind - test it
+                .unbind( 'click' ) // TODO add click to unbind - test it
                 .click( close_node );
 
         }
