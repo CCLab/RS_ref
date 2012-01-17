@@ -123,6 +123,24 @@ var _db = (function () {
             }
         });
     };
+    
+    that.store_state = function ( permalink_data, callback ) {
+        $.ajax({
+            url     : '/store_state/',
+            data    : {
+                'permalink_data': permalink_data
+            },
+            dataType: 'json',
+            type    : 'POST',
+            success : function( received_data ) {
+                callback( received_data );
+            },
+            error   : function( err ) {
+                console.log( err );
+                callback( { 'error': err } );
+            }
+        });
+    };
 
     return that;
 

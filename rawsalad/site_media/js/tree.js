@@ -53,6 +53,10 @@ var _tree = (function () {
         return tree.children( parent_id, true );
     };
     
+    that.get_ancestors = function( tree, id ) {
+        return tree.parents( id, true );
+    };
+    
     
     that.insert_node = function( tree, node ) {
         return tree.insertNode( node );

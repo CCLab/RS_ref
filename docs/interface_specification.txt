@@ -27,7 +27,7 @@ Server --> _db
 4) permalink, url: /<integer>/
 [
     {
-        endpoint_id: string/null,
+        endpoint: string,
         data: [ <row_object>, ... ],
         metadata: {
             name: string,
@@ -41,7 +41,7 @@ Server --> _db
                 type: enum(integer),
                 name: string,
                 columns: [ visible_column_key1, visible_column_key2, ... ],
-                sheet_data: <sheet_data>
+                data: <sheet_data>
             },
             ...
         ]
@@ -146,13 +146,13 @@ _db --> Server
 1) permalink, url: store_state
 [
     {
-        endpoint_id: string/null,
+        endpoint: string/null,
         sheets: [
             {
                 type: enum(integer),
-                name: string,
+                label: string,
                 columns: [ visible_column_key1, visible_column_key2, ... ],
-                sheet_data: <sheet_data>
+                data: <sheet_data>
             },
             ...
         ]

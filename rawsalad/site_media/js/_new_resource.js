@@ -418,17 +418,52 @@ var _resource = (function () {
         });
     };
     
-    that.create_permalink = function ( sheet_id, callback ) {
-        var all_ids = get_sorted_ids();
+    // Creates permalink from sheets which id is in list sheet_id.
+    // If sheet_id is undefined, then all sheets will be used to
+    // create permalink.
+    that.create_permalink = function ( sheet_ids, callback ) {
+        var sheet_ids = sheet_ids || get_sorted_ids();
         var all_sheets = [];
         
-        all_ids.forEach( function ( id ) {
+        sheet_ids.forEach( function ( id ) {
             all_sheets.push( get_sheet( id ) );
         });
         
-        var permalink_data = _permalinks.prepare_permalink( all_sheets, all_ids );
+        var permalink_data = _permalinks.prepare_permalink( all_sheets, sheet_ids );
         
-        callback( permalink_data );
+        _store.store_state( permalink_data, callback );
+    };
+    
+    // Restores sheets from permalink.
+    that.restore_permalink = function( permalink_data, callback ) {
+        var last_sheet_id;
+        
+        // For each group of sheets
+        permalink_data.forEach( function ( group ) {
+            // Create functions that will be passed to _permalinks module
+            // to get nodes from store
+            var get_children_function = function ( parent_id ) {
+                return _store.get_children( group['endpoint'], parent_id );
+            };
+            var get_top_level_function = function () {
+                return _store.get_top_level( group['endpoint'] );
+            };
+            var get_ancestors_function = function ( id ) {
+                return _store.get_ancestors_ids( group['endpoint'], id );
+            };
+            
+            // For each sheet in group: get data that needs to be inserted into
+            // its tree, create and add a new sheet containing that data
+            group['sheets'].forEach( function ( sheet ) {
+                var sheet_data = _permalinks.restore_sheet_data( sheet, get_top_level_function,
+                                    get_children_function, get_ancestors_function );
+                var sheet = create_sheet( group['endpoint'], sheet_data, group['meta'] );
+                last_sheet_id = add_sheet( sheet );
+            });
+        });
+        
+        // Send to gui data of last sheet
+        that.get_sheet_data( last_sheet_id, callback );
     };
 
 
