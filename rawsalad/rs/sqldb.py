@@ -166,7 +166,7 @@ def search_data( user_query, endpoint, get_meta=False ):
 
     cursor.execute( columns )
     keys = [ column['key'] for column in cursor.fetchall() ]
-
+    end = 0
     # do the search once per searchable key
     for key in keys:
         query = '''SELECT * FROM %s
@@ -176,7 +176,6 @@ def search_data( user_query, endpoint, get_meta=False ):
 
         cursor.execute( query )
         results = cursor.fetchall()
-
         # get only unique results from current column
         unique_data = [ r for r in results if not boxes.get( r['id'], None ) ]
         # transform db data into resource objects
@@ -194,7 +193,9 @@ def search_data( user_query, endpoint, get_meta=False ):
             boxes[ hit_id ].append( key )
 
             # add uniq parents
+	    start = time()
             final_data['data'] += collection.get_unique_parents( result['parent'], visited_parents, 0 )
+	    end += time() - start
 
     # make boxes a list
     final_data['boxes'] = [ { 'id': k, 'hits': v } for k, v in  boxes.iteritems() ]
@@ -210,7 +211,6 @@ def search_data( user_query, endpoint, get_meta=False ):
 
     # >> DEBUG MODE
     if settings.DEBUG:
-        end = time() - start
         print ">> ------ DEBUG ---------"
         print ">> Search data time for:"
         print "   query: %s" % user_query
@@ -242,12 +242,11 @@ class Collection:
         self.columns = self.cursor.fetchall()
 
         # get label of the endpoint
-#        query = '''SELECT label FROM dbtree
-#                   WHERE endpoint = '%s'
-#                ''' % ( self.endpoint, )
-#        self.cursor.execute( query )
-#        self.label = self.cursor.fetchone()['label']
-        self.label = "CAS"
+        query = '''SELECT label FROM dbtree
+                   WHERE endpoint = '%s'
+                ''' % ( self.endpoint, )
+        self.cursor.execute( query )
+        self.label = self.cursor.fetchone()['label']
 
 
     def get_columns( self ):
@@ -308,7 +307,7 @@ class Collection:
         self.cursor.execute( query )
         data = self.cursor.fetchall()
 
-        return self.prepare_data( data )
+        return data#self.prepare_data( data )
 
 
     def prepare_data( self, data ):
@@ -349,6 +348,5 @@ class Collection:
         else:
             visited[ parent_id ] = True
             node = self.get_node( parent_id )
-
             return [node] + self.get_unique_parents( node['parent'], visited, t )
 

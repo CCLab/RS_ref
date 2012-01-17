@@ -18,8 +18,8 @@ def flatten( x ):
 visited = {}
 start = time.time()
 
-d_cur = ps.connect("host='localhost' dbname='tree_test'").cursor( cursor_factory=pse.RealDictCursor )
-t_cur = ps.connect("host='localhost' dbname='tree_test'").cursor()
+d_cur = ps.connect("host='localhost' dbname='rs_ref'").cursor( cursor_factory=pse.RealDictCursor )
+t_cur = ps.connect("host='localhost' dbname='rs_ref'").cursor()
 
 query = "SELECT * FROM data_50006 WHERE name ILIKE '%{0}%'".format( sys.argv[1] )
 d_cur.execute( query )

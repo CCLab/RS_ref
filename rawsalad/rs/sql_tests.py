@@ -34,9 +34,13 @@ try:
 except:
     password = None
 
-conn_string = "host='%s' dbname='%s' user='%s' password='%s'" % ( host, dbname, user, password )
+try:
+    conn_string = "host='%s' dbname='%s' user='%s' password='%s'" % ( host, dbname, user, password )
+    conn = psycopg2.connect( conn_string )
+except:
+    conn_string = "host='%s' dbname='%s'" % ( host, dbname )
+    conn = psycopg2.connect( conn_string )
 
-conn = psycopg2.connect( conn_string )
 cursor = conn.cursor( cursor_factory=psycopg2.extras.RealDictCursor )
 
 qry = sys.argv[1]

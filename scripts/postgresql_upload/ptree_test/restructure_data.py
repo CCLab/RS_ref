@@ -108,9 +108,10 @@ for f in file_list:
 #        h_insert = "INSERT INTO hierarchy VALUES( %d, '%s' );\n" % ( row['id'], row['path'] )
 #        hierarchy.write( h_insert )
         path = row['path'] if row['path'] is 'NULL' else "'{{{0}}}'".format( row['path'] )
-        print( 'INSERT INTO p_tree( id, parents ) VALUES( {0}, {1} );'.format( row['id'], path ))
+#        print( 'INSERT INTO p_tree( id, parents ) VALUES( {0}, {1} );'.format( row['id'], path ))
+        hierarchy.write( 'INSERT INTO p_tree( id, parents ) VALUES( {0}, {1} );\n'.format( row['id'], path ) )
 
-#hierarchy.close()
+hierarchy.close()
 #tables.close()
 #inserts.close()
 
