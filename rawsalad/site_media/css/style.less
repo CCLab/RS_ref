@@ -49,7 +49,13 @@
       @panel-close-bar-hover-background:        @white; 
       @panel-close-bar-hover-text:              @blue;
       
-      @tree-even-background:                    @very-light-silver;
+      @panel-tree-border:                       @very-light-silver;
+      @panel-tree-table-head-border:            @gray;
+      @panel-tree-table-cell-border:            @dark-silver;
+      @panel-tree-li-border:                    @gray;
+      @panel-tree-det-border:                   @gray;
+      @panel-tree-det-background:               @white;
+      @panel-tree-even-background:              @very-light-silver;      
       
       @choose-view-background:                  @silver;
       @chose-header-border:                     @gray;
@@ -394,6 +400,24 @@ textarea {
       margin-bottom: 20px;
     }
   }
+
+  #pl-ch-datasets { /* TODO rename datasets */
+    float: left;
+    width: 98%;
+    clear: none;
+    
+    > ul > li {
+      padding-bottom: 25px;
+    
+      border-style: solid;
+      border-color: @panel-tree-li-border;
+      border-bottom-width: 1px;
+    }
+      
+    > ul > li:last-child {
+        border-bottom-width: 0px;
+    }
+  }
     
   .pl-tree-node {
     float: left;
@@ -425,12 +449,15 @@ textarea {
   .pl-tree {
     overflow: auto;
 
+    clear: both;
+    display: inline-block;
+
     padding: 5px;
 
     border-width: 1px;
     border-style: solid;
-    border-color: #E3E3E3;  /*TODO work on colors in tree */
-    
+    border-color: @panel-tree-border;
+        
     table {
       overflow: auto;
       border-collapse: collapse;
@@ -442,7 +469,7 @@ textarea {
       font-weight: bold;
       border-bottom: solid;
       border-bottom-width: 1px;
-      border-bottom-color: #8B8B8B; /*TODO prepare color */    
+      border-bottom-color: @panel-tree-table-head-border;    
     }
     
     td {
@@ -454,7 +481,7 @@ textarea {
       border-bottom: solid;
       border-bottom-style: solid;
       border-bottom-width: 1px;
-      border-bottom-color: #C8C8C8;
+      border-bottom-color: @panel-tree-table-cell-border;
     }
     
     table > tbody {
@@ -476,26 +503,29 @@ textarea {
 
     > ul > table {
       margin-left: 74px;
-    }
+    }    
     
     .pl-tree-list-even {
         
       > li > section.pl-tree {
-        background-color: @tree-even-background;      
+        background-color: @panel-tree-even-background;      
       }
     }
         
   }
   
   .pl-tree-det {
-    background-color: white; /*TODO - LESS COLORS */
-    border-color: #919191;
+    background-color: @panel-tree-det-background;
+    border-color: @panel-tree-det-border;
     
     > ul {
         display: block;
         clear: both;
+        
+        > li > .pl-tree {
+            border-color: @panel-tree-det-border;
+        }
     }
-    
   }
   
   .pl-tree-pointer {
@@ -523,6 +553,7 @@ textarea {
         
     header {
       margin-top: 8px;
+      margin-bottom: 5px;
     }
   }
 
@@ -569,11 +600,7 @@ textarea {
     clear: none;
   }
   
-  #pl-ch-datasets {
-    float: left;
-    width: 98%;
-    clear: none;
-  }
+
 
 
   .pl-ch-back {
