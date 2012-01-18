@@ -669,6 +669,7 @@ var _resource = (function () {
                 }
             }
             columns.forEach( function ( column ) {
+                // Uncomment and delete second line when data from db is ok
                 //new_node['data'][ column['key'] ] = node['data'][ column['key'] ];
                 new_node['data'][ column['key'] ] = node[ column['key'] ];
             });
