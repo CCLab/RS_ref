@@ -58,7 +58,7 @@ var _resource = (function () {
         var respond = function() {
             var gui_data;
             var children = _tree.get_children_nodes( sheet['data'], parent_id );
-            
+
             gui_data = prepare_table_data( sheet_id, children );
             callback( gui_data );
         };
@@ -120,13 +120,13 @@ var _resource = (function () {
         if ( prev_selected_id !== undefined ) {
             set_selection( sheet['data'], prev_selected_id, '', '', '' );
         }
-        
+
         // if selected_id is not previous one, which would be deselection
         if ( prev_selected_id !== selected_id ) {
             set_selection( sheet['data'], selected_id, 'selected', 'in-selected', 'after-selected' );
             sheet['any_selected'] = true;
         }
-        
+
         sheet['any_selected'] = false;
     };
 
@@ -144,7 +144,7 @@ var _resource = (function () {
         sheet['columns'].forEach( function ( column ) {
             selected_columns[ column['key'] ] = true;
         });
-        
+
         full_columns_list = _store.get_columns( sheet['endpoint'] );
 
         columns = full_columns_list.map( function ( column ) {
@@ -326,24 +326,24 @@ var _resource = (function () {
 
         that.get_sheet_data( sheet_id, callback );
     };
-    
-    
+
+
     // Filter sheet and return it.
     that.filter = function ( sheet_id, criterion, callback ) {
         // TODO
         //  ||
         //  \/
         var criterion_to_function = function( node ) {
-            
+
             return node[ 'id' ] % 2 === 1;
         };
-        
+
         var sheet;
         var new_sheet;
         var new_sheet_id;
         var filtered_tree;
         var filter_fun;
-        
+
         sheet = get_sheet( sheet_id );
         fiter_fun = criterion_to_function( criterion );
         filtered_tree = _tree.filter( sheet['data'], filter_fun );
@@ -383,7 +383,7 @@ var _resource = (function () {
         copied_sheet = $.extend( true, {}, sheet );
         copied_sheet_id = add_sheet( copied_sheet );
         sheet_descr = get_sheet_description( copied_sheet_id );
-        
+
         callback( sheet_descr );
     };
 
@@ -445,23 +445,23 @@ var _resource = (function () {
             callback( data );
         });
     };
-    
+
     // Creates permalink from sheets which id is in list sheet_id.
     // If sheet_id is undefined, then all sheets will be used to
     // create permalink.
     that.create_permalink = function ( sheet_ids, callback ) {
         var sheet_ids = sheet_ids || get_sorted_ids();
         var all_sheets = [];
-        
+
         sheet_ids.forEach( function ( id ) {
             all_sheets.push( get_sheet( id ) );
         });
-        
+
         var permalink_data = _permalinks.prepare_permalink( all_sheets, sheet_ids );
-        
+
         _store.store_state( permalink_data, callback );
     };
-    
+
     that.restore_permalink = function( permalink_id, callback ) {
         _store.restore_state( permalink_id, function( permalink_data ) {
             var last_sheet_id;
@@ -469,7 +469,7 @@ var _resource = (function () {
             // For each group of sheets
             permalink_data.forEach( function ( group ) {
                 var data_tree = _tree.create_tree( group['data'], 'id', 'parent' );
-                
+
                 // Create functions that will be passed to _permalinks module
                 // to get nodes from store
                 var get_children_function = function ( parent_id ) {
@@ -483,13 +483,13 @@ var _resource = (function () {
                     ids_list = ancestors.map( function ( node ) {
                         return node['id'];
                     });
-                    
+
                     return ids_list;
                 };
                 var get_filtered_nodes_function = function () {
                     return _tree.get_filtered_nodes( data_tree );
                 };
-                
+
                 // For each sheet in group: get data that needs to be inserted into
                 // its tree, create and add a new sheet containing that data
                 group['sheets'].forEach( function ( sheet ) {
@@ -500,8 +500,8 @@ var _resource = (function () {
                     last_sheet_id = add_sheet( sheet );
                 });
             });
-            
-            // Send data of last sheet to gui 
+
+            // Send data of last sheet to gui
             that.get_sheet_data( last_sheet_id, callback );
         });
     };
@@ -509,30 +509,30 @@ var _resource = (function () {
 
 // P R I V A T E   I N T E R F A C E
     var sheets = {};
-    
+
     function get_sheet( sheet_id ) {
         return sheets[ sheet_id ];
     }
-    
+
     function remove_sheet( sheet_id ) {
         delete sheets[ sheet_id ];
     }
-    
+
     function get_sorted_ids() {
         var sheet_id;
         var ids = [];
         var sorted_ids = [];
-        
+
         for ( sheet_id in sheets ) {
             if ( sheets.hasOwnProperty( sheet_id ) ) {
                 ids.push( parseInt( sheet_id ) );
             }
         }
-        
+
         sorted_ids = ids.sort( function ( id1, id2 ) {
             return id1 - id2;
         });
-        
+
         return sorted_ids;
     }
 
@@ -597,14 +597,14 @@ var _resource = (function () {
             'type': type,
             'any_selected': false
         };
-        
+
         if ( type === _enum['FILTERED'] || type === _enum['SEARCHED'] ) {
             new_sheet['boxes'] = $.extend( true, [], boxes );
         }
 
         return new_sheet;
     }
-    
+
     var generate_sheet_id = ( function () {
         var next_sheet_id = 10000;
         return (function() {
@@ -624,19 +624,19 @@ var _resource = (function () {
 
         return sheet_id;
     }
-    
+
     function prepare_table_data( sheet_id, data ) {
         var sheet = get_sheet( sheet_id );
         var full_data = _tree.tree_to_list( sheet['data'] );
         // if data to prepare was not passed, use full data from sheet
         var data = data || full_data;
-        
+
         return _ui.prepare_data_package( sheet, sheet_id, data, full_data );
     }
-    
+
     function get_sheet_description( sheet_id ) {
         var sheet = get_sheet( sheet_id );
-        
+
         return {
             'name': sheet['label'],
             'sheet_id': sheet_id,
@@ -669,9 +669,7 @@ var _resource = (function () {
                 }
             }
             columns.forEach( function ( column ) {
-                // Uncomment and delete second line when data from db is ok
-                //new_node['data'][ column['key'] ] = node['data'][ column['key'] ];
-                new_node['data'][ column['key'] ] = node[ column['key'] ];
+                new_node['data'][ column['key'] ] = node['data'][ column['key'] ];
             });
 
             new_node['state'] = {

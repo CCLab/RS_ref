@@ -31,6 +31,12 @@ CREATE TABLE counters (
     value           integer CHECK ( value >= 0 )
 );
 
+DROP TABLE p_tree;
+CREATE TABLE p_tree(
+    id      int unique not null,
+    parents int[]
+);
+
 
 ---------- D A T A   T A B L E S -----------
 

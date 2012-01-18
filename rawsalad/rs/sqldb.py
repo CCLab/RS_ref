@@ -307,7 +307,7 @@ class Collection:
         self.cursor.execute( query )
         data = self.cursor.fetchall()
 
-        return data#self.prepare_data( data )
+        return self.prepare_data( data )
 
 
     def prepare_data( self, data ):
