@@ -308,7 +308,7 @@ var _resource = (function () {
         // TODO
         //  ||
         //  \/
-        var query_to_function = function ( query ) {
+        var order_to_function = function ( order ) {
             var fun = function( elem1, elem2 ) {
                 return elem1 - elem2
             };
@@ -320,11 +320,38 @@ var _resource = (function () {
         var sort_fun;
 
         sheet = get_sheet( sheet_id );
-        sort_fun = query_to_function( query );
+        sort_fun = query_to_function( order );
         sorted_tree = _tree.sort( sheet['data'], sort_fun );
         sheet['data'] = sorted_tree;
 
         that.get_sheet_data( sheet_id, callback );
+    };
+    
+    
+    // Filter sheet and return it.
+    that.filter = function ( sheet_id, criterion, callback ) {
+        // TODO
+        //  ||
+        //  \/
+        var criterion_to_function = function( node ) {
+            
+            return node[ 'id' ] % 2 === 1;
+        };
+        
+        var sheet;
+        var new_sheet;
+        var new_sheet_id;
+        var filtered_tree;
+        var filter_fun;
+        
+        sheet = get_sheet( sheet_id );
+        fiter_fun = criterion_to_function( criterion );
+        filtered_tree = _tree.filter( sheet['data'], filter_fun );
+        new_sheet = create_sheet( sheet['endpoint'], filtered_tree.toList(),
+                                  sheet['meta'], _enum['FILTERED'] );
+        new_sheet_id = add_sheet( new_sheet );
+
+        that.get_sheet_data( new_sheet_id, callback );
     };
 
     // Return gui-understandable data from sheet_id sheet.
@@ -384,7 +411,7 @@ var _resource = (function () {
                 }
                 group['data'].push({
                     'endpoint': tree_id,
-                    'name': that.get_end_name( tree_id )['label'],
+                    'label': that.get_end_name( tree_id )['label'],
                     'found_count': result['count']
                 });
             });
@@ -395,6 +422,7 @@ var _resource = (function () {
 
     that.get_search_data = function ( endpoint, query, callback ) {
         _store.get_search_data( endpoint, query, function ( data, meta ) {
+            // TODO:
             /*{
                 sheet_id : int,
                 name   : str,
@@ -434,36 +462,48 @@ var _resource = (function () {
         _store.store_state( permalink_data, callback );
     };
     
-    // Restores sheets from permalink.
-    that.restore_permalink = function( permalink_data, callback ) {
-        var last_sheet_id;
-        
-        // For each group of sheets
-        permalink_data.forEach( function ( group ) {
-            // Create functions that will be passed to _permalinks module
-            // to get nodes from store
-            var get_children_function = function ( parent_id ) {
-                return _store.get_children( group['endpoint'], parent_id );
-            };
-            var get_top_level_function = function () {
-                return _store.get_top_level( group['endpoint'] );
-            };
-            var get_ancestors_function = function ( id ) {
-                return _store.get_ancestors_ids( group['endpoint'], id );
-            };
-            
-            // For each sheet in group: get data that needs to be inserted into
-            // its tree, create and add a new sheet containing that data
-            group['sheets'].forEach( function ( sheet ) {
-                var sheet_data = _permalinks.restore_sheet_data( sheet, get_top_level_function,
-                                    get_children_function, get_ancestors_function );
-                var sheet = create_sheet( group['endpoint'], sheet_data, group['meta'] );
-                last_sheet_id = add_sheet( sheet );
+    that.restore_permalink = function( permalink_id, callback ) {
+        _store.restore_state( permalink_id, function( permalink_data ) {
+            var last_sheet_id;
+
+            // For each group of sheets
+            permalink_data.forEach( function ( group ) {
+                var data_tree = _tree.create_tree( group['data'], 'id', 'parent' );
+                
+                // Create functions that will be passed to _permalinks module
+                // to get nodes from store
+                var get_children_function = function ( parent_id ) {
+                    return _tree.get_children_nodes( data_tree, parent_id );
+                };
+                var get_top_level_function = function () {
+                    return _tree.get_children_nodes( data_tree );
+                };
+                var get_ancestors_function = function ( id ) {
+                    var ancestors = _tree.get_ancestors( data_tree, id );
+                    ids_list = ancestors.map( function ( node ) {
+                        return node['id'];
+                    });
+                    
+                    return ids_list;
+                };
+                var get_filtered_nodes_function = function () {
+                    return _tree.get_filtered_nodes( data_tree );
+                };
+                
+                // For each sheet in group: get data that needs to be inserted into
+                // its tree, create and add a new sheet containing that data
+                group['sheets'].forEach( function ( sheet ) {
+                    var sheet_data = _permalinks.restore_sheet_data( sheet, get_top_level_function,
+                                        get_children_function, get_ancestors_function,
+                                        get_filtered_nodes_function );
+                    var sheet = create_sheet( group['endpoint'], sheet_data, group['meta'] );
+                    last_sheet_id = add_sheet( sheet );
+                });
             });
+            
+            // Send data of last sheet to gui 
+            that.get_sheet_data( last_sheet_id, callback );
         });
-        
-        // Send to gui data of last sheet
-        that.get_sheet_data( last_sheet_id, callback );
     };
 
 
@@ -531,12 +571,13 @@ var _resource = (function () {
     }
 
     // Create new sheet from data.
-    function create_sheet( endpoint, data, meta ) {
+    function create_sheet( endpoint, data, meta, type, boxes ) {
         var new_sheet;
         var active_columns;
         var cleaned_data;
         var cleaned_tree_data;
         var group_id;
+        var type = type || _enum['STANDARD'];
 
         active_columns = meta['columns'].filter( function ( column ) {
             return !!column['basic'];
@@ -553,14 +594,18 @@ var _resource = (function () {
             'data': cleaned_tree_data,
             'label': meta['label'],
             'columns': active_columns,
-            'type': _enum['STANDARD'],
+            'type': type,
             'any_selected': false
         };
+        
+        if ( type === _enum['FILTERED'] || type === _enum['SEARCHED'] ) {
+            new_sheet['boxes'] = $.extend( true, [], boxes );
+        }
 
         return new_sheet;
     }
     
-    generate_sheet_id = ( function () {
+    var generate_sheet_id = ( function () {
         var next_sheet_id = 10000;
         return (function() {
             return function() {
@@ -624,7 +669,8 @@ var _resource = (function () {
                 }
             }
             columns.forEach( function ( column ) {
-                new_node['data'][ column['key'] ] = node['data'][ column['key'] ];
+                //new_node['data'][ column['key'] ] = node['data'][ column['key'] ];
+                new_node['data'][ column['key'] ] = node[ column['key'] ];
             });
 
             new_node['state'] = {

@@ -31,9 +31,11 @@ var _permalinks = (function () {
     
     // Create permalink data for sheets from sheets list. Their ids are in
     // ids list. Id of sheet sheets[i] is ids[i].
-    that.prepare_permalink = function( sheets, ids ) {
+    that.prepare_permalink = function( sheets, ids, next_node_fun_gen, is_filtered_fun_gen ) {
         var permalink_data = [];
         var grouped_sheets = group_sheets( sheets, ids );
+        
+        var next_node_fun = 
         
         grouped_sheets.forEach( function ( group ) {
             var prepared_sheets = [];
@@ -42,8 +44,15 @@ var _permalinks = (function () {
             group['sheets'].forEach( function ( sheet_info ) {
                 var sheet_id = sheet_info['sheet_id'];
                 var sheet = sheet_info['sheet'];
+                var next_node_fun = function( node ) {
+                    return next_node_fun_gen( sheet['data'], node );
+                };
+                var is_filtered_fun = function( node ) {
+                    return is_filtered_fun_gen( sheet['data'], node );
+                };
+                
                 endpoint = sheet['endpoint'];
-                var prepared_sheet = sheet_to_permalink( sheet, sheet_id, sheet['data'] );
+                var prepared_sheet = sheet_to_permalink( sheet, next_node_fun, is_filtered_fun );
                 prepared_sheets.push( prepared_sheet );
             });
             
@@ -57,7 +66,7 @@ var _permalinks = (function () {
     };
     
     that.restore_sheet_data = function( sheet, get_top_level_fun, get_children_fun,
-                                        get_ancestors_fun ) {
+                                        get_ancestors_fun, get_filtered_nodes_fun ) {
         var sheet_data;
         
         switch ( sheet['type'] ) {
@@ -66,10 +75,11 @@ var _permalinks = (function () {
                                 get_children_fun, get_ancestors_fun );
                 break;
             case _enum['FILTERED']:
-                sheet_data = get_filtered_sheet_data( data_tree );
+                sheet_data = get_filtered_sheet_data( sheet['data'], get_top_level_fun,
+                                get_children_fun, get_ancestors_fun );
                 break;
             case _enum['SEARCHED']:
-                sheet_data = get_searched_sheet_data( data_tree );
+                sheet_data = sheet['boxes']; // TODO
                 break;
         };
         
@@ -120,7 +130,7 @@ var _permalinks = (function () {
     }
     
     // Make permalink data for one sheet, data_tree is data of sheet.
-    function sheet_to_permalink( sheet, sheet_id, data_tree ) {
+    function sheet_to_permalink( sheet, next_node_fun, is_filtered_fun ) {
         var permalink_object = {};
         var sheet_data;
         
@@ -129,41 +139,42 @@ var _permalinks = (function () {
         permalink_object['columns'] = sheet['columns'].map( function( column ) {
             return column['key'];
         });
-        permalink_object['data'] = prepare_sheet_data( data_tree, sheet['type'] );
+        
+        // Create sheet data depending on type of sheet.
+        switch ( sheet['type'] ) {
+            case _enum['STANDARD']:
+                sheet_data = prepare_standard_sheet_data( next_node_fun );
+                break;
+            case _enum['FILTERED']:
+                sheet_data = prepare_filtered_sheet_data( next_node_fun, is_filtered_fun );
+                break;
+            case _enum['SEARCHED']:
+                sheet_data = sheet['boxes'];
+                break;
+        };
+        permalink_object['data'] = sheet_data;
         
         return permalink_object;
     }
     
-    // Create sheet data depending on type of sheet.
-    function prepare_sheet_data( data_tree, type ) {
-        var sheet_data;
-        
-        switch ( type ) {
-            case _enum['STANDARD']:
-                sheet_data = prepare_standard_sheet_data( data_tree );
-                break;
-            case _enum['FILTERED']:
-                sheet_data = prepare_filtered_sheet_data( data_tree );
-                break;
-            case _enum['SEARCHED']:
-                sheet_data = prepare_searched_sheet_data( data_tree );
-                break;
-        };
-        
-        return sheet_data;
-    }
-    
+    // Prepare sheet data when permalink is created.
     // Sheet data in standard permalink is a list of special nodes.
     // Find needed nodes to place them in permalink data. Those nodes are
     // parents of leaves and if there are two nodes that are in the same
     // branch.
-    function prepare_standard_sheet_data( data_tree ) {
-        var data_list = _tree.tree_to_list( data_tree );
+    function prepare_standard_sheet_data( next_node_fun ) {
+        var data_list = [];
         var leaves = {};
         var leaves_parents = {};
         var id;
         var id_list = [];
         var sorted_ids;
+        var act_node = undefined;
+        
+        while ( next_node_fun( act_node ) ) {
+            act_node = next_node_fun( act_node );
+            data_list.push( act_node );
+        }
         
         // Find ids of leaves.
         data_list.forEach( function ( node ) {
@@ -195,6 +206,38 @@ var _permalinks = (function () {
         return sorted_ids;
     }
     
+    // Prepare sheet data when permalink is created.
+    // Sheet data in standard permalink is a list of filtered nodes.
+    // Find them and group in boxes.
+    function prepare_filtered_sheet_data( next_node_fun, is_filtered_fun ) {
+        var filtered_nodes = [];
+        var actual_node;
+        var parent_ids = [];
+        var parent_children = {};
+        var boxes = [];
+        
+        while ( !!next_node_fun( actual_node ) ) {
+            if ( is_filtered_fun( actual_node ) ) {
+                filtered_nodes.push( actual_node );
+            }
+            actual_node = next_node_fun( actual_node );
+        }
+        
+        filtered_nodes.forEach( function ( node ) {
+            if ( !parent_children[ node['parent'] ] ) {
+                parent_ids.push( node['parent'] );
+                parent_children[ node['parent'] ] = [];
+            }
+            parent_children[ node['parent'] ].push( node['id'] );
+        });
+        
+        parentIds.forEach( function ( parent_id ) {
+            boxes.push( parent_children[ parent_id ] );
+        });
+        
+        return boxes;
+    }
+    
     // Get nodes for standard sheet using passed functions.
     // Permalink_sheet_data contains information which nodes are needed.
     // Uses passed functions to get top level data, children nodes and ancestors.
@@ -221,13 +264,50 @@ var _permalinks = (function () {
         sheet_data = get_top_level_fun();
         
         permalink_sheet_data.forEach( function ( id ) {
-            var branch_new_nodes = get_branch( node_id );
-            sheet_data = sheet_data.concat( get_branch( node_id ) );
+            var branch_new_nodes = get_branch( id );
+            sheet_data = sheet_data.concat( branch_new_nodes );
         });
         
         return sheet_data;
     }
     
+    function get_filtered_sheet_data( boxes, get_top_level_fun,
+                                      get_children_fun, get_ancestors_fun ) {
+        var get_branch = function( node_id ) {
+            var new_rows = [];
+            var ancestors_ids = get_ancestors_fun( node_id );
+            
+            ancestors_ids.forEach( function ( id ) {
+                if ( !node_ids[ id ] ) {
+                    new_rows = new_rows.concat( get_children_fun( id ) );
+                    node_ids[ id ] = true;
+                }
+            });
+            
+            return new_rows;
+        };
+        var sheet_data = [];
+        var filtered_nodes = {};
+        
+        sheet_data = get_top_level_fun();
+        
+        boxes.forEach( function ( id_list ) {
+            var branch_new_nodes = get_branch( id_list[0] );
+            sheet_data = sheet_data.concat( branch_new_nodes );
+        });
+        
+        boxes.forEach( function ( id_list ) {
+            id_list.forEach( function ( id ) {
+                filtered_nodes[ id ] = true;
+            });
+        });
+        
+        sheet_data.forEach( function ( node ) {
+            node = filtered_nodes['filtered'];
+        });
+        
+        return sheet_data;
+    }
 
     /*
     {

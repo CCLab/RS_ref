@@ -141,6 +141,24 @@ var _db = (function () {
             }
         });
     };
+    
+    that.restore_state = function ( id, callback ) {
+        $.ajax({
+            url     : '/restore_state/',
+            data    : {
+                'id': id
+            },
+            dataType: 'json',
+            type    : 'POST',
+            success : function( received_data ) {
+                callback( received_data );
+            },
+            error   : function( err ) {
+                console.log( err );
+                callback( { 'error': err } );
+            }
+        });
+    };
 
     return that;
 

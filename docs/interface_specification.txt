@@ -4,7 +4,7 @@ Server --> _db
 {
     data: [ <row_object>, ... ],
     meta: {
-        name: string,
+        label: string,
         columns: [
             <column_object>,
             ...
@@ -29,8 +29,8 @@ Server --> _db
     {
         endpoint: string,
         data: [ <row_object>, ... ],
-        metadata: {
-            name: string,
+        meta: {
+            label: string,
             columns: [
                 <column_object>,
                 ...
@@ -39,7 +39,7 @@ Server --> _db
         sheets: [
             {
                 type: enum(integer),
-                name: string,
+                label: string,
                 columns: [ visible_column_key1, visible_column_key2, ... ],
                 data: <sheet_data>
             },
@@ -63,7 +63,7 @@ Server --> _db
 {
     endpoint_id: string/null,
     data: [ <row_object>, ... ],
-    query: string,  
+    query: string,
     boxes: [
         {
             id: string/integer,
@@ -171,8 +171,8 @@ _store --> _resource
 1) initial collection data, _store.get_init_data()
 {
     data: monkey_tree,
-    metadata: {
-        name: string,
+    meta: {
+        label: string,
         columns: [ column_object, ... ]
     }
 }
@@ -219,7 +219,7 @@ a) standard
     ],
     group: integer,
     id: integer,
-    name: string,
+    label: string,
     rows: [
         <gui_row_object>,
         ...
@@ -234,9 +234,6 @@ a) standard
     ],
     type: enum(integer)
 }
-
-b) filtered
-
 
 c) searched
 
@@ -306,7 +303,7 @@ same as in get sheet
 {
     end_id: string,
     group_id: integer,
-    name: string,
+    label: string,
     sheet_id: integer
 }
 

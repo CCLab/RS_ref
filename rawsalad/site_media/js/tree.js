@@ -84,7 +84,19 @@ var _tree = (function () {
     
     that.sort = function( tree, sort_fun ) {
         return tree.sort( sort_fun );
-    }
+    };
+    
+    that.get_filtered_nodes = function( tree ) {
+        var filtered_nodes = [];
+        
+        tree.forEach( function ( node ) {
+            if ( tree.isNodeFiltered( node ) ) {
+                filtered_nodes.push( tree.value( node ) );
+            }
+        });
+        
+        return filtered_nodes;
+    };
 
     return that;
 }) ();
