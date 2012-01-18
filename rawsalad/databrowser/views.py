@@ -80,7 +80,6 @@ def search_data( req ):
     return HttpResponse( json.dumps( results ))
 
 
-
 # TODO can POST forms be handeled better?!
 @csrf_exempt
 def feedback_email( request ):

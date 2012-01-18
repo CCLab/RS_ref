@@ -166,7 +166,6 @@ def search_data( user_query, endpoint, get_meta=False ):
 
     cursor.execute( columns )
     keys = [ column['key'] for column in cursor.fetchall() ]
-    end = 0
     # do the search once per searchable key
     for key in keys:
         query = '''SELECT * FROM %s
@@ -181,9 +180,6 @@ def search_data( user_query, endpoint, get_meta=False ):
         # transform db data into resource objects
         final_data['data'] += collection.prepare_data( unique_data )
 
-        # prepare a list of already collected parents
-        visited_parents = {}
-        [ visited_parents.setdefault( k, True ) for k in boxes ]
         # for each result mark a hit column and collect parents
         for result in results:
             hit_id = result['id']
@@ -192,10 +188,19 @@ def search_data( user_query, endpoint, get_meta=False ):
             boxes.setdefault( hit_id, [] )
             boxes[ hit_id ].append( key )
 
-            # add uniq parents
-	    start = time()
-            final_data['data'] += collection.get_unique_parents( result['parent'], visited_parents, 0 )
-	    end += time() - start
+    hit_ids  = str( boxes.keys() ).strip('[]')
+    subquery = '''SELECT DISTINCT unnest(parents) FROM p_tree
+                  WHERE id IN ({0})
+               '''.format( hit_ids )
+
+    query = '''SELECT * FROM {0}
+               WHERE id IN ({1})
+            '''.format( endpoint, subquery )
+
+    cursor.execute( query )
+    unique_parents = [ r for r in cursor.fetchall()  if not boxes.get( r['id'], None ) ]
+    # transform db data into resource objects
+    final_data['data'] += collection.prepare_data( unique_parents )
 
     # make boxes a list
     final_data['boxes'] = [ { 'id': k, 'hits': v } for k, v in  boxes.iteritems() ]
@@ -211,6 +216,7 @@ def search_data( user_query, endpoint, get_meta=False ):
 
     # >> DEBUG MODE
     if settings.DEBUG:
+        end = time() - start
         print ">> ------ DEBUG ---------"
         print ">> Search data time for:"
         print "   query: %s" % user_query
