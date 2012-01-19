@@ -108,18 +108,19 @@ row_object = {
 
 sheet_data depends on type of a sheet:
 a) standard sheet:
-    [ id1, id2, ... ]
-
+{
+    ids: [ id1, id2, ... ],
+    sort_query: json
+}   
 
 b) filtered sheet:
-    [
-        [
-            id1, id2, ...
-        ],
-        ...
-    ]
+{
+    ids: [ id1, id2, ... ],
+    sort_query: json,
+    filter_query: json
+}
 
-c) searched sheet:
+c1) searched sheet(from server to db module):
 {
     query: string,
     boxes: [
@@ -138,6 +139,19 @@ c) searched sheet:
     ]
 }
 
+c2) searched sheet(from db module to server):
+{
+    query: string,
+    boxes: [
+        {
+            rows: [id1, id2, id3],
+            breadcrumb: boolean,
+            context: boolean
+        },
+        ...
+    ]
+}
+
 
 
 _db --> Server
@@ -145,7 +159,7 @@ _db --> Server
 1) permalink, url: store_state
 [
     {
-        endpoint: string/null,
+        endpoint: string,
         sheets: [
             {
                 type: enum(integer),
@@ -233,6 +247,8 @@ a) standard
     ],
     type: enum(integer)
 }
+
+b) filtered
 
 c) searched
 
