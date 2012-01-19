@@ -229,6 +229,64 @@ def search_data( user_query, endpoint, get_meta=False ):
     return final_data
 
 
+def restore_permalink( id ):
+    '''Reconstructs the stored snapshot to full state object'''
+    # connect to db
+    cursor = db_cursor()
+    permalink = get_permalink( id )
+
+    collection = Collection( permalink['endpoint'], cursor )
+
+    permalink['data'] = collection.get_top_level()
+
+    # make data unique for the endpoint!
+    for sheet in permalink['sheets']:
+        parents = sheet['data']
+        query = '''SELECT DISTINCT unnest(parents) FROM p_tree
+                   WHERE id IN ( %s )
+                ''' % str( parents ).strip('[]')
+        cursor.execute( query )
+        parents += [ e['unnest'] for e in cursor.fetchall() ]
+
+        for parent in parents:
+            permalink['data'] += collection.get_children( parent )
+
+    permalink['meta'] = {
+        'label': collection.get_label(),
+        'columns': collection.get_columns()
+    }
+
+    return permalink
+
+
+def get_permalink( id ):
+    '''Test object. To be taken from  from db'''
+    return {
+            'endpoint': 'data_50001',
+            'sheets': [
+                {
+                    'type': 3,
+                    'label': 'Janek',
+                    'columns': [ 'type', 'name', 'plan_po_zmianach', 'wykonanie_wydatkow' ],
+                    'data': [ 1000000016, 1000000018, 1000000021 ]
+                },
+                {
+                    'type': 3,
+                    'label': 'Kazek',
+                    'columns': [ 'type', 'name', 'wykonanie_wydatkow' ],
+                    'data': [ 1000000021, 1000000022 ]
+                },
+                {
+                    'type': 3,
+                    'label': 'Staszek',
+                    'columns': [ 'type', 'name', 'grupa_paragrafow', 'plan_po_zmianach', 'wykonanie_wydatkow' ],
+                    'data': [ 1000001116, 1000001009 ]
+                }
+            ]
+        }
+
+
+
 class Collection:
     '''Class for extracting data from acenrtain endpoint in the db'''
     # TODO move db cursor to the session

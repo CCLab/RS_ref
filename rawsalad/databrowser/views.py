@@ -147,9 +147,10 @@ def init_restore( request, idef ):
 
     data = {
         'dbtree': json.dumps( dbtree ),
-        'id': id
+        'id': idef,
+        'data': sqldb.restore_permalink( idef )
     }
-    return render_to_response( 'app.html', data )
+    return HttpResponse( json.dumps( data ) )#render_to_response( 'app.html', data )
 
 
 # url: /restore_state/
