@@ -495,16 +495,23 @@ var _resource = (function () {
 
                     return ids_list;
                 };
-                var get_filtered_nodes_function = function () {
-                    return _tree.get_filtered_nodes( data_tree );
+                var create_tree_function = function ( data ) {
+                    return _tree.create_tree( data, 'id', 'parent' );
                 };
-
+                var sort_function = function ( data ) {
+                    return _tree.sort( data, sheet['sort_query'] );
+                };
+                var filter_function = function ( data ) {
+                    return _tree.filter( data, sheet['filter_query'] );
+                };
+                
+                
                 // For each sheet in group: get data that needs to be inserted into
                 // its tree, create and add a new sheet containing that data
                 group['sheets'].forEach( function ( sheet ) {
-                    var sheet_data = _permalinks.restore_sheet_data( sheet, get_top_level_function,
-                                        get_children_function, get_ancestors_function,
-                                        get_filtered_nodes_function );
+                    var sheet_data = _permalinks.restore_sheet_data( sheet, create_tree_function,
+                                        get_top_level_function, get_children_function,
+                                        get_ancestors_function, sort_function, filter_function );
                     var sheet = create_sheet( group['endpoint'], sheet_data, group['meta'] );
                     last_sheet_id = add_sheet( sheet );
                 });
@@ -514,7 +521,6 @@ var _resource = (function () {
             that.get_sheet_data( last_sheet_id, callback );
         });
     };
-
 
 // P R I V A T E   I N T E R F A C E
     var sheets = {};
