@@ -75,6 +75,10 @@ var _tree = (function () {
         return tree.toList();
     };
     
+    that.next_node = function( tree, node ) {
+        return tree.next( node );
+    };
+    
     that.get_children_number = function( tree, parent_id ) {
         if ( parent_id === undefined ) {
             parent_id = tree.rootId();
@@ -84,6 +88,14 @@ var _tree = (function () {
     
     that.sort = function( tree, sort_fun ) {
         return tree.sort( sort_fun );
+    };
+    
+    that.filter = function( tree, filter_fun ) {
+        return tree.filter( filter_fun );
+    };
+    
+    that.is_filtered = function( tree, node ) {
+        return tree.isNodeFiltered( node );
     };
     
     that.get_filtered_nodes = function( tree ) {
