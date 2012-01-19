@@ -35,8 +35,6 @@ var _permalinks = (function () {
         var permalink_data = [];
         var grouped_sheets = group_sheets( sheets, ids );
         
-        var next_node_fun = 
-        
         grouped_sheets.forEach( function ( group ) {
             var prepared_sheets = [];
             var endpoint;
@@ -216,10 +214,9 @@ var _permalinks = (function () {
         var parent_children = {};
         var boxes = [];
         
-        while ( !!next_node_fun( actual_node ) ) {
-            if ( is_filtered_fun( actual_node ) ) {
-                filtered_nodes.push( actual_node );
-            }
+        actual_node = next_node_fun( actual_node );
+        while ( !!actual_node ) {
+            filtered_nodes.push( actual_node );
             actual_node = next_node_fun( actual_node );
         }
         
@@ -231,7 +228,7 @@ var _permalinks = (function () {
             parent_children[ node['parent'] ].push( node['id'] );
         });
         
-        parentIds.forEach( function ( parent_id ) {
+        parent_ids.forEach( function ( parent_id ) {
             boxes.push( parent_children[ parent_id ] );
         });
         

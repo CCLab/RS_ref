@@ -310,7 +310,7 @@ var _resource = (function () {
         //  \/
         var order_to_function = function ( order ) {
             var fun = function( elem1, elem2 ) {
-                return elem1 - elem2
+                return elem1 - elem2;
             };
 
             return fun;
@@ -334,8 +334,11 @@ var _resource = (function () {
         //  ||
         //  \/
         var criterion_to_function = function( node ) {
+            var fun = function( node ) {
+                return node[ 'id' ] % 2 === 1;
+            };
 
-            return node[ 'id' ] % 2 === 1;
+            return fun;
         };
 
         var sheet;
@@ -343,12 +346,17 @@ var _resource = (function () {
         var new_sheet_id;
         var filtered_tree;
         var filter_fun;
+        var meta;
 
         sheet = get_sheet( sheet_id );
-        fiter_fun = criterion_to_function( criterion );
+        filter_fun = criterion_to_function( criterion );
         filtered_tree = _tree.filter( sheet['data'], filter_fun );
-        new_sheet = create_sheet( sheet['endpoint'], filtered_tree.toList(),
-                                  sheet['meta'], _enum['FILTERED'] );
+        meta = {
+            'label': sheet['label'],
+            'columns': sheet['columns']
+        };
+        new_sheet = create_sheet( sheet['endpoint'], _tree.tree_to_list( filtered_tree ),
+                                  meta, _enum['FILTERED'] );
         new_sheet_id = add_sheet( new_sheet );
 
         that.get_sheet_data( new_sheet_id, callback );
@@ -457,7 +465,8 @@ var _resource = (function () {
             all_sheets.push( get_sheet( id ) );
         });
 
-        var permalink_data = _permalinks.prepare_permalink( all_sheets, sheet_ids );
+        var permalink_data = _permalinks.prepare_permalink( all_sheets, sheet_ids,
+                                                            _tree.next_node,  _tree.is_filtered );
 
         _store.store_state( permalink_data, callback );
     };

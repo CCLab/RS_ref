@@ -70,9 +70,18 @@ var _tree = (function () {
         return tree.removeNode( id );
     };
     
-    
+    // iterates over tree and returns array of nodes
     that.tree_to_list = function( tree ) {
         return tree.toList();
+    };
+    
+    // returns list even with filtered nodes
+    that.all_tree_to_list = function( tree ) {
+        return tree.toList( true );
+    };
+    
+    that.next_node = function( tree, node ) {
+        return tree.next( node );
     };
     
     that.get_children_number = function( tree, parent_id ) {
@@ -84,6 +93,14 @@ var _tree = (function () {
     
     that.sort = function( tree, sort_fun ) {
         return tree.sort( sort_fun );
+    };
+    
+    that.filter = function( tree, filter_fun ) {
+        return tree.filter( filter_fun );
+    };
+    
+    that.is_filtered = function( tree, node ) {
+        return tree.isNodeFiltered( node );
     };
     
     that.get_filtered_nodes = function( tree ) {
