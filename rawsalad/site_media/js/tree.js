@@ -70,9 +70,14 @@ var _tree = (function () {
         return tree.removeNode( id );
     };
     
-    
+    // iterates over tree and returns array of nodes
     that.tree_to_list = function( tree ) {
         return tree.toList();
+    };
+    
+    // returns list even with filtered nodes
+    that.all_tree_to_list = function( tree ) {
+        return tree.toList( true );
     };
     
     that.next_node = function( tree, node ) {

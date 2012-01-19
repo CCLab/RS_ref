@@ -795,14 +795,19 @@ Form of created tree:
             },
             
             // Copies nodes' values(no hierarchy information) from this tree to
-            // a list in order specified by next function.
+            // a list in order specified by next function. AcceptFiltered
+            // parameter decides if also nodes that didn't meet filtration
+            // criterion should be returned.
             // Returns created list.
-            toList: function() {
+            toList: function(acceptFiltered) {
                 var saveInList = function(node) {
-                    if (!node['__filtered__'])
+                    if ( acceptFiltered ||
+                        (!acceptFiltered && !node['__filtered__']) ) {
                         list.push(nodeToValue(node, idColumn, parentColumn));
+                    }
                 };
                 
+                var acceptFiltered = acceptFiltered || false;
                 var list = [];
                 
                 this.forEach(saveInList);

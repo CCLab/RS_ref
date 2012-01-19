@@ -355,7 +355,7 @@ var _resource = (function () {
             'label': sheet['label'],
             'columns': sheet['columns']
         };
-        new_sheet = create_sheet( sheet['endpoint'], filtered_tree.toList(),
+        new_sheet = create_sheet( sheet['endpoint'], _tree.tree_to_list( filtered_tree ),
                                   meta, _enum['FILTERED'] );
         new_sheet_id = add_sheet( new_sheet );
 

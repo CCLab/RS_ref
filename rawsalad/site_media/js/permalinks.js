@@ -216,9 +216,7 @@ var _permalinks = (function () {
         
         actual_node = next_node_fun( actual_node );
         while ( !!actual_node ) {
-            if ( !is_filtered_fun( actual_node ) ) {
-                filtered_nodes.push( actual_node );
-            }
+            filtered_nodes.push( actual_node );
             actual_node = next_node_fun( actual_node );
         }
         
