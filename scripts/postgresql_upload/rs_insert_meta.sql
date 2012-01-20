@@ -24,7 +24,7 @@ BEGIN;
 INSERT INTO counters VALUES( 'dbtree', 1016 );
 INSERT INTO counters VALUES( 'endpoints', 50007 );
 INSERT INTO counters VALUES( 'data', 1000067180 );
-INSERT INTO counters VALUES( 'permalinks', 75000 );
+INSERT INTO counters VALUES( 'permalinks', 75001 );
 COMMIT;
 
 ------------- C O L U M N S  ---------------

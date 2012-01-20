@@ -124,10 +124,7 @@ def download_data( request ):
     return response
 
 
-
-
 # url: /store_state/
-# store front-end state as a permalink in mongo
 # TODO can POST forms be handeled better?!
 @csrf_exempt
 def store_state( request ):
@@ -141,24 +138,25 @@ def store_state( request ):
 
 
 # url: /\d+
-def init_restore( request, idef ):
+def init_restore( request, id ):
     '''Init application prepared to handle restore data'''
     dbtree = sqldb.get_db_tree()
 
     data = {
-        'dbtree': json.dumps( dbtree ),
-        'id': idef,
-        'data': sqldb.restore_permalink( idef )
+        'dbtree': dbtree,
+        'id': id,
+        'endpoints': sqldb.get_permalink_endpoints( id )
     }
-    return HttpResponse( json.dumps( data ) )#render_to_response( 'app.html', data )
+
+    return  render_to_response( 'app.html', json.dumps( data ) )
 
 
 # url: /restore_state/
 def restore_state( request ):
     '''Restore front-end state from mongo'''
     permalink_id  = request.GET.get( 'permalink_id', None )
-    state_manager = rsdb.StateManager()
+    endpoint      = request.GET.get( 'endpoint', None )
 
-    groups = state_manager.get_state( int( permalink_id ) )
+    group = sqldb.restore_group( permalink_id, endpoint )
 
-    return HttpResponse( json.dumps( groups ) )
+    return HttpResponse( json.dumps( group ) )

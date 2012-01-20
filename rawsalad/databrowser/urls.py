@@ -8,7 +8,7 @@ urlpatterns = patterns( 'databrowser.views',
     ( r'^get_children/$',  'get_children' ),
 
     ( r'^store_state/$',   'store_state' ),
-    ( r'^(?P<idef>\d+)/$', 'init_restore' ),
+    ( r'^(?P<id>\d+)/$',   'init_restore' ),
     ( r'^restore_state/$', 'restore_state' ),
 
     ( r'^download/$',      'download_data' ),

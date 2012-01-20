@@ -6,6 +6,8 @@ import psycopg2.extras as psqlextras
 from ConfigParser import ConfigParser
 from time import time
 
+import simplejson as json
+
 
 def db_cursor():
     '''Define a connection object for a selected database'''
@@ -176,7 +178,7 @@ def search_data( user_query, endpoint, get_meta=False ):
         cursor.execute( query )
         results = cursor.fetchall()
         # get only unique results from current column
-        unique_data = [ r for r in results if not boxes.get( r['id'], None ) ]
+        unique_data = [ r for r in results if not boxes.get( r['id'] ) ]
         # transform db data into resource objects
         final_data['data'] += collection.prepare_data( unique_data )
 
@@ -198,7 +200,7 @@ def search_data( user_query, endpoint, get_meta=False ):
             '''.format( endpoint, subquery )
 
     cursor.execute( query )
-    unique_parents = [ r for r in cursor.fetchall()  if not boxes.get( r['id'], None ) ]
+    unique_parents = [ r for r in cursor.fetchall() if not boxes.get( r['id'] ) ]
     # transform db data into resource objects
     final_data['data'] += collection.prepare_data( unique_parents )
 
@@ -229,62 +231,73 @@ def search_data( user_query, endpoint, get_meta=False ):
     return final_data
 
 
-def restore_permalink( id ):
-    '''Reconstructs the stored snapshot to full state object'''
+def get_permalink_endpoints( id ):
+    '''Collect signatures for all endpoints/sheets in permalink'''
+    cursor = db_cursor()
+    query = '''SELECT endpoint, labels FROM permalinks
+               WHERE id = %s
+            ''' % id
+
+    cursor.execute( query )
+    data = [{'endpoint': e['endpoint'], 'labels': e['labels']} for e in cursor.fetchall()]
+
+    return data
+
+
+def restore_group( id, endpoint ):
+    '''Collect all data and metadata for a given endpoint.'''
     # connect to db
     cursor = db_cursor()
-    permalink = get_permalink( id )
+    # get minimal JSON object stored in db
+    group  = get_snapshot( id, endpoint )
 
-    collection = Collection( permalink['endpoint'], cursor )
-
-    permalink['data'] = collection.get_top_level()
-
-    # make data unique for the endpoint!
-    for sheet in permalink['sheets']:
-        parents = sheet['data']
+    # collect ids of unique open nodes in the endpoint
+    unique_parents = set()
+    for sheet in group['sheets']:
+        # get parents of sheet's deepest open nodes
         query = '''SELECT DISTINCT unnest(parents) FROM p_tree
                    WHERE id IN ( %s )
-                ''' % str( parents ).strip('[]')
+                ''' % str( sheet['data'] ).strip('[]')
         cursor.execute( query )
-        parents += [ e['unnest'] for e in cursor.fetchall() ]
+        # gather all open nodes in the sheet
+        # TODO don't use the RealDictCursor here
+        open_nodes = sheet['data'] + [ e['unnest'] for e in cursor.fetchall() ]
+        # collect only endpoint unique nodes
+        map( unique_parents.add, open_nodes )
 
-        for parent in parents:
-            permalink['data'] += collection.get_children( parent )
+    # now collect the data (full data, not only ids!)
+    collection = Collection( endpoint, cursor )
+    # top level is always present
+    group['data'] = collection.get_top_level()
+    # collect all children of all open nodes in the endpoint
+    for parent in unique_parents:
+        group['data'] += collection.get_children( parent )
 
-    permalink['meta'] = {
+    group['data'].sort( key=lambda e: e['id'] )
+
+    # add metadata for the endpoint
+    group['meta'] = {
         'label': collection.get_label(),
         'columns': collection.get_columns()
     }
 
-    return permalink
+    return group
 
 
-def get_permalink( id ):
-    '''Test object. To be taken from  from db'''
+def get_snapshot( id, endpoint ):
+    '''Get the permalink's group snapshot from db'''
+    cursor = db_cursor()
+    query = '''SELECT data FROM permalinks
+               WHERE id = %s AND endpoint = '%s'
+            ''' % ( id, endpoint )
+
+    cursor.execute( query )
+    sheets = cursor.fetchone()['data']
+
     return {
-            'endpoint': 'data_50001',
-            'sheets': [
-                {
-                    'type': 3,
-                    'label': 'Janek',
-                    'columns': [ 'type', 'name', 'plan_po_zmianach', 'wykonanie_wydatkow' ],
-                    'data': [ 1000000016, 1000000018, 1000000021 ]
-                },
-                {
-                    'type': 3,
-                    'label': 'Kazek',
-                    'columns': [ 'type', 'name', 'wykonanie_wydatkow' ],
-                    'data': [ 1000000021, 1000000022 ]
-                },
-                {
-                    'type': 3,
-                    'label': 'Staszek',
-                    'columns': [ 'type', 'name', 'grupa_paragrafow', 'plan_po_zmianach', 'wykonanie_wydatkow' ],
-                    'data': [ 1000001116, 1000001009 ]
-                }
-            ]
-        }
-
+        'endpoint': 'data_50001',
+        'sheets': json.loads( sheets )
+    }
 
 
 class Collection:

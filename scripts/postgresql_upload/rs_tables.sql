@@ -37,6 +37,13 @@ CREATE TABLE p_tree(
     parents int[]
 );
 
+DROP TABLE permalinks;
+CREATE TABLE permalinks(
+    id       int not null,
+    endpoint varchar(10),
+    labels   text[],
+    data     text
+);
 
 ---------- D A T A   T A B L E S -----------
 
