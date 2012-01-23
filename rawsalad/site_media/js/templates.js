@@ -57,15 +57,19 @@ var _templates = (function () {
                 ' pl-tree-list-even' +
             '{{/even}}' +
         '">' +
-        '</ul>';
+        '</ul>' +
+        '{{#button}}' +
+            '<div class="clear blue button">{{button_name}}</div>' +
+        '{{/button}}';
+        
     
     that.tree_node=
         '<li>' +
             '<div data-node="{{id}}" class="pl-tree-node-unchecked pl-tree-node">' + //TODO change classes names
             '</div>' +
             '<section class="pl-tree">' +
-                '<img src="/site_media/img/corner.png" class="pl-tree-pointer" style="display: none; ">' +
-                '<img src="/site_media/img/triangle.png" alt="triangle" class="pl-tree-arrow" data-node="{{id}}">' +
+                '<div class="pl-tree-pointer" style="display: none;"></div>' +
+                '<div class="pl-tree-arrow" data-node="{{id}}"></div>' +
                 '<section class="pl-tree-node-info">' +
                     '<header>' +
                         '<h3>{{name}}</h3>' +

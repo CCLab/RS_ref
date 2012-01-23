@@ -29,27 +29,33 @@ var _dbtree = (function () {
 // P U B L I C   I N T E R F A C E
     var that = {};
     
-    that.draw_db_tree_panels = function( data ) {
-        var choose_list;
+    that.draw_db_tree_panels = function( data, submit_name, callback ) {
+        var choose_panel;
+        var choose_panel_code;
         var choose_list_code;
 
         // 'even' - for ".pl-tree" background colours changes
-        var even_level = { 'even': false, };
+        var even_level = { 
+                  'even'        : false,
+                  'button'      : true,
+                  'button_name' : submit_name || 'Wyświetl wybrane', // TODO - remove "Wybierz" 
+                  };
         var choose_panel = $('#pl-ch-datasets');
          
         // prepare place for dbtree list elements
-        choose_list = Mustache.to_html( _templates.tree_list, even_level ); 
-        choose_list_code = $(choose_list);
+        panel_content = Mustache.to_html( _templates.tree_list, even_level ); 
+        panel_content_code = $(panel_content);
+        choose_list_code = panel_content_code.closest('ul');
 
         // generate dbtree code
         // '' - root level
         // true - for CSS ".pl-tree" background colours changes
         add_tree_node( data, '', choose_list_code, true );
 
-        prepare_tree_interface( choose_list_code );
+        prepare_tree_interface( panel_content_code, callback );
                 
         // add to page
-        choose_panel.append( choose_list_code );
+        choose_panel.append( panel_content_code );
     };
 
 // P R I V A T E   I N T E R F A C E
@@ -196,11 +202,12 @@ var _dbtree = (function () {
 
 
     // P R E A P A R E   I N T E R F A C E   F U N C T I O N S
-    function prepare_tree_interface( tree_code ) {
+    function prepare_tree_interface( tree_code, callback ) {
         // get html elements
         var tree_arow = tree_code.find( '.pl-tree-arrow' );
         var uchecked_endpoints = tree_code.find( '.pl-tree-end-unchecked' );
         var unchecked_nodes = tree_code.find( '.pl-tree-node-unchecked' );
+        var submit_button = tree_code.closest( 'div.button' )
         
         // add 'click' events to html elements
         tree_arow
@@ -211,6 +218,9 @@ var _dbtree = (function () {
             
         uchecked_endpoints
             .click( check_endpoint );
+            
+        submit_button.
+            click( callback );
     }
 
 
@@ -235,7 +245,6 @@ var _dbtree = (function () {
 	        .css({ display: "inline-block" });
 
 	    $(this)
-	        .attr('src', '/site_media/img/triangle-down.png' )
 	        .unbind( 'click' )
 	        .click( hide_level );
     }
@@ -256,8 +265,13 @@ var _dbtree = (function () {
 	        .find( '.pl-tree-node-des' )
 	        .css({ display: "block" });
 
-	    $(this).siblings('.pl-tree-end-det')
+	    $(this).siblings( '.pl-tree-end-det' )
 	        .css({ display: 'none' });
+	    
+	    // uncheck all endpoints in level    
+	    $(this).siblings( 'ul.pl-tree-list' )
+	        .find( '.pl-tree-end-checked' )
+	        .trigger( 'click' );
 
         if ( $(this)
                 .closest( 'ul.pl-tree-list' )
@@ -267,7 +281,6 @@ var _dbtree = (function () {
     	}
         
 	    $(this)
-	        .attr('src', '/site_media/img/triangle.png' )
 	        .unbind( 'click' )
 	        .click( show_next_level );
     }

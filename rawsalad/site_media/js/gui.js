@@ -44,12 +44,12 @@ var _gui = (function () {
 // P R I V A T E   I N T E R F A C E
 
     // D R A W   F U N C T I O N S    
-    function draw_end_point( end_id ) {
+    function draw_end_point( endpoint ) {
 
         prepare_aplication_interface();
         $('#application').show();
 
-        _resource.get_top_level( end_id, function ( data ) {
+        _resource.get_top_level( endpoint, function ( data ) {
             // TODO change for label  and put into draw_tools
             var names = { 'name': data['name'], };
             draw_table( data );
@@ -70,7 +70,7 @@ var _gui = (function () {
 //        }
 //        _resource.get_sheet( sheet_id, callback );
   
-        _resource.get_sheet( sheet_id, draw_table );
+        _resource.get_sheet_data( sheet_id, draw_table );
         _resource.get_sheet_name( sheet_id, draw_tools );
         _resource.get_sheets_names( draw_tabs );  
     }

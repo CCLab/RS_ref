@@ -406,6 +406,13 @@ textarea {
     width: 98%;
     clear: none;
     
+    > div.button {
+      float: left;
+
+      margin-bottom: 15px;
+      margin-left: 25px;
+    }
+    
     > ul > li {
       padding-bottom: 25px;
     
@@ -456,7 +463,7 @@ textarea {
 
     border-width: 1px;
     border-style: solid;
-    border-color: @panel-tree-border;
+    border-color: @panel-tree-border;    
         
     table {
       overflow: auto;
@@ -508,7 +515,11 @@ textarea {
     .pl-tree-list-even {
         
       > li > section.pl-tree {
-        background-color: @panel-tree-even-background;      
+        background-color: @panel-tree-even-background;           
+
+        > div.pl-tree-pointer {
+          background-image: url("/site_media/img/corner2.png");           
+        }
       }
     }
         
@@ -519,30 +530,47 @@ textarea {
     border-color: @panel-tree-det-border;
     
     > ul {
-        display: block;
-        clear: both;
+      display: block;
+      clear: both;
         
-        > li > .pl-tree {
-            border-color: @panel-tree-det-border;
+      > li > .pl-tree {
+        border-color: @panel-tree-det-border;            
+
+        > div.pl-tree-pointer {
+          display: inline-block !important;    
         }
+      }        
     }
+    
+    > div.pl-tree-arrow {
+      background-image: url("/site_media/img/arrow_down.png");              
+    }
+    
   }
   
   .pl-tree-pointer {
     float: left;
 
+    width: 9px;
+    height: 17px;
+
     margin-left: -14px !important;
     margin-top: 5px;
     
     position: absolute;  
+    background-image: url("/site_media/img/corner.png");              
   }
 
   .pl-tree-arrow {
     float: left;
     
+    width: 23px;
+    height: 23px;
+    
     margin-left: 5px;
     margin-right: 20px;
     margin-top: 4px;
+    background-image: url("/site_media/img/arrow_left.png");              
     
     cursor: pointer;
   }
@@ -590,6 +618,10 @@ textarea {
   
   .pl-tree-end-checked {
     background-image: url("/site_media/img/checkbox02_checked.png");
+    
+    &:hover {
+      background-image: url("/site_media/img/checkbox02_checkedHover.png");     
+    } 
   }
 
 
