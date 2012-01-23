@@ -46,6 +46,10 @@ var _tree = (function () {
         return !!that.get_node( tree, id );
     };
     
+    that.right_node = function( tree, id ) {
+        return tree.rightSibling( id );
+    };
+    
     that.get_children_nodes = function( tree, parent_id ) {
         if ( parent_id === undefined ) {
             parent_id = tree.root();
@@ -82,6 +86,10 @@ var _tree = (function () {
     
     that.next_node = function( tree, node ) {
         return tree.next( node );
+    };
+    
+    that.iterate = function( tree, fun, first, end ) {
+        tree.iterate( fun, first, end );
     };
     
     that.get_children_number = function( tree, parent_id ) {
