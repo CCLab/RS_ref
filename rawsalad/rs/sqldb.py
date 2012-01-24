@@ -295,7 +295,7 @@ def get_snapshot( id, endpoint ):
     sheets = cursor.fetchone()['data']
 
     return {
-        'endpoint': 'data_50001',
+        'endpoint': endpoint,
         'sheets': json.loads( sheets )
     }
 
