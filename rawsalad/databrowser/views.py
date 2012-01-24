@@ -148,7 +148,7 @@ def init_restore( request, id ):
         'endpoints': sqldb.get_permalink_endpoints( id )
     }
 
-    return  render_to_response( 'app.html', json.dumps( data ) )
+    return  render_to_response( 'app.html', data )
 
 
 # url: /restore_state/

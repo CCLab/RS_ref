@@ -308,9 +308,9 @@
           "js_choose_panel_issue": 'Wybierz jedno z wydań danych.',
       }; 
       (function () {
-        {% if idef %}
+        {% if id %}
         _gui.init_gui( true );
-        _gui.restore_session( {{ idef }} );
+        _gui.restore_session( {{ id }}, {{ endpoints|safe }} );
         {% else %}
         _gui.init_gui();
         {% endif %}

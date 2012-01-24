@@ -63,32 +63,30 @@ var _permalinks = (function () {
         return permalink_data;
     };
     
-    that.restore_sheet_data = function( sheet, make_tree_fun, get_top_level_fun, get_children_fun,
-                                        get_ancestors_fun, sort_fun, filter_fun ) {
+    that.restore_sheet_data = function( sheet, data_tree ) {
         var sheet_data;
-        var tree_data;
+        var tree;
+        var sorted_tree;
+        var sheet_tree;
         
         switch ( sheet['type'] ) {
             case _enum['STANDARD']:
-                sheet_data = get_standard_sheet_data( sheet['data'], get_top_level_fun,
-                                get_children_fun, get_ancestors_fun );
-                tree_data = make_tree_fun( sheet_data );
-                sheet_data = sort_fun( tree_data );
+                sheet_data = get_standard_sheet_data( data_tree, sheet['data'],
+                                                      sheet['sort_query'] );
                 break;
             case _enum['FILTERED']:
-                sheet_data = get_filtered_sheet_data( sheet['data'], get_top_level_fun,
-                                get_children_fun, get_ancestors_fun );
-                tree_data = make_tree_fun( sheet_data );
-                tree_data = sort_fun( tree_data );
-                sheet_data = filter_fun( tree_data );
+                sheet_data = get_filtered_sheet_data( data_tree, sheet['data'],
+                                                      sheet['sort_query'],
+                                                      sheet['filter_query'] );
                 break;
             case _enum['SEARCHED']:
-                sheet_data = get_searched_sheet_data( sheet['data'] );
-                sheet_data = make_tree_fun( sheet_data );
+                sheet_data = get_searched_sheet_data( data_tree, sheet['data'] );
                 break;
+            default:
+                throw 'Bad sheet type';
         };
         
-        return sheet_data;
+        return _tree.tree_to_list( sheet_data );
     };
 
 //  P R I V A T E   I N T E R F A C E
@@ -157,6 +155,8 @@ var _permalinks = (function () {
             case _enum['SEARCHED']:
                 sheet_data = prepare_searched_sheet_data( sheet['query'], sheet['boxes'] );
                 break;
+            default:
+                throw 'Bad sheet type';
         };
         permalink_object['data'] = sheet_data;
         
@@ -251,19 +251,20 @@ var _permalinks = (function () {
     }
     
     // Get nodes for standard sheet using passed functions.
-    // Permalink_sheet_data contains information which nodes are needed.
-    // Uses passed functions to get top level data, children nodes and ancestors.
-    // Returns a list with nodes that need to be inserted into a tree.
-    function get_standard_sheet_data( permalink_sheet_data, get_top_level_fun,
-                                      get_children_fun, get_ancestors_fun ) {
+    // sheet_info contains information which nodes are needed.
+    // Returns tree with nodes that need to be inserted into a tree.
+    function get_standard_sheet_data( data_tree, sheet_info, sort_query ) {
         var get_branch = function( node_id ) {
             var new_rows = [];
-            var ancestors_ids = get_ancestors_fun( node_id );
+            var ancestors = _tree.get_ancestors( data_tree, node_id );
+            var ancestors_ids = ancestors.map( function ( node ) {
+                return node['id'];
+            });
             ancestors_ids.push( node_id );
             
             ancestors_ids.forEach( function ( id ) {
                 if ( !node_ids[ id ] ) {
-                    new_rows = new_rows.concat( get_children_fun( id ) );
+                    new_rows = new_rows.concat( _tree.get_children_nodes( data_tree, id ) );
                     node_ids[ id ] = true;
                 }
             });
@@ -273,65 +274,42 @@ var _permalinks = (function () {
         var sheet_data = [];
         var node_ids = {};
         
-        sheet_data = get_top_level_fun();
+        sheet_data = _tree.get_children_nodes( data_tree );
         
-        permalink_sheet_data.forEach( function ( id ) {
+        sheet_info.forEach( function ( id ) {
+            // TODO: remove
+            if ( id === 1000001009 ) return;
             var branch_new_nodes = get_branch( id );
             sheet_data = sheet_data.concat( branch_new_nodes );
         });
+        tree = _tree.create_tree( sheet_data, 'id', 'parent' );
+        sheet_tree = ( !!sort_query ) ? _tree.sort( tree, sort_query ) : tree;
         
-        return sheet_data;
+        return sheet_tree;
     }
     
-    function get_filtered_sheet_data( boxes, get_top_level_fun,
-                                      get_children_fun, get_ancestors_fun ) {
-        var get_branch = function( node_id ) {
-            var new_rows = [];
-            var ancestors_ids = get_ancestors_fun( node_id );
-            
-            ancestors_ids.forEach( function ( id ) {
-                if ( !node_ids[ id ] ) {
-                    new_rows = new_rows.concat( get_children_fun( id ) );
-                    node_ids[ id ] = true;
-                }
-            });
-            
-            return new_rows;
-        };
-        var sheet_data = [];
-        var filtered_nodes = {};
+    function get_filtered_sheet_data( data_tree, sheet_info, sort_query, filter_query ) {
+        var sorted_tree = get_standard_sheet_data( data_tree, sheet_info, sort_query );
+        var filtered_tree = _tree.filter( data_tree, filter_query );
         
-        sheet_data = get_top_level_fun();
-        
-        boxes.forEach( function ( id_list ) {
-            var branch_new_nodes = get_branch( id_list[0] );
-            sheet_data = sheet_data.concat( branch_new_nodes );
-        });
-        
-        boxes.forEach( function ( id_list ) {
-            id_list.forEach( function ( id ) {
-                filtered_nodes[ id ] = true;
-            });
-        });
-        
-        sheet_data.forEach( function ( node ) {
-            node = filtered_nodes['filtered'];
-        });
-        
-        return sheet_data;
+        return filtered_tree;
     }
     
-    function get_searched_sheet_data(boxes, get_top_level_fun, get_children_fun,
-                                     get_ancestors_fun, get_node ) {
+    function get_searched_sheet_data( data_tree, sheet_info ) {
+        var boxes = sheet_info['boxes'];
         // TODO: test it, prealpha version
         boxes.forEach( function ( box ) {
             var rows = box['ids'];
             var nodes_in_box = [];
-            if (breadcrumb) {
-                nodes_in_box.push( get_ancestors(rows[0]) );
+            var ancestors;
+            var children;
+            if ( breadcrumb ) {
+                ancestors = _tree.get_ancestors( data_tree, rows[0] );
+                nodes_in_box.push( ancestors );
             }
-            if (context) {
-                nodes_in_box = nodes_in_box.concat( get_children(get_parent(rows[0])) );
+            if ( context ) {
+                children = _tree.get_children_nodes( data_tree, ancestors[0] );
+                nodes_in_box = nodes_in_box.concat( children );
             } else {
                 rows.forEach( function ( row ) {
                     nodes_in_box.push( row );
@@ -341,21 +319,6 @@ var _permalinks = (function () {
         
         return nodes_in_box;
     }
-
-    /*
-    {
-        endpoint_id: string/null,
-        sheets: [
-            {
-                type: enum(integer),
-                label: string,
-                columns: [ visible_column_key1, visible_column_key2, ... ],
-                sheet_data: <sheet_data>
-            },
-            ...
-        ]
-    }
-    */
 
     return that;
 }) ();

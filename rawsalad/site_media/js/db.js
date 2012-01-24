@@ -142,14 +142,15 @@ var _db = (function () {
         });
     };
     
-    that.restore_state = function ( id, callback ) {
+    that.restore_state = function ( permalink_id, endpoint, callback ) {
         $.ajax({
             url     : '/restore_state/',
             data    : {
-                'id': id
+                'permalink_id': permalink_id,
+                'endpoint'    : endpoint
             },
             dataType: 'json',
-            type    : 'POST',
+            type    : 'GET',
             success : function( received_data ) {
                 callback( received_data );
             },

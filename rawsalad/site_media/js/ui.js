@@ -42,7 +42,8 @@ var _ui = (function () {
             case _enum['SEARCHED']:
                 data_package = prepare_searched_data_package( sheet, sheet_id, data, full_data );
                 break;
-                
+            default:
+                throw 'Bad sheet type';
         };
 
         return data_package;

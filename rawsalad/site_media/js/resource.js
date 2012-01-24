@@ -35,7 +35,10 @@ var _resource = (function () {
             callback( collections );
         });
     };
-
+    
+    that.get_top_levels = function ( endpoints, callbacks ) {
+        get_many( endpoints, that.get_top_level, callbacks );
+    };
 
     // Get top level data from store and prepare it for
     // gui-understandable form.
@@ -43,9 +46,11 @@ var _resource = (function () {
         _store.get_init_data( endpoint, function( data, meta ) {
             var sheet_id;
             var sheet;
+            var cleaned_data;
             var gui_data;
 
-            sheet = create_sheet( endpoint, data, meta );
+            cleaned_data = clean_data( data, meta['columns'] )
+            sheet = create_sheet( endpoint, cleaned_data, meta );
             sheet_id = add_sheet( sheet );
             gui_data = prepare_table_data( sheet_id );
 
@@ -72,8 +77,11 @@ var _resource = (function () {
 
                 // Remove unnecessary fields(not present in columns list) from children
                 // and update tree.
-                cleaned_data = clean_data( data, sheet['columns'] );
+                cleaned_data = clean_data( data, sheet['columns'] )
                 _tree.update_tree( sheet['data'], cleaned_data );
+                if ( !!sheet['any_selected'] ) {
+                    reset_selection( sheet_id );
+                }
 
                 respond();
             });
@@ -95,39 +103,29 @@ var _resource = (function () {
 
 
     that.row_selected = function ( sheet_id, selected_id, prev_selected_id ) {
-        // selected row get 'selected' attribute, his descdendants 'inside'
-        // attribute, next row after his last descendant 'after' attribute
-        var set_selection = function ( data_tree, root_id, selected, inside, after ) {
-            var subtree_root;
-            var act_node;
 
-            subtree_root = data_tree.getNode( root_id );
-            subtree_root['state']['selected'] = selected;
-            act_node = data_tree.next( subtree_root );
-            while ( !!act_node && data_tree.isAncestor( subtree_root, act_node ) ) {
-                subtree_root['state']['selected'] = inside;
-                act_node = data_tree.next( act_node );
-            }
-            if ( !!act_node ) {
-                act_node['state']['selected'] = after;
-            }
-        };
-        var sheet;
-
-        sheet = get_sheet( sheet_id );
-
-        // if there was no selected row
+        var sheet = get_sheet( sheet_id );
+        
+        // if there was a selected row
         if ( prev_selected_id !== undefined ) {
-            set_selection( sheet['data'], prev_selected_id, '', '', '' );
-        }
-
-        // if selected_id is not previous one, which would be deselection
-        if ( prev_selected_id !== selected_id ) {
-            set_selection( sheet['data'], selected_id, 'selected', 'in-selected', 'after-selected' );
+            // if selected_id is not a previous one, which would be deselection
+            if ( prev_selected_id !== selected_id) {
+                set_selection( sheet_id, prev_selected_id, 'dim' );
+                set_selection( sheet_id, selected_id, 'selected' );
+                sheet['any_selected'] = true;
+                reset_selection( sheet_id );
+            } else {
+                // if a row is deselected
+                set_selection( sheet_id, prev_selected_id, undefined );
+                sheet['any_selected'] = false;
+                reset_selection( sheet_id );
+            }
+        } else {
+            set_selection( sheet_id, selected_id, 'selected' );
             sheet['any_selected'] = true;
+            reset_selection( sheet_id );
         }
-
-        sheet['any_selected'] = false;
+        
     };
 
 
@@ -200,6 +198,9 @@ var _resource = (function () {
 
         // Update tree
         sheet['data'] = new_tree;
+        if ( !!sheet['any_selected'] ) {
+            reset_selection( sheet_id, true, find_selected_row( old_tree ) );
+        }
 
         that.get_sheet_data( sheet_id, callback );
     };
@@ -471,7 +472,7 @@ var _resource = (function () {
         _store.store_state( permalink_data, callback );
     };
 
-    that.restore_permalink = function( permalink_id, callback ) {
+    /*that.restore_permalink = function( permalink_id, callback ) {
         _store.restore_state( permalink_id, function( permalink_data ) {
             var last_sheet_id;
 
@@ -519,6 +520,36 @@ var _resource = (function () {
 
             // Send data of last sheet to gui
             that.get_sheet_data( last_sheet_id, callback );
+        });
+    };*/
+    
+    that.restore_permalink = function ( permalink_id, endpoints, callbacks ) {
+        var permalinks_data = endpoints.map( function ( e ) {
+            return {
+                'permalink_id': permalink_id,
+                'endpoint': e
+            };
+        });
+        get_many( permalinks_data, that.get_permalink_part, callbacks );
+    };
+    
+    that.get_permalink_part = function ( permalink_part_descr, callback ) {
+        _store.restore_state( permalink_part_descr['permalink_id'],
+                              permalink_part_descr['endpoint'],
+                              function( group ) {
+            var data_tree = _tree.create_tree( group['data'], 'id', 'parent' );
+        
+            // For each sheet in group: get data that needs to be inserted into
+            // its tree, create and add a new sheet containing that data
+            group['sheets'].forEach( function ( sheet ) {            
+                var sheet_data = _permalinks.restore_sheet_data( sheet, data_tree );
+                var sheet_id;
+                
+                // TODO: sort_query, filter_query, query
+                sheet = create_sheet( group['endpoint'], sheet_data, group['meta'] );
+                sheet_id = add_sheet( sheet );
+                that.get_sheet_data( sheet_id, callback );
+            });
         });
     };
 
@@ -639,6 +670,22 @@ var _resource = (function () {
 
         return sheet_id;
     }
+    
+    function get_many( values, get_one, callbacks ) {
+        var get_next = function ( count ) {
+            var value = values.shift();
+            var callback = callbacks[ count ];
+            
+            if ( value === undefined ) return;
+            
+            get_one( value, function ( data ) {
+                callback( data );
+                get_next( count + 1 );
+            });
+        };
+        
+        get_next( 0 );
+    }
 
     function prepare_table_data( sheet_id, data ) {
         var sheet = get_sheet( sheet_id );
@@ -660,7 +707,7 @@ var _resource = (function () {
         };
     }
 
-    // Return data that contains columns that are in columns list
+    // Return data that contains columns that are in columns list.
     function clean_data( data, columns ) {
         var clean_node = function( node, columns ) {
             var property;
@@ -688,7 +735,7 @@ var _resource = (function () {
             });
 
             new_node['state'] = {
-                'selected': '',
+                'selected': undefined,
                 'is_open': false
             };
 
@@ -700,6 +747,71 @@ var _resource = (function () {
         });
 
         return cleaned_data;
+    }
+    
+    // selected row get 'top' attribute, his descdendants 'inside'
+    // attribute, next row after his last descendant 'after' attribute
+    function set_selection( sheet_id, root_id, selection_type ) {
+        var sheet = get_sheet( sheet_id );
+        var subtree_root;
+
+        subtree_root = sheet['data'].getNode( root_id );
+        subtree_root['state']['selected'] = selection_type;
+    }
+    
+    // Set correct selection for all nodes in sheet which id is sheet_id.
+    function reset_selection( sheet_id ) {
+        var sheet = get_sheet( sheet_id );
+        var any_selected = sheet['any_selected'];
+        var selected_id = find_selected_row( sheet_id );
+        var selected_node;
+        var after_node;
+        
+        if ( !any_selected ) {
+            // if nothing is selected, clear selection in all nodes
+            _tree.iterate( sheet['data'], function ( node ) {
+                node['state']['selected'] = undefined;
+            });
+        } else {
+            // if something is selected, dim everything in the begining
+            _tree.iterate( sheet['data'], function ( node ) {
+                node['state']['selected'] = 'dim';
+            });
+            selected_node = _tree.get_node( sheet['data'], selected_id );
+            after_node = _tree.right_node( sheet['data'], selected_id );
+            
+            // next set in-selected parameter for selected node and his children
+            _tree.iterate( sheet['data'], function ( node ) {
+                node['state']['selected'] = 'in-selected';
+            }, selected_node, after_node );
+            
+            // correct selected parameter for selected node
+            selected_node['state']['selected'] = 'selected'
+            if ( !!after_node ) {
+                // if there is a node after selected, then mark it as after-selected
+                after_node['state']['selected'] = 'after-selected';
+            }
+        }
+    }
+    
+    // Returns selected nodes id. If no node is selected, then
+    // undefined is returned.
+    function find_selected_row( sheet_id ) {
+        var sheet = get_sheet( sheet_id );
+        var top_level = _tree.get_children_nodes( sheet['data'] );
+        
+        var selected_id;
+        var selected_nodes = top_level.filter( function ( node ) {
+            return node['state']['selected'] === 'selected';
+        });
+        
+        if ( selected_nodes.length > 0 ) {
+            selected_id = selected_nodes[0]['id'];
+        } else {
+            selected_id = undefined;
+        }
+        
+        return selected_id;
     }
 
     return that;
