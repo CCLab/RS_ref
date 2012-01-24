@@ -97,7 +97,7 @@ var _resource = (function () {
     that.row_selected = function ( sheet_id, selected_id, prev_selected_id ) {
         // selected row get 'selected' attribute, his descdendants 'inside'
         // attribute, next row after his last descendant 'after' attribute
-        var set_selection = function ( tree, root_id, selected, inside, after ) {
+        var set_selection = function ( data_tree, root_id, selected, inside, after ) {
             var subtree_root;
             var act_node;
 

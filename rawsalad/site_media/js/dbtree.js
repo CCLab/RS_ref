@@ -38,7 +38,7 @@ var _dbtree = (function () {
         var even_level = { 
                   'even'        : false,
                   'button'      : true,
-                  'button_name' : submit_name || 'Wyświetl wybrane', // TODO - remove "Wybierz" 
+                  'button_name' : submit_name || 'Wyświetl', // TODO - remove "Wybierz" 
                   };
         var choose_panel = $('#pl-ch-datasets');
          
