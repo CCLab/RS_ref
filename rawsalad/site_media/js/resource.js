@@ -103,6 +103,7 @@ var _resource = (function () {
 
 
     that.row_selected = function ( sheet_id, selected_id, prev_selected_id ) {
+
         var sheet = get_sheet( sheet_id );
         
         // if there was a selected row
@@ -471,7 +472,7 @@ var _resource = (function () {
         _store.store_state( permalink_data, callback );
     };
 
-    that.restore_permalink = function( permalink_id, callback ) {
+    /*that.restore_permalink = function( permalink_id, callback ) {
         _store.restore_state( permalink_id, function( permalink_data ) {
             var last_sheet_id;
 
@@ -520,64 +521,32 @@ var _resource = (function () {
             // Send data of last sheet to gui
             that.get_sheet_data( last_sheet_id, callback );
         });
-    };
+    };*/
     
-    that.restore_permalink = function ( permalink_id ) {
-        _store.get_permalink_sheets_count( permalink_id, function ( count ) {
-            var permalinks_data = [];
-            var i;
-            for ( i = 0; i < count; ++i ) {
-                permalinks_data.push({
-                    'permalink_id': permalink_id,
-                    'sheet_nr': i
-                });
-            }
-            
-            get_many( permalinks_data, that.get_permalink_part, callbacks );
-        });    
+    that.restore_permalink = function ( permalink_id, endpoints, callbacks ) {
+        var permalinks_data = endpoints.map( function ( e ) {
+            return {
+                'permalink_id': permalink_id,
+                'endpoint': e
+            };
+        });
+        get_many( permalinks_data, that.get_permalink_part, callbacks );
     };
     
     that.get_permalink_part = function ( permalink_part_descr, callback ) {
         _store.restore_state( permalink_part_descr['permalink_id'],
-                              permalink_part_descr['sheet_nr'],
+                              permalink_part_descr['endpoint'],
                               function( group ) {
             var data_tree = _tree.create_tree( group['data'], 'id', 'parent' );
-            var sheet_id;
-
-            // Create functions that will be passed to _permalinks module
-            // to get nodes from store
-            var get_children_function = function ( parent_id ) {
-                return _tree.get_children_nodes( data_tree, parent_id );
-            };
-            var get_top_level_function = function () {
-                return _tree.get_children_nodes( data_tree );
-            };
-            var get_ancestors_function = function ( id ) {
-                var ancestors = _tree.get_ancestors( data_tree, id );
-                ids_list = ancestors.map( function ( node ) {
-                    return node['id'];
-                });
-
-                return ids_list;
-            };
-            var create_tree_function = function ( data ) {
-                return _tree.create_tree( data, 'id', 'parent' );
-            };
-            var sort_function = function ( data ) {
-                return _tree.sort( data, sheet['sort_query'] );
-            };
-            var filter_function = function ( data ) {
-                return _tree.filter( data, sheet['filter_query'] );
-            };
-            
-            
+        
             // For each sheet in group: get data that needs to be inserted into
             // its tree, create and add a new sheet containing that data
-            group['sheets'].forEach( function ( sheet ) {
-                var sheet_data = _permalinks.restore_sheet_data( sheet, create_tree_function,
-                                    get_top_level_function, get_children_function,
-                                    get_ancestors_function, sort_function, filter_function );
-                var sheet = create_sheet( group['endpoint'], sheet_data, group['meta'] );
+            group['sheets'].forEach( function ( sheet ) {            
+                var sheet_data = _permalinks.restore_sheet_data( sheet, data_tree );
+                var sheet_id;
+                
+                // TODO: sort_query, filter_query, query
+                sheet = create_sheet( group['endpoint'], sheet_data, group['meta'] );
                 sheet_id = add_sheet( sheet );
                 that.get_sheet_data( sheet_id, callback );
             });
@@ -707,7 +676,7 @@ var _resource = (function () {
             var value = values.shift();
             var callback = callbacks[ count ];
             
-            if ( value !== undefined ) return;
+            if ( value === undefined ) return;
             
             get_one( value, function ( data ) {
                 callback( data );

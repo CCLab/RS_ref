@@ -186,7 +186,7 @@ var _store = (function () {
         _db.store_state( permalink_data, callback );
     };
     
-    that.restore_state = function( permalink_id, callback ) {
+    /*that.restore_state = function( permalink_id, callback ) {
         _db.restore_state( permalink_id, function ( permalink_data ) {            
             permalink_data.forEach( function( endpoint_data ) {
                 var endpoint = endpoint_data['endpoint'];
@@ -196,7 +196,17 @@ var _store = (function () {
             
             callback( permalink_data );
         });
+    };*/
+    that.restore_state = function( permalink_id, endpoint, callback ) {
+        _db.restore_state( permalink_id, endpoint, function ( endpoint_data ) {
+            var endpoint = endpoint_data['endpoint'];
+            store_data( endpoint_data['data'], endpoint );
+            store_meta_data( endpoint_data['meta'], endpoint );
+            
+            callback( endpoint_data );
+        });
     };
+    
 
 
 // P R I V A T E   I N T E R F A C E

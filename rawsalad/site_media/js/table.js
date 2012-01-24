@@ -50,7 +50,7 @@ var _table = (function () {
     };
     
 
-    that.add_node = function( row_id, data ) {
+    that.generate_node = function( row_id, data ) {
         var new_rows = create_rows( data );
         return new_rows;        
     };
