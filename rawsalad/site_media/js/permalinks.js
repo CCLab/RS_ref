@@ -182,37 +182,39 @@ var _permalinks = (function () {
     // parents of leaves and if there are two nodes that are in the same
     // branch.
     function prepare_standard_sheet_data( sheet ) {
-        var data_list = [];
-        var leaves = {};
-        var leaves_parents = {};
-        var id;
         var id_list = [];
         var sorted_ids;
         var act_node = undefined;
+        var id;
+        var parent;
+        
+        var visited = {};  // ids of visited nodes( map: id->parent )
+        var needed = {};   // nodes needed in permalink
+        var unneeded = {}; // nodes that were needed in permalink
         
         while ( _tree.next_node( sheet['data'], act_node ) ) {
             act_node = _tree.next_node( sheet['data'], act_node );
-            data_list.push( act_node );
+            id = act_node['id'];
+            parent = act_node['parent'];
+            
+            visited[ id ] = parent;
+            if ( !!parent && !needed[ parent ] ) {
+                if ( !unneeded[ parent ] ) {
+                    // if parent of this node should be added to needed list
+                    uberparent = visited[ parent ];
+                    // if grandparent of this node should be removed from the list
+                    if ( uberparent !== undefined && needed[ uberparent ] ) {
+                        delete needed[ uberparent ];
+                        unneeded[ uberparent ] = true;
+                    }
+                    needed[ parent ] = true;
+                }
+            }
         }
         
-        // Find ids of leaves.
-        data_list.forEach( function ( node ) {
-            if ( !!node['parent'] ) {
-                leaves[ node['parent'] ] = false;
-            }
-            leaves[ node['id'] ] = true;
-        });
-        
-        // Build object with ids of parents of non top level leaves.
-        data_list.filter( function( node ) {
-            return leaves[ node['id'] ] && !!node['parent'];
-                }).forEach( function ( node ) {
-            leaves_parents[ node['parent'] ] = true;
-        });
-        
-        // Create list of those ids.
-        for ( id in leaves_parents ) {
-            if ( leaves_parents.hasOwnProperty( id ) ) {
+        // Create list of those needed ids in permalink.
+        for ( id in needed ) {
+            if ( needed.hasOwnProperty( id ) ) {
                 id_list.push( parseInt( id ) );
             }
         }
