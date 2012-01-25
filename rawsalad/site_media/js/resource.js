@@ -541,12 +541,14 @@ var _resource = (function () {
         
             // For each sheet in group: get data that needs to be inserted into
             // its tree, create and add a new sheet containing that data
-            group['sheets'].forEach( function ( sheet ) {            
-                var sheet_data = _permalinks.restore_sheet_data( sheet, data_tree );
+            group['sheets'].forEach( function ( permalink_sheet ) {
+                var sheet_data = _permalinks.restore_sheet_data( permalink_sheet, data_tree );
+                var sheet;
                 var sheet_id;
+                var additional_fields = _permalinks.get_additional_fields( permalink_sheet );
                 
-                // TODO: sort_query, filter_query, query
-                sheet = create_sheet( group['endpoint'], sheet_data, group['meta'] );
+                sheet = create_sheet( group['endpoint'], sheet_data, group['meta'],
+                                      permalink_sheet['type'], additional_fields );
                 sheet_id = add_sheet( sheet );
                 that.get_sheet_data( sheet_id, callback );
             });
@@ -617,13 +619,14 @@ var _resource = (function () {
     }
 
     // Create new sheet from data.
-    function create_sheet( endpoint, data, meta, type, boxes ) {
+    function create_sheet( endpoint, data, meta, type, other_fields ) {
         var new_sheet;
         var active_columns;
         var cleaned_data;
         var cleaned_tree_data;
         var group_id;
         var type = type || _enum['STANDARD'];
+        var other_fields = other_fields || {};
 
         active_columns = meta['columns'].filter( function ( column ) {
             return !!column['basic'];
@@ -644,8 +647,20 @@ var _resource = (function () {
             'any_selected': false
         };
 
-        if ( type === _enum['FILTERED'] || type === _enum['SEARCHED'] ) {
-            new_sheet['boxes'] = $.extend( true, [], boxes );
+        switch ( type ) {
+            case _enum['STANDARD']:
+                new_sheet['sort_query'] = other_fields['sort_query'];
+                break;
+            case _enum['FILTERED']:
+                new_sheet['sort_query'] = other_fields['sort_query'];
+                new_sheet['filter_query'] = other_fields['filter_query'];
+                break;
+            case _enum['SEARCHED']:
+                new_sheet['query'] = other_fields['query'];
+                new_sheet['boxes'] = other_fields['boxes'];
+                break;
+            default:
+                throw 'Bad sheet type';
         }
 
         return new_sheet;

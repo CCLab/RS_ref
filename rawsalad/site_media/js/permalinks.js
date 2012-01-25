@@ -71,13 +71,10 @@ var _permalinks = (function () {
         
         switch ( sheet['type'] ) {
             case _enum['STANDARD']:
-                sheet_data = get_standard_sheet_data( data_tree, sheet['data'],
-                                                      sheet['sort_query'] );
+                sheet_data = get_standard_sheet_data( data_tree, sheet['data'] );
                 break;
             case _enum['FILTERED']:
-                sheet_data = get_filtered_sheet_data( data_tree, sheet['data'],
-                                                      sheet['sort_query'],
-                                                      sheet['filter_query'] );
+                sheet_data = get_filtered_sheet_data( data_tree, sheet['data'] );
                 break;
             case _enum['SEARCHED']:
                 sheet_data = get_searched_sheet_data( data_tree, sheet['data'] );
@@ -87,6 +84,29 @@ var _permalinks = (function () {
         };
         
         return _tree.tree_to_list( sheet_data );
+    };
+    
+    // Obtain additional fields that depend on type of a sheet.
+    that.get_additional_fields = function( sheet ) {
+        var additional_fields = {};
+        
+        switch ( sheet['type'] ) {
+            case _enum['STANDARD']:
+                additional_fields['sort_query'] = sheet['sort_query'];
+                break;
+            case _enum['FILTERED']:
+                additional_fields['sort_query'] = sheet['sort_query'];
+                additional_fields['filter_query'] = sheet['filter_query'];
+                break;
+            case _enum['SEARCHED']:
+                additional_fields['query'] = sheet['query'];
+                additional_fields['boxes'] = sheet['boxes'];
+                break;
+            default:
+                throw 'Bad sheet type';
+        };
+        
+        return additional_fields;
     };
 
 //  P R I V A T E   I N T E R F A C E
@@ -253,7 +273,7 @@ var _permalinks = (function () {
     // Get nodes for standard sheet using passed functions.
     // sheet_info contains information which nodes are needed.
     // Returns tree with nodes that need to be inserted into a tree.
-    function get_standard_sheet_data( data_tree, sheet_info, sort_query ) {
+    function get_standard_sheet_data( data_tree, sheet_data ) {
         var get_branch = function( node_id ) {
             var new_rows = [];
             var ancestors = _tree.get_ancestors( data_tree, node_id );
@@ -271,53 +291,62 @@ var _permalinks = (function () {
             
             return new_rows;
         };
-        var sheet_data = [];
+        var sheet_tree;
+        var sheet_nodes = [];
         var node_ids = {};
         
-        sheet_data = _tree.get_children_nodes( data_tree );
+        sheet_nodes = _tree.get_children_nodes( data_tree );
         
-        sheet_info.forEach( function ( id ) {
+        sheet_data['ids'].forEach( function ( id ) {
             // TODO: remove
             if ( id === 1000001009 ) return;
             var branch_new_nodes = get_branch( id );
-            sheet_data = sheet_data.concat( branch_new_nodes );
+            sheet_nodes = sheet_nodes.concat( branch_new_nodes );
         });
-        tree = _tree.create_tree( sheet_data, 'id', 'parent' );
-        sheet_tree = ( !!sort_query ) ? _tree.sort( tree, sort_query ) : tree;
+        sheet_tree = _tree.create_tree( sheet_data, 'id', 'parent' );
         
-        return sheet_tree;
+        if ( !!sheet_data['sort_query'] ) {
+            return _tree.sort( sheet_tree, sheet_data['sort_query'] );
+        } else {
+            return sheet_tree;
+        }
     }
     
-    function get_filtered_sheet_data( data_tree, sheet_info, sort_query, filter_query ) {
-        var sorted_tree = get_standard_sheet_data( data_tree, sheet_info, sort_query );
-        var filtered_tree = _tree.filter( data_tree, filter_query );
+    function get_filtered_sheet_data( data_tree, sheet_data ) {
+        var sorted_tree = get_standard_sheet_data( data_tree, sheet_data );
         
-        return filtered_tree;
+        return  _tree.filter( sorted_tree, sheet_data['filter_query'] );
     }
     
-    function get_searched_sheet_data( data_tree, sheet_info ) {
-        var boxes = sheet_info['boxes'];
+    function get_searched_sheet_data( data_tree, sheet_data ) {
+        var boxes = sheet_data['boxes'];
+        var sheet_nodes = [];
+        
         // TODO: test it, prealpha version
         boxes.forEach( function ( box ) {
             var rows = box['ids'];
             var nodes_in_box = [];
             var ancestors;
             var children;
-            if ( breadcrumb ) {
+            
+            if ( box['breadcrumb'] ) {
                 ancestors = _tree.get_ancestors( data_tree, rows[0] );
                 nodes_in_box.push( ancestors );
             }
-            if ( context ) {
+            
+            if ( box['context'] ) {
                 children = _tree.get_children_nodes( data_tree, ancestors[0] );
                 nodes_in_box = nodes_in_box.concat( children );
             } else {
-                rows.forEach( function ( row ) {
-                    nodes_in_box.push( row );
+                box['rows'].forEach( function ( row ) {
+                    var node = _tree.get_node( data_tree, row['id'] );
+                    nodes_in_box.push( node );
                 });
             }
+            sheet_nodes = sheet_nodes.concat( nodes_in_box );
         });
         
-        return nodes_in_box;
+        return _tree.create_tree( sheet_nodes, 'id', 'parent' );
     }
 
     return that;
