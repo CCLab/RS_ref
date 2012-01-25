@@ -402,6 +402,7 @@ var _gui = (function () {
             set_selection( rows_code ); //TODO finish selection
             make_zebra();
             row
+                .attr( 'data-open', 'true' )
                 .unbind( 'click' ) 
                 .click( close_node );
         }
@@ -414,16 +415,25 @@ var _gui = (function () {
     }
 
 
-    // not used yet:
     function close_node() {
         var sheet_id = active_sheet_id();
         var row = $(this);
         var row_id = get_id( row );
-        var children = row.nextUntil( '.top' );
+        var children = row.siblings( '[data-parent="' + row_id +'"]' );
+        var open_children = children.filter( '[data-open="true"]' );
+        
+        open_children.trigger( 'click' );
+        
         _resource.remove_children( sheet_id, row_id );
         children.remove();
-        make_zebra();
+            
+        if ( row.hasClass( 'selected' ) ) {
+            deselect();
+        }
+        make_zebra(); // TODO - how to make it only one time?
+        
         row
+            .attr( 'data-open', 'false' )
             .unbind( 'click' )
             .click( open_node );        
     }
@@ -599,53 +609,54 @@ var _gui = (function () {
     // TABLE FUNCTIONS
 
     function set_selection( rows_code ){
+        var sheet_id = active_sheet_id();
+
         var top_row = get_prev_top_row( rows_code );
         var top_row_id = get_id( top_row );
+
         var in_select = top_row.nextUntil( '.top' );
         var after_row = get_next_top_row( rows_code );
 
         var old_selected = $('tr.selected');
         var old_selected_row_id;
 
-        // TODO test rows
-        var rows = top_row.prevAll().add( after_row.nextAll() );
-        if ( after_row !== null ) {
-            rows = after_row.add( rows );
-        }
-        
-        var sheet_id = active_sheet_id();
-        
-        // TODO test it
-        rows.addClass( 'dim' );
-//      rows.addClass( 'dim' ); TODO - test new and remove old
+        var rows = top_row.prevAll()
+                    .add( after_row.nextAll() );
 
         if ( old_selected.length === 1 ) {
             old_selected_row_id = get_id( old_selected );
         }
 
+
         if ( old_selected_row_id !== top_row_id ) {
-            rows.removeClass( 'selected' );
-            rows.removeClass( 'in-selected' );
-            rows.removeClass( 'after-selected' );
+            
+            deselect();
+
             top_row
                 .addClass( 'selected' );
-            // TODO move var            
+
             in_select
                 .addClass( 'in-selected' );
 
-            if ( after_row !== null ) {
-            after_row
-                .addClass( 'after-selected' );
+            if ( after_row.length !== 0 ) {
+                after_row
+                    .addClass( 'after-selected' );
             } 
-            else{
-            // TODO - add class for select last top row
-            }
+            rows.addClass( 'dim' );
         }
         else {
             rows_code.addClass( 'in-selected' );
         }
 
         _resource.row_selected( sheet_id, top_row_id, old_selected_row_id );
+    }
+    
+    
+    function deselect() {
+        $('tr.selected').removeClass( 'selected' );
+        $('tr.in-selected').removeClass( 'in-selected' );
+        $('tr.after-selected').removeClass( 'after-selected' );
+        $('tr.dim').removeClass( 'dim' );
     }
 
 
@@ -667,12 +678,11 @@ var _gui = (function () {
         if ( row.length !== 0 ) {
             while ( ! row.hasClass( 'top' ) ){
                 row = row.next();
-                if ( row.isEmptyObject() ) { // TODO test it and configure display.
-                    row = null;
+                if ( row.length === 0 ) { // TODO test it and configure display.
                     return;
                 }    
             }
-        }        
+        }
         return row;
     }
 
