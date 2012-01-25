@@ -243,6 +243,7 @@ Form of created tree:
                 
                 node = isIdType(elem) ? this.getNode(elem) : elem;
                 parentNode.__children__.remove(this.nodeId(node));
+                delete idMap[this.nodeId(node)];
                 
                 return this;
             },
