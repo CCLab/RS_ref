@@ -31,7 +31,7 @@ var _permalinks = (function () {
     
     // Create permalink data for sheets from sheets list. Their ids are in
     // ids list. Id of sheet sheets[i] is ids[i].
-    that.prepare_permalink = function( sheets, ids, next_node_fun_gen, is_filtered_fun_gen ) {
+    that.prepare_permalink = function( sheets, ids ) {
         var permalink_data = [];
         var grouped_sheets = group_sheets( sheets, ids );
         
@@ -42,15 +42,9 @@ var _permalinks = (function () {
             group['sheets'].forEach( function ( sheet_info ) {
                 var sheet_id = sheet_info['sheet_id'];
                 var sheet = sheet_info['sheet'];
-                var next_node_fun = function( node ) {
-                    return next_node_fun_gen( sheet['data'], node );
-                };
-                var is_filtered_fun = function( node ) {
-                    return is_filtered_fun_gen( sheet['data'], node );
-                };
                 
                 endpoint = sheet['endpoint'];
-                var prepared_sheet = sheet_to_permalink( sheet, next_node_fun, is_filtered_fun );
+                var prepared_sheet = sheet_to_permalink( sheet );
                 prepared_sheets.push( prepared_sheet );
             });
             
@@ -153,7 +147,7 @@ var _permalinks = (function () {
     }
     
     // Make permalink data for one sheet, data_tree is data of sheet.
-    function sheet_to_permalink( sheet, next_node_fun, is_filtered_fun ) {
+    function sheet_to_permalink( sheet ) {
         var permalink_object = {};
         var sheet_data;
         
@@ -166,14 +160,13 @@ var _permalinks = (function () {
         // Create sheet data depending on type of sheet.
         switch ( sheet['type'] ) {
             case _enum['STANDARD']:
-                sheet_data = prepare_standard_sheet_data( sheet['sort_query'], next_node_fun );
+                sheet_data = prepare_standard_sheet_data( sheet );
                 break;
             case _enum['FILTERED']:
-                sheet_data = prepare_filtered_sheet_data( sheet['sort_query'], sheet['filter_query'],
-                                                          next_node_fun );
+                sheet_data = prepare_filtered_sheet_data( sheet );
                 break;
             case _enum['SEARCHED']:
-                sheet_data = prepare_searched_sheet_data( sheet['query'], sheet['boxes'] );
+                sheet_data = prepare_searched_sheet_data( sheet );
                 break;
             default:
                 throw 'Bad sheet type';
@@ -188,7 +181,7 @@ var _permalinks = (function () {
     // Find needed nodes to place them in permalink data. Those nodes are
     // parents of leaves and if there are two nodes that are in the same
     // branch.
-    function prepare_standard_sheet_data( sort_query, next_node_fun ) {
+    function prepare_standard_sheet_data( sheet ) {
         var data_list = [];
         var leaves = {};
         var leaves_parents = {};
@@ -196,10 +189,9 @@ var _permalinks = (function () {
         var id_list = [];
         var sorted_ids;
         var act_node = undefined;
-        var sheet_data;
         
-        while ( next_node_fun( act_node ) ) {
-            act_node = next_node_fun( act_node );
+        while ( _tree.next_node( sheet['data'], act_node ) ) {
+            act_node = _tree.next_node( sheet['data'], act_node );
             data_list.push( act_node );
         }
         
@@ -231,19 +223,19 @@ var _permalinks = (function () {
         });
         
         return {
-            'ids': sorted_ids,
-            'sort_query': sort_query
+            'ids'       : sorted_ids,
+            'sort_query': sheet['sort_query']
         };
     }
     
     // Prepare sheet data when permalink is created.
     // Sheet data in standard permalink is a list of filtered nodes.
     // Find them and group in boxes.
-    function prepare_filtered_sheet_data( sort_query, filter_query, next_node_fun ) {
+    function prepare_filtered_sheet_data( sheet ) {
         var sheet_data;
 
-        sheet_data = prepare_standard_sheet_data( sort_query, next_node_fun );
-        sheet_data['filter_query'] = filter_query;
+        sheet_data = prepare_standard_sheet_data( sheet );
+        sheet_data['filter_query'] = sheet['filter_query'];
         
         return sheet_data;
     }
@@ -251,13 +243,13 @@ var _permalinks = (function () {
     // Prepare sheet data when permalink is created.
     // Searched permalink should contain information about search query
     // and states of boxes.
-    function prepare_searched_sheet_data( query, boxes ) {
-        var sheet_data = {};
+    function prepare_searched_sheet_data( sheet ) {
+        var sheet_data = {
+            'query': sheet['query'],
+            'boxes': []
+        };
         
-        sheet_data['query'] = query;
-        sheet_data['boxes'] = [];
-        
-        boxes.forEach( function ( box ) {
+        sheet['boxes'].forEach( function ( box ) {
             var rows = box['rows'].map( function ( e ) {
                 return e['id'];
             });
@@ -268,6 +260,8 @@ var _permalinks = (function () {
                 'breadcrumb': box['breadcrumb']
             };
         });
+        
+        return sheet_data;
     }
     
     // Get nodes for standard sheet using passed functions.
