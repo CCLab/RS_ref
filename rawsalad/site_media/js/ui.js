@@ -155,13 +155,59 @@ var _ui = (function () {
         return data_package;
     }
 
-    function prepare_filtered_data_package( sheet, sheet_id, data, full_data ) {
+    function prepare_filtered_data_package( sheet, sheet_id, filtered_ids, full_data ) {
+        var prepare_row = function( row, columns ) {
+            // insert standard values
+            var new_row = {
+                'id' : row['id'],
+            };
+            if ( !!row['aux']['info'] ) {
+                new_row['info'] = row['aux']['info'];
+            }
+
+            // add data fields containing information to generate cells
+            // in table for this row
+            new_row['data'] = columns.map( function( e ) {
+                return {
+                    'column_key'  : e['key'],
+                    'column_type' : e['type'],
+                    'content'     : format_value( row['data'][ e['key'] ], e['type'], e['format'] )
+                };
+            });
+
+            return new_row;
+        };
+        
         var data_package;
         var columns_for_gui;
         var boxes = [];
         
+        var nodes = {};
+        var filtered_visited = 0;
+        var last_parent_id = undefined;
+        
         // columns description for gui
         columns_for_gui = get_columns_description( sheet['columns'] );
+        
+        full_data.forEach( function ( node ) {
+            var id = node[ id ];
+            var box;
+            
+            nodes[ id ] = node;
+            if ( filtered_ids[ filtered_visited ] === id ) {
+                if ( last_parent_id !== node['parent'] ) {
+                    last_parent_id = node['parent'];
+                    boxes.push({
+                        'breadcrumb': get_breadcrumb(),
+                        'rows': []
+                    });
+                }
+                
+                box = boxes[ boxes.length - 1 ];
+                box['rows'].push( prepare_row( node, columns_for_gui ) );
+                filtered_visited += 1;
+            }
+        });
         
         
         data_package = {

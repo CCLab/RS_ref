@@ -128,6 +128,7 @@ def download_data( request ):
 @csrf_exempt
 def store_state( request ):
     data  = request.POST.get( 'state', '' )
+    print 'data=', data
 
     permalink_id = sqldb.save_permalink( json.loads( data ) )
 

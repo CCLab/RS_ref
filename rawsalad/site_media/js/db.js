@@ -128,7 +128,7 @@ var _db = (function () {
         $.ajax({
             url     : '/store_state/',
             data    : {
-                'permalink_data': permalink_data
+                'state': JSON.stringify(permalink_data)
             },
             dataType: 'json',
             type    : 'POST',
