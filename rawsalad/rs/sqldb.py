@@ -223,6 +223,33 @@ def search_data( user_query, endpoint, get_meta=False ):
     return final_data
 
 
+def save_permalink( data ):
+    cursor = db_cursor()
+    query = '''SELECT value FROM counters
+               WHERE key = 'permalinks'
+            '''
+    cursor.execute( query )
+    permalink_id = cursor.fetchone()['value']
+
+    for endpoint in data:
+        # create a lable list and prepare it for pgSQL array format
+        labels = str( [ s['label'] for s in endpoint['sheets'] ] ).strip('[]')
+        # store sheet jsons as sent by _db
+        data   = json.dumps( endpoint['sheets'] )
+
+        insert = '''INSERRT INTO permalinks( id, endpoint, labels, data )
+                    VALUES( %s, '%s', '{%s}', '%s' )
+                 ''' % ( permalink_id, endpoint, labels, data )
+
+        cursor.execute( insert )
+
+    update = '''UPDATE counters SET value = %s
+                WHERE key = 'permalinks'
+             ''' % permalink_id
+
+    return permalink_id
+
+
 def get_permalink_endpoints( id ):
     '''Collect signatures for all endpoints/sheets in permalink'''
     cursor = db_cursor()
