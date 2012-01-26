@@ -336,14 +336,12 @@ var _gui = (function () {
 
         if ( $('#app-tb-tl-rename-input').is(":visible")){
             var new_name = $('#app-tb-tl-rename-input').val();
-            // TODO get old_name from tools
-            var old_name = active_tab_name();
+            var old_name = active_sheet_name();
             var callback = function(){
-                _resource.get_sheets_names( draw_tabs )
+                _resource.get_sheets_names( draw_tabs );
             };
 
-
-            if ( new_name !== old_name ) {
+            if ( ( new_name !== old_name ) && /\S/.test(new_name) ) {
                 var sheet_id = active_sheet_id();
 
                 $('#app-tb-tl-title').html( new_name );
@@ -426,10 +424,11 @@ var _gui = (function () {
             var new_rows = _table.generate_node( row_id, new_data );
             var rows_code = $(new_rows);
 
-            prepare_rows_interface( rows_code );
-            row.after( rows_code );
 
-            add_selection( rows_code ); //TODO finish selection
+            row.after( rows_code );
+            add_selection( rows_code ); 
+            prepare_rows_interface( rows_code );
+
             make_zebra();
             row
                 .attr( 'data-open', 'true' )
@@ -488,12 +487,6 @@ var _gui = (function () {
 
 
     // TABLE TABS FUNCTIONS
-
-    function active_tab_name() {
-        var tab = $('#app-tb-sheets>.active');
-        return tab.text();
-    }
-
 
     function new_active_tab( button ) {
         var close_bt = $(_templates.close_sheet_button);
@@ -593,6 +586,14 @@ var _gui = (function () {
     
     
     // TOOLS FUNCTIONS
+    
+    
+    function active_sheet_name() {
+        var tab = $('#app-tb-tl-title');
+        return tab.text();
+    }
+
+
 
     function preapare_sort_interface( sort_form ){
         add_sort_key( sort_form );
@@ -637,7 +638,7 @@ var _gui = (function () {
 
 
     // TABLE FUNCTIONS
-
+    // rows_code is jQuery object of rows added to page
     function add_selection( rows_code ){
         var sheet_id = active_sheet_id();
 

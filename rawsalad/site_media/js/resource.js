@@ -268,7 +268,7 @@ var _resource = (function () {
     that.get_sheet_name = function ( sheet_id, callback ) {
         var sheet = get_sheet( sheet_id );
 
-        callback( { 'name': sheet['label'] } );
+        callback( { 'label': sheet['label'] } );
     };
 
 
