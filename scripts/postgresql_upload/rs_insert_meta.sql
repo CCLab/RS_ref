@@ -13,9 +13,9 @@ INSERT INTO dbtree VALUES( 1009, 1008, 'Dane zagregowane', NULL, 'Dane centrali 
 INSERT INTO dbtree VALUES( 1010, 1009, '2011', 'Budżet NFZ 2011', NULL, 0, 0, 'data_50002', TRUE );
 INSERT INTO dbtree VALUES( 1011, 1008, 'Ośrodki regionalne', NULL, 'Dane ośrodków regionalnych', 1, 1, NULL, TRUE );
 INSERT INTO dbtree VALUES( 1012, 1011, '2011', 'Budżet ośrodków regionalnych NFZ 2011', NULL, 0, 0, 'data_50003', TRUE );
-INSERT INTO dbtree VALUES( 1013, NULL, 'EFRR', NULL, 'Projekty Europejskiego Funduszu Rozwoju Regionalnego', 2, 2, NULL, TRUE );
-INSERT INTO dbtree VALUES( 1014, 1013, 'Projekty gminne', NULL, 'Projekty realizowane na szczelu gminnym', 1, 1, NULL, TRUE );
-INSERT INTO dbtree VALUES( 1015, 1013, 'Projekty międzygminne', NULL, 'Projekty realizowane na szczelu gminnym', 1, 1, NULL, TRUE );
+INSERT INTO dbtree VALUES( 1013, NULL, 'EFRR', NULL, 'Projekty Europejskiego Funduszu Rozwoju Regionalnego', 3, 2, NULL, TRUE );
+INSERT INTO dbtree VALUES( 1014, 1013, 'Projekty gminne', NULL, 'Projekty realizowane na szczelu gminnym', 2, 2, NULL, TRUE );
+INSERT INTO dbtree VALUES( 1015, 1014, 'Projekty międzygminne', NULL, 'Projekty realizowane na szczelu gminnym', 1, 1, NULL, TRUE );
 INSERT INTO dbtree VALUES( 1016, 1015, '2010', 'Projekty gminne EFRR 2010', NULL, 0, 0, 'data_50004', TRUE );
 INSERT INTO dbtree VALUES( 1017, 1015, '2011', 'Projekty gminne EFRR 2011', NULL, 0, 0, 'data_50005', TRUE );
 INSERT INTO dbtree VALUES( 1018, 1013, 'Projekty powiatowe', NULL, 'Projekty realizowane na szczelu powiatowym', 1, 1, NULL, TRUE );

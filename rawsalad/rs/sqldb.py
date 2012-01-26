@@ -258,11 +258,11 @@ def restore_group( id, endpoint ):
         # get parents of sheet's deepest open nodes
         query = '''SELECT DISTINCT unnest(parents) FROM p_tree
                    WHERE id IN ( %s )
-                ''' % str( sheet['data'] ).strip('[]')
+                ''' % str( sheet['data']['ids'] ).strip('[]')
         cursor.execute( query )
         # gather all open nodes in the sheet
         # TODO don't use the RealDictCursor here
-        open_nodes = sheet['data'] + [ e['unnest'] for e in cursor.fetchall() ]
+        open_nodes = sheet['data']['ids'] + [ e['unnest'] for e in cursor.fetchall() ]
         # collect only endpoint unique nodes
         map( unique_parents.add, open_nodes )
 
