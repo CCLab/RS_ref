@@ -136,14 +136,7 @@ var _ui = (function () {
         var id_map;
         
         // columns description for gui
-        columns_for_gui = sheet['columns'].map( function ( column ) {
-            return {
-                'key': column['key'],
-                'label': column['label'],
-                'type': column['type']
-            };
-        });
-
+        columns_for_gui = get_columns_description( sheet['columns'] );
         total_row = prepare_total_row( data, columns_for_gui );
         id_map = create_level_map( full_data );
         rows_for_gui = prepare_rows( data, columns_for_gui, id_map );
@@ -163,11 +156,38 @@ var _ui = (function () {
     }
 
     function prepare_filtered_data_package( sheet, sheet_id, data, full_data ) {
-        return 'TODO';
+        var data_package;
+        var columns_for_gui;
+        var boxes = [];
+        
+        // columns description for gui
+        columns_for_gui = get_columns_description( sheet['columns'] );
+        
+        
+        data_package = {
+            'group': sheet['group_id'],
+            'id': sheet_id,
+            'type': sheet['type'],
+            'label': sheet['label'],
+            'columns': columns_for_gui,
+            'boxes': boxes
+        };
+        
+        return data_package;
     }
 
     function prepare_searched_data_package( sheet, sheet_id, data, full_data ) {
         return 'TODO';
+    }
+    
+    function get_columns_description( columns ) {
+        return columns.map( function ( column ) {
+            return {
+                'key': column['key'],
+                'label': column['label'],
+                'type': column['type']
+            };
+        });
     }
     
     function format_value( value, type, format ) {
