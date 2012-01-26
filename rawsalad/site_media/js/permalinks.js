@@ -294,17 +294,15 @@ var _permalinks = (function () {
         sheet_nodes = _tree.get_children_nodes( data_tree );
         
         sheet_data['ids'].forEach( function ( id ) {
-            // TODO: remove
-            if ( id === 1000001009 ) return;
             var branch_new_nodes = get_branch( id );
             sheet_nodes = sheet_nodes.concat( branch_new_nodes );
         });
-        sheet_tree = _tree.create_tree( sheet_data, 'id', 'parent' );
+        sheet_tree = _tree.create_tree( sheet_nodes, 'id', 'parent' );
         
-        if ( !!sheet_data['sort_query'] ) {
-            return _tree.sort( sheet_tree, sheet_data['sort_query'] );
-        } else {
+        if ( is_sort_query_empty( sheet_data['sort_query'] ) ) {
             return sheet_tree;
+        } else {
+            return _tree.sort( sheet_tree, sheet_data['sort_query'] );
         }
     }
     
@@ -343,6 +341,17 @@ var _permalinks = (function () {
         });
         
         return _tree.create_tree( sheet_nodes, 'id', 'parent' );
+    }
+    
+    function is_sort_query_empty( sort_query ) {
+        var property;
+        
+        for ( property in sort_query ) {
+            if ( sort_query.hasOwnProperty( property ) ) {
+                return false;
+            }
+        }
+        return true;
     }
 
     return that;

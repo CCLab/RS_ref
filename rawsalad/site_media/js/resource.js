@@ -694,12 +694,7 @@ var _resource = (function () {
 
             new_node['id'] = node['id'];
             new_node['parent'] = node['parent'];
-            // TODO
-            ///////////////////////////////////////////////////
-            // DELETE IT ASAP
-            ///////////////////////////////////////////////////
-            new_node['leaf'] = false;
-            ///////////////////////////////////////////////////
+            new_node['leaf'] = node['leaf'];
 
             for ( property in node['aux'] ) {
                 if ( node['aux'].hasOwnProperty( property )) {
