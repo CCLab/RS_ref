@@ -79,14 +79,6 @@ def search_count( user_query, scope ):
 
     # traverse through all requested endpoints
     for endpoint in scope:
-        # get endpoint's id in the dbtree
-        # TODO do we really need that?
-        query = '''SELECT id FROM dbtree
-                   WHERE endpoint = '%s'
-                ''' % endpoint
-        cursor.execute( query )
-        tree_id = cursor.fetchone()['id']
-
         # collect all searchable column's keys
         columns = '''SELECT key FROM columns
                      WHERE searchable IS TRUE
@@ -114,7 +106,6 @@ def search_count( user_query, scope ):
         cursor.execute( query )
         # collect the results
         result = {
-            'tree_id'  : tree_id,
             'endpoint' : endpoint,
             'count'    : cursor.fetchone()['count']
         }
@@ -395,6 +386,7 @@ class Collection:
             new_row = {
                 'id'     : row['id'],
                 'parent' : row['parent'],
+                'leaf'   : row['leaf'],
                 'aux'    : {},
                 'data'   : {}
             }
