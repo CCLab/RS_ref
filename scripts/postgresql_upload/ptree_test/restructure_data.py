@@ -10,10 +10,11 @@ from types import *
 endpoint = 50000
 # unique id
 inx = 1000000000
+
 # output files
 hierarchy = codecs.open( 'hierarchy.sql', 'w', encoding='utf-8' )
 #tables    = codecs.open( 'tables.sql', 'w', encoding='utf-8' )
-#inserts   = codecs.open( 'inserts.sql', 'w', encoding='utf-8' )
+inserts   = codecs.open( 'inserts.sql', 'w', encoding='utf-8' )
 
 if len( sys.argv ) == 1:
     file_list = filter( lambda e: e.endswith('json'), sorted( os.listdir('.') ) )
@@ -33,6 +34,9 @@ for f in file_list:
     data = js.loads( codecs.open( f, encoding='utf-8' ).read() )['data']
 
     for row in data:
+        # increment the unique id
+        inx += 1
+
         # cache the old idef
         old_idef  = row['idef']
         node_idef = row['parent']
@@ -63,8 +67,6 @@ for f in file_list:
 
         # save the brand new object
         results.append( row )
-        # increment the unique id
-        inx += 1
 
     # make a copy of keys and remove obligatory ones
     keys = sorted( results[0].keys() )
@@ -76,34 +78,32 @@ for f in file_list:
 
     # create inserts
     for row in results:
-#        columns = ','.join( keys )
-#        insert  = 'INSERT INTO data_%d(%s) VALUES(' % ( endpoint, columns )
-#
-#        for k in keys:
-#            try:
-#                value  = row[ k ]
-#            except KeyError as key_err:
-#                value = None
-#
-#            v_type = type( value )
-#
-#            if v_type in [ StringType, UnicodeType ]:
-#                insert += "'%s'," % value.replace("'", '"')
-#            elif v_type in [ IntType, FloatType ]:
-#                insert += '%d,' % value
-#            elif v_type is BooleanType:
-#                insert += '%s,' % str( value ).upper()
-#            elif v_type is NoneType:
-#                insert += 'NULL,'
-#            elif v_type is ListType:
-#                insert += "'%s'," % js.dumps( value )
-#            else:
-#                print type(value)
-#
-#        insert = insert.rstrip(',')
-#        insert += ');\n'
-#
-#        inserts.write( insert )
+        columns = ','.join( keys )
+        insert  = 'INSERT INTO data_%d(%s) VALUES(' % ( endpoint, columns )
+
+        for k in keys:
+            try:
+                value  = row[ k ]
+            except KeyError as key_err:
+                value = None
+
+            v_type = type( value )
+
+            if v_type in [ StringType, UnicodeType, IntType, FloatType ]:
+                insert += "'%s'," % value.replace("'", '"')
+            elif v_type is BooleanType:
+                insert += '%s,' % str( value ).upper()
+            elif v_type is NoneType:
+                insert += 'NULL,'
+            elif v_type is ListType:
+                insert += "'%s'," % js.dumps( value )
+            else:
+                print type(value)
+
+        insert = insert.rstrip(',')
+        insert += ');\n'
+
+        inserts.write( insert )
 
 #        h_insert = "INSERT INTO hierarchy VALUES( %d, '%s' );\n" % ( row['id'], row['path'] )
 #        hierarchy.write( h_insert )
@@ -113,7 +113,7 @@ for f in file_list:
 
 hierarchy.close()
 #tables.close()
-#inserts.close()
+inserts.close()
 
 
 

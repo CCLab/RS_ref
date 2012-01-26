@@ -80,6 +80,7 @@ def search_count( user_query, scope ):
     # traverse through all requested endpoints
     for endpoint in scope:
         # get endpoint's id in the dbtree
+        # TODO do we really need that?
         query = '''SELECT id FROM dbtree
                    WHERE endpoint = '%s'
                 ''' % endpoint
