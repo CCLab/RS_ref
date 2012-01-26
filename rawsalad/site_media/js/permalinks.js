@@ -31,7 +31,7 @@ var _permalinks = (function () {
     
     // Create permalink data for sheets from sheets list. Their ids are in
     // ids list. Id of sheet sheets[i] is ids[i].
-    that.prepare_permalink = function( sheets, ids, next_node_fun_gen, is_filtered_fun_gen ) {
+    that.prepare_permalink = function( sheets, ids ) {
         var permalink_data = [];
         var grouped_sheets = group_sheets( sheets, ids );
         
@@ -42,15 +42,9 @@ var _permalinks = (function () {
             group['sheets'].forEach( function ( sheet_info ) {
                 var sheet_id = sheet_info['sheet_id'];
                 var sheet = sheet_info['sheet'];
-                var next_node_fun = function( node ) {
-                    return next_node_fun_gen( sheet['data'], node );
-                };
-                var is_filtered_fun = function( node ) {
-                    return is_filtered_fun_gen( sheet['data'], node );
-                };
                 
                 endpoint = sheet['endpoint'];
-                var prepared_sheet = sheet_to_permalink( sheet, next_node_fun, is_filtered_fun );
+                var prepared_sheet = sheet_to_permalink( sheet );
                 prepared_sheets.push( prepared_sheet );
             });
             
@@ -71,13 +65,10 @@ var _permalinks = (function () {
         
         switch ( sheet['type'] ) {
             case _enum['STANDARD']:
-                sheet_data = get_standard_sheet_data( data_tree, sheet['data'],
-                                                      sheet['sort_query'] );
+                sheet_data = get_standard_sheet_data( data_tree, sheet['data'] );
                 break;
             case _enum['FILTERED']:
-                sheet_data = get_filtered_sheet_data( data_tree, sheet['data'],
-                                                      sheet['sort_query'],
-                                                      sheet['filter_query'] );
+                sheet_data = get_filtered_sheet_data( data_tree, sheet['data'] );
                 break;
             case _enum['SEARCHED']:
                 sheet_data = get_searched_sheet_data( data_tree, sheet['data'] );
@@ -87,6 +78,29 @@ var _permalinks = (function () {
         };
         
         return _tree.tree_to_list( sheet_data );
+    };
+    
+    // Obtain additional fields that depend on type of a sheet.
+    that.get_additional_fields = function( sheet ) {
+        var additional_fields = {};
+        
+        switch ( sheet['type'] ) {
+            case _enum['STANDARD']:
+                additional_fields['sort_query'] = sheet['sort_query'];
+                break;
+            case _enum['FILTERED']:
+                additional_fields['sort_query'] = sheet['sort_query'];
+                additional_fields['filter_query'] = sheet['filter_query'];
+                break;
+            case _enum['SEARCHED']:
+                additional_fields['query'] = sheet['query'];
+                additional_fields['boxes'] = sheet['boxes'];
+                break;
+            default:
+                throw 'Bad sheet type';
+        };
+        
+        return additional_fields;
     };
 
 //  P R I V A T E   I N T E R F A C E
@@ -133,7 +147,7 @@ var _permalinks = (function () {
     }
     
     // Make permalink data for one sheet, data_tree is data of sheet.
-    function sheet_to_permalink( sheet, next_node_fun, is_filtered_fun ) {
+    function sheet_to_permalink( sheet ) {
         var permalink_object = {};
         var sheet_data;
         
@@ -146,14 +160,13 @@ var _permalinks = (function () {
         // Create sheet data depending on type of sheet.
         switch ( sheet['type'] ) {
             case _enum['STANDARD']:
-                sheet_data = prepare_standard_sheet_data( sheet['sort_query'], next_node_fun );
+                sheet_data = prepare_standard_sheet_data( sheet );
                 break;
             case _enum['FILTERED']:
-                sheet_data = prepare_filtered_sheet_data( sheet['sort_query'], sheet['filter_query'],
-                                                          next_node_fun );
+                sheet_data = prepare_filtered_sheet_data( sheet );
                 break;
             case _enum['SEARCHED']:
-                sheet_data = prepare_searched_sheet_data( sheet['query'], sheet['boxes'] );
+                sheet_data = prepare_searched_sheet_data( sheet );
                 break;
             default:
                 throw 'Bad sheet type';
@@ -168,39 +181,40 @@ var _permalinks = (function () {
     // Find needed nodes to place them in permalink data. Those nodes are
     // parents of leaves and if there are two nodes that are in the same
     // branch.
-    function prepare_standard_sheet_data( sort_query, next_node_fun ) {
-        var data_list = [];
-        var leaves = {};
-        var leaves_parents = {};
-        var id;
+    function prepare_standard_sheet_data( sheet ) {
         var id_list = [];
         var sorted_ids;
         var act_node = undefined;
-        var sheet_data;
+        var id;
+        var parent;
         
-        while ( next_node_fun( act_node ) ) {
-            act_node = next_node_fun( act_node );
-            data_list.push( act_node );
+        var visited = {};  // ids of visited nodes( map: id->parent )
+        var needed = {};   // nodes needed in permalink
+        var unneeded = {}; // nodes that were needed in permalink
+        
+        while ( _tree.next_node( sheet['data'], act_node ) ) {
+            act_node = _tree.next_node( sheet['data'], act_node );
+            id = act_node['id'];
+            parent = act_node['parent'];
+            
+            visited[ id ] = parent;
+            if ( !!parent && !needed[ parent ] ) {
+                if ( !unneeded[ parent ] ) {
+                    // if parent of this node should be added to needed list
+                    uberparent = visited[ parent ];
+                    // if grandparent of this node should be removed from the list
+                    if ( uberparent !== undefined && needed[ uberparent ] ) {
+                        delete needed[ uberparent ];
+                        unneeded[ uberparent ] = true;
+                    }
+                    needed[ parent ] = true;
+                }
+            }
         }
         
-        // Find ids of leaves.
-        data_list.forEach( function ( node ) {
-            if ( !!node['parent'] ) {
-                leaves[ node['parent'] ] = false;
-            }
-            leaves[ node['id'] ] = true;
-        });
-        
-        // Build object with ids of parents of non top level leaves.
-        data_list.filter( function( node ) {
-            return leaves[ node['id'] ] && !!node['parent'];
-                }).forEach( function ( node ) {
-            leaves_parents[ node['parent'] ] = true;
-        });
-        
-        // Create list of those ids.
-        for ( id in leaves_parents ) {
-            if ( leaves_parents.hasOwnProperty( id ) ) {
+        // Create list of those needed ids in permalink.
+        for ( id in needed ) {
+            if ( needed.hasOwnProperty( id ) ) {
                 id_list.push( parseInt( id ) );
             }
         }
@@ -211,19 +225,19 @@ var _permalinks = (function () {
         });
         
         return {
-            'ids': sorted_ids,
-            'sort_query': sort_query
+            'ids'       : sorted_ids,
+            'sort_query': sheet['sort_query']
         };
     }
     
     // Prepare sheet data when permalink is created.
     // Sheet data in standard permalink is a list of filtered nodes.
     // Find them and group in boxes.
-    function prepare_filtered_sheet_data( sort_query, filter_query, next_node_fun ) {
+    function prepare_filtered_sheet_data( sheet ) {
         var sheet_data;
 
-        sheet_data = prepare_standard_sheet_data( sort_query, next_node_fun );
-        sheet_data['filter_query'] = filter_query;
+        sheet_data = prepare_standard_sheet_data( sheet );
+        sheet_data['filter_query'] = sheet['filter_query'];
         
         return sheet_data;
     }
@@ -231,13 +245,13 @@ var _permalinks = (function () {
     // Prepare sheet data when permalink is created.
     // Searched permalink should contain information about search query
     // and states of boxes.
-    function prepare_searched_sheet_data( query, boxes ) {
-        var sheet_data = {};
+    function prepare_searched_sheet_data( sheet ) {
+        var sheet_data = {
+            'query': sheet['query'],
+            'boxes': []
+        };
         
-        sheet_data['query'] = query;
-        sheet_data['boxes'] = [];
-        
-        boxes.forEach( function ( box ) {
+        sheet['boxes'].forEach( function ( box ) {
             var rows = box['rows'].map( function ( e ) {
                 return e['id'];
             });
@@ -248,12 +262,14 @@ var _permalinks = (function () {
                 'breadcrumb': box['breadcrumb']
             };
         });
+        
+        return sheet_data;
     }
     
     // Get nodes for standard sheet using passed functions.
     // sheet_info contains information which nodes are needed.
     // Returns tree with nodes that need to be inserted into a tree.
-    function get_standard_sheet_data( data_tree, sheet_info, sort_query ) {
+    function get_standard_sheet_data( data_tree, sheet_data ) {
         var get_branch = function( node_id ) {
             var new_rows = [];
             var ancestors = _tree.get_ancestors( data_tree, node_id );
@@ -271,53 +287,62 @@ var _permalinks = (function () {
             
             return new_rows;
         };
-        var sheet_data = [];
+        var sheet_tree;
+        var sheet_nodes = [];
         var node_ids = {};
         
-        sheet_data = _tree.get_children_nodes( data_tree );
+        sheet_nodes = _tree.get_children_nodes( data_tree );
         
-        sheet_info.forEach( function ( id ) {
+        sheet_data['ids'].forEach( function ( id ) {
             // TODO: remove
             if ( id === 1000001009 ) return;
             var branch_new_nodes = get_branch( id );
-            sheet_data = sheet_data.concat( branch_new_nodes );
+            sheet_nodes = sheet_nodes.concat( branch_new_nodes );
         });
-        tree = _tree.create_tree( sheet_data, 'id', 'parent' );
-        sheet_tree = ( !!sort_query ) ? _tree.sort( tree, sort_query ) : tree;
+        sheet_tree = _tree.create_tree( sheet_data, 'id', 'parent' );
         
-        return sheet_tree;
+        if ( !!sheet_data['sort_query'] ) {
+            return _tree.sort( sheet_tree, sheet_data['sort_query'] );
+        } else {
+            return sheet_tree;
+        }
     }
     
-    function get_filtered_sheet_data( data_tree, sheet_info, sort_query, filter_query ) {
-        var sorted_tree = get_standard_sheet_data( data_tree, sheet_info, sort_query );
-        var filtered_tree = _tree.filter( data_tree, filter_query );
+    function get_filtered_sheet_data( data_tree, sheet_data ) {
+        var sorted_tree = get_standard_sheet_data( data_tree, sheet_data );
         
-        return filtered_tree;
+        return  _tree.filter( sorted_tree, sheet_data['filter_query'] );
     }
     
-    function get_searched_sheet_data( data_tree, sheet_info ) {
-        var boxes = sheet_info['boxes'];
+    function get_searched_sheet_data( data_tree, sheet_data ) {
+        var boxes = sheet_data['boxes'];
+        var sheet_nodes = [];
+        
         // TODO: test it, prealpha version
         boxes.forEach( function ( box ) {
             var rows = box['ids'];
             var nodes_in_box = [];
             var ancestors;
             var children;
-            if ( breadcrumb ) {
+            
+            if ( box['breadcrumb'] ) {
                 ancestors = _tree.get_ancestors( data_tree, rows[0] );
                 nodes_in_box.push( ancestors );
             }
-            if ( context ) {
+            
+            if ( box['context'] ) {
                 children = _tree.get_children_nodes( data_tree, ancestors[0] );
                 nodes_in_box = nodes_in_box.concat( children );
             } else {
-                rows.forEach( function ( row ) {
-                    nodes_in_box.push( row );
+                box['rows'].forEach( function ( row ) {
+                    var node = _tree.get_node( data_tree, row['id'] );
+                    nodes_in_box.push( node );
                 });
             }
+            sheet_nodes = sheet_nodes.concat( nodes_in_box );
         });
         
-        return nodes_in_box;
+        return _tree.create_tree( sheet_nodes, 'id', 'parent' );
     }
 
     return that;

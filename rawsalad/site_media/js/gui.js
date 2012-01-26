@@ -231,12 +231,42 @@ var _gui = (function () {
     // TABLE ROWS INTERFACE
 
     function prepare_rows_interface( table_code ) {
-        var clickable_rows = table_code.find( 'td.click' ).parent();
         var info_bt = table_code.find( '.app-tb-info-button>img' );
 
+        var clickable = table_code.find( 'td.click' ).parent();
+        var clickable_roots = clickable.filter( '.top' );
+
+        var close_roots = clickable_roots.filter( '[data-open="false"]' );
+        var open_roots = clickable_roots
+                                .filter( '[data-open="true"]' )
+                                .not( '.selected' );
+
+        var clickable_in_select =  clickable.filter('.in-selected');
+        var open_in_select = clickable_in_select.filter( '[data-open="true"]' );
+        var close_in_select = clickable_in_select.filter( '[data-open="false"]' );
+
+        var selected_root = $('tr.selected');
+        var not_root = clickable.not( '.top' ).not( '.in-selected' );
+
+
+//        var close_rows
+
         // EVENTS
-        clickable_rows
+        close_roots
             .click( open_node );
+        selected_root
+            .click( close_node );
+        
+        open_in_select
+            .click( close_node );
+        close_in_select
+            .click( open_node );                
+            
+        open_roots
+            .click( reselect );
+         not_root
+            .click( reselect );
+            
 
         info_bt
             .click( display_info_panel );
@@ -399,9 +429,10 @@ var _gui = (function () {
             prepare_rows_interface( rows_code );
             row.after( rows_code );
 
-            set_selection( rows_code ); //TODO finish selection
+            add_selection( rows_code ); //TODO finish selection
             make_zebra();
             row
+                .attr( 'data-open', 'true' )
                 .unbind( 'click' ) 
                 .click( close_node );
         }
@@ -414,16 +445,25 @@ var _gui = (function () {
     }
 
 
-    // not used yet:
     function close_node() {
         var sheet_id = active_sheet_id();
         var row = $(this);
         var row_id = get_id( row );
-        var children = row.nextUntil( '.top' );
+        var children = row.siblings( '[data-parent="' + row_id +'"]' );
+        var open_children = children.filter( '[data-open="true"]' );
+        
+        open_children.trigger( 'click' );
+        
         _resource.remove_children( sheet_id, row_id );
         children.remove();
-        make_zebra();
+            
+        if ( row.hasClass( 'selected' ) ) {
+            deselect();
+        }
+        make_zebra(); // TODO - how to make it only one time?
+        
         row
+            .attr( 'data-open', 'false' )
             .unbind( 'click' )
             .click( open_node );        
     }
@@ -598,61 +638,82 @@ var _gui = (function () {
 
     // TABLE FUNCTIONS
 
-    function set_selection( rows_code ){
+    function add_selection( rows_code ){
+        var sheet_id = active_sheet_id();
+
         var top_row = get_prev_top_row( rows_code );
         var top_row_id = get_id( top_row );
-        var in_select = top_row.nextUntil( '.top' );
-        var after_row = get_next_top_row( rows_code );
 
         var old_selected = $('tr.selected');
         var old_selected_row_id;
-
-        // TODO test rows
-        var rows = top_row.prevAll().add( after_row.nextAll() );
-        if ( after_row !== null ) {
-            rows = after_row.add( rows );
-        }
-        
-        var sheet_id = active_sheet_id();
-        
-        // TODO test it
-        rows.addClass( 'dim' );
-//      rows.addClass( 'dim' ); TODO - test new and remove old
 
         if ( old_selected.length === 1 ) {
             old_selected_row_id = get_id( old_selected );
         }
 
-        if ( old_selected_row_id !== top_row_id ) {
-            rows.removeClass( 'selected' );
-            rows.removeClass( 'in-selected' );
-            rows.removeClass( 'after-selected' );
-            top_row
-                .addClass( 'selected' );
-            // TODO move var            
-            in_select
-                .addClass( 'in-selected' );
-
-            if ( after_row !== null ) {
-            after_row
-                .addClass( 'after-selected' );
-            } 
-            else{
-            // TODO - add class for select last top row
-            }
+        if ( old_selected_row_id !== top_row_id ) {            
+            select( rows_code );
+            _resource.row_selected( sheet_id, top_row_id, old_selected_row_id );
         }
         else {
             rows_code.addClass( 'in-selected' );
         }
+    }
 
-        _resource.row_selected( sheet_id, top_row_id, old_selected_row_id );
+    
+    // row is 'tr' jQuery object or list of objects
+    function select( row, isReselect ) {
+    
+        var top_row = get_prev_top_row( row );
+        var in_select = top_row.nextUntil( '.top' );
+        var after_row = get_next_top_row( row );
+        var rows = top_row.prevAll()
+                    .add( after_row.nextAll() );
+
+        deselect();
+        top_row.addClass( 'selected' );
+        in_select.addClass( 'in-selected' );
+        after_row.addClass( 'after-selected' );
+        rows.addClass( 'dim' );
+
+        if ( !!isReselect ) {
+            var clickable_children = in_select.find( 'td.click' ).parent();
+            var open_children = clickable_children.filter( '[data-open="true"]' );
+            var close_children = clickable_children.filter( '[data-open="false"]' );
+
+            top_row
+                .unbind( 'click' )
+                .click( close_node );
+            after_row.unbind( 'click' ); 
+            open_children.click( close_node );
+            close_children.click( open_node );
+        }        
+    }
+    
+    
+    function deselect() {
+        $('tr.selected')
+            .removeClass( 'selected' )
+            .unbind( 'click')
+            .click( reselect );
+        $('tr.in-selected')
+            .removeClass( 'in-selected' )
+            .unbind( 'click' )
+            .click( reselect );
+        $('tr.after-selected').removeClass( 'after-selected' );
+        $('tr.dim').removeClass( 'dim' );
+    }
+    
+    function reselect() {
+        var row = $(this);
+        select( row, true );
     }
 
 
     //get root for rows
     // TODO check for first row
-    function get_prev_top_row( rows_code ) {
-        var row = rows_code.first().prev();
+    function get_prev_top_row( rows_code ) {        
+        var row = rows_code.first();
         while ( ! row.hasClass( 'top' ) ) {
             row = row.prev();
         }
@@ -664,15 +725,9 @@ var _gui = (function () {
     function get_next_top_row( rows_code ) {
         var row = rows_code.last().next();
         
-        if ( row.length !== 0 ) {
-            while ( ! row.hasClass( 'top' ) ){
-                row = row.next();
-                if ( row.isEmptyObject() ) { // TODO test it and configure display.
-                    row = null;
-                    return;
-                }    
-            }
-        }        
+        while ( ( row.length !== 0 ) && ! row.hasClass( 'top' ) ) {
+            row = row.next();
+        }
         return row;
     }
 

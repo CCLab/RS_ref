@@ -211,7 +211,7 @@ var _templates = (function () {
     // T A B L E
     that.standard_rows = 
         '{{#rows}}' + //TODO add info panel
-          '<tr id="{{id}}" data_open="{{is_open}}" ' +
+          '<tr id="{{id}}" data-open="{{is_open}}" ' +
           'data-parent="{{parent}}" ' +
           'class="{{selected}} {{top_level}}">' +
             '{{#data}}' +

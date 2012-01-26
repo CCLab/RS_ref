@@ -7,11 +7,11 @@ Form of created tree:
 -- creates new root node without value
 -- all tree nodes are objects
 -- children nodes are in a 'children' parameter
--- parent node is in '__parent__' parameter
--- id is in '__id__' parameter
--- is filtered is in '__filtered__' parameter
+-- parent node is in '__parent' parameter
+-- id is in '__id' parameter
+-- is filtered is in '__filtered' parameter
 -- data in node is in other parameters
--- fields '__filtered__' and '__children__' cannot be used as nodes parameters
+-- fields '__filtered' and '__children' cannot be used as nodes parameters
 
 */
 
@@ -92,7 +92,7 @@ Form of created tree:
                 if (!parentNode) return this;        
                 
                 newNode = new Node(value, parentNode, idMap, idColumn, parentColumn, isFiltered);
-                parentNode.__children__.add(newNode, idMap);
+                parentNode.__children.add(newNode, idMap);
                 
                 return this;
             },
@@ -221,7 +221,7 @@ Form of created tree:
                         parentNode = this.getNode(id);
                         newPositions.forEach(function(node) {
                             var newNode = new Node(node['node'], parentNode, idMap, idColumn, parentColumn);
-                            parentNode.__children__.insert(newNode, idMap, node['i']);
+                            parentNode.__children.insert(newNode, idMap, node['i']);
                         });
                     }
                 }
@@ -242,7 +242,8 @@ Form of created tree:
                 if (!parentNode) return this;
                 
                 node = isIdType(elem) ? this.getNode(elem) : elem;
-                parentNode.__children__.remove(this.nodeId(node));
+                parentNode.__children.remove(this.nodeId(node));
+                delete idMap[this.nodeId(node)];
                 
                 return this;
             },
@@ -292,7 +293,7 @@ Form of created tree:
                 }
                 
                 if (!!node)
-                    return (copy) ? this.value(node.__parent__) : node.__parent__;
+                    return (copy) ? this.value(node.__parent) : node.__parent;
                 else
                     return undefined;
             },
@@ -390,7 +391,7 @@ Form of created tree:
                 
                 node = isIdType(elem) ? this.getNode(elem, false) : elem;
                 
-                return (!!node) ? node['__filtered__'] : false;
+                return (!!node) ? node['__filtered'] : false;
             },
             
             // Checks if ancestorNode is an ancestor of childNode.
@@ -529,11 +530,11 @@ Form of created tree:
                 node = isIdType(elem) ? this.getNode(elem) : elem;
                 
                 if (copy) {
-                    return (!!node) ? node.__children__.get().map(function(childNode) {
+                    return (!!node) ? node.__children.get().map(function(childNode) {
                                           return deepCopy(childNode, idColumn, parentColumn);
                                       }) : [];
                 } else {
-                    return (!!node) ? node.__children__.get() : [];
+                    return (!!node) ? node.__children.get() : [];
                 }
             },
             
@@ -542,7 +543,7 @@ Form of created tree:
             // returns new tree with nodes from subtree and changed ids.
             subtree: function(elem, copy) {
                 var copySubtree = function(srcTree, dstTree, node) {
-                    dstTree.insertNode(srcTree.value(node), node['__filtered__']);
+                    dstTree.insertNode(srcTree.value(node), node['__filtered']);
                     
                     srcTree.children(node).forEach( function(childNode) {
                         copySubtree(srcTree, dstTree, childNode);
@@ -550,7 +551,7 @@ Form of created tree:
                     
                     // must be done after inserting his children
                     if (srcTree.isNodeFiltered(node)) {
-                        node['__filtered__'] = true;
+                        node['__filtered'] = true;
                     }
                 };
                 
@@ -694,7 +695,7 @@ Form of created tree:
                 while (!!nextNode) {
                     copiedNode = deepCopy(nextNode, idColumn, parentColumn);
                     modifiedNode = fun(copiedNode);
-                    copiedTree.insertNode(modifiedNode, modifiedNode['__filtered__']);
+                    copiedTree.insertNode(modifiedNode, modifiedNode['__filtered']);
                     nextNode = this.next(nextNode);
                 }
                 
@@ -786,7 +787,7 @@ Form of created tree:
             
             // Returns id of a node.
             nodeId: function(node) {
-                return node.__id__;
+                return node.__id;
             },
             
             // Returns copied tree.
@@ -802,7 +803,7 @@ Form of created tree:
             toList: function(acceptFiltered) {
                 var saveInList = function(node) {
                     if ( acceptFiltered ||
-                        (!acceptFiltered && !node['__filtered__']) ) {
+                        (!acceptFiltered && !node['__filtered']) ) {
                         list.push(nodeToValue(node, idColumn, parentColumn));
                     }
                 };
@@ -831,17 +832,17 @@ Form of created tree:
         var _filtered = isFiltered;
         var _children = new Children(_id, idMap);
         
-        Object.defineProperty(this, '__parent__', {
+        Object.defineProperty(this, '__parent', {
             get: function() { return _parent; }
         });
-        Object.defineProperty(this, '__children__', {
+        Object.defineProperty(this, '__children', {
             get: function() { return _children; }
         });
-        Object.defineProperty(this, '__filtered__', {
+        Object.defineProperty(this, '__filtered', {
             get: function() { return _filtered; },
             set: function(newValue) { _filtered = !!newValue; }
         });
-        Object.defineProperty(this, '__id__', {
+        Object.defineProperty(this, '__id', {
             get: function() { return _id; },
             set: function(newValue) {
                 if (!idMap[newValue]) {
@@ -853,8 +854,8 @@ Form of created tree:
         });
         
         for (property in valueCopy) {
-            if (valueCopy.hasOwnProperty(property) && property !== '__parent__' &&
-                property !== '__children__' && property !== '__id__' && property !== '__filtered__') {
+            if (valueCopy.hasOwnProperty(property) && property !== '__parent' &&
+                property !== '__children' && property !== '__id' && property !== '__filtered') {
                     this[property] = valueCopy[property];
             }
         }
@@ -877,7 +878,7 @@ Form of created tree:
                 return (idMap[parentId] === '') ? '0' : idMap[parentId] + '-0';
             
             lastChild = nodes[len - 1];
-            lastChildId = idMap[ lastChild.__id__ ];
+            lastChildId = idMap[ lastChild.__id ];
             idParts = lastChildId.split('-');
             if (index === undefined) {
                 idParts[idParts.length - 1] = (parseInt(idParts[idParts.length - 1]) + 1) + '';
@@ -891,19 +892,19 @@ Form of created tree:
         var len;
         
         this.add = function(node, idMap) {
-            if (!idMap[node.__id__]) {
-                idMap[node.__id__] = generateInnerId(parentId, idMap);
+            if (!idMap[node.__id]) {
+                idMap[node.__id] = generateInnerId(parentId, idMap);
                 nodes.push(node);
             } else {
                 for (i = 0; i < nodes.length; ++i) {
-                    if (nodes[i].__id__ === node.__id__) {
-                        if (!nodes[i].__filtered__) break;
+                    if (nodes[i].__id === node.__id) {
+                        if (!nodes[i].__filtered) break;
                         
                         nodes[i].get().forEach(function(e) {
-                            node.__children__.add(e, parentId, idMap);
-                            e.__parent__ = node;
+                            node.__children.add(e, parentId, idMap);
+                            e.__parent = node;
                         });
-                        nodes[i].__parent__ = undefined;
+                        nodes[i].__parent = undefined;
                         nodes[i] = node;
                         break;
                     }
@@ -911,15 +912,15 @@ Form of created tree:
             }
         };
         this.insert = function(node, idMap, index) {
-            if (!idMap[node.__id__]) {
-                idMap[node.__id__] = generateInnerId(parentId, idMap, index);
+            if (!idMap[node.__id]) {
+                idMap[node.__id] = generateInnerId(parentId, idMap, index);
                 nodes.splice(index, 0, node);
             }
         };
         this.remove = function(id) {
             for (i = 0; i < nodes.length; ++i) {
-                if (nodes[i].__id__=== id) {
-                    nodes[i].__parent__ = undefined;
+                if (nodes[i].__id=== id) {
+                    nodes[i].__parent = undefined;
                     nodes.splice(i, 1);
                     break;
                 }
@@ -955,8 +956,8 @@ Form of created tree:
         assertNode(node, 'getChild');
         assertNonEmptyString(childId, 'getChild');
         
-        childrenList = node.__children__.get().filter(function(e) {
-            var realId = idMap[e.__id__];
+        childrenList = node.__children.get().filter(function(e) {
+            var realId = idMap[e.__id];
             var level = count(realId, '-');
             var levelId = getIdOnLevel(childId, level);
             return realId === levelId;
@@ -1058,12 +1059,12 @@ Form of created tree:
                 }
             }
             if (value.constructor === Node) {
-                objectCopy[idColumn] = value['__id__'];
+                objectCopy[idColumn] = value['__id'];
                 if (!!parentColumn)
-                    if (value['__parent__']['__id__'] === '__root__')
+                    if (value['__parent']['__id'] === '__root__')
                         objectCopy[parentColumn] = '';
                     else
-                        objectCopy[parentColumn] = value['__parent__']['__id__'];
+                        objectCopy[parentColumn] = value['__parent']['__id'];
             }
             return objectCopy;
         }
@@ -1142,8 +1143,8 @@ Form of created tree:
     };
     
     var assertNode = function(node, idColumn, msg) {
-        if ( !node.hasOwnProperty(idColumn) && !node.hasOwnProperty('__parent__') &&
-             assertList(node['__children__'], msg + '->assertNode') ) {
+        if ( !node.hasOwnProperty(idColumn) && !node.hasOwnProperty('__parent') &&
+             assertList(node['__children'], msg + '->assertNode') ) {
             throw 'assertNode(idColumn=' + idColumn + ')' + msg;
         }
     };
