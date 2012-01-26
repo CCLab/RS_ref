@@ -78,40 +78,6 @@ def search_data( req ):
 
     return HttpResponse( json.dumps( results ))
 
-# url: /store_state/
-# TODO can POST forms be handeled better?!
-@csrf_exempt
-def store_state( request ):
-    data  = request.GET.get( 'state', '' )
-
-    permalink_id = sqldb.save_permalink( json.loads( data ) )
-
-    return HttpResponse( permalink_id )
-
-
-# url: /\d+
-def init_restore( request, id ):
-    '''Init application prepared to handle restore data'''
-    dbtree = sqldb.get_db_tree()
-
-    data = {
-        'dbtree': dbtree,
-        'id': id,
-        'endpoints': sqldb.get_permalink_endpoints( id )
-    }
-
-    return  render_to_response( 'app.html', json.dumps( data ) )
-
-
-# url: /restore_state/
-def restore_state( request ):
-    '''Restore front-end state from mongo'''
-    permalink_id  = request.GET.get( 'permalink_id', None )
-    endpoint      = request.GET.get( 'endpoint', None )
-
-    group = sqldb.restore_group( permalink_id, endpoint )
-
-    return HttpResponse( json.dumps( group ) )
 
 # TODO can POST forms be handeled better?!
 @csrf_exempt
@@ -157,3 +123,37 @@ def download_data( request ):
     return response
 
 
+# url: /store_state/
+# TODO can POST forms be handeled better?!
+@csrf_exempt
+def store_state( request ):
+    data  = request.POST.get( 'state', '' )
+
+    permalink_id = sqldb.save_permalink( json.loads( data ) )
+
+    return HttpResponse( permalink_id )
+
+
+# url: /\d+
+def init_restore( request, id ):
+    '''Init application prepared to handle restore data'''
+    dbtree = sqldb.get_db_tree()
+
+    data = {
+        'dbtree': dbtree,
+        'id': id,
+        'endpoints': sqldb.get_permalink_endpoints( id )
+    }
+
+    return  render_to_response( 'app.html', json.dumps( data ) )
+
+
+# url: /restore_state/
+def restore_state( request ):
+    '''Restore front-end state from mongo'''
+    permalink_id  = request.GET.get( 'permalink_id', None )
+    endpoint      = request.GET.get( 'endpoint', None )
+
+    group = sqldb.restore_group( permalink_id, endpoint )
+
+    return HttpResponse( json.dumps( group ) )

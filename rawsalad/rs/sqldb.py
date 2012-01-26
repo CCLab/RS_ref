@@ -229,23 +229,25 @@ def save_permalink( data ):
                WHERE key = 'permalinks'
             '''
     cursor.execute( query )
-    permalink_id = cursor.fetchone()['value']
+    permalink_id = cursor.fetchone()['value'] + 1
 
     for endpoint in data:
         # create a lable list and prepare it for pgSQL array format
-        labels = str( [ s['label'] for s in endpoint['sheets'] ] ).strip('[]')
+        labels = json.dumps( [ s['label'] for s in endpoint['sheets'] ] ).strip('[]')
         # store sheet jsons as sent by _db
         data   = json.dumps( endpoint['sheets'] )
 
-        insert = '''INSERRT INTO permalinks( id, endpoint, labels, data )
-                    VALUES( %s, '%s', '{%s}', '%s' )
-                 ''' % ( permalink_id, endpoint, labels, data )
+        insert = '''INSERT INTO permalinks( id, endpoint, labels, data )
+                    VALUES( %s, '%s', '{%s}', '%s' ); COMMIT;
+                 ''' % ( permalink_id, endpoint['endpoint'], labels, data )
 
         cursor.execute( insert )
 
     update = '''UPDATE counters SET value = %s
-                WHERE key = 'permalinks'
+                WHERE key = 'permalinks'; COMMIT;
              ''' % permalink_id
+
+    cursor.execute( update )
 
     return permalink_id
 
