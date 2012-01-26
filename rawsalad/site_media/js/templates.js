@@ -118,7 +118,7 @@ var _templates = (function () {
     // T O O L S
     that.app_table_tools =
         '<section>' +
-            '<h3 id="app-tb-tl-title" class="left">{{name}}</h3>' +
+            '<h3 id="app-tb-tl-title" class="left">{{label}}</h3>' +
             '<form id="app-tb-tl-rename-form" style="display: none;" class="left" >' +
                 '<input type="text" class="input-text" id="app-tb-tl-rename-input" />' +
             '</form>' +
