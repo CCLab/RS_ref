@@ -42,6 +42,10 @@ var _tree = (function () {
         return tree.topParent( id, true );
     };
     
+    that.root = function( tree ) {
+        return tree.root();
+    };
+    
     that.has_node = function( tree, id ) {
         return !!that.get_node( tree, id );
     };

@@ -161,6 +161,7 @@ var _ui = (function () {
     }
 
     function prepare_filtered_data_package( sheet, sheet_id, filtered_ids ) {
+        // Return row in gui-understandable form.
         var prepare_row = function( row, columns ) {
             // insert standard values
             var new_row = {
@@ -183,40 +184,30 @@ var _ui = (function () {
             return new_row;
         };
         
-        var data_package;
         var columns_for_gui;
         var boxes = [];
-        
-        var nodes = {};
-        var filtered_visited = 0;
-        var last_parent_id = undefined;
-        var full_data = _tree.tree_to_list( sheet['data'] );
         
         // columns description for gui
         columns_for_gui = get_columns_description( sheet['columns'] );
         
-        full_data.forEach( function ( node ) {
-            var id = node[ 'id' ];
+        _tree.iterate( sheet['data'], function ( parent ) {
             var box;
+            var children_nodes = _tree.get_children_nodes( sheet['data'], parent );
             
-            nodes[ id ] = node;
-            if ( filtered_ids[ filtered_visited ] === id ) {
-                if ( last_parent_id !== node['parent'] ) {
-                    last_parent_id = node['parent'];
-                    boxes.push({
-                        'breadcrumb': get_breadcrumb( sheet['data'], id ),
-                        'rows': []
-                    });
-                }
-                
-                box = boxes[ boxes.length - 1 ];
-                box['rows'].push( prepare_row( node, columns_for_gui ) );
-                filtered_visited += 1;
+            if ( children_nodes.length > 0 ) {
+                box = {
+                    'breadcrumb': get_breadcrumb( sheet['data'], children_nodes[0]['id'] ),
+                    'rows': children_nodes.filter( function ( node ) {
+                                return _tree.is_filtered( sheet['data'], node['id'] );
+                            }).map( function ( node ) {
+                                return prepare_row( node, columns_for_gui );
+                            })
+                };
+                boxes.push( box );
             }
-        });
-        
-        
-        data_package = {
+        } _tree.root( sheet['data'] ) );
+
+        return {
             'group': sheet['group_id'],
             'id': sheet_id,
             'type': sheet['type'],
@@ -224,8 +215,6 @@ var _ui = (function () {
             'columns': columns_for_gui,
             'boxes': boxes
         };
-        
-        return data_package;
     }
 
     function prepare_searched_data_package( sheet, sheet_id, data ) {
