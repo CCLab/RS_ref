@@ -272,7 +272,7 @@ var _permalinks = (function () {
     function get_standard_sheet_data( data_tree, sheet_data ) {
         var get_branch = function( node_id ) {
             var new_rows = [];
-            var ancestors = _tree.get_ancestors( data_tree, node_id );
+            var ancestors = _tree.get_parents( data_tree, node_id );
             var ancestors_ids = ancestors.map( function ( node ) {
                 return node['id'];
             });
@@ -324,7 +324,7 @@ var _permalinks = (function () {
             var children;
             
             if ( box['breadcrumb'] ) {
-                ancestors = _tree.get_ancestors( data_tree, rows[0] );
+                ancestors = _tree.get_parents( data_tree, rows[0] );
                 nodes_in_box.push( ancestors );
             }
             

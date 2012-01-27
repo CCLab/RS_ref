@@ -29,18 +29,22 @@ var _ui = (function () {
 //  P U B L I C   I N T E R F A C E
     var that = {};
 
-    that.prepare_data_package = function( sheet, sheet_id, data, full_data ) {
+    that.prepare_data_package = function( sheet, sheet_id, data ) {
         var data_package;
         
         switch ( sheet['type'] ) {
             case _enum['STANDARD']:
-                data_package = prepare_standard_data_package( sheet, sheet_id, data, full_data );
+                data_package = prepare_standard_data_package( sheet, sheet_id, data );
                 break;
             case _enum['FILTERED']:
-                data_package = prepare_filtered_data_package( sheet, sheet_id, data, full_data );
+                data = _tree.get_filtered_nodes( sheet['data'] )
+                            .map( function ( node ) {
+                                return node['id'];
+                            });
+                data_package = prepare_filtered_data_package( sheet, sheet_id, data );
                 break;
             case _enum['SEARCHED']:
-                data_package = prepare_searched_data_package( sheet, sheet_id, data, full_data );
+                data_package = prepare_searched_data_package( sheet, sheet_id, data );
                 break;
             default:
                 throw 'Bad sheet type';
@@ -52,7 +56,7 @@ var _ui = (function () {
 //  P R I V A T E   I N T E R F A C E
     
     // Prepare data for standard sheet.
-    function prepare_standard_data_package( sheet, sheet_id, data, full_data ) {
+    function prepare_standard_data_package( sheet, sheet_id, data ) {
         // Used to generate gui row levels. If row does not have parent,
         // it's on first level, otherwise is one level lower.
         var create_level_map = function( sheet_data ) {
@@ -134,6 +138,7 @@ var _ui = (function () {
         var rows_for_gui;
         var data_package;
         var id_map;
+        var full_data = _tree.tree_to_list( sheet['data'] );
         
         // columns description for gui
         columns_for_gui = get_columns_description( sheet['columns'] );
@@ -155,7 +160,7 @@ var _ui = (function () {
         return data_package;
     }
 
-    function prepare_filtered_data_package( sheet, sheet_id, filtered_ids, full_data ) {
+    function prepare_filtered_data_package( sheet, sheet_id, filtered_ids ) {
         var prepare_row = function( row, columns ) {
             // insert standard values
             var new_row = {
@@ -185,12 +190,13 @@ var _ui = (function () {
         var nodes = {};
         var filtered_visited = 0;
         var last_parent_id = undefined;
+        var full_data = _tree.tree_to_list( sheet['data'] );
         
         // columns description for gui
         columns_for_gui = get_columns_description( sheet['columns'] );
         
         full_data.forEach( function ( node ) {
-            var id = node[ id ];
+            var id = node[ 'id' ];
             var box;
             
             nodes[ id ] = node;
@@ -198,7 +204,7 @@ var _ui = (function () {
                 if ( last_parent_id !== node['parent'] ) {
                     last_parent_id = node['parent'];
                     boxes.push({
-                        'breadcrumb': get_breadcrumb(),
+                        'breadcrumb': get_breadcrumb( sheet['data'], id ),
                         'rows': []
                     });
                 }
@@ -222,7 +228,8 @@ var _ui = (function () {
         return data_package;
     }
 
-    function prepare_searched_data_package( sheet, sheet_id, data, full_data ) {
+    function prepare_searched_data_package( sheet, sheet_id, data ) {
+        var full_data = _tree.tree_to_list( sheet['data'] );
         return 'TODO';
     }
     
@@ -234,6 +241,23 @@ var _ui = (function () {
                 'type': column['type']
             };
         });
+    }
+    
+    function get_breadcrumb( tree, node_id ) {
+        var parents_descr = _tree.get_parents( tree, node_id )
+                                 .map( function ( node ) {
+                                    return {
+                                        'type': node['data']['type'],
+                                        'name': node['data']['name']
+                                    };
+                                 });
+        
+        var breadcrumb = [];
+        parents_descr.forEach( function ( pair ) {
+            breadcrumb.push( pair['type'] + ' ' + pair['name'] );
+        });
+        
+        return breadcrumb.join(' > ');
     }
     
     function format_value( value, type, format ) {

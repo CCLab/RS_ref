@@ -345,19 +345,20 @@ var _resource = (function () {
         var sheet;
         var new_sheet;
         var new_sheet_id;
-        var filtered_tree;
         var filter_fun;
         var meta;
 
         sheet = get_sheet( sheet_id );
         filter_fun = criterion_to_function( criterion );
-        filtered_tree = _tree.filter( sheet['data'], filter_fun );
         meta = {
             'label': sheet['label'],
             'columns': sheet['columns']
         };
-        new_sheet = create_sheet( sheet['endpoint'], _tree.tree_to_list( filtered_tree ),
-                                  meta, _enum['FILTERED'] );
+        new_sheet = create_sheet( sheet['endpoint'], _tree.tree_to_list( sheet['data'] ),
+                                  meta, _enum['FILTERED'],
+                                  {'sort_query'  : sheet['sort_query'],
+                                   'filter_query': criterion } );
+        filter_sheet( new_sheet, filter_fun );
         new_sheet_id = add_sheet( new_sheet );
 
         that.get_sheet_data( new_sheet_id, callback );
@@ -626,6 +627,11 @@ var _resource = (function () {
 
         return new_sheet;
     }
+    
+    function filter_sheet( sheet, filter_function ) {
+        var filtered_tree = _tree.filter( sheet['data'], filter_function );
+        sheet['data'] = filtered_tree;
+    }
 
     var generate_sheet_id = ( function () {
         var next_sheet_id = 10000;
@@ -665,11 +671,10 @@ var _resource = (function () {
 
     function prepare_table_data( sheet_id, data ) {
         var sheet = get_sheet( sheet_id );
-        var full_data = _tree.tree_to_list( sheet['data'] );
         // if data to prepare was not passed, use full data from sheet
-        var data = data || full_data;
+        var data = data || _tree.tree_to_list( sheet['data'] );
 
-        return _ui.prepare_data_package( sheet, sheet_id, data, full_data );
+        return _ui.prepare_data_package( sheet, sheet_id, data );
     }
 
     function get_sheet_description( sheet_id ) {

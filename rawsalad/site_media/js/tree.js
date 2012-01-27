@@ -57,7 +57,7 @@ var _tree = (function () {
         return tree.children( parent_id, true );
     };
     
-    that.get_ancestors = function( tree, id ) {
+    that.get_parents = function( tree, id ) {
         return tree.parents( id, true );
     };
     
@@ -76,7 +76,7 @@ var _tree = (function () {
     
     // iterates over tree and returns array of nodes
     that.tree_to_list = function( tree ) {
-        return tree.toList();
+        return tree.toList(true);
     };
     
     // returns list even with filtered nodes
