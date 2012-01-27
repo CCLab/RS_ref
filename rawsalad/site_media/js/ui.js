@@ -37,11 +37,7 @@ var _ui = (function () {
                 data_package = prepare_standard_data_package( sheet, sheet_id, data );
                 break;
             case _enum['FILTERED']:
-                data = _tree.get_filtered_nodes( sheet['data'] )
-                            .map( function ( node ) {
-                                return node['id'];
-                            });
-                data_package = prepare_filtered_data_package( sheet, sheet_id, data );
+                data_package = prepare_filtered_data_package( sheet, sheet_id );
                 break;
             case _enum['SEARCHED']:
                 data_package = prepare_searched_data_package( sheet, sheet_id, data );
@@ -160,7 +156,7 @@ var _ui = (function () {
         return data_package;
     }
 
-    function prepare_filtered_data_package( sheet, sheet_id, filtered_ids ) {
+    function prepare_filtered_data_package( sheet, sheet_id ) {
         // Return row in gui-understandable form.
         var prepare_row = function( row, columns ) {
             // insert standard values
@@ -205,7 +201,7 @@ var _ui = (function () {
                 };
                 boxes.push( box );
             }
-        } _tree.root( sheet['data'] ) );
+        }, _tree.root( sheet['data'] ) );
 
         return {
             'group': sheet['group_id'],
@@ -217,9 +213,84 @@ var _ui = (function () {
         };
     }
 
-    function prepare_searched_data_package( sheet, sheet_id, data ) {
-        var full_data = _tree.tree_to_list( sheet['data'] );
-        return 'TODO';
+    function prepare_searched_data_package( sheet, sheet_id, boxes ) {
+        // Return row in gui-understandable form.
+        var prepare_row = function( row, columns, hit_list ) {
+            // insert standard values
+            var new_row = {
+                'id' : row['id'],
+            };
+            var hit_obj = {};
+            
+            if ( !!row['aux']['info'] ) {
+                new_row['info'] = row['aux']['info'];
+            }
+            
+            hit_list.forEach( function ( e ) {
+                hit_obj[ e ] = true;
+            });
+
+            // add data fields containing information to generate cells
+            // in table for this row
+            new_row['data'] = columns.map( function( e ) {
+                return {
+                    'hit'         : !!hit_obj[ e['key'] ],
+                    'column_key'  : e['key'],
+                    'column_type' : e['type'],
+                    'content'     : format_value( row['data'][ e['key'] ], e['type'], e['format'] )
+                };
+            });
+
+            return new_row;
+        };
+        
+        var columns_for_gui;
+        var gui_boxes;
+        
+        // columns description for gui
+        columns_for_gui = get_columns_description( sheet['columns'] );
+        
+        gui_boxes = boxes.map( function ( box ) {
+            var hit_ids = {};
+            var gui_breadcrumb;
+            var gui_context;
+            var gui_rows
+            
+            gui_rows = box['rows'].map( function ( row ) {
+                var node = _tree.get_node( sheet['data'], row['id'] );
+                hit_ids[ row['id'] ] = true;
+                return prepare_row( node, columns_for_gui, row['hit'] );
+            });
+            if ( box['breadcrumb'] ) {
+                gui_breadcrumb = _tree.get_parents( sheet['data'], box['rows'][0]['id'] )
+                                    .map( function ( node ) {
+                                        return prepare_row( node, columns_for_gui, [] );
+                                    });
+            }
+            if ( box['context'] ) {
+                gui_context = _tree.get_children_nodes( sheet['data'], box['rows'][0]['id'] )
+                                .filter( function( node ) {
+                                    return !hit_ids[ node['id'] ];
+                                }).map( function ( node ) {
+                                    return prepare_row( node, columns_for_gui, [] );
+                                });
+            }
+            
+            return {
+                'rows': gui_rows,
+                'breadcrumb': gui_breadcrumb,
+                'context': gui_context
+            }
+        });
+        
+        return {
+            'group': sheet['group_id'],
+            'id': sheet_id,
+            'type': sheet['type'],
+            'label': sheet['label'],
+            'columns': columns_for_gui,
+            'boxes': gui_boxes
+        };
     }
     
     function get_columns_description( columns ) {
@@ -229,6 +300,12 @@ var _ui = (function () {
                 'label': column['label'],
                 'type': column['type']
             };
+        });
+    }
+    
+    function get_parents_ids( tree, node_id ) {
+        return _tree.get_parents( tree, node_id ).map( function ( node ) {
+            return node['id'];
         });
     }
     
