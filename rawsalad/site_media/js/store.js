@@ -30,7 +30,7 @@ var _store = (function () {
     var that = {};
 
     // DBTREE FUNCTIONS
-    
+
     // Download db tree describing collections.
     that.get_collections_list = function ( callback ) {
         var respond = function () {
@@ -57,7 +57,7 @@ var _store = (function () {
             return _tree.to_list( get_data_source[ endpoint ] );
         }
     };
-    
+
     that.get_top_parent = function ( endpoint ) {
         var tree_id = get_endpoint_id( endpoint );
         var top_parent = _tree.get_top_parent( get_db_tree(), tree_id );
@@ -66,13 +66,13 @@ var _store = (function () {
 
         return top_parent;
     };
-    
+
     that.get_collection_name = function( endpoint ) {
         var node = _tree.get_node( get_db_tree(), endpoint );
-        
+
         return node['label'];
     };
-    
+
     // DATA TREE FUNCTIONS
     // Download meta data and first level nodes of collection with id = col_id.
     that.get_init_data = function ( endpoint, callback ) {
@@ -102,13 +102,13 @@ var _store = (function () {
     that.get_children = function ( endpoint, parent_id, callback ) {
         var respond = function ( data_source ) {
             var children;
-            
+
             if ( parent_id === endpoint ) {
                 children = _tree.get_children_nodes( data_source );
             } else {
                 children = _tree.get_children_nodes( data_source, parent_id );
             }
-            
+
             callback( children );
         };
         var data_source;
@@ -125,7 +125,7 @@ var _store = (function () {
                 // TODO: check execution time
                 _tree.update_tree( data_source, db_data );
                 mark_parent_complete( parent_id );
-                
+
                 respond( data_source );
             });
         }
@@ -140,22 +140,22 @@ var _store = (function () {
         var columns_copy;
 
         meta_data = get_meta_data_source( endpoint );
-        columns_copy = $.extend( true, {}, meta_data['columns'] );
+        columns_copy = $.extend( true, [],  meta_data['columns'] );
 
         return columns_copy;
     };
-    
+
     that.get_ancestors_ids = function( endpoint, id ) {
         var data_source = get_data_source( endpoint );
         var ancestors = _tree.get_ancestors( data_source, id );
         ids_list = ancestors.map( function ( node ) {
             return node['id'];
         });
-        
+
         return ids_list;
     };
 
-    
+
     // SEARCH FUNCTIONS
     that.get_search_count = function( endpoints, query, callback ) {
         _db.get_search_count( endpoints, query, callback );
@@ -179,21 +179,21 @@ var _store = (function () {
             callback( data_copy, meta_copy );
         });
     };
-    
-    
+
+
     // PERMALINK FUNCTIONS
     that.store_state = function( permalink_data, callback ) {
         _db.store_state( permalink_data, callback );
     };
-    
+
     /*that.restore_state = function( permalink_id, callback ) {
-        _db.restore_state( permalink_id, function ( permalink_data ) {            
+        _db.restore_state( permalink_id, function ( permalink_data ) {
             permalink_data.forEach( function( endpoint_data ) {
                 var endpoint = endpoint_data['endpoint'];
                 store_data( endpoint_data['data'], endpoint );
                 store_meta_data( endpoint_data['meta'], endpoint );
             });
-            
+
             callback( permalink_data );
         });
     };*/
@@ -202,11 +202,11 @@ var _store = (function () {
             var endpoint = endpoint_data['endpoint'];
             store_data( endpoint_data['data'], endpoint );
             store_meta_data( endpoint_data['meta'], endpoint );
-            
+
             callback( endpoint_data );
         });
     };
-    
+
 
 
 // P R I V A T E   I N T E R F A C E
@@ -240,7 +240,7 @@ var _store = (function () {
     function mark_parent_complete( parent_id ) {
         complete_children[ parent_id ] = true;
     }
-    
+
     function has_data_source( endpoint ) {
         return !!data_source[ endpoint ];
     }
@@ -256,11 +256,11 @@ var _store = (function () {
     function get_meta_data_source( endpoint ) {
         return meta_sources[ endpoint ];
     }
-    
+
     function add_endpoint_id( endpoint, tree_id ) {
         endpoint_map[ endpoint ] = tree_id;
     }
-    
+
     function get_endpoint_id( endpoint ) {
         return endpoint_map[ endpoint ];
     }
@@ -294,7 +294,7 @@ var _store = (function () {
                 add_endpoint_id( node['endpoint'], node['id'] );
             }
         });
-        
+
     }
 
     return that;
