@@ -119,13 +119,7 @@ var _store = (function () {
             respond( data_source );
         } else {
             _db.get_children( endpoint, parent_id, function ( db_data ) {
-                // Store is not sure if it has all children of parent_id,
-                // downloads them and updates tree(inserting new nodes).
-                data_source = get_data_source( endpoint );
-                // TODO: check execution time
-                _tree.update_tree( data_source, db_data );
-                mark_parent_complete( parent_id );
-
+                data_source = store_data( db_data, endpoint );
                 respond( data_source );
             });
         }
@@ -265,13 +259,38 @@ var _store = (function () {
         return endpoint_map[ endpoint ];
     }
 
-    // Save downloaded data and save information about having full first level.
-    function store_data( db_data, endpoint ) {
-        var new_data_source = _tree.create_tree( db_data, 'id', 'parent' );
-        data_sources[ endpoint ] = new_data_source;
-        mark_parent_complete( endpoint );
-
-        return new_data_source;
+    // Save downloaded data. If the data does not come from search, save
+    // information about having full first level.
+    function store_data( db_data, endpoint, searched ) {
+        var data_source = get_data_source( endpoint );
+        var searched = searched || false;
+        
+        if ( !data_source ) {
+            data_source = _tree.create_tree( db_data, 'id', 'parent' );
+            data_sources[ endpoint ] = data_source;
+            if ( !searched ) {
+                mark_parent_complete( endpoint );
+            }
+        } else {
+            if ( !searched ) {
+                // TODO: check execution time
+                _tree.update_tree( data_source, db_data );
+            } else {
+                db_data.forEach( function ( node ) {
+                    _tree.insert_node( data_source, node );
+                });
+            }
+        }
+        
+        if ( !searched ) {
+            // could save parent_complete information multiple times
+            // but it doesn't matter
+            db_data.forEach( function ( node ) {
+                mark_parent_complete( node['parent'] );
+            });
+        }
+        
+        return data_source;
     }
 
     function store_meta_data( db_meta_data, endpoint ) {
@@ -294,7 +313,6 @@ var _store = (function () {
                 add_endpoint_id( node['endpoint'], node['id'] );
             }
         });
-
     }
 
     return that;

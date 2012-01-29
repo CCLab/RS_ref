@@ -432,6 +432,7 @@ var _resource = (function () {
 
     that.get_search_data = function ( endpoint, query, callback ) {
         _store.get_search_data( endpoint, query, function ( data, meta ) {
+            
             // TODO:
             /*{
                 sheet_id : int,

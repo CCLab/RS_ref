@@ -51,7 +51,7 @@ var _ui = (function () {
     
 //  P R I V A T E   I N T E R F A C E
     
-    // Prepare data for standard sheet.
+    // Prepare data in standard sheet for gui.
     function prepare_standard_data_package( sheet, sheet_id, data ) {
         // Used to generate gui row levels. If row does not have parent,
         // it's on first level, otherwise is one level lower.
@@ -156,6 +156,7 @@ var _ui = (function () {
         return data_package;
     }
 
+    // Prepare data in filtered sheet for gui.
     function prepare_filtered_data_package( sheet, sheet_id ) {
         // Return row in gui-understandable form.
         var prepare_row = function( row, columns ) {
@@ -213,6 +214,7 @@ var _ui = (function () {
         };
     }
 
+    // Prepare data in searched sheet for gui.
     function prepare_searched_data_package( sheet, sheet_id, boxes ) {
         // Return row in gui-understandable form.
         var prepare_row = function( row, columns, hit_list ) {
