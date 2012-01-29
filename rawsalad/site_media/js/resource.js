@@ -305,23 +305,46 @@ var _resource = (function () {
     };
 
     // Sort sheet(in specified order) and return it.
-    that.sort = function ( sheet_id, order, callback ) {
-        // TODO
+    that.sort = function ( sheet_id, sort_order, callback ) {
+        // TOTEST
         //  ||
         //  \/
-        var order_to_function = function ( order ) {
-            var fun = function( elem1, elem2 ) {
-                return elem1 - elem2;
+        var sort_order_to_function = function ( sort_order ) {
+            // [
+                // { 'key': 'abc',
+                  // 'order': 1|-1
+                // },
+                // ...
+            // ]
+            return function( elem1, elem2 ) {
+                var i;
+                var key;
+                var order;
+                var result = 0;
+            
+                for ( i = 0; i < order.length && result !== 0; ++i ) {
+                    key = sort_order[ i ]['key'];
+                    order = sort_order[ i ]['order'];
+                    
+                    if ( elem1[ key ] > elem2[ key ] ) {
+                        result = 1;
+                    } else if ( elem1[ key ] < elem2[ key ] ) {
+                        result = -1;
+                    }
+                    if ( order[ i ] === 'lt' ) {
+                        result = -result;
+                    }
+                }
+                
+                return result;
             };
-
-            return fun;
         };
         var sheet;
         var sorted_tree;
         var sort_fun;
 
         sheet = get_sheet( sheet_id );
-        sort_fun = query_to_function( order );
+        sort_fun = sort_order_to_function( sort_order );
         sorted_tree = _tree.sort( sheet['data'], sort_fun );
         sheet['data'] = sorted_tree;
 

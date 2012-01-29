@@ -65,13 +65,13 @@ var _permalinks = (function () {
         
         switch ( sheet['type'] ) {
             case _enum['STANDARD']:
-                sheet_data = get_standard_sheet_data( data_tree, sheet['data'] );
+                sheet_data = restore_standard_sheet_data( data_tree, sheet['data'] );
                 break;
             case _enum['FILTERED']:
-                sheet_data = get_filtered_sheet_data( data_tree, sheet['data'] );
+                sheet_data = restore_filtered_sheet_data( data_tree, sheet['data'] );
                 break;
             case _enum['SEARCHED']:
-                sheet_data = get_searched_sheet_data( data_tree, sheet['data'] );
+                sheet_data = restore_searched_sheet_data( data_tree, sheet['data'] );
                 break;
             default:
                 throw 'Bad sheet type';
@@ -187,6 +187,7 @@ var _permalinks = (function () {
         var act_node = undefined;
         var id;
         var parent;
+        var grandparent;
         
         var visited = {};  // ids of visited nodes( map: id->parent )
         var needed = {};   // nodes needed in permalink
@@ -201,11 +202,11 @@ var _permalinks = (function () {
             if ( !!parent && !needed[ parent ] ) {
                 if ( !unneeded[ parent ] ) {
                     // if parent of this node should be added to needed list
-                    uberparent = visited[ parent ];
+                    grandparent = visited[ parent ];
                     // if grandparent of this node should be removed from the list
-                    if ( uberparent !== undefined && needed[ uberparent ] ) {
-                        delete needed[ uberparent ];
-                        unneeded[ uberparent ] = true;
+                    if ( grandparent !== undefined && needed[ grandparent ] ) {
+                        delete needed[ grandparent ];
+                        unneeded[ grandparent ] = true;
                     }
                     needed[ parent ] = true;
                 }
@@ -269,7 +270,7 @@ var _permalinks = (function () {
     // Get nodes for standard sheet using passed functions.
     // sheet_info contains information which nodes are needed.
     // Returns tree with nodes that need to be inserted into a tree.
-    function get_standard_sheet_data( data_tree, sheet_data ) {
+    function restore_standard_sheet_data( data_tree, sheet_data ) {
         var get_branch = function( node_id ) {
             var new_rows = [];
             var ancestors = _tree.get_parents( data_tree, node_id );
@@ -306,13 +307,13 @@ var _permalinks = (function () {
         }
     }
     
-    function get_filtered_sheet_data( data_tree, sheet_data ) {
-        var sorted_tree = get_standard_sheet_data( data_tree, sheet_data );
+    function restore_filtered_sheet_data( data_tree, sheet_data ) {
+        var sorted_tree = restore_standard_sheet_data( data_tree, sheet_data );
         
         return  _tree.filter( sorted_tree, sheet_data['filter_query'] );
     }
     
-    function get_searched_sheet_data( data_tree, sheet_data ) {
+    function restore_searched_sheet_data( data_tree, sheet_data ) {
         var boxes = sheet_data['boxes'];
         var sheet_nodes = [];
         
