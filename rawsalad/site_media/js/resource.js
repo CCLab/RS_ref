@@ -397,6 +397,9 @@ var _resource = (function () {
         callback( sheet_descr );
     };
 
+    // SEARCH FUNCTIONS
+    // Get number of rows that match query in endpoints from enpoints_list.
+    // Call callback passing results to it.
     that.get_search_count = function ( endpoints_list, query, callback ) {
         _store.get_search_count( endpoints_list, query, function ( data ) {
             var gui_results = {
@@ -430,32 +433,30 @@ var _resource = (function () {
         });
     };
 
+    // Get rows that match the given query and are in the given endpoint.
+    // Call callback passing the rows to it.
     that.get_search_data = function ( endpoint, query, callback ) {
-        _store.get_search_data( endpoint, query, function ( data, meta ) {
+        _store.get_search_data( endpoint, query, function ( data, meta, boxes ) {
+            var sheet;
+            var sheet_id;
+            var cleaned_data;
+            var gui_data;
+            var other_fields = {
+                'query': query,
+                'boxes': boxes
+            };
             
-            // TODO:
-            /*{
-                sheet_id : int,
-                name   : str,
-                type   : enum.SEARCH,
-                query  : str,
-                boxes  : [
-                    {
-                        parents : str || list,
-                        columns : list,
-                        rows  : [
-                            {
-                                ...
-                                hit: column_key
-                            },
-                            ...
-                        ]
-                    }
-                ]
-            }*/
-            callback( data );
+            cleaned_data = clean_data( data, meta['columns'] );
+            sheet = create_sheet( endpoint, cleaned_data, meta,
+                                  _enum['SEARCHED'], other_fields );
+            sheet_id = add_sheet( sheet );
+            gui_data = prepare_table_data( sheet_id );
+
+            callback( gui_data );
         });
     };
+    
+    // PERMALINK FUNCTIONS
 
     // Creates permalink from sheets which id is in list sheet_id.
     // If sheet_id is undefined, then all sheets will be used to

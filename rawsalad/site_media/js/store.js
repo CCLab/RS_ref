@@ -102,13 +102,12 @@ var _store = (function () {
     that.get_children = function ( endpoint, parent_id, callback ) {
         var respond = function ( data_source ) {
             var children;
-
+            
             if ( parent_id === endpoint ) {
                 children = _tree.get_children_nodes( data_source );
             } else {
                 children = _tree.get_children_nodes( data_source, parent_id );
             }
-
             callback( children );
         };
         var data_source;
@@ -170,7 +169,7 @@ var _store = (function () {
             }
             data_copy = $.extend( true, [], db_data['data'] );
             meta_copy = $.extend( true, {}, meta );
-            callback( data_copy, meta_copy );
+            callback( data_copy, meta_copy, db_data['boxes'] );
         });
     };
 
@@ -180,17 +179,6 @@ var _store = (function () {
         _db.store_state( permalink_data, callback );
     };
 
-    /*that.restore_state = function( permalink_id, callback ) {
-        _db.restore_state( permalink_id, function ( permalink_data ) {
-            permalink_data.forEach( function( endpoint_data ) {
-                var endpoint = endpoint_data['endpoint'];
-                store_data( endpoint_data['data'], endpoint );
-                store_meta_data( endpoint_data['meta'], endpoint );
-            });
-
-            callback( permalink_data );
-        });
-    };*/
     that.restore_state = function( permalink_id, endpoint, callback ) {
         _db.restore_state( permalink_id, endpoint, function ( endpoint_data ) {
             store_data( endpoint_data['data'], endpoint_data['endpoint'] );
