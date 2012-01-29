@@ -473,19 +473,10 @@ var _resource = (function () {
         _store.store_state( permalink_data, callback );
     };
 
-    that.cp = function ( sheet_ids, callback ) {
-        var sheet_ids = sheet_ids || get_sorted_ids();
-        var all_sheets = [];
-
-        sheet_ids.forEach( function ( id ) {
-            all_sheets.push( get_sheet( id ) );
-        });
-
-        var permalink_data = _permalinks.prepare_permalink( all_sheets, sheet_ids );
-
-        callback( permalink_data );
-    };
-
+    // Download data from permalink which id is permalink_id. Data will
+    // come from endpoints that are in endpoints list. For sheets from
+    // each endpoint a callback from the callbacks list is called. Sequence
+    // of callbacks has the same order as sequence of endpoints.
     that.restore_permalink = function ( permalink_id, endpoints, callbacks ) {
         var permalinks_data = endpoints.map( function ( e ) {
             return {
@@ -496,6 +487,10 @@ var _resource = (function () {
         get_many( permalinks_data, that.get_permalink_part, callbacks );
     };
 
+    // Download data from one endpoint from the permalink. Both are described
+    // by permalink_data_descr. Create sheets, that were saved in the permalink
+    // and contained data from the endpoint. For each sheet call callback
+    // function with gui-understandable data from this sheet.
     that.get_permalink_part = function ( permalink_part_descr, callback ) {
         _store.restore_state( permalink_part_descr['permalink_id'],
                               permalink_part_descr['endpoint'],

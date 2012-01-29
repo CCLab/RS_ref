@@ -162,13 +162,13 @@ var _store = (function () {
         var meta_copy;
 
         _db.get_search_data( endpoint, query, get_meta, function ( db_data ) {
-            data_source = get_data_source( endpoint );
+            data_source = store_data( db_data['data'], endpoint );
             if ( get_meta ) {
                 meta = store_meta_data( db_data['meta'], endpoint );
             } else {
                 meta = get_meta_data_source( endpoint );
             }
-            data_copy = _tree.tree_to_list( data_source );
+            data_copy = $.extend( true, [], db_data['data'] );
             meta_copy = $.extend( true, {}, meta );
             callback( data_copy, meta_copy );
         });
@@ -193,9 +193,8 @@ var _store = (function () {
     };*/
     that.restore_state = function( permalink_id, endpoint, callback ) {
         _db.restore_state( permalink_id, endpoint, function ( endpoint_data ) {
-            var endpoint = endpoint_data['endpoint'];
-            store_data( endpoint_data['data'], endpoint );
-            store_meta_data( endpoint_data['meta'], endpoint );
+            store_data( endpoint_data['data'], endpoint_data['endpoint'] );
+            store_meta_data( endpoint_data['meta'], endpoint_data['endpoint'] );
 
             callback( endpoint_data );
         });
