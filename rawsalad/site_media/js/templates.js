@@ -36,9 +36,9 @@ var _templates = (function () {
         '<ul id="app-tb-sheets">' +
             '{{#sheets}}' +
                 '<li id="snap-{{sheet_id}}" data-end-point="{{end_id}}" data-group="{{group_id}}" class="sheet tab button' +
-//                    '{{#active}}' + //TODO remove = not neaded
-//                        ' active' +
-//                    '{{/active}}' +
+//                    '{{#blocked}}' + //TODO remove = not neaded
+//                        'ready' +
+//                    '{{/blocked}}' +
                 '" title="{{name}}">' +
                     '<p>' +
                     '{{name}}' +

@@ -394,46 +394,45 @@ var _gui = (function () {
         var sheet_id = active_sheet_id();
 
         var callback = function( columns ){
-            var columns_form = Mustache.to_html( _templates.columns_form, { 'columns': columns, } );
+            var columns_object =  { 'columns': columns, };
+            var columns_form = Mustache.to_html( _templates.columns_form, columns_object );
             var columns_form_code = $(columns_form);
 
-            prepare_columns_form_interface( columns_form );    // TODO
-
             $('#app-tb-tl-columns-list').append( columns_form );
-            // show the form
             $('#app-tb-tl-columns-form').slideDown( 200 );
-
             $('html')
                 .click( function () {
                     $('#app-tb-tl-columns-button')
                         .trigger( $.Event( 'click' ));
                 });
-            event.stopPropagation(); //TODO - need it?
-                        prepare_columns_form_interface( columns_form );    // TODO
+                
+            event.stopPropagation(); 
+            prepare_columns_form_interface( columns_form );
         };
-        alert( 'show col' );
 
-        _resource.all_columns( sheet_id, callback ); //TODO - not ready - test it
-        
         $(this)
             .unbind( 'click' )
             .click( hide_add_columns );
+
+        _resource.all_columns( sheet_id, callback ); //TODO - not ready - test it
+        
     }
     
-    function hide_add_columns( event ) {
-        alert( 'hide col' );
-        $('#app-tb-tl-columns-form').slideUp( 200 );
 
-//        $('#app-tb-tl-columns-list').empty();
+    function hide_add_columns( event ) {
+        
+        $('#app-tb-tl-columns-form').slideUp( 200, function() {
+            $('#app-tb-tl-columns-list').empty();
+        } );
 
         $('html').unbind( 'click' );
+
         event.stopPropagation();        
 
         $(this)
             .unbind( 'click' )
             .click( display_add_columns );
     }
-
 
 
     // not used yet:
@@ -469,10 +468,12 @@ var _gui = (function () {
 
             make_zebra();
             row
-                .attr( 'data-open', 'true' )
-                .unbind( 'click' ) 
+                .attr( 'data-open', 'true' ) 
                 .click( close_node );
         }
+        
+        row.unbind( 'click' );
+
         _resource.get_children( sheet_id, row_id, callback )
     }
 
@@ -633,6 +634,7 @@ var _gui = (function () {
 
     // add columns functions
     function prepare_columns_form_interface( columns_form ) {
+
         $('#app-tb-tl-lt-select')
             .click( function () {
                 $('input[name=app-tb-tl-columns]').attr( 'checked', 'true' );
@@ -653,27 +655,24 @@ var _gui = (function () {
                 event.stopPropagation();
             })
             .submit( function () {
-
                 var columns = [];
                 var sheet_id = active_sheet_id();
                 var checkboxes = $( 'input[name=app-tb-tl-columns]:checked' );
+                var callback = function( data ){
+                        draw_table( data );
+                        $('#app-tb-tl-columns-button').trigger( 'click' );
+                };
+
                 checkboxes.map( function ( index, input ) {
                     columns.push( input['value'] );
                 });              
 
-                var callback = function( data ){
-                    $('#app-tb-tl-columns-button')
-                        .trigger( 'click' );
-                        draw_table( data );
-                };
                 _resource.show_with_columns( sheet_id, columns, callback )
-            });
 
                 // to prevent form's action!!
-        return false;
+                return false;
+            });
     }
-
-
 
 
     // TODO - make sort
@@ -836,71 +835,6 @@ var _gui = (function () {
                 }
             });
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // C O L U M N S   B U T T O N   F U N C T I O N S
-
-
-
-//    function prepare_columns_form_bt( columns_form ) {
-//        $('#app-tb-tl-lt-select')
-//            .click( function () {
-//                $('input[name=app-tb-tl-columns]').attr( 'checked', 'true' );
-//            });
-
-//        $('#app-tb-tl-lt-unselect')
-//            .click( function () {
-//                $('input[name=app-tb-tl-columns]').removeAttr( 'checked' );
-//            });
-
-//        $('#app-tb-tl-lt-submit')
-//            .click( function () {
-//                $('#app-tb-tl-columns-form').submit();
-//            });
-
-//        $('#app-tb-tl-columns-form')
-//            .click( function ( event ) {
-//                event.stopPropagation();
-//            })
-//            .submit( function () {
-
-//                var columns = [];
-//                var checkboxes = $('input[name=app-tb-tl-columns]:checked');
-//                var callback = function(){
-//        //            draw_sheet( // TODO finish submit
-//                };
-//                });
-
-//                // to prevent form's action!!
-//                return false;
-
-//    }
-
-
-//    function prepare_columns_bt( button ) {
-//        button.click( show_columns_form );
-//    }
-
-    // END OF COLUMNS BUTTON FUNCTIONS
 
 
     // return public interface
