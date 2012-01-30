@@ -321,6 +321,7 @@ var _gui = (function () {
         var sheet_id = active_sheet_id();
 
         var callback = function( data ) {
+            var new_sheet_id = data['sheet_id']; 
             draw_sheet( data['sheet_id'] );
         }
         _resource.copy_sheet( sheet_id, callback );
