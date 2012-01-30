@@ -36,6 +36,8 @@ var _resource = (function () {
         });
     };
 
+    // Get top levels and call callbacks with data (top level + meta) from them,
+    // order of callbacks is the same as order of endpoints.
     that.get_top_levels = function ( endpoints, callbacks ) {
         get_many( endpoints, that.get_top_level, callbacks );
     };
@@ -170,9 +172,7 @@ var _resource = (function () {
         // Get selected columns description.
         selected_column_keys = {};
         columns.forEach( function ( column ) {
-            if ( column['selected'] ) {
-                selected_column_keys[ column['key'] ] = true;
-            }
+            selected_column_keys[ column ] = true;
         });
         all_columns = that.all_columns( sheet_id );
         selected_columns = all_columns.filter( function ( column ) {
@@ -432,22 +432,21 @@ var _resource = (function () {
             var top_parent_groups = {};
 
             data.forEach( function( result ) {
-                var top_parent;
-                var tree_id = result['tree_id'];
-                var group = top_parent_groups[ tree_id ];
+                var top_parent = _store.get_top_parent( result['endpoint'] );
+                var top_id = top_parent['id'];
+                var group = top_parent_groups[ top_id ];
 
                 if ( !group ) {
-                    top_parent = _store.get_top_parent( tree_id )['label'];
                     group = {
-                        'dbtree_top_parent_name': top_parent,
+                        'dbtree_top_parent_name': top_parent['name'],
                         'data': []
                     };
                     gui_results['results'].push( group );
-                    top_parent_groups[ tree_id ] = group;
+                    top_parent_groups[ top_id ] = group;
                 }
                 group['data'].push({
-                    'endpoint': tree_id,
-                    'label': that.get_end_name( tree_id )['label'],
+                    'endpoint': result['endpoint'],
+                    'label': _store.get_collection_name( result['endpoint'] ),
                     'found_count': result['count']
                 });
             });

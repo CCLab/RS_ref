@@ -68,7 +68,8 @@ var _store = (function () {
     };
 
     that.get_collection_name = function( endpoint ) {
-        var node = _tree.get_node( get_db_tree(), endpoint );
+        var id = get_endpoint_id( endpoint );
+        var node = _tree.get_node( get_db_tree(), id );
 
         return node['label'];
     };
