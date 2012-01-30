@@ -409,6 +409,7 @@ var _gui = (function () {
                         .trigger( $.Event( 'click' ));
                 });
             event.stopPropagation(); //TODO - need it?
+                        prepare_columns_form_interface( columns_form );    // TODO
         };
         alert( 'show col' );
 
@@ -655,25 +656,15 @@ var _gui = (function () {
 
                 var columns = [];
                 var sheet_id = active_sheet_id();
-                var checked = $('input[name=app-tb-tl-columns]:checked');
-//                checkboxes.foreach( function ( input ) {
-//                    var col_key = input.value();
-//                    
-//                    var column = { 'key' : col_key, }
-//                    if ( input.is(':checked') ) {
-//                        column['selected'] = true;
-//                    } 
-//                    columns.push( column );
-//                 });
+                var checkboxes = $( 'input[name=app-tb-tl-columns]:checked' );
+                checkboxes.map( function ( index, input ) {
+                    columns.push( input['value'] );
+                });              
 
                 var callback = function( data ){
                     $('#app-tb-tl-columns-button')
                         .trigger( 'click' );
                         draw_table( data );
-                    
-
-                      
-        //            draw_sheet( // TODO finish submit
                 };
                 _resource.show_with_columns( sheet_id, columns, callback )
             });
