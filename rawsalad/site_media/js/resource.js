@@ -155,7 +155,11 @@ var _resource = (function () {
             };
         });
 
-        callback( columns );
+        if ( !!callback ) {
+            callback( columns );
+        } else {
+            return columns;
+        }
     };
 
     // Update columns in sheet. Return sheet data with new columns.
