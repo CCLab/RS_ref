@@ -174,6 +174,7 @@ var _resource = (function () {
         var cleaned_full_data;
         var old_tree;
         var new_tree;
+        var selected_id;
 
         // Get selected columns description.
         selected_column_keys = {};
@@ -203,9 +204,10 @@ var _resource = (function () {
         });
 
         // Update tree
+        selected_id = find_selected_row( sheet_id );
         sheet['data'] = new_tree;
         if ( !!sheet['any_selected'] ) {
-            reset_selection( sheet_id, true, find_selected_row( old_tree ) );
+            reset_selection( sheet_id, true, selected_id );
         }
 
         that.get_sheet_data( sheet_id, callback );
