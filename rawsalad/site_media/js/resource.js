@@ -38,7 +38,9 @@ var _resource = (function () {
 
     // Get top levels and call callbacks with data (top level + meta) from them,
     // order of callbacks is the same as order of endpoints.
-    that.get_top_levels = function ( endpoints, callbacks ) {
+    that.get_top_levels = function ( endpoints, init_callback, callbacks ) {
+        // create_empty_sheets for endpoints and call init_callback
+        // with data for sheet tabs(get_sheets_names)
         get_many( endpoints, that.get_top_level, callbacks );
     };
 
@@ -704,10 +706,11 @@ var _resource = (function () {
         var sheet = get_sheet( sheet_id );
 
         return {
-            'name': sheet['label'],
+            'name'    : sheet['label'],
             'sheet_id': sheet_id,
             'group_id': sheet['group_id'],
-            'endpoint': sheet['endpoint']
+            'endpoint': sheet['endpoint'],
+            'blocked' : !sheet['data']
         };
     }
 
