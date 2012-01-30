@@ -224,7 +224,7 @@ var _gui = (function () {
             .click( display_filter_panel );
 
         columns_bt
-            .click( display_columns_form );
+            .click( display_add_columns );
     }
 
 
@@ -390,21 +390,16 @@ var _gui = (function () {
     }
 
 
-    function display_columns_form() {
+    function display_add_columns( event ) {
         var sheet_id = active_sheet_id();
 
         var callback = function( columns ){
+            var columns_form = Mustache.to_html( _templates.columns_form, { 'columns': columns, } );
+            var columns_form_code = $(columns_form);
 
-            var columns_form = $(Mustache.to_html( _templates.columns_form, { 'columns': columns, } ) );
-
-            prepare_columns_form_bt( columns_form );    // TODO
-
-            $('#app-tb-tools')
-                .find('form:visible')
-                .slideUp( 200 );
+            prepare_columns_form_interface( columns_form );    // TODO
 
             $('#app-tb-tl-columns-list').append( columns_form );
-
             // show the form
             $('#app-tb-tl-columns-form').slideDown( 200 );
 
@@ -413,16 +408,31 @@ var _gui = (function () {
                     $('#app-tb-tl-columns-button')
                         .trigger( $.Event( 'click' ));
                 });
-           // event.stopPropagation(); TODO - need it?
-
+            event.stopPropagation(); //TODO - need it?
         };
+        alert( 'show col' );
 
         _resource.all_columns( sheet_id, callback ); //TODO - not ready - test it
+        
+        $(this)
+            .unbind( 'click' )
+            .click( hide_add_columns );
+    }
+    
+    function hide_add_columns( event ) {
+        alert( 'hide col' );
+        $('#app-tb-tl-columns-form').slideUp( 200 );
+
+//        $('#app-tb-tl-columns-list').empty();
+
+        $('html').unbind( 'click' );
+        event.stopPropagation();        
 
         $(this)
-            .unbind
-            .click( hide_columns_form );
+            .unbind( 'click' )
+            .click( display_add_columns );
     }
+
 
 
     // not used yet:
@@ -620,6 +630,60 @@ var _gui = (function () {
         return tab.text();
     }
 
+    // add columns functions
+    function prepare_columns_form_interface( columns_form ) {
+        $('#app-tb-tl-lt-select')
+            .click( function () {
+                $('input[name=app-tb-tl-columns]').attr( 'checked', 'true' );
+            });
+
+        $('#app-tb-tl-lt-unselect')
+            .click( function () {
+                $('input[name=app-tb-tl-columns]').removeAttr( 'checked' );
+            });
+
+        $('#app-tb-tl-lt-submit')
+            .click( function () {
+                $('#app-tb-tl-columns-form').submit();
+            });
+
+        $('#app-tb-tl-columns-form')
+            .click( function ( event ) {
+                event.stopPropagation();
+            })
+            .submit( function () {
+
+                var columns = [];
+                var sheet_id = active_sheet_id();
+                var checked = $('input[name=app-tb-tl-columns]:checked');
+//                checkboxes.foreach( function ( input ) {
+//                    var col_key = input.value();
+//                    
+//                    var column = { 'key' : col_key, }
+//                    if ( input.is(':checked') ) {
+//                        column['selected'] = true;
+//                    } 
+//                    columns.push( column );
+//                 });
+
+                var callback = function( data ){
+                    $('#app-tb-tl-columns-button')
+                        .trigger( 'click' );
+                        draw_table( data );
+                    
+
+                      
+        //            draw_sheet( // TODO finish submit
+                };
+                _resource.show_with_columns( sheet_id, columns, callback )
+            });
+
+                // to prevent form's action!!
+        return false;
+    }
+
+
+
 
     // TODO - make sort
     function preapare_sort_interface( sort_form ){
@@ -765,6 +829,23 @@ var _gui = (function () {
         var id = obj.attr( 'id' );
         return parseInt( id, 10 );
     }
+    
+ 
+    function make_zebra() {
+        $('#app-tb-datatable')
+            .find('tr:visible')
+            .each( function ( i ) {
+                if( i % 2 === 0 ) {
+                    $(this).removeClass( 'odd' );
+                    $(this).addClass( 'even' );
+                }
+                else {
+                    $(this).removeClass( 'even' );
+                    $(this).addClass( 'odd' );
+                }
+            });
+    }
+
 
 
 
@@ -786,101 +867,50 @@ var _gui = (function () {
 
 
     // C O L U M N S   B U T T O N   F U N C T I O N S
-    function hide_columns_form() {
-        $(this).unbind;
-        $('#app-tb-tl-columns-form').slideUp( 200 );
-        $('#app-tb-tl-columns-form').empty();
-        $(this).click( show_columns_form );
-    }
 
 
-    function show_columns_form() {
-        $(this).unbind;
-        var callback = function( columns ){
 
-            var columns_form = $(Mustache.to_html( _templates.columns_form, { 'columns': columns, } ) );
+//    function prepare_columns_form_bt( columns_form ) {
+//        $('#app-tb-tl-lt-select')
+//            .click( function () {
+//                $('input[name=app-tb-tl-columns]').attr( 'checked', 'true' );
+//            });
 
-            prepare_columns_form_bt( columns_form );    // TODO
+//        $('#app-tb-tl-lt-unselect')
+//            .click( function () {
+//                $('input[name=app-tb-tl-columns]').removeAttr( 'checked' );
+//            });
 
-            $('#app-tb-tools')
-                .find('form:visible')
-                .slideUp( 200 );
+//        $('#app-tb-tl-lt-submit')
+//            .click( function () {
+//                $('#app-tb-tl-columns-form').submit();
+//            });
 
-            $('#app-tb-tl-columns-list').append( columns_form );
+//        $('#app-tb-tl-columns-form')
+//            .click( function ( event ) {
+//                event.stopPropagation();
+//            })
+//            .submit( function () {
 
-            // show the form
-            $('#app-tb-tl-columns-form').slideDown( 200 );
+//                var columns = [];
+//                var checkboxes = $('input[name=app-tb-tl-columns]:checked');
+//                var callback = function(){
+//        //            draw_sheet( // TODO finish submit
+//                };
+//                });
 
-            $('html')
-                .click( function () {
-                    $('#app-tb-tl-columns-button')
-                        .trigger( $.Event( 'click' ));
-                });
-           // event.stopPropagation(); TODO - need it?
+//                // to prevent form's action!!
+//                return false;
 
-        };
-
-//        _resource.all_columns( end_id, callback ); TODO - not ready - test it
-
-        $(this).click( hide_columns_form );
-    }
-
-
-    function prepare_columns_form_bt( columns_form ) {
-        $('#app-tb-tl-lt-select')
-            .click( function () {
-                $('input[name=app-tb-tl-columns]').attr( 'checked', 'true' );
-            });
-
-        $('#app-tb-tl-lt-unselect')
-            .click( function () {
-                $('input[name=app-tb-tl-columns]').removeAttr( 'checked' );
-            });
-
-        $('#app-tb-tl-lt-submit')
-            .click( function () {
-                $('#app-tb-tl-columns-form').submit();
-            });
-
-        $('#app-tb-tl-columns-form')
-            .click( function ( event ) {
-                event.stopPropagation();
-            })
-            .submit( function () {
-
-                var columns = [];
-                var checkboxes = $('input[name=app-tb-tl-columns]:checked');
-                var callback = function(){
-        //            draw_sheet( // TODO finish submit
-                };
-                });
-
-                // to prevent form's action!!
-                return false;
-
-    }
+//    }
 
 
-    function prepare_columns_bt( button ) {
-        button.click( show_columns_form );
-    }
+//    function prepare_columns_bt( button ) {
+//        button.click( show_columns_form );
+//    }
 
     // END OF COLUMNS BUTTON FUNCTIONS
 
-    function make_zebra() {
-        $('#app-tb-datatable')
-            .find('tr:visible')
-            .each( function ( i ) {
-                if( i % 2 === 0 ) {
-                    $(this).removeClass( 'odd' );
-                    $(this).addClass( 'even' );
-                }
-                else {
-                    $(this).removeClass( 'even' );
-                    $(this).addClass( 'odd' );
-                }
-            });
-    }
 
     // return public interface
     return that;
