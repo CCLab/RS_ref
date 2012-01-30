@@ -54,7 +54,7 @@ var _store = (function () {
         if ( !has_meta_data( endpoint ) ) {
             return undefined;
         } else {
-            return _tree.to_list( get_data_source[ endpoint ] );
+            return _tree.tree_to_list( get_data_source( endpoint ) );
         }
     };
 
