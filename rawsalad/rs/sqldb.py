@@ -204,7 +204,7 @@ def search_data( user_query, endpoint, get_meta=False ):
 
     if get_meta:
         final_data['meta'] = {
-            'name'    : collection.get_label(),
+            'label'   : collection.get_label(),
             'columns' : collection.get_columns()
         }
 
