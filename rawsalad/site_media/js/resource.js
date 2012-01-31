@@ -471,9 +471,10 @@ var _resource = (function () {
             var sheet_id;
             var cleaned_data;
             var gui_data;
+            var sheet_boxes = prepare_boxes( boxes, data );
             var other_fields = {
                 'query': query,
-                'boxes': boxes
+                'boxes': sheet_boxes
             };
             
             cleaned_data = clean_data( data, meta['columns'] );
@@ -632,13 +633,13 @@ var _resource = (function () {
             'data': cleaned_tree_data,
             'label': meta['label'],
             'columns': active_columns,
-            'type': type,
-            'any_selected': false
+            'type': type
         };
 
         switch ( type ) {
             case _enum['STANDARD']:
                 new_sheet['sort_query'] = other_fields['sort_query'];
+                new_sheet['any_selected'] = false;
                 break;
             case _enum['FILTERED']:
                 new_sheet['sort_query'] = other_fields['sort_query'];
@@ -816,6 +817,36 @@ var _resource = (function () {
         }
 
         return selected_id;
+    }
+    
+    // Change boxes that come from server to boxes used by resource.
+    function prepare_boxes( boxes, data ) {
+        var sheet_boxes = [];
+        var parents_list = [];
+        var boxes_obj = {};
+        var data_tree = _tree.create_tree( data, 'id', 'parent' );
+        
+        boxes.forEach( function ( box ) {
+            var node = _tree.get_node( data_tree, box['id'] );
+            var parent_id = node['parent'];
+            
+            if ( !boxes_obj[ parent_id ] ) {
+                boxes_obj[ parent_id ] = {
+                    'rows': [],
+                    'breadcrumb': false,
+                    'context': false
+                };
+                parents_list.push( parent_id );
+            }
+            
+            boxes_obj[ parent_id ]['rows'].push( box );
+        });
+        
+        parents_list.forEach( function ( parent_id ) {
+            sheet_boxes.push( boxes_obj[ parent_id ] );
+        });
+        
+        return sheet_boxes;
     }
 
     return that;

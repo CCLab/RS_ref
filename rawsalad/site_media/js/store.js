@@ -168,8 +168,12 @@ var _store = (function () {
             } else {
                 meta = get_meta_data_source( endpoint );
             }
-            data_copy = $.extend( true, [], db_data['data'] );
+            data_copy = _tree.tree_to_list( data_source );
             meta_copy = $.extend( true, {}, meta );
+            meta_copy['columns'] = meta_copy['columns'].filter( function ( column ) {
+                return column['basic'];
+            });
+            
             callback( data_copy, meta_copy, db_data['boxes'] );
         });
     };

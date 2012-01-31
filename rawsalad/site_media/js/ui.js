@@ -40,7 +40,7 @@ var _ui = (function () {
                 data_package = prepare_filtered_data_package( sheet, sheet_id );
                 break;
             case _enum['SEARCHED']:
-                data_package = prepare_searched_data_package( sheet, sheet_id, data );
+                data_package = prepare_searched_data_package( sheet, sheet_id );
                 break;
             default:
                 throw 'Bad sheet type';
@@ -215,7 +215,7 @@ var _ui = (function () {
     }
 
     // Prepare data in searched sheet for gui.
-    function prepare_searched_data_package( sheet, sheet_id, boxes ) {
+    function prepare_searched_data_package( sheet, sheet_id ) {
         // Return row in gui-understandable form.
         var prepare_row = function( row, columns, hit_list ) {
             // insert standard values
@@ -252,7 +252,7 @@ var _ui = (function () {
         // columns description for gui
         columns_for_gui = get_columns_description( sheet['columns'] );
         
-        gui_boxes = boxes.map( function ( box ) {
+        gui_boxes = sheet['boxes'].map( function ( box ) {
             var hit_ids = {};
             var gui_breadcrumb;
             var gui_context;
@@ -261,7 +261,7 @@ var _ui = (function () {
             gui_rows = box['rows'].map( function ( row ) {
                 var node = _tree.get_node( sheet['data'], row['id'] );
                 hit_ids[ row['id'] ] = true;
-                return prepare_row( node, columns_for_gui, row['hit'] );
+                return prepare_row( node, columns_for_gui, row['hits'] );
             });
             if ( box['breadcrumb'] ) {
                 gui_breadcrumb = _tree.get_parents( sheet['data'], box['rows'][0]['id'] )
