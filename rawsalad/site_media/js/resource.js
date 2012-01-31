@@ -61,13 +61,11 @@ var _resource = (function () {
         _store.get_init_data( endpoint, function( data, meta ) {
             var sheet_id;
             var sheet;
-            var cleaned_data;
             var gui_data;
             
-            cleaned_data = clean_data( data, meta['columns'] )
-            sheet = create_sheet( endpoint, cleaned_data, meta );
+            sheet = create_sheet( endpoint, data, meta );
             sheet_id = find_blocked_sheet( endpoint );
-            add_sheet( sheet, sheet_id );
+            sheet_id = add_sheet( sheet, sheet_id );
             gui_data = prepare_table_data( sheet_id );
 
             callback( gui_data );

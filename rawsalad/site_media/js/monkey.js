@@ -116,7 +116,7 @@ Form of created tree:
                     var lastPart = parseInt( innerId.slice(innerId.lastIndexOf('-') + 1) );
                     
                     if (getParentId(innerId) === '__root__') {
-                        newBaseId = innerId.parseInt() + delta + '';
+                        newBaseId = lastPart + delta + '';
                     } else {
                         newBaseId = getParentId(innerId) + '-' + (lastPart + delta + '');
                     }
@@ -210,7 +210,9 @@ Form of created tree:
                         // get original form of id
                         id = (!!parentColumn) ? firstChild[parentColumn] : getParentId(firstChild[idColumn]);
                         newNodes = groupedValues[id];
-                        oldNodes = (!id) ? this.children(this.root()) : this.children(id);
+                        id = ( !id && id !== 0 ) ? this.nodeId(this.root()) : id;
+                        //oldNodes = (!id) ? this.children(this.root()) : this.children(id);
+                        oldNodes = this.children(id);
                         newIds = newNodes.map(function (e) { return e[idColumn]; });
                         oldIds = oldNodes.map(function (e) { return e[idColumn]; });
                         translations = getTranslation(oldIds, newIds);
