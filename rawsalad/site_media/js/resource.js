@@ -41,6 +41,17 @@ var _resource = (function () {
     that.get_top_levels = function ( endpoints, init_callback, callbacks ) {
         // create_empty_sheets for endpoints and call init_callback
         // with data for sheet tabs(get_sheets_names)
+        endpoints.forEach( function ( endpoint ) {
+            var simple_meta = {
+                'label'  : _store.get_collection_name( endpoint ),
+                'columns': []
+            };
+            var add_fields = { 'blocked': true };
+            var empty_sheet = create_sheet( endpoint, [], simple_meta,
+                                            _enum['STANDARD'], add_fields );
+            add_sheet( empty_sheet );
+        });
+        
         get_many( endpoints, that.get_top_level, callbacks );
     };
 
@@ -52,10 +63,11 @@ var _resource = (function () {
             var sheet;
             var cleaned_data;
             var gui_data;
-
+            
             cleaned_data = clean_data( data, meta['columns'] )
             sheet = create_sheet( endpoint, cleaned_data, meta );
-            sheet_id = add_sheet( sheet );
+            sheet_id = find_blocked_sheet( endpoint );
+            add_sheet( sheet, sheet_id );
             gui_data = prepare_table_data( sheet_id );
 
             callback( gui_data );
@@ -617,6 +629,7 @@ var _resource = (function () {
         var group_id;
         var type = type || _enum['STANDARD'];
         var other_fields = other_fields || {};
+        var field;
 
         active_columns = meta['columns'].filter( function ( column ) {
             return !!column['basic'];
@@ -636,6 +649,7 @@ var _resource = (function () {
             'type': type
         };
 
+        // copy additional, expected fields
         switch ( type ) {
             case _enum['STANDARD']:
                 new_sheet['sort_query'] = other_fields['sort_query'];
@@ -652,8 +666,32 @@ var _resource = (function () {
             default:
                 throw 'Bad sheet type';
         }
+        // copy additional, unexpected fields
+        for ( field in other_fields ) {
+            if ( other_fields.hasOwnProperty( field ) ) {
+                new_sheet[ field ] = other_fields[ field ];
+            }
+        }
 
         return new_sheet;
+    }
+    
+    // Find FIRST blocked sheet that was created when data
+    // was downloaded from the given endpoint.
+    function find_blocked_sheet( endpoint ) {
+        var sheet_id;
+        var sheet;
+        
+        for ( sheet_id in sheets ) {
+            if ( sheets.hasOwnProperty( sheet_id ) ) {
+                sheet = get_sheet( sheet_id );
+                if ( !!sheet['blocked'] ) {
+                    return parseInt( sheet_id );
+                }
+            }
+        }
+        
+        return undefined;
     }
     
     function filter_sheet( sheet, filter_function ) {
@@ -672,9 +710,10 @@ var _resource = (function () {
         })();
     })();
 
-    // Add a new sheet and return its id.
-    function add_sheet( new_sheet ) {
-        var sheet_id = generate_sheet_id();
+    // Add a new sheet and return its id. Can replace sheet with replace_id
+    // if replace_id is defined.
+    function add_sheet( new_sheet, replace_id ) {
+        var sheet_id = replace_id || generate_sheet_id();
 
         sheets[ sheet_id ] = new_sheet;
 

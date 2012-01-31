@@ -162,7 +162,7 @@ var _store = (function () {
         var meta_copy;
 
         _db.get_search_data( endpoint, query, get_meta, function ( db_data ) {
-            data_source = store_data( db_data['data'], endpoint );
+            data_source = store_data( db_data['data'], endpoint, true );
             if ( get_meta ) {
                 meta = store_meta_data( db_data['meta'], endpoint );
             } else {
@@ -186,7 +186,9 @@ var _store = (function () {
 
     that.restore_state = function( permalink_id, endpoint, callback ) {
         _db.restore_state( permalink_id, endpoint, function ( endpoint_data ) {
-            store_data( endpoint_data['data'], endpoint_data['endpoint'] );
+            // don't know which data is from searched permalink,
+            // so think that all data comes from it
+            store_data( endpoint_data['data'], endpoint_data['endpoint'], true );
             store_meta_data( endpoint_data['meta'], endpoint_data['endpoint'] );
 
             callback( endpoint_data );
