@@ -122,12 +122,12 @@ var _templates = (function () {
             '<form id="app-tb-tl-rename-form" style="display: none;" class="left" >' +
                 '<input type="text" class="input-text" id="app-tb-tl-rename-input" />' +
             '</form>' +
-            '{{#orginal_label}}' +
-                '<div id="app-tb-tl-old-title" class="left"> {{orginal_label}} </div>' +
-            '{{/orginal_label}}' +
-            '{{^orginal_label}}'+
+            '{{#changed_label}}' +
+                '<div id="app-tb-tl-old-title" class="left"> {{original_label}} </div>' +
+            '{{/changed_label}}' +
+            '{{^changed_label}}'+
                 '<div id="app-tb-tl-old-title" class="left" style="display: none;"> </div>' +
-            '{{/orginal_label}}' +
+            '{{/changed_label}}' +
             '<div id="app-tb-tl-old-title" class="left" style="display: none;"> </div>' +
             '<div id="app-tb-tl-rename-button" class="button left">Zmień nazwę</div>' +
             '<div id="app-tb-tl-bt-container" class="right">' +
