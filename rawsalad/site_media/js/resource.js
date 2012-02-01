@@ -436,6 +436,7 @@ var _resource = (function () {
 
         sheet = get_sheet( sheet_id );
         copied_sheet = $.extend( true, {}, sheet );
+        copied_sheet['data'] = _tree.copy( sheet['data'] );
         copied_sheet_id = add_sheet( copied_sheet );
         sheet_descr = get_sheet_description( copied_sheet_id );
 

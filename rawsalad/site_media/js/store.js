@@ -42,7 +42,6 @@ var _store = (function () {
             respond();
         }
         else {
-            // TODO: collections list
             _db.get_collections_list( function ( data ) {
                 save_db_tree( data );
                 respond();

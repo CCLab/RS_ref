@@ -96,6 +96,10 @@ var _tree = (function () {
         tree.iterate( fun, first, end );
     };
     
+    that.copy = function( tree ) {
+        return tree.copy();
+    };
+    
     that.get_children_number = function( tree, parent_id ) {
         if ( parent_id === undefined ) {
             parent_id = tree.rootId();
