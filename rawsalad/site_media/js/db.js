@@ -30,8 +30,10 @@ var _db = (function () {
 //  P U B L I C   I N T E R F A C E
     var that = {};
 
-    that.get_db_tree = function ( callback ) {
+    that.get_collections_list = function ( callback ) {
         $.ajax({
+            // TODO: get_collections_list
+            // TODO: additional field format
             url     : '/get_db_tree/',
             dataType: 'json',
             type    : 'GET',

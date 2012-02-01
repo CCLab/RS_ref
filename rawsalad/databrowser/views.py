@@ -19,6 +19,8 @@ def app_page( request ):
     return render_to_response( 'app.html' )
 
 
+# TODO: get_collections
+# TODO: format (list)
 # url: /get_db_tree/
 def get_db_tree( req ):
     '''Get the navigation tree for all database collections'''

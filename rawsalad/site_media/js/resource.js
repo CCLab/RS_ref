@@ -30,7 +30,7 @@ var _resource = (function () {
     var that = {};
 
     // Get db tree and return it as a list.
-    that.get_db_tree = function ( callback ) {
+    that.get_collections_list = function ( callback ) {
         _store.get_collections_list( function ( collections ) {
             callback( collections );
         });
@@ -258,7 +258,7 @@ var _resource = (function () {
     };
 
     // Get names of sheets and sort them in order: ( group_id, sheet_id ).
-    that.get_sheets_names = function ( callback ) {
+    that.get_sheets_labels = function ( callback ) {
         var sheet_id;
         var sheet_descr;
         var sheets_names = [];
@@ -285,8 +285,12 @@ var _resource = (function () {
 
     that.get_sheet_name = function ( sheet_id, callback ) {
         var sheet = get_sheet( sheet_id );
+        var original_label = _store.get_collection_name( sheet['endpoint'] );
 
-        callback( { 'label': sheet['label'] } );
+        callback({
+            'label'         : sheet['label'],
+            'original_label': original_label
+        });
     };
 
 
