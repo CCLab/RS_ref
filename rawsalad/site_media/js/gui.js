@@ -85,6 +85,8 @@ var _gui = (function () {
 
     function draw_tools( names ) {
         var tools;
+        names['changed_label'] = ( names['label'] === names['original_label'] ) ? false : true;        
+        
         tools = Mustache.to_html( _templates.app_table_tools, names );
         display_tools( tools );
     }
@@ -343,11 +345,13 @@ var _gui = (function () {
 
             old_name = active_sheet_name();
             
-            if ( ( new_name !== old_name ) && /\S/.test(new_name) ) {
+            if ( ( new_name !== old_name ) && /\S/.test( new_name ) ) {
                 var sheet_id = active_sheet_id();
 
                 _resource.change_name( sheet_id, new_name, callback );
                 $('#app-tb-tl-title').html( new_name );
+                $('#app-tb-tl-old-title').html( old_name );
+                $('#app-tb-tl-old-title').show();
             }
             $('#app-tb-tl-rename-form').hide();
             $('#app-tb-tl-title').show();
