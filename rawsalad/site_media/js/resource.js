@@ -376,12 +376,12 @@ var _resource = (function () {
 
     // Filter sheet and return it.
     that.filter = function ( sheet_id, criterion, callback ) {
-        // TODO
+        // TOTEST
         //  ||
         //  \/
         var criterion_to_function = function( node ) {
             var fun = function( node ) {
-                return node[ 'id' ] % 2 === 1;
+                return filter_node( node, criterion );
             };
 
             return fun;
@@ -505,11 +505,13 @@ var _resource = (function () {
     // PERMALINK FUNCTIONS
 
     // Creates permalink from sheets which id is in list sheet_id.
-    // If sheet_id is undefined, then all sheets will be used to
+    // If sheet_id is an empty list, then all sheets will be used to
     // create permalink.
     that.create_permalink = function ( sheet_ids, callback ) {
-        var sheet_ids = sheet_ids || get_sorted_ids();
         var all_sheets = [];
+        if ( sheet_ids.length === 0 ) {
+            sheet_ids = get_sorted_ids();
+        }
 
         sheet_ids.forEach( function ( id ) {
             all_sheets.push( get_sheet( id ) );
@@ -889,6 +891,61 @@ var _resource = (function () {
         });
         
         return sheet_boxes;
+    }
+    
+    function filter_node( node, criterions ) {
+        var passed = true;
+        
+        criterions.forEach( function ( criterion ) {
+            if ( !passed ) return;
+            
+            passed = check_criterion( node, criterion );
+        });
+        
+        return passed;
+    }
+    
+    function check_criterion( node, criterion ) {
+        var node_value = node[ criterion['key'] ];
+        var filter_value = node[ criterion['value'] ];
+        var preference = node[ criterion['preference'] ];
+        
+        switch ( criterion['type'] ) {
+            case 'number':
+                return check_number( node_value, filter_value, pref );
+            case 'string':
+                return check_string( node_value, filter_value, pref );
+            default:
+                throw 'Bad filter criterion type';
+        }
+    }
+    
+    function check_number( node_value, filter_value, pref ) {
+        switch ( pref ) {
+            case 'lt':
+                return ( node_value < filter_value );
+            case 'eq':
+                return ( node_value === filter_value );
+            case 'gt':
+                return ( node_value > filter_value );
+            default:
+                throw 'Bad number critertion preference';
+        }
+    }
+    
+    function check_string( node_value, filter_value, pref ) {
+        switch ( pref ) {
+            case 'nst':
+                return ( node_value.indexOf( filter_value ) !== 0 );
+            case 'ncnt':
+                return ( node_value.indexOf( filter_value ) === -1 );
+            case 'cnt':
+                return ( node_value.indexOf( filter_value ) !== -1 );
+            case 'st':
+                return ( node_value.indexOf( filter_value ) === 0 );
+            default:
+                throw 'Bad string critertion preference';
+        }
     }
 
     return that;
