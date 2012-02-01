@@ -43,7 +43,8 @@ var _gui = (function () {
         });
 
         // get_db_tree parmeters - draw db_tree, submit button text, submit callback function
-        _resource.get_db_tree( _dbtree.draw_db_tree_panels, "Wyświetl wybrane" );
+        // TODO change for get collection names
+        _resource.get_collections_list( _dbtree.draw_db_tree_panels, "Wyświetl wybrane" ); 
     };
 
     //=====================================================//
@@ -62,7 +63,7 @@ var _gui = (function () {
         _resource.get_top_level( endpoint, function ( data ) {
             draw_table( data );
             draw_tools( data );  
-            _resource.get_sheets_names( draw_tabs );
+            _resource.get_sheets_labels( draw_tabs );
         });
     }
 
@@ -70,7 +71,7 @@ var _gui = (function () {
     function draw_sheet( sheet_id ){  
         _resource.get_sheet_data( sheet_id, draw_table );
         _resource.get_sheet_name( sheet_id, draw_tools );
-        _resource.get_sheets_names( draw_tabs );  
+        _resource.get_sheets_labels( draw_tabs );  
     }
 
 
@@ -83,7 +84,8 @@ var _gui = (function () {
 
 
     function draw_tools( names ) {
-        var tools = Mustache.to_html( _templates.app_table_tools, names );
+        var tools;
+        tools = Mustache.to_html( _templates.app_table_tools, names );
         display_tools( tools );
     }
 
@@ -336,7 +338,7 @@ var _gui = (function () {
         if ( $('#app-tb-tl-rename-input').is(":visible")){
             var new_name = $('#app-tb-tl-rename-input').val();
             var callback = function(){
-                _resource.get_sheets_names( draw_tabs );
+                _resource.get_sheets_labels( draw_tabs );
             };
 
             old_name = active_sheet_name();

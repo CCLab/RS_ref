@@ -36,7 +36,7 @@ var _templates = (function () {
         '<ul id="app-tb-sheets">' +
             '{{#sheets}}' +
                 '<li id="snap-{{sheet_id}}" data-end-point="{{end_id}}" data-group="{{group_id}}" class="sheet tab button' +
-//                    '{{#blocked}}' + //TODO remove = not neaded
+//                    '{{#blocked}}' + //TODO
 //                        'ready' +
 //                    '{{/blocked}}' +
                 '" title="{{name}}">' +
@@ -122,12 +122,12 @@ var _templates = (function () {
             '<form id="app-tb-tl-rename-form" style="display: none;" class="left" >' +
                 '<input type="text" class="input-text" id="app-tb-tl-rename-input" />' +
             '</form>' +
-            '{{#old_name}}' +
-                '<div id="app-tb-tl-old-title" class="left"> {{old_name}} </div>' +
-            '{{/old_name}}' +
-            '{{^old_name}}'+
+            '{{#changed_label}}' +
+                '<div id="app-tb-tl-old-title" class="left"> {{original_label}} </div>' +
+            '{{/changed_label}}' +
+            '{{^changed_label}}'+
                 '<div id="app-tb-tl-old-title" class="left" style="display: none;"> </div>' +
-            '{{/old_name}}' +
+            '{{/changed_label}}' +
             '<div id="app-tb-tl-old-title" class="left" style="display: none;"> </div>' +
             '<div id="app-tb-tl-rename-button" class="button left">Zmień nazwę</div>' +
             '<div id="app-tb-tl-bt-container" class="right">' +
