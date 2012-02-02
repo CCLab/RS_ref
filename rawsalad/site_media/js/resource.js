@@ -376,25 +376,12 @@ var _resource = (function () {
 
     // Filter sheet and return it.
     that.filter = function ( sheet_id, criterions, callback ) {
-        // TOTEST
-        //  ||
-        //  \/
-        var criterion_to_function = function( node ) {
-            var fun = function( node ) {
-                return filter_node( node, criterions );
-            };
-
-            return fun;
-        };
-
         var sheet;
         var new_sheet;
         var new_sheet_id;
-        var filter_fun;
         var meta;
 
         sheet = get_sheet( sheet_id );
-        filter_fun = criterion_to_function( criterions );
         meta = {
             'label': sheet['label'],
             'columns': sheet['columns']
@@ -403,7 +390,6 @@ var _resource = (function () {
                                   meta, _enum['FILTERED'],
                                   {'sort_query'  : sheet['sort_query'],
                                    'filter_query': criterions } );
-        filter_sheet( new_sheet, filter_fun );
         new_sheet_id = add_sheet( new_sheet );
 
         that.get_sheet_data( new_sheet_id, callback );
@@ -634,7 +620,6 @@ var _resource = (function () {
         var group_id;
         var type = type || _enum['STANDARD'];
         var other_fields = other_fields || {};
-        var field;
 
         active_columns = meta['columns'].filter( function ( column ) {
             return !!column['basic'];
@@ -648,25 +633,53 @@ var _resource = (function () {
         new_sheet = {
             'group_id': group_id,
             'endpoint': endpoint,
-            'data': cleaned_tree_data,
-            'label': meta['label'],
-            'columns': active_columns,
-            'type': type
+            'data'    : cleaned_tree_data,
+            'label'   : meta['label'],
+            'columns' : active_columns,
+            'type'    : type
         };
+        
+        additional_operations( new_sheet, other_fields );
 
+        return new_sheet;
+    }
+    
+    function additional_operations( sheet, other_fields ) {
+        var sort_fun;
+        var filter_fun;
+        var field;
+        var filter_criterion_to_function = function( filter_criterion ) {
+            var fun = function( node ) {
+                return filter_node( node, filter_criterion );
+            };
+            return fun;
+        };
+        var sort_criterion_to_function = function( sort_criterion ) {
+            var fun = function( node1, node2 ) {
+                return sort_node( node1, node2, sort_criterion );
+            };
+            return fun;
+        };
+        
         // copy additional, expected fields
-        switch ( type ) {
+        switch ( sheet['type'] ) {
             case _enum['STANDARD']:
-                new_sheet['sort_query'] = other_fields['sort_query'];
-                new_sheet['any_selected'] = false;
+                sheet['sort_query'] = other_fields['sort_query'] || [];
+                sort_fun = sort_criterion_to_function( sheet['sort_query'] );
+                sheet['data'] = _tree.sort( sheet['data'], sort_fun );
+                sheet['any_selected'] = false;
                 break;
             case _enum['FILTERED']:
-                new_sheet['sort_query'] = other_fields['sort_query'];
-                new_sheet['filter_query'] = other_fields['filter_query'];
+                sheet['sort_query'] = other_fields['sort_query'] || [];
+                sheet['filter_query'] = other_fields['filter_query'];
+                sort_fun = sort_criterion_to_function( sheet['sort_query'] );
+                filter_fun = filter_criterion_to_function( sheet['filter_query'] );
+                sheet['data'] = _tree.sort( sheet['data'], sort_fun );
+                sheet['data'] = _tree.filter( sheet['data'], filter_fun );
                 break;
             case _enum['SEARCHED']:
-                new_sheet['query'] = other_fields['query'];
-                new_sheet['boxes'] = other_fields['boxes'];
+                sheet['query'] = other_fields['query'];
+                sheet['boxes'] = other_fields['boxes'];
                 break;
             default:
                 throw 'Bad sheet type';
@@ -674,11 +687,9 @@ var _resource = (function () {
         // copy additional, unexpected fields
         for ( field in other_fields ) {
             if ( other_fields.hasOwnProperty( field ) ) {
-                new_sheet[ field ] = other_fields[ field ];
+                sheet[ field ] = other_fields[ field ];
             }
         }
-
-        return new_sheet;
     }
     
     // Find FIRST blocked sheet that was created when data
@@ -697,11 +708,6 @@ var _resource = (function () {
         }
         
         return undefined;
-    }
-    
-    function filter_sheet( sheet, filter_function ) {
-        var filtered_tree = _tree.filter( sheet['data'], filter_function );
-        sheet['data'] = filtered_tree;
     }
 
     var generate_sheet_id = ( function () {
@@ -785,7 +791,7 @@ var _resource = (function () {
 
             new_node['state'] = {
                 'selected': undefined,
-                'is_open': false
+                'is_open' : false
             };
 
             return new_node;
@@ -891,6 +897,15 @@ var _resource = (function () {
         });
         
         return sheet_boxes;
+    }
+    
+    function sort_node( node1, node2, criterions ) {
+        if ( criterions.length > 1 ) {
+            // TODO:
+            throw 'Sort is not done yet';
+        } else {
+            return node1['id'] - node2['id'];
+        }
     }
     
     function filter_node( node, criterions ) {

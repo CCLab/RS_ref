@@ -57,7 +57,7 @@ var _permalinks = (function () {
         return permalink_data;
     };
     
-    that.restore_sheet_data = function( sheet, data_tree ) {
+    that.restore_sheet_data = function( sheet, data_tree, squery_fun, fquery_fun ) {
         var sheet_data;
         var tree;
         var sorted_tree;
@@ -81,20 +81,20 @@ var _permalinks = (function () {
     };
     
     // Obtain additional fields that depend on type of a sheet.
-    that.get_additional_fields = function( sheet ) {
+    that.get_additional_fields = function( permalink_sheet ) {
         var additional_fields = {};
         
-        switch ( sheet['type'] ) {
+        switch ( permalink_sheet['type'] ) {
             case _enum['STANDARD']:
-                additional_fields['sort_query'] = sheet['sort_query'];
+                additional_fields['sort_query'] = permalink_sheet['data']['sort_query'];
                 break;
             case _enum['FILTERED']:
-                additional_fields['sort_query'] = sheet['sort_query'];
-                additional_fields['filter_query'] = sheet['filter_query'];
+                additional_fields['sort_query'] = permalink_sheet['data']['sort_query'];
+                additional_fields['filter_query'] = permalink_sheet['data']['filter_query'];
                 break;
             case _enum['SEARCHED']:
-                additional_fields['query'] = sheet['query'];
-                additional_fields['boxes'] = sheet['boxes'];
+                additional_fields['query'] = permalink_sheet['query'];
+                additional_fields['boxes'] = permalink_sheet['boxes'];
                 break;
             default:
                 throw 'Bad sheet type';
@@ -270,7 +270,7 @@ var _permalinks = (function () {
     // Get nodes for standard sheet using passed functions.
     // sheet_info contains information which nodes are needed.
     // Returns tree with nodes that need to be inserted into a tree.
-    function restore_standard_sheet_data( data_tree, sheet_data ) {
+    function restore_standard_sheet_data( data_tree, sheet_data, query_to_fun ) {
         var get_branch = function( node_id ) {
             var new_rows = [];
             var ancestors = _tree.get_parents( data_tree, node_id );
@@ -300,17 +300,11 @@ var _permalinks = (function () {
         });
         sheet_tree = _tree.create_tree( sheet_nodes, 'id', 'parent' );
         
-        if ( is_sort_query_empty( sheet_data['sort_query'] ) ) {
-            return sheet_tree;
-        } else {
-            return _tree.sort( sheet_tree, sheet_data['sort_query'] );
-        }
+        return sheet_tree;
     }
     
     function restore_filtered_sheet_data( data_tree, sheet_data ) {
-        var sorted_tree = restore_standard_sheet_data( data_tree, sheet_data );
-        
-        return  _tree.filter( sorted_tree, sheet_data['filter_query'] );
+        return restore_standard_sheet_data( data_tree, sheet_data );
     }
     
     function restore_searched_sheet_data( data_tree, sheet_data ) {
@@ -342,17 +336,6 @@ var _permalinks = (function () {
         });
         
         return _tree.create_tree( sheet_nodes, 'id', 'parent' );
-    }
-    
-    function is_sort_query_empty( sort_query ) {
-        var property;
-        
-        for ( property in sort_query ) {
-            if ( sort_query.hasOwnProperty( property ) ) {
-                return false;
-            }
-        }
-        return true;
     }
 
     return that;
