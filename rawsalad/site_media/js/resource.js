@@ -472,10 +472,9 @@ var _resource = (function () {
             var sheet_id;
             var cleaned_data;
             var gui_data;
-            var sheet_boxes = prepare_boxes( boxes, data );
             var other_fields = {
                 'query': query,
-                'boxes': sheet_boxes
+                'boxes': boxes
             };
             
             cleaned_data = clean_data( data, meta['columns'] );
@@ -504,7 +503,7 @@ var _resource = (function () {
         });
 
         var permalink_data = _permalinks.prepare_permalink( all_sheets, sheet_ids );
-
+        //z = permalink_data; // TODO: remove after testing
         _store.store_state( permalink_data, callback );
     };
 
@@ -539,12 +538,25 @@ var _resource = (function () {
                 var sheet;
                 var sheet_id;
                 var additional_fields = _permalinks.get_additional_fields( permalink_sheet );
-
                 sheet = create_sheet( group['endpoint'], sheet_data, group['meta'],
                                       permalink_sheet['type'], additional_fields );
                 sheet_id = add_sheet( sheet );
                 that.get_sheet_data( sheet_id, callback );
             });
+        });
+    };
+    
+    that.re = function(group, callback) {
+        var data_tree = _tree.create_tree( group['data'], 'id', 'parent' );
+        group['sheets'].forEach( function ( permalink_sheet ) {
+            var sheet_data = _permalinks.restore_sheet_data( permalink_sheet, data_tree );
+            var sheet;
+            var sheet_id;
+            var additional_fields = _permalinks.get_additional_fields( permalink_sheet );
+            sheet = create_sheet( group['endpoint'], sheet_data, group['meta'],
+                                  permalink_sheet['type'], additional_fields );
+            sheet_id = add_sheet( sheet );
+            that.get_sheet_data( sheet_id, callback );
         });
     };
 
@@ -679,14 +691,14 @@ var _resource = (function () {
                 break;
             case _enum['SEARCHED']:
                 sheet['query'] = other_fields['query'];
-                sheet['boxes'] = other_fields['boxes'];
+                sheet['boxes'] = prepare_boxes( other_fields['boxes'], sheet['data'] );
                 break;
             default:
                 throw 'Bad sheet type';
         }
         // copy additional, unexpected fields
         for ( field in other_fields ) {
-            if ( other_fields.hasOwnProperty( field ) ) {
+            if ( other_fields.hasOwnProperty( field ) && sheet[ field ] === undefined ) {
                 sheet[ field ] = other_fields[ field ];
             }
         }
@@ -870,11 +882,15 @@ var _resource = (function () {
     }
     
     // Change boxes that come from server to boxes used by resource.
-    function prepare_boxes( boxes, data ) {
+    function prepare_boxes( boxes, data_tree ) {
         var sheet_boxes = [];
         var parents_list = [];
         var boxes_obj = {};
-        var data_tree = _tree.create_tree( data, 'id', 'parent' );
+        
+        // check if they come from permalink, if yes, then just copy
+        if ( boxes.length > 0 && !!boxes[0]['rows'] ) {
+            return boxes;
+        }
         
         boxes.forEach( function ( box ) {
             var node = _tree.get_node( data_tree, box['id'] );

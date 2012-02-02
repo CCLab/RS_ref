@@ -57,7 +57,7 @@ var _permalinks = (function () {
         return permalink_data;
     };
     
-    that.restore_sheet_data = function( sheet, data_tree, squery_fun, fquery_fun ) {
+    that.restore_sheet_data = function( sheet, data_tree ) {
         var sheet_data;
         var tree;
         var sorted_tree;
@@ -93,8 +93,8 @@ var _permalinks = (function () {
                 additional_fields['filter_query'] = permalink_sheet['data']['filter_query'];
                 break;
             case _enum['SEARCHED']:
-                additional_fields['query'] = permalink_sheet['query'];
-                additional_fields['boxes'] = permalink_sheet['boxes'];
+                additional_fields['query'] = permalink_sheet['data']['query'];
+                additional_fields['boxes'] = permalink_sheet['data']['boxes'];
                 break;
             default:
                 throw 'Bad sheet type';
@@ -257,11 +257,11 @@ var _permalinks = (function () {
                 return e['id'];
             });
             
-            return {
+            sheet_data['boxes'].push({
                 'rows': rows,
                 'context': box['context'],
                 'breadcrumb': box['breadcrumb']
-            };
+            });
         });
         
         return sheet_data;
@@ -313,15 +313,13 @@ var _permalinks = (function () {
         
         // TODO: test it, prealpha version
         boxes.forEach( function ( box ) {
-            var rows = box['ids'];
+            var rows = box['rows'];
             var nodes_in_box = [];
             var ancestors;
             var children;
             
-            if ( box['breadcrumb'] ) {
-                ancestors = _tree.get_parents( data_tree, rows[0] );
-                nodes_in_box.push( ancestors );
-            }
+            ancestors = _tree.get_parents( data_tree, rows[0]['id'] );
+            nodes_in_box = ancestors;
             
             if ( box['context'] ) {
                 children = _tree.get_children_nodes( data_tree, ancestors[0] );
