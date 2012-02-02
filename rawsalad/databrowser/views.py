@@ -19,15 +19,18 @@ def app_page( request ):
     return render_to_response( 'app.html' )
 
 
-# TODO: get_collections
-# TODO: format (list)
-# url: /get_db_tree/
-def get_db_tree( req ):
+# url: /get_collections/
+def get_collections( req ):
     '''Get the navigation tree for all database collections'''
     # create a navigator for the db collections
-    dbtree = sqldb.get_db_tree()
+    format = req.GET.get( 'format', 'list' )
+    collections = []
+    if format == 'list':
+        collections = sqldb.get_db_tree()
+    else:
+        raise Exception('Bad format type')
 
-    return HttpResponse( json.dumps( dbtree ) )
+    return HttpResponse( json.dumps( collections ) )
 
 
 # url: /get_init_data/
