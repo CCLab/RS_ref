@@ -375,13 +375,13 @@ var _resource = (function () {
 
 
     // Filter sheet and return it.
-    that.filter = function ( sheet_id, criterion, callback ) {
+    that.filter = function ( sheet_id, criterions, callback ) {
         // TOTEST
         //  ||
         //  \/
         var criterion_to_function = function( node ) {
             var fun = function( node ) {
-                return filter_node( node, criterion );
+                return filter_node( node, criterions );
             };
 
             return fun;
@@ -394,7 +394,7 @@ var _resource = (function () {
         var meta;
 
         sheet = get_sheet( sheet_id );
-        filter_fun = criterion_to_function( criterion );
+        filter_fun = criterion_to_function( criterions );
         meta = {
             'label': sheet['label'],
             'columns': sheet['columns']
@@ -402,7 +402,7 @@ var _resource = (function () {
         new_sheet = create_sheet( sheet['endpoint'], _tree.tree_to_list( sheet['data'] ),
                                   meta, _enum['FILTERED'],
                                   {'sort_query'  : sheet['sort_query'],
-                                   'filter_query': criterion } );
+                                   'filter_query': criterions } );
         filter_sheet( new_sheet, filter_fun );
         new_sheet_id = add_sheet( new_sheet );
 
@@ -906,22 +906,22 @@ var _resource = (function () {
     }
     
     function check_criterion( node, criterion ) {
-        var node_value = node[ criterion['key'] ];
-        var filter_value = node[ criterion['value'] ];
-        var preference = node[ criterion['preference'] ];
+        var node_value = node['data'][ criterion['key'] ];
+        var filter_value = criterion['value'];
+        var preference = criterion['preference'];
         
-        switch ( criterion['type'] ) {
+        switch ( typeof node_value ) {
             case 'number':
-                return check_number( node_value, filter_value, pref );
+                return check_number( node_value, filter_value, preference );
             case 'string':
-                return check_string( node_value, filter_value, pref );
+                return check_string( node_value, filter_value, preference );
             default:
                 throw 'Bad filter criterion type';
         }
     }
     
-    function check_number( node_value, filter_value, pref ) {
-        switch ( pref ) {
+    function check_number( node_value, filter_value, preference ) {
+        switch ( preference ) {
             case 'lt':
                 return ( node_value < filter_value );
             case 'eq':
@@ -933,8 +933,8 @@ var _resource = (function () {
         }
     }
     
-    function check_string( node_value, filter_value, pref ) {
-        switch ( pref ) {
+    function check_string( node_value, filter_value, preference ) {
+        switch ( preference ) {
             case 'nst':
                 return ( node_value.indexOf( filter_value ) !== 0 );
             case 'ncnt':

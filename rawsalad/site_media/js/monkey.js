@@ -77,7 +77,7 @@ Form of created tree:
                 var parentId;
                 var parentNode;
                 var newNode;
-                var isFiltered = isFiltered || false;
+                var isFiltered = (isFiltered === undefined ) ? true : isFiltered;
                 
                 assertId(value[idColumn], 'insertNode[idColumn]');
                 if (!!parentColumn) {
@@ -384,7 +384,7 @@ Form of created tree:
                 return id === this.nodeId( root() );
             },
             
-            // Returns true if node didn't pass filtration, otherwise false.
+            // Returns true if node passed filtration, otherwise false.
             isNodeFiltered: function(elem) {
                 var node;
                 
@@ -552,8 +552,8 @@ Form of created tree:
                     });
                     
                     // must be done after inserting his children
-                    if (srcTree.isNodeFiltered(node)) {
-                        node['__filtered__'] = true;
+                    if (!srcTree.isNodeFiltered(node)) {
+                        node['__filtered__'] = false;
                     }
                 };
                 
@@ -715,8 +715,8 @@ Form of created tree:
                 
                 while (!!nextNode) {
                     copiedNode = deepCopy(nextNode, idColumn, parentColumn);
-                    isFiltered = !fun(copiedNode);
-                    copiedTree.insertNode(copiedNode, !!isFiltered);
+                    isFiltered = !!fun(copiedNode);
+                    copiedTree.insertNode(copiedNode, isFiltered);
                     nextNode = this.next(nextNode);
                 }
                 
@@ -805,7 +805,7 @@ Form of created tree:
             toList: function(acceptFiltered) {
                 var saveInList = function(node) {
                     if ( acceptFiltered ||
-                        (!acceptFiltered && !node['__filtered__']) ) {
+                        (!acceptFiltered && !!node['__filtered__']) ) {
                         list.push(nodeToValue(node, idColumn, parentColumn));
                     }
                 };
@@ -831,7 +831,7 @@ Form of created tree:
         
         var _id = valueCopy[idColumn];
         var _parent = parentNode;
-        var _filtered = isFiltered;
+        var _filtered = (isFiltered === undefined) ? true : !!isFiltered;
         var _children = new Children(_id, idMap);
         
         Object.defineProperty(this, '__parent__', {

@@ -188,19 +188,22 @@ var _ui = (function () {
         columns_for_gui = get_columns_description( sheet['columns'] );
         
         _tree.iterate( sheet['data'], function ( parent ) {
-            var box;
             var children_nodes = _tree.get_children_nodes( sheet['data'], parent );
+            var rows;
+            var breadcrumb;
             
-            if ( children_nodes.length > 0 ) {
-                box = {
-                    'breadcrumb': get_breadcrumb( sheet['data'], children_nodes[0]['id'] ),
-                    'rows': children_nodes.filter( function ( node ) {
-                                return _tree.is_filtered( sheet['data'], node['id'] );
-                            }).map( function ( node ) {
-                                return prepare_row( node, columns_for_gui );
-                            })
-                };
-                boxes.push( box );
+            rows = children_nodes.filter( function ( node ) {
+                            return _tree.is_filtered( sheet['data'], node['id'] ) &&
+                                   node['data']['type'] !== 'Total';
+                        }).map( function ( node ) {
+                            return prepare_row( node, columns_for_gui );
+                        });
+            if ( rows.length > 0 ) {
+                breadcrumb = get_breadcrumb( sheet['data'], children_nodes[0]['id'] );
+                boxes.push({
+                    'breadcrumb': breadcrumb,
+                    'rows'      : rows
+                });
             }
         }, _tree.root( sheet['data'] ) );
 
