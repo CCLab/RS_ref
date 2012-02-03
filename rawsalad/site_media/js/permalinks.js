@@ -249,20 +249,8 @@ var _permalinks = (function () {
     function prepare_searched_sheet_data( sheet ) {
         var sheet_data = {
             'query': sheet['query'],
-            'boxes': []
+            'boxes': sheet['boxes']
         };
-        
-        sheet['boxes'].forEach( function ( box ) {
-            var rows = box['rows'].map( function ( e ) {
-                return e['id'];
-            });
-            
-            sheet_data['boxes'].push({
-                'rows': rows,
-                'context': box['context'],
-                'breadcrumb': box['breadcrumb']
-            });
-        });
         
         return sheet_data;
     }

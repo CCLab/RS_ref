@@ -120,7 +120,7 @@ b) filtered sheet:
     filter_query: json
 }
 
-c1) searched sheet(from server to db module):
+c) searched sheet:
 {
     query: string,
     boxes: [
@@ -132,19 +132,6 @@ c1) searched sheet(from server to db module):
                 },
                 ...
             ],
-            breadcrumb: boolean,
-            context: boolean
-        },
-        ...
-    ]
-}
-
-c2) searched sheet(from db module to server):
-{
-    query: string,
-    boxes: [
-        {
-            rows: [id1, id2, id3],
             breadcrumb: boolean,
             context: boolean
         },
