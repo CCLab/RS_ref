@@ -317,17 +317,20 @@ def restore_group( id, endpoint ):
     unique_nodes = set()
     for sheet in group['sheets']:
         if sheet['type'] in [0, 1]:
-            restore_standard_sheet_data( sheet['data'], unique_parents )
+            parents = get_standard_sheet_data( sheet['data'], cursor )
+            unique_parents = unique_parents | parents
         else:
-            restore_searched_sheet_data( sheet['data'], unique_parents, unique_nodes )
+            parents, nodes = get_searched_sheet_data( sheet['data'], cursor )
+            unique_parents = unique_parents | parents
+            unique_nodes = unique_nodes | nodes
 
     # now collect the data (full data, not only ids!)
     collection = Collection( endpoint, cursor )
     
     group['data'] = []
-    if '' in unique_parents:
+    if None in unique_parents:
         group['data'] = collection.get_top_level()
-        unique_parents.discard( '' )
+        unique_parents.discard( None )
 
     # collect all children of all open nodes in the endpoint
     for parent in unique_parents:
@@ -352,46 +355,48 @@ def restore_group( id, endpoint ):
     return group
     
     
-def restore_standard_sheet_data( data, unique_parents ):
+def get_standard_sheet_data( data, cursor ):
     # get parents of sheet's deepest open nodes
-    cursor = db_cursor()
+    unique_parents = set()
     query = '''SELECT DISTINCT unnest(parents) FROM p_tree
                WHERE id IN ( %s )
             ''' % str( data['ids'] ).strip('[]')
     cursor.execute( query )
     # remember that top level nodes are needed
-    unique_parents.add( '' )
+    unique_parents.add( None )
     # gather all open nodes in the sheet
     # TODO don't use the RealDictCursor here
     open_nodes = data['ids'] + [ e['unnest'] for e in cursor.fetchall() ]
     # collect only endpoint unique nodes
     map( unique_parents.add, open_nodes )
     
+    return unique_parents
     
     
-def restore_searched_sheet_data( data, unique_parents, unique_nodes ):
-    cursor = db_cursor()
+def get_searched_sheet_data( data, cursor ):
+    unique_parents = set()
+    unique_nodes = set()
     for box in data['boxes']:
         query = '''SELECT unnest(parents) FROM p_tree
                    WHERE id = %d
                 ''' % box['rows'][0]['id']
         cursor.execute( query )
-        needed_nodes = [ e['unnest'] for e in cursor.fetchall() ]
-        map( unique_nodes.add, needed_nodes )
+        parents = [ e['unnest'] for e in cursor.fetchall() ]
+        # remember ids of all ancestors
+        map( unique_nodes.add, parents )
         if box['context']:
-            query = '''SELECT unnest(parents) FROM p_tree
-                       WHERE id = %d
-                    ''' % box['rows'][0]['id']
-            cursor.execute( query )
-            parents = [ e['unnest'] for e in cursor.fetchall() ]
-            # if first level row
+            # remember that all children of parent are needed
             if not parents:
-                unique_nodes.add( '' )
+                # remember that top level is needed
+                unique_nodes.add( None )
             else:
                 unique_nodes.add( parents[-1] )
         else:
+            # remember which nodes are needed
             ids = [ row['id'] for row in box['rows'] ]
             map( unique_nodes.add, ids )
+    
+    return unique_parents, unique_nodes
             
 
 def get_snapshot( id, endpoint ):
