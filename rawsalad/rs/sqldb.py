@@ -388,9 +388,9 @@ def get_searched_sheet_data( data, cursor ):
             # remember that all children of parent are needed
             if not parents:
                 # remember that top level is needed
-                unique_nodes.add( None )
+                unique_parents.add( None )
             else:
-                unique_nodes.add( parents[-1] )
+                unique_parents.add( parents[-1] )
         else:
             # remember which nodes are needed
             ids = [ row['id'] for row in box['rows'] ]
