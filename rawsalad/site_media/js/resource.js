@@ -38,8 +38,8 @@ var _resource = (function () {
 
     // Get top levels and call callbacks with data (top level + meta) from them,
     // order of callbacks is the same as order of endpoints.
-    that.get_top_levels = function ( endpoints, init_callback, callbacks ) {
-        // create_empty_sheets for endpoints and call init_callback
+    that.get_top_levels = function ( endpoints, callbacks ) {
+        // Create_empty_sheets for endpoints
         // with data for sheet tabs(get_sheets_names)
         endpoints.forEach( function ( endpoint ) {
             var simple_meta = {
@@ -52,24 +52,7 @@ var _resource = (function () {
             add_sheet( empty_sheet );
         });
         
-        get_many( endpoints, that.get_top_level, callbacks );
-    };
-
-    // Get top level data from store and prepare it for
-    // gui-understandable form.
-    that.get_top_level = function ( endpoint, callback ) {
-        _store.get_init_data( endpoint, function( data, meta ) {
-            var sheet_id;
-            var sheet;
-            var gui_data;
-            
-            sheet = create_sheet( endpoint, data, meta );
-            sheet_id = find_blocked_sheet( endpoint );
-            sheet_id = add_sheet( sheet, sheet_id );
-            gui_data = prepare_table_data( sheet_id );
-
-            callback( gui_data );
-        });
+        get_many( endpoints, collect_sheets_data, callbacks );
     };
 
     // Get children of parent_id row from sheet_id sheet.
@@ -113,8 +96,6 @@ var _resource = (function () {
             _tree.remove_node( sheet['data'], node['id'] );
         });
     };
-
-
 
     that.row_selected = function ( sheet_id, selected_id, prev_selected_id ) {
 
@@ -263,6 +244,7 @@ var _resource = (function () {
         var sheet_descr;
         var sheets_names = [];
         var sorted_sheets_names;
+        var result;
 
         for ( sheet_id in sheets ) {
             if ( sheets.hasOwnProperty( sheet_id ) ) {
@@ -280,7 +262,12 @@ var _resource = (function () {
             }
         });
 
-        callback( { 'sheets': sorted_sheets_names } );
+        result = { 'sheets': sorted_sheets_names };
+        if ( !!calback ) {
+            callback( result );
+        } else {
+            return result;
+        }
     };
 
     that.get_sheet_name = function ( sheet_id, callback ) {
@@ -703,19 +690,13 @@ var _resource = (function () {
     }
 
     function get_many( values, get_one, callbacks ) {
-        var get_next = function ( count ) {
-            var value = values.shift();
-            var callback = callbacks[ count ];
-
-            if ( value === undefined ) return;
-
+        values.forEach( function( value, index ) {
+            var callback = callbacks[ index ];
+            
             get_one( value, function ( data ) {
                 callback( data );
-                get_next( count + 1 );
             });
-        };
-
-        get_next( 0 );
+        });
     }
 
     function prepare_table_data( sheet_id, data ) {
@@ -736,6 +717,35 @@ var _resource = (function () {
             'endpoint': sheet['endpoint'],
             'blocked' : !sheet['data']
         };
+    }
+    
+    // Get description of all sheets' labels and top level data
+    // of the given endpoint.
+    function collect_sheets_data( endpoint, callback ) {
+        var tabs = that.get_sheets_labels();
+        get_top_level( endpoint, function( gui_data ) {
+            return {
+                'tabs': tabs,
+                'data': gui_data
+            };
+        });
+    }
+    
+    // Get top level data from store and prepare it for
+    // gui-understandable form.
+    function get_top_level( endpoint, callback ) {
+        _store.get_init_data( endpoint, function( data, meta ) {
+            var sheet_id;
+            var sheet;
+            var gui_data;
+            
+            sheet = create_sheet( endpoint, data, meta );
+            sheet_id = find_blocked_sheet( endpoint );
+            sheet_id = add_sheet( sheet, sheet_id );
+            gui_data = prepare_table_data( sheet_id );
+
+            callback( gui_data );
+        });
     }
 
     // Return data that contains columns that are in columns list.
