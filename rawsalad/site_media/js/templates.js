@@ -30,7 +30,7 @@ var _templates = (function () {
     var that = {};
 
 // T E M P L A T E S
-    // A P P   H E A D E R 
+    // A P P   H E A D E R
     that.app_table_header =
         '<div id="app-tb-save-sheet" class="blue button left">Kopiuj do arkusza</div>' +
         '<ul id="app-tb-sheets">' +
@@ -49,20 +49,17 @@ var _templates = (function () {
                 '</li>' +
             '{{/sheets}}' +
         '</ul>';
-    
+
     // D B   T R E E
-    that.tree_list = 
+    that.tree_list =
         '<ul class="left pl-tree-list' +
             '{{#even}}' +
                 ' pl-tree-list-even' +
             '{{/even}}' +
         '">' +
-        '</ul>' +
-        '{{#button}}' +
-            '<div class="clear blue button">{{button_name}}</div>' +
-        '{{/button}}';
-        
-    
+        '</ul>';
+
+
     that.tree_node=
         '<li>' +
             '<div data-node="{{id}}" class="pl-tree-node-unchecked pl-tree-node">' + //TODO change classes names
@@ -83,7 +80,7 @@ var _templates = (function () {
             '</section>' +
         '</li>';
 
-    that.double_end = 
+    that.double_end =
         '<table>' +
             '<thead>' +
                 '<tr>' +
@@ -103,18 +100,18 @@ var _templates = (function () {
                                     '<div data-endpoint="{{endpoint}}" class="pl-tree-end-unchecked pl-tree-end-checkbox"> </div>' +
                                 '{{/end}}' +
                                 '{{^end}}' +
-                                    '<div class="pl-tree-end-nocheck pl-tree-end-checkbox"> </div>' +                            
-                                '{{/end}}' +                            
+                                    '<div class="pl-tree-end-nocheck pl-tree-end-checkbox"> </div>' +
+                                '{{/end}}' +
                             '</td>' +
                         '{{/children}}' +
                     '</tr>' +
                 '{{/nodes}}' +
             '</tbody>' +
         '</table>';
-        
-    
-    
-        
+
+
+
+
     // T O O L S
     that.app_table_tools =
         '<section>' +
@@ -141,7 +138,7 @@ var _templates = (function () {
             '<br class="clear"/>' +
             '<div id="app-tb-tl-columns-list" class="right"></div>' +
         '</section>';
-    
+
     that.columns_form =
         '<form id="app-tb-tl-columns-form" style="display: none;">' +
             '<div id="app-tb-tl-lt-select" class="grey button left">Zaznacz wszystkie</div>' +
@@ -170,7 +167,7 @@ var _templates = (function () {
             '</table>' +
         '</form>';
 
-    that.sort_form = 
+    that.sort_form =
         '<form id="app-tb-tl-sort-form" class="sort-filter-form left">' +
             '<table>' +
                 '<thead>' +
@@ -185,12 +182,12 @@ var _templates = (function () {
             '<div id="app-tb-tl-sort-add" class="grey button">Dodaj kolejny klucz</div>' +
             '<div id="app-tb-tl-sort-submit" class="blue button">Sortuj</div>' +
         '</form>';
-        
+
     that.sort_key = //TODO test it ( key_num! )
         '<tr id="sort-key-{{keys_num}}">' +
             '<td>' +
                 '<select name="app-tb-tl-sort-form-columns" class="input-text key-{{keys_num}}">' +
-                    '<option value="null" class="column-key-{{keys_num}}" ></option>' + 
+                    '<option value="null" class="column-key-{{keys_num}}" ></option>' +
                     '{{#columns}}' +
                         '<option value="{{column_key}}" class="column-key-{{keys_num}}"> {{column_label}} </option>' +
                     '{{/columns}}' +
@@ -198,46 +195,46 @@ var _templates = (function () {
             '</td>' +
             '<td>' +
                 '<select name="name="app-tb-tl-sort-order" class="input-text key-{{keys_num}}">' +
-                    '<option value="null" class="order-key-{{keys_num}}" ></option>' + 
-                    '<option value="-1" class="order-key-{{keys_num}}" >Rosnąco</option>' + 
-                    '<option value="1" class="order-key-{{keys_num}}" >Malejąco</option>' + 
+                    '<option value="null" class="order-key-{{keys_num}}" ></option>' +
+                    '<option value="-1" class="order-key-{{keys_num}}" >Rosnąco</option>' +
+                    '<option value="1" class="order-key-{{keys_num}}" >Malejąco</option>' +
                 '</select>' +
             '</td>' +
-         '</tr>'; 
+         '</tr>';
 
     that.close_sheet_button = '<div class="close-sheet-button button">x</div>';
 
 
     // T A B L E
-    that.standard_rows = 
+    that.standard_rows =
         '{{#rows}}' + //TODO add info panel
           '<tr id="{{id}}" data-open="{{is_open}}" ' +
           'data-parent="{{parent}}" ' +
           'class="{{selected}} {{top_level}}">' +
             '{{#data}}' +
-              '<td class="{{column_key}} {{column_type}} {{click}}"' + 
+              '<td class="{{column_key}} {{column_type}} {{click}}"' +
                 '{{#padding}}' +
                   'style="padding-left: {{value}}px;" ' +
                 '{{/padding}} '+
               '>' +
                 '{{content}}' +
               '</td>' +
-            '{{/data}}' +                                
+            '{{/data}}' +
           '</tr>' +
         '{{/rows}}';
 
-        
-    that.standard_total_row =      
+
+    that.standard_total_row =
         '<tr>' +
-            '{{#total}}' +        
+            '{{#total}}' +
                 '<td class="{{column_key}} {{column_type}}">' +
                     '{{data}}' +
-                '</td>' +    
+                '</td>' +
             '{{/total}}' +
         '</tr>';
-        
-        
-    that.standard_head_row = 
+
+
+    that.standard_head_row =
         '<tr>' +
             '{{#columns}}' +
                 '<td class="{{key}} {{type}}">' +
@@ -245,8 +242,8 @@ var _templates = (function () {
                 '</td>' +
             '{{/columns}}' +
         '</tr>';
-    
-    
+
+
 
 
     // return public interface
