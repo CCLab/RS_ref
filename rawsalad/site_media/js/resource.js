@@ -724,10 +724,10 @@ var _resource = (function () {
     function collect_sheets_data( endpoint, callback ) {
         var tabs = that.get_sheets_labels();
         get_top_level( endpoint, function( gui_data ) {
-            return {
+            callback({
                 'tabs': tabs,
                 'data': gui_data
-            };
+            });
         });
     }
     
