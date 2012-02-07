@@ -54,7 +54,7 @@ var _resource = (function () {
         
         get_many( endpoints, collect_sheets_data, callbacks );
     };
-
+  
     // Get children of parent_id row from sheet_id sheet.
     that.get_children = function ( sheet_id, parent_id, callback ) {
         var respond = function() {
@@ -263,7 +263,7 @@ var _resource = (function () {
         });
 
         result = { 'sheets': sorted_sheets_names };
-        if ( !!calback ) {
+        if ( !!callback ) {
             callback( result );
         } else {
             return result;

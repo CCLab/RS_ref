@@ -38,9 +38,9 @@ var _gui = (function () {
 
         $('#pl-ch-submit').click( function() {
             var boxes = $('#pl-ch-datasets').find('.pl-tree-end-checked');
-            var endpoints = boxes.map( function ( e ) {
+            var endpoints = $.makeArray( boxes.map( function ( e ) {
                                 return $(this).attr('data-endpoint');
-                            });
+                            }));
             var callbacks = endpoints.map( function ( e ) {
                                 return function ( d ) { console.log( d ) };
                             });
