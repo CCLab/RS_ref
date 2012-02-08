@@ -675,7 +675,7 @@ var _resource = (function () {
                 var new_sheet_id = next_sheet_id;
                 next_sheet_id += 1;
                 return new_sheet_id;
-            }
+            };
         })();
     })();
 
