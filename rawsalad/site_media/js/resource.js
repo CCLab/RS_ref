@@ -31,6 +31,7 @@ var _resource = (function () {
 
     // Get db tree and return it as a list.
     that.get_collections_list = function ( callback ) {
+        // TODO why callback is packed into another callback ?
         _store.get_collections_list( function ( collections ) {
             callback( collections );
         });
@@ -51,10 +52,10 @@ var _resource = (function () {
                                             _enum['STANDARD'], add_fields );
             add_sheet( empty_sheet );
         });
-        
+
         get_many( endpoints, collect_sheets_data, callbacks );
     };
-  
+
     // Get children of parent_id row from sheet_id sheet.
     that.get_children = function ( sheet_id, parent_id, callback ) {
         var respond = function() {
@@ -323,7 +324,7 @@ var _resource = (function () {
         var sheet;
         var sorted_tree;
         var sort_fun;
-        
+
 
         sheet = get_sheet( sheet_id );
         sort_fun = sort_criterion_to_function( sort_criterion );
@@ -439,7 +440,7 @@ var _resource = (function () {
                 'query': query,
                 'boxes': boxes
             };
-            
+
             cleaned_data = clean_data( data, meta['columns'] );
             sheet = create_sheet( endpoint, cleaned_data, meta,
                                   _enum['SEARCHED'], other_fields );
@@ -449,7 +450,7 @@ var _resource = (function () {
             callback( gui_data );
         });
     };
-    
+
     // PERMALINK FUNCTIONS
 
     // Creates permalink from sheets which id is in list sheet_id.
@@ -598,12 +599,12 @@ var _resource = (function () {
             'columns' : active_columns,
             'type'    : type
         };
-        
+
         additional_operations( new_sheet, other_fields );
 
         return new_sheet;
     }
-    
+
     function additional_operations( sheet, other_fields ) {
         var sort_fun;
         var filter_fun;
@@ -618,7 +619,7 @@ var _resource = (function () {
                 return compare_nodes( node1, node2, sort_criterion );
             };
         };
-        
+
         // copy additional, expected fields
         switch ( sheet['type'] ) {
             case _enum['STANDARD']:
@@ -649,13 +650,13 @@ var _resource = (function () {
             }
         }
     }
-    
+
     // Find FIRST blocked sheet that was created when data
     // was downloaded from the given endpoint.
     function find_blocked_sheet( endpoint ) {
         var sheet_id;
         var sheet;
-        
+
         for ( sheet_id in sheets ) {
             if ( sheets.hasOwnProperty( sheet_id ) ) {
                 sheet = get_sheet( sheet_id );
@@ -664,7 +665,7 @@ var _resource = (function () {
                 }
             }
         }
-        
+
         return undefined;
     }
 
@@ -692,7 +693,7 @@ var _resource = (function () {
     function get_many( values, get_one, callbacks ) {
         values.forEach( function( value, index ) {
             var callback = callbacks[ index ];
-            
+
             get_one( value, function ( data ) {
                 callback( data );
             });
@@ -718,7 +719,7 @@ var _resource = (function () {
             'blocked' : !sheet['data']
         };
     }
-    
+
     // Get description of all sheets' labels and top level data
     // of the given endpoint.
     function collect_sheets_data( endpoint, callback ) {
@@ -730,7 +731,7 @@ var _resource = (function () {
             });
         });
     }
-    
+
     // Get top level data from store and prepare it for
     // gui-understandable form.
     function get_top_level( endpoint, callback ) {
@@ -738,7 +739,7 @@ var _resource = (function () {
             var sheet_id;
             var sheet;
             var gui_data;
-            
+
             sheet = create_sheet( endpoint, data, meta );
             sheet_id = find_blocked_sheet( endpoint );
             sheet_id = add_sheet( sheet, sheet_id );
@@ -849,22 +850,22 @@ var _resource = (function () {
 
         return selected_id;
     }
-    
+
     // Change boxes that come from server to boxes used by resource.
     function prepare_boxes( boxes, data_tree ) {
         var sheet_boxes = [];
         var parents_list = [];
         var boxes_obj = {};
-        
+
         // check if they come from permalink, if yes, then just copy
         if ( boxes.length > 0 && !!boxes[0]['rows'] ) {
             return boxes;
         }
-        
+
         boxes.forEach( function ( box ) {
             var node = _tree.get_node( data_tree, box['id'] );
             var parent_id = node['parent'];
-            
+
             if ( !boxes_obj[ parent_id ] ) {
                 boxes_obj[ parent_id ] = {
                     'rows': [],
@@ -873,17 +874,17 @@ var _resource = (function () {
                 };
                 parents_list.push( parent_id );
             }
-            
+
             boxes_obj[ parent_id ]['rows'].push( box );
         });
-        
+
         parents_list.forEach( function ( parent_id ) {
             sheet_boxes.push( boxes_obj[ parent_id ] );
         });
-        
+
         return sheet_boxes;
     }
-    
+
     function compare_nodes( node1, node2, criterions ) {
         var i;
         var result = 0;
@@ -891,7 +892,7 @@ var _resource = (function () {
         var preference;
         var value1;
         var value2;
-        
+
         if ( criterions.length >= 1 ) {
             for ( i = 0; i < criterions.length; ++i ) {
                 key = criterions[ i ]['key'];
@@ -908,10 +909,10 @@ var _resource = (function () {
             return node1['id'] - node2['id'];
         }
     }
-    
+
     function compare_values( value1, value2, preference ) {
         var result;
-        
+
         switch ( typeof value1 ) {
             case 'number':
                 result = compare_number( value1, value2 );
@@ -922,18 +923,18 @@ var _resource = (function () {
             default:
                 throw 'Bad sort value type';
         }
-        
+
         if ( preference === 'lt' ) {
             result = -result;
         }
-        
+
         return result;
     }
-    
+
     function compare_number( number1, number2 ) {
         return number1 - number2;
     }
-    
+
     function compare_string( string1, string2 ) {
         var alphabet = "0123456789a\u0105bc\u0107de\u0119fghijkl\u0142mn\u0144o\u00f3pqrs\u015btuvwxyz\u017a\u017c";
         // compare_letter is slighlty modified alpha function from
@@ -942,11 +943,11 @@ var _resource = (function () {
         function compare_letter( a, b ) {
             var ia = alphabet.indexOf( a );
             var ib = alphabet.indexOf( b );
-            
+
             if ( a === b ) {
                 return 0;
             }
-            
+
             if ( ia === -1 || ib === -1 ) {
                 if ( ia === -1 )
                     return ( a > 'a' ) ? 1 : -1;
@@ -957,7 +958,7 @@ var _resource = (function () {
                 return ia - ib;
             }
         }
-        
+
         var min_length = Math.min( string1.length, string2.length );
         var lower_string1 = string1.toLowerCase();
         var lower_string2 = string2.toLowerCase();
@@ -969,27 +970,27 @@ var _resource = (function () {
                 return result;
             }
         }
-        
+
         return string1.length - string2.length;
     }
-    
+
     function filter_node( node, criterions ) {
         var passed = true;
-        
+
         criterions.forEach( function ( criterion ) {
             if ( !passed ) return;
-            
+
             passed = check_criterion( node, criterion );
         });
-        
+
         return passed;
     }
-    
+
     function check_criterion( node, criterion ) {
         var node_value = node['data'][ criterion['key'] ];
         var filter_value = criterion['value'];
         var preference = criterion['preference'];
-        
+
         switch ( typeof node_value ) {
             case 'number':
                 return check_number( node_value, filter_value, preference );
@@ -999,7 +1000,7 @@ var _resource = (function () {
                 throw 'Bad filter criterion type';
         }
     }
-    
+
     function check_number( node_value, filter_value, preference ) {
         switch ( preference ) {
             case 'lt':
@@ -1012,7 +1013,7 @@ var _resource = (function () {
                 throw 'Bad number critertion preference';
         }
     }
-    
+
     function check_string( node_value, filter_value, preference ) {
         switch ( preference ) {
             case 'nst':

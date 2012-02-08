@@ -30,17 +30,16 @@ var _dbtree = (function () {
     var that = {};
 
     that.draw_db_tree = function( data, submit_name, callback ) {
-        var choose_panel;
+        var choose_panel = $('#pl-ch-datasets');
         var choose_panel_code;
         var choose_list_code;
 
-        // 'even' - for ".pl-tree" background colours changes
+        // 'even' - for ".pl-tree" background colors changes
         var even_level = {
-                  'even'        : false,
-                  'button'      : true,
-                  'button_name' : submit_name || 'Wyświetl', // TODO - remove "Wybierz"
-                  };
-        var choose_panel = $('#pl-ch-datasets');
+            'even'        : false,
+            'button'      : true,
+            'button_name' : submit_name || 'Wyświetl',
+        };
 
         // prepare place for dbtree list elements
         panel_content = Mustache.to_html( _templates.tree_list, even_level );
@@ -220,7 +219,22 @@ var _dbtree = (function () {
             .click( check_endpoint );
 
         submit_button.
-            click( callback );
+            click( function () {
+                // collect checked endpoints and pass them to callback
+                var boxes = $('#pl-ch-datasets').find('.pl-tree-end-checked');
+                // TODO how to map over jQuery objects returning Array, not jQuery Array
+                var endpoints = $.makeArray( boxes.map( function ( e ) {
+                                    return $(this).attr('data-endpoint');
+                                }));
+
+                // in case nothing was selected
+                if( !endpoints.length ) {
+                    console.log( "Proszę wybrać choć jedną kolekcję danych" );
+                    return;
+                }
+
+                callback( endpoints );
+            });
     }
 
 

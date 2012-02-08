@@ -34,21 +34,12 @@ var _gui = (function () {
 
     that.init_gui = function() {
 
-        _resource.get_collections_list( _dbtree.draw_db_tree );
-
-        $('#pl-ch-submit').click( function() {
-            var boxes = $('#pl-ch-datasets').find('.pl-tree-end-checked');
-            var endpoints = $.makeArray( boxes.map( function ( e ) {
-                                return $(this).attr('data-endpoint');
-                            }));
-            var callbacks = endpoints.map( function ( e ) {
-                                return function ( d ) { console.log( d ) };
-                            });
-
-            _resource.get_top_levels( endpoints, callbacks );
-            //draw_end_point( 'data_50001' );
+        _resource.get_collections_list( function ( collections ) {
+            // TODO make the submit button's callback a stand-alone function
+            _dbtree.draw_db_tree( collections, 'Pokaż dane', show_collections );
+            // start preloader
+            console.log( "Wczytuję dane. To może chwilę potrwać!" );
         });
-
     };
 
     //=====================================================//
@@ -62,13 +53,14 @@ var _gui = (function () {
     /////////////////////////////////
 
 
-    function draw_end_point( endpoint ) {
+    function draw_endpoint( data ) {
+        if( $('#panels').is(':visible') ) {
+            $('#panels').slideUp( 300 );
+        }
         display_application_panel();
-        _resource.get_top_level( endpoint, function ( data ) {
-            draw_table( data );
-            draw_tools( data );
-            _resource.get_sheets_labels( draw_tabs );
-        });
+        draw_table( data );
+        draw_tools( data );
+        _resource.get_sheets_labels( draw_tabs );
     }
 
 
@@ -377,6 +369,7 @@ var _gui = (function () {
 
     function clear_table() {
         var sheet_id = active_sheet_id();
+        // TODO make draw_sheet a direct callback
         var callback = function() {
             draw_sheet( sheet_id );
         }
@@ -843,6 +836,35 @@ var _gui = (function () {
             });
     }
 
+
+
+    // DB TREE CALLBACKS
+    function show_collections( endpoints ) {
+        // TODO prepare a final list of callbacks
+        // each endpoint has it's own callback [ fun, fun, fun.... ]
+        // the first inits the app, the last cleans up the preloader
+        var callbacks = [];
+        var first_callback = function ( data ) {
+                console.log( "1 / " + endpoints.length );
+                draw_endpoint( data['data'] );
+        };
+        var mid_callback = function ( data ) {
+                console.log( (i+2) + " / " + endpoints.length );
+        };
+        var last_callback = function ( data ) {
+            console.log( (i+2) + " / " + endpoints.length );
+            console.log( "Skończone" );
+        };
+
+        // populate callbacks list with appropriate callbacks
+        callbacks.push( first_callback );
+        for( i = 0; i < endpoints.length-2; ++i ) {
+            callbacks.push( mid_callback );
+        }
+        callbacks.push( last_callback );
+
+        _resource.get_top_levels( endpoints, callbacks );
+    }
 
     // return public interface
     return that;
