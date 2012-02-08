@@ -34,12 +34,50 @@ var _gui = (function () {
 
     that.init_gui = function() {
 
-        _resource.get_collections_list( function ( collections ) {
-            // TODO make the submit button's callback a stand-alone function
-            _dbtree.draw_db_tree( collections, 'Pokaż dane', show_collections );
-            // start preloader
-            console.log( "Wczytuję dane. To może chwilę potrwać!" );
+        $('#tm-choose').click( function () {
+            _resource.get_collections_list( function ( collections ) {
+                // TODO make the submit button's callback a stand-alone function
+                _dbtree.draw_db_tree( collections, 'Pokaż dane', show_collections );
+                // start preloader
+                console.log( "Wczytuję dane. To może chwilę potrwać!" );
+            });
         });
+
+        $('#tm-search').click( function () {
+            _resource.get_collections_list( function ( collections ) {
+                var html = [];
+                html.push( '<section class="panel-main">' );
+                html.push( '<input type="text" id="search-query" ' );
+                html.push( 'placeholder="Wpisz szukane słowo" /></section>' );
+
+                // TODO make the submit button's callback a stand-alone function
+                _dbtree.draw_db_tree( collections, 'Szukaj', function ( endpoints ) {
+                    console.log( "Szukam" );
+
+                    var query = $('#search-query').val();
+                    _resource.get_search_count( endpoints, query, function ( data ) {
+                        console.log( data );
+                        $('#pl-ch-area').empty();
+
+                        var html = [];
+                        data['results'].forEach( function ( e ) {
+                            html.push( '<h1>', e['dbtree_top_parent_name'], '</h1>' );
+                            e['data'].forEach( function ( ee ) {
+                                html.push( '<p>', ee['label'], ' :: ', ee['found_count'], '</p>' );
+                            });
+                        });
+                        $('#pl-ch-area').append( $(html.join('')));
+                    });
+                });
+
+                $('#pl-ch-area').prepend( $(html.join('')) );
+
+                // start preloader
+                console.log( "Wczytuję dane. To może chwilę potrwać!" );
+            });
+        });
+
+        $('#tm-choose').trigger('click');
     };
 
     //=====================================================//

@@ -30,7 +30,7 @@ var _dbtree = (function () {
     var that = {};
 
     that.draw_db_tree = function( data, submit_name, callback ) {
-        var choose_panel = $('#pl-ch-datasets');
+        var choose_panel = $('#pl-ch-datasets').empty();
         var choose_panel_code;
         var choose_list_code;
 
