@@ -57,7 +57,10 @@ var _templates = (function () {
                 ' pl-tree-list-even' +
             '{{/even}}' +
         '">' +
-        '</ul>';
+        '</ul><br />' +
+        '{{#button}}' +
+            '<div id="pl-ch-submit" class="clear blue button">{{button_name}}</div>' +
+        '{{/button}}';
 
 
     that.tree_node=
