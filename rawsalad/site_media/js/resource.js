@@ -31,10 +31,7 @@ var _resource = (function () {
 
     // Get db tree and return it as a list.
     that.get_collections_list = function ( callback ) {
-        // TODO why callback is packed into another callback ?
-        _store.get_collections_list( function ( collections ) {
-            callback( collections );
-        });
+        _store.get_collections_list( callback );
     };
 
     // Get top levels and call callbacks with data (top level + meta) from them,
@@ -99,7 +96,6 @@ var _resource = (function () {
     };
 
     that.row_selected = function ( sheet_id, selected_id, prev_selected_id ) {
-
         var sheet = get_sheet( sheet_id );
 
         // if there was a selected row
@@ -199,7 +195,7 @@ var _resource = (function () {
         selected_id = find_selected_row( sheet_id );
         sheet['data'] = new_tree;
         if ( !!sheet['any_selected'] ) {
-            reset_selection( sheet_id, true, selected_id );
+            reset_selection( sheet_id );
         }
 
         that.get_sheet_data( sheet_id, callback );
@@ -210,11 +206,11 @@ var _resource = (function () {
     that.clean_table = function ( sheet_id, callback ) {
         var sheet = get_sheet( sheet_id );
 
-        // first parameter is endpoint, not endpoint id
         _store.get_top_level( sheet['endpoint'], function ( data ) {
             var cleaned_data = clean_data( data, sheet['columns'] );
 
             sheet['data'] = _tree.create_tree( cleaned_data, 'id', 'parent' );
+            sheet['any_selected'] = false;
 
             that.get_sheet_data( sheet_id, callback );
         });
@@ -792,7 +788,7 @@ var _resource = (function () {
         var sheet = get_sheet( sheet_id );
         var subtree_root;
 
-        subtree_root = sheet['data'].getNode( root_id );
+        subtree_root = _tree.get_node( sheet['data'], root_id );
         subtree_root['state']['selected'] = selection_type;
     }
 
