@@ -208,11 +208,11 @@ def search_data( user_query, endpoint, get_meta=False ):
 
     # make boxes a list
     for box in boxes:
-        final_data['boxes'].append( [{'id':k,'hits':v} for k,v in box.iteritems()] )
+        box_list = sorted( [{'id':k,'hits':v} for k,v in box.iteritems()], key=lambda e: e['id'] )
+        final_data['boxes'].append( box_list )
 
     # sort results
-    # TODO sort the boxes list
-    #final_data['boxes'].sort( key=(lambda e: e['id']) )
+    final_data['boxes'].sort( key=(lambda e: e[0]['id']) )
     final_data['data'].sort( key=(lambda e: e['id']) )
 
     if get_meta:
