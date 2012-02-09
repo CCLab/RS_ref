@@ -31,14 +31,15 @@ var _templates = (function () {
 
 // T E M P L A T E S
     // A P P   H E A D E R
+    // TODO change name to more connected with tabs
     that.app_table_header =
         '<div id="app-tb-save-sheet" class="blue button left">Kopiuj do arkusza</div>' +
         '<ul id="app-tb-sheets">' +
             '{{#sheets}}' +
                 '<li id="snap-{{sheet_id}}" data-end-point="{{end_id}}" data-group="{{group_id}}" class="sheet tab button' +
-//                    '{{#blocked}}' + //TODO
-//                        'ready' +
-//                    '{{/blocked}}' +
+                    '{{#blocked}}' +
+                        'ready' +
+                    '{{/blocked}}' +
                 '" title="{{name}}">' +
                     '<p>' +
                     '{{name}}' +
@@ -116,6 +117,7 @@ var _templates = (function () {
 
 
     // T O O L S
+    // TODO split for two different placeholders and templates
     that.app_table_tools =
         '<section>' +
             '<h3 id="app-tb-tl-title" class="left">{{label}}</h3>' +
@@ -131,6 +133,7 @@ var _templates = (function () {
             '<div id="app-tb-tl-old-title" class="left" style="display: none;"> </div>' +
             '<div id="app-tb-tl-rename-button" class="button left">Zmień nazwę</div>' +
             '<div id="app-tb-tl-bt-container" class="right">' +
+                // TODO check how it works with different types of tables
                 '<div id="app-tb-tl-clear-button" class="button left">Wyczyść tabelę</div>' +
                 '<div id="app-tb-tl-sort-button" class="button left">Sortuj</div>' +
                 '<div id="app-tb-tl-filter-button" class="button left">Filtruj</div>' +
@@ -248,6 +251,22 @@ var _templates = (function () {
 
 
 
+    that.search_box =
+        '<table>' +
+        '{{#boxes}}' +
+            '<tr>' +
+            '<td style="padding-top: 15px; background-color: #eee;" colspan="3">' +
+                '{{breadcrumb}}' +
+            '</td>' +
+            '</tr>' +
+            '{{#rows}}' +
+                '<tr id="{{id}}">' +
+                    '{{#data}}' +
+                        '<td style="{{#hit}} background-color: #ddddaa;{{/hit}}">{{content}}</td>' +
+                    '{{/data}}' +
+                '</tr>' +
+            '{{/rows}}' +
+        '{{/boxes}}';
 
     // return public interface
     return that;

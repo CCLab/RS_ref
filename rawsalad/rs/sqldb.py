@@ -160,6 +160,8 @@ def search_data( user_query, endpoint, get_meta=False ):
 
     cursor.execute( columns )
     keys = [ column['key'] for column in cursor.fetchall() ]
+
+    unique_hits = set()
     # do the search once per searchable key
     for key in keys:
         query = '''SELECT * FROM %s
@@ -176,13 +178,21 @@ def search_data( user_query, endpoint, get_meta=False ):
 
         # for each result mark a hit column and collect parents
         for result in results:
+            # keep it under parents key, but for the top level
+            # len( unique_hits ) used as a unique key for each top level node
+            parent = result['parent'] if result['parent'] else len( unique_hits )
             hit_id = result['id']
 
-            # collect the hit columns
-            boxes.setdefault( hit_id, [] )
-            boxes[ hit_id ].append( key )
+            # collect the boxes
+            boxes.setdefault( parent, { hit_id: [] } )
+            boxes[ parent ][ hit_id ] = boxes[ parent ].get( hit_id, [] ) + [ key ]
 
-    hit_ids  = str( boxes.keys() ).strip('[]')
+            # collect all unique hits
+            unique_hits.add( hit_id )
+
+    # get rid of parents --> [{id/hit, id/hit}, {id/hit}]
+    boxes = boxes.values()
+    hit_ids  = str( list( unique_hits ) ).strip('[]')
     subquery = '''SELECT DISTINCT unnest(parents) FROM p_tree
                   WHERE id IN ({0})
                '''.format( hit_ids )
@@ -192,14 +202,17 @@ def search_data( user_query, endpoint, get_meta=False ):
             '''.format( endpoint, subquery )
 
     cursor.execute( query )
-    unique_parents = [ r for r in cursor.fetchall() if not boxes.get( r['id'] ) ]
+    unique_parents = [ r for r in cursor.fetchall() if r['id'] not in unique_hits ]
     # transform db data into resource objects
     final_data['data'] += collection.prepare_data( unique_parents )
 
     # make boxes a list
-    final_data['boxes'] = [ { 'id': k, 'hits': v } for k, v in  boxes.iteritems() ]
+    for box in boxes:
+        final_data['boxes'].append( [{'id':k,'hits':v} for k,v in box.iteritems()] )
+
     # sort results
-    final_data['boxes'].sort( key=(lambda e: e['id']) )
+    # TODO sort the boxes list
+    #final_data['boxes'].sort( key=(lambda e: e['id']) )
     final_data['data'].sort( key=(lambda e: e['id']) )
 
     if get_meta:
@@ -303,7 +316,7 @@ def restore_group_old( id, endpoint ):
     }
 
     return group
-    
+
 
 def restore_group( id, endpoint ):
     '''Collect all data and metadata for a given endpoint.'''
@@ -326,7 +339,7 @@ def restore_group( id, endpoint ):
 
     # now collect the data (full data, not only ids!)
     collection = Collection( endpoint, cursor )
-    
+
     group['data'] = []
     if None in unique_parents:
         group['data'] = collection.get_top_level()
@@ -338,7 +351,7 @@ def restore_group( id, endpoint ):
         children_ids = [ child['id'] for child in children ]
         map( unique_nodes.discard, children_ids )
         group['data'] += children
-        
+
     # collect other needed nodes
     for node in unique_nodes:
         prepared_node = collection.get_node( node )
@@ -353,8 +366,8 @@ def restore_group( id, endpoint ):
     }
 
     return group
-    
-    
+
+
 def get_standard_sheet_data( data, cursor ):
     # get parents of sheet's deepest open nodes
     unique_parents = set()
@@ -369,10 +382,10 @@ def get_standard_sheet_data( data, cursor ):
     open_nodes = data['ids'] + [ e['unnest'] for e in cursor.fetchall() ]
     # collect only endpoint unique nodes
     map( unique_parents.add, open_nodes )
-    
+
     return unique_parents
-    
-    
+
+
 def get_searched_sheet_data( data, cursor ):
     unique_parents = set()
     unique_nodes = set()
@@ -395,9 +408,9 @@ def get_searched_sheet_data( data, cursor ):
             # remember which nodes are needed
             ids = [ row['id'] for row in box['rows'] ]
             map( unique_nodes.add, ids )
-    
+
     return unique_parents, unique_nodes
-            
+
 
 def get_snapshot( id, endpoint ):
     '''Get the permalink's group snapshot from db'''
