@@ -504,6 +504,24 @@ var _resource = (function () {
             });
         });
     };
+    
+    // DOWNLOAD FUNCTIONS
+    // Download data from selected sheets and endpoints.
+    that.download_data = function( sheet_ids, endpoints, callback ) {
+        var sheets = sheet_ids.map( function ( id ) {
+            return get_sheet( id );
+        });
+        var data = _download.prepare_download_data( sheets, endpoints );
+        
+        callback = function ( x ) {
+            $('#pl-dl-hidden-form')
+                .find('input')
+                .val( x )
+                .end()
+                .submit();
+        }
+        callback( data );
+    }
 
 // P R I V A T E   I N T E R F A C E
     var sheets = {};
@@ -634,7 +652,7 @@ var _resource = (function () {
                 break;
             case _enum['SEARCHED']:
                 sheet['query'] = other_fields['query'];
-                sheet['boxes'] = prepare_boxes( other_fields['boxes'], sheet['data'] );
+                sheet['boxes'] = prepare_boxes( other_fields['boxes'] );
                 break;
             default:
                 throw 'Bad sheet type';
@@ -848,37 +866,19 @@ var _resource = (function () {
     }
 
     // Change boxes that come from server to boxes used by resource.
-    function prepare_boxes( boxes, data_tree ) {
-        var sheet_boxes = [];
-        var parents_list = [];
-        var boxes_obj = {};
-
+    function prepare_boxes( boxes ) {
         // check if they come from permalink, if yes, then just copy
         if ( boxes.length > 0 && !!boxes[0]['rows'] ) {
             return boxes;
         }
 
-        boxes.forEach( function ( box ) {
-            var node = _tree.get_node( data_tree, box['id'] );
-            var parent_id = node['parent'];
-
-            if ( !boxes_obj[ parent_id ] ) {
-                boxes_obj[ parent_id ] = {
-                    'rows': [],
-                    'breadcrumb': false,
-                    'context': false
-                };
-                parents_list.push( parent_id );
-            }
-
-            boxes_obj[ parent_id ]['rows'].push( box );
+        return boxes.map( function( box ) {
+            return {
+                'rows': box,
+                'breadcrumb': false,
+                'context': false
+            };
         });
-
-        parents_list.forEach( function ( parent_id ) {
-            sheet_boxes.push( boxes_obj[ parent_id ] );
-        });
-
-        return sheet_boxes;
     }
 
     function compare_nodes( node1, node2, criterions ) {
