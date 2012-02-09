@@ -354,7 +354,7 @@ def restore_group( id, endpoint ):
 
     # collect other needed nodes
     for node in unique_nodes:
-        prepared_node = collection.get_node( node )
+        prepared_node = collection.get_nodes( [ node ] )[0]
         group['data'].append( prepared_node )
 
     group['data'].sort( key=lambda e: e['id'] )
@@ -480,20 +480,20 @@ class Collection:
         return self.get_data( query )
 
 
-    def get_node( self, _id ):
+    def get_nodes( self, ids ):
         '''Get the certain node in the collection'''
         query = '''SELECT * FROM %s
-                   WHERE id = %s
-                ''' % ( self.endpoint, _id )
+                   WHERE id IN ( %s )
+                ''' % ( self.endpoint, ids )
         data = self.get_data( query )
 
-        return data[0]
+        return data
 
 
     def get_parent( self, _id ):
         '''Get parent of the certain node in the collection'''
-        node   = self.get_node( _id )
-        parent = self.get_node( node['parent'] )
+        node   = self.get_nodes( [ _id ] )[0]
+        parent = self.get_nodes( [ node['parent'] ] )[0]
 
         return parent
 
@@ -542,17 +542,13 @@ class Collection:
         return result
 
 
-    def get_unique_parents( self, parent_id, visited, t ):
+    def get_unique_parents( self, id ):
         '''Traverse the tree from a certain parent up to the top level'''
-        # hit the top level
-        if not parent_id:
-            return []
-        # already been there
-        elif parent_id in visited:
-            return []
-        # get parent and go on
-        else:
-            visited[ parent_id ] = True
-            node = self.get_node( parent_id )
-            return [node] + self.get_unique_parents( node['parent'], visited, t )
-
+        query = '''SELECT * FROM %s
+                   WHERE id IN( SELECT unnest(parents)
+                   FROM p_tree WHERE id IN ( %d ) );
+                ''' % ( self.endpoint, id )
+        parents = self.get_data( query )
+        parents.reverse()
+        
+        return parents

@@ -195,8 +195,6 @@ var _store = (function () {
         });
     };
 
-
-
 // P R I V A T E   I N T E R F A C E
 
     // data tree about data
