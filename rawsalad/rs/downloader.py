@@ -110,7 +110,16 @@ def get_hierarchy_path( node, parents ):
     return path
     
 def decode_value( value ):
-    return str( value ).decode('utf-8')
+    if isinstance( value, basestring ):
+        return value.decode('utf-8')
+    else:
+        return value
+        
+def encode_value( value ):
+    if isinstance( value, basestring ):
+        return value.encode('utf-8')
+    else:
+        return value
     
 # Get list containing hierarchy fields for new hierarchy type. Hierarchy
 # in a collection is specified by hierarchy, name and type values are in path.
@@ -131,7 +140,11 @@ def get_hierarchy_fields( path, hierarchy ):
     return hierarchy_fields
     
 def get_aux_value( value ):
-    return value.rsplit(' ', 1)[-1]
+    aux_value = value.rsplit(' ', 1)[-1]
+    try:
+        return int( aux_value )
+    except:
+        return aux_value
 
 # TODO: make a table in db and get hierarchy from it
 def get_hierarchy( endpoint ):
@@ -163,12 +176,13 @@ class UnicodeWriter:
     def __init__( self, fd, dialect=csv.excel, encoding="utf-8", **kwds ):
         # Redirect output to a queue
         self.queue   = StringIO()
-        self.writer  = csv.writer( self.queue, dialect=dialect, delimiter=';', **kwds )
+        self.writer  = csv.writer( self.queue, dialect=dialect, delimiter=';',
+                                   quotechar='"', quoting=csv.QUOTE_NONNUMERIC, **kwds )
         self.stream  = fd
         self.encoder = codecs.getincrementalencoder( encoding )()
 
     def writerow( self, row ):
-        self.writer.writerow([ s.encode("utf-8") for s in row ])
+        self.writer.writerow([ encode_value( s ) for s in row ])
         # Fetch UTF-8 output from the queue ...
         data = self.queue.getvalue()
         data = data.decode( "utf-8" )
