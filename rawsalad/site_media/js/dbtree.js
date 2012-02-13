@@ -28,6 +28,78 @@ var _dbtree = (function () {
 
 // P U B L I C   I N T E R F A C E
     var that = {};
+    
+    // Draw tree that shows available collections.
+    that.draw_db_tree_new = function( db_tree, header, callback ) {
+        // Generate html code for node and his children.
+        function generate_node( node, even ) {
+            var html_code;
+            var params = {};
+            var children_code = '';
+            var endpoints_table = false;
+            var children_nodes = _tree.get_children_nodes( db_tree, node['id'] );
+            
+            // generate code for children nodes
+            children_nodes.forEach( function( node ) {
+                var code = generate_node( node, !even );
+                if ( !!code['leaf'] ) {
+                    endpoints_table = true;
+                }
+                children_code += code;
+            });
+            
+            // generate code for this node using code for children nodes
+            if ( children_nodes.length === 0 ) {
+                // code cannot be generated for endpoint, remember its leaf
+                html_code = { 'leaf': true };
+            } else if ( endpoints_table ) {
+                // his children are leaves, generate endpoint table
+                params = {
+                    'label'    : node['name'],
+                    'even'     : even,
+                    'endpoints': children_nodes.map( function ( child_node ) {
+                        return {
+                            'label'   : child_node['name'],
+                            'endpoint': child_node['endpoint']
+                        }
+                    })
+                };
+                html_code = gen_html( params, children_code );
+            } else {
+                // his children are tables or parents of tables
+                params = {
+                    'label': node['name'] || header, // header for root node
+                    'even' : even
+                };
+                html_code = gen_html( params, children_code );
+            }
+            
+            return html_code;
+        }
+        var db_tree_code;
+        var root = _tree.root( db_tree );
+        
+        
+        db_tree_code = generate_node( root, true );
+        console.log( db_tree_code );
+    };
+    
+    function gen_html( params, children_code ) {
+        html = '<node ';
+        if ( !params['endpoints'] ) {
+            html += 'label=' + params['label'] + ' even=' + params['even'] + '>\n';
+            html += children_code;
+        } else {
+            html += 'label=' + params['label'] + ' even=' + params['even'] + '>\n';
+            html += '<endpoints>\n';
+            params['endpoints'].forEach( function( endpoint ) {
+                html += '<label=' + endpoint['label'] + ' endpoint=' + endpoint['endpoint'] + '>\n';
+            });
+            html += '</endpoints>\n';
+        }
+        html += '</node>\n';
+        return html;
+    }
 
     that.draw_db_tree = function( data, submit_name, callback ) {
         var choose_panel = $('#pl-ch-datasets').empty();

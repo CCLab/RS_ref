@@ -35,8 +35,13 @@ var _gui = (function () {
     that.init_gui = function() {
 
         $('#tm-choose').click( function () {
-            _resource.get_collections_list( function ( collections ) {
+            _resource.get_collections( function ( collections ) {
+                // TODO replace old draw_db_tree with the new one
+                _dbtree.draw_db_tree_new( collections, 'Pokaż dane', 'unused_callback' );
                 // TODO make the submit button's callback a stand-alone function
+                // TODO fast temporary solution so that old and new db
+                // functions work
+                collections = _tree.tree_to_list( collections );
                 _dbtree.draw_db_tree( collections, 'Pokaż dane', show_collections );
                 // start preloader
                 console.log( "Wczytuję dane. To może chwilę potrwać!" );
@@ -44,7 +49,10 @@ var _gui = (function () {
         });
 
         $('#tm-search').click( function () {
-            _resource.get_collections_list( function ( collections ) {
+            _resource.get_collections( function ( collections ) {
+                // TODO fast temporary solution so that old and new db
+                // functions work
+                collections = _tree.tree_to_list( collections );
                 var html = [];
                 html.push( '<section class="panel-main">' );
                 html.push( '<input type="text" id="search-query" ' );

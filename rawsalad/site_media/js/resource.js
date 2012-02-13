@@ -30,8 +30,8 @@ var _resource = (function () {
     var that = {};
 
     // Get db tree and return it as a list.
-    that.get_collections_list = function ( callback ) {
-        _store.get_collections_list( callback );
+    that.get_collections = function ( callback ) {
+        _store.get_collections( callback );
     };
 
     // Get top levels and call callbacks with data (top level + meta) from them,
@@ -1027,3 +1027,18 @@ var _resource = (function () {
 
     return that;
 }) ();
+
+function open_all() {
+    $('.odd').each( function() {
+        var this_node = $(this);
+        if ( this_node.attr("data-open") === "false" ) {
+            this_node.click();
+        }
+    });
+    $('.even').each( function() {
+        var this_node = $(this);
+        if ( this_node.attr("data-open") === "false" ) {
+            this_node.click();
+        }
+    });
+}
