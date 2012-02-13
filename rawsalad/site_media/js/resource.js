@@ -31,6 +31,7 @@ var _resource = (function () {
 
     // Get db tree and return it as a list.
     that.get_collections_list = function ( callback ) {
+        // TODO why callback is packed into another callback ?
         _store.get_collections_list( function ( collections ) {
             callback( collections );
         });
@@ -38,8 +39,8 @@ var _resource = (function () {
 
     // Get top levels and call callbacks with data (top level + meta) from them,
     // order of callbacks is the same as order of endpoints.
-    that.get_top_levels = function ( endpoints, init_callback, callbacks ) {
-        // create_empty_sheets for endpoints and call init_callback
+    that.get_top_levels = function ( endpoints, callbacks ) {
+        // Create_empty_sheets for endpoints
         // with data for sheet tabs(get_sheets_names)
         endpoints.forEach( function ( endpoint ) {
             var simple_meta = {
@@ -51,25 +52,8 @@ var _resource = (function () {
                                             _enum['STANDARD'], add_fields );
             add_sheet( empty_sheet );
         });
-        
-        get_many( endpoints, that.get_top_level, callbacks );
-    };
 
-    // Get top level data from store and prepare it for
-    // gui-understandable form.
-    that.get_top_level = function ( endpoint, callback ) {
-        _store.get_init_data( endpoint, function( data, meta ) {
-            var sheet_id;
-            var sheet;
-            var gui_data;
-            
-            sheet = create_sheet( endpoint, data, meta );
-            sheet_id = find_blocked_sheet( endpoint );
-            sheet_id = add_sheet( sheet, sheet_id );
-            gui_data = prepare_table_data( sheet_id );
-
-            callback( gui_data );
-        });
+        get_many( endpoints, collect_sheets_data, callbacks );
     };
 
     // Get children of parent_id row from sheet_id sheet.
@@ -113,8 +97,6 @@ var _resource = (function () {
             _tree.remove_node( sheet['data'], node['id'] );
         });
     };
-
-
 
     that.row_selected = function ( sheet_id, selected_id, prev_selected_id ) {
 
@@ -263,6 +245,7 @@ var _resource = (function () {
         var sheet_descr;
         var sheets_names = [];
         var sorted_sheets_names;
+        var result;
 
         for ( sheet_id in sheets ) {
             if ( sheets.hasOwnProperty( sheet_id ) ) {
@@ -280,7 +263,12 @@ var _resource = (function () {
             }
         });
 
-        callback( { 'sheets': sorted_sheets_names } );
+        result = { 'sheets': sorted_sheets_names };
+        if ( !!callback ) {
+            callback( result );
+        } else {
+            return result;
+        }
     };
 
     that.get_sheet_name = function ( sheet_id, callback ) {
@@ -327,46 +315,19 @@ var _resource = (function () {
     };
 
     // Sort sheet(in specified order) and return it.
-    that.sort = function ( sheet_id, sort_order, callback ) {
-        // TOTEST
-        //  ||
-        //  \/
-        var sort_order_to_function = function ( sort_order ) {
-            // [
-                // { 'key': 'abc',
-                  // 'order': 1|-1
-                // },
-                // ...
-            // ]
-            return function( elem1, elem2 ) {
-                var i;
-                var key;
-                var order;
-                var result = 0;
-            
-                for ( i = 0; i < order.length && result !== 0; ++i ) {
-                    key = sort_order[ i ]['key'];
-                    order = sort_order[ i ]['order'];
-                    
-                    if ( elem1[ key ] > elem2[ key ] ) {
-                        result = 1;
-                    } else if ( elem1[ key ] < elem2[ key ] ) {
-                        result = -1;
-                    }
-                    if ( order[ i ] === 'lt' ) {
-                        result = -result;
-                    }
-                }
-                
-                return result;
+    that.sort = function ( sheet_id, sort_criterion, callback ) {
+        var sort_criterion_to_function = function( sort_criterion ) {
+            return function( node1, node2 ) {
+                return compare_nodes( node1, node2, sort_criterion );
             };
         };
         var sheet;
         var sorted_tree;
         var sort_fun;
 
+
         sheet = get_sheet( sheet_id );
-        sort_fun = sort_order_to_function( sort_order );
+        sort_fun = sort_criterion_to_function( sort_criterion );
         sorted_tree = _tree.sort( sheet['data'], sort_fun );
         sheet['data'] = sorted_tree;
 
@@ -375,35 +336,24 @@ var _resource = (function () {
 
 
     // Filter sheet and return it.
-    that.filter = function ( sheet_id, criterion, callback ) {
-        // TODO
-        //  ||
-        //  \/
-        var criterion_to_function = function( node ) {
-            var fun = function( node ) {
-                return node[ 'id' ] % 2 === 1;
-            };
-
-            return fun;
-        };
-
+    that.filter = function ( sheet_id, criterions, callback ) {
         var sheet;
         var new_sheet;
         var new_sheet_id;
-        var filter_fun;
         var meta;
+        var additional_parameters;
 
         sheet = get_sheet( sheet_id );
-        filter_fun = criterion_to_function( criterion );
         meta = {
             'label': sheet['label'],
             'columns': sheet['columns']
         };
+        additional_parameters = {
+            'sort_query'  : sheet['sort_query'],
+            'filter_query': criterions
+        };
         new_sheet = create_sheet( sheet['endpoint'], _tree.tree_to_list( sheet['data'] ),
-                                  meta, _enum['FILTERED'],
-                                  {'sort_query'  : sheet['sort_query'],
-                                   'filter_query': criterion } );
-        filter_sheet( new_sheet, filter_fun );
+                                  meta, _enum['FILTERED'], additional_parameters );
         new_sheet_id = add_sheet( new_sheet );
 
         that.get_sheet_data( new_sheet_id, callback );
@@ -436,6 +386,7 @@ var _resource = (function () {
 
         sheet = get_sheet( sheet_id );
         copied_sheet = $.extend( true, {}, sheet );
+        copied_sheet['data'] = _tree.copy( sheet['data'] );
         copied_sheet_id = add_sheet( copied_sheet );
         sheet_descr = get_sheet_description( copied_sheet_id );
 
@@ -485,12 +436,11 @@ var _resource = (function () {
             var sheet_id;
             var cleaned_data;
             var gui_data;
-            var sheet_boxes = prepare_boxes( boxes, data );
             var other_fields = {
                 'query': query,
-                'boxes': sheet_boxes
+                'boxes': boxes
             };
-            
+
             cleaned_data = clean_data( data, meta['columns'] );
             sheet = create_sheet( endpoint, cleaned_data, meta,
                                   _enum['SEARCHED'], other_fields );
@@ -500,22 +450,23 @@ var _resource = (function () {
             callback( gui_data );
         });
     };
-    
+
     // PERMALINK FUNCTIONS
 
     // Creates permalink from sheets which id is in list sheet_id.
-    // If sheet_id is undefined, then all sheets will be used to
+    // If sheet_id is an empty list, then all sheets will be used to
     // create permalink.
     that.create_permalink = function ( sheet_ids, callback ) {
-        var sheet_ids = sheet_ids || get_sorted_ids();
         var all_sheets = [];
+        if ( sheet_ids.length === 0 ) {
+            sheet_ids = get_sorted_ids();
+        }
 
         sheet_ids.forEach( function ( id ) {
             all_sheets.push( get_sheet( id ) );
         });
 
         var permalink_data = _permalinks.prepare_permalink( all_sheets, sheet_ids );
-
         _store.store_state( permalink_data, callback );
     };
 
@@ -550,7 +501,6 @@ var _resource = (function () {
                 var sheet;
                 var sheet_id;
                 var additional_fields = _permalinks.get_additional_fields( permalink_sheet );
-
                 sheet = create_sheet( group['endpoint'], sheet_data, group['meta'],
                                       permalink_sheet['type'], additional_fields );
                 sheet_id = add_sheet( sheet );
@@ -631,7 +581,6 @@ var _resource = (function () {
         var group_id;
         var type = type || _enum['STANDARD'];
         var other_fields = other_fields || {};
-        var field;
 
         active_columns = meta['columns'].filter( function ( column ) {
             return !!column['basic'];
@@ -645,45 +594,69 @@ var _resource = (function () {
         new_sheet = {
             'group_id': group_id,
             'endpoint': endpoint,
-            'data': cleaned_tree_data,
-            'label': meta['label'],
-            'columns': active_columns,
-            'type': type
+            'data'    : cleaned_tree_data,
+            'label'   : meta['label'],
+            'columns' : active_columns,
+            'type'    : type
+        };
+
+        additional_operations( new_sheet, other_fields );
+
+        return new_sheet;
+    }
+
+    function additional_operations( sheet, other_fields ) {
+        var sort_fun;
+        var filter_fun;
+        var field;
+        var filter_criterion_to_function = function( filter_criterion ) {
+            return function( node ) {
+                return filter_node( node, filter_criterion );
+            };
+        };
+        var sort_criterion_to_function = function( sort_criterion ) {
+            return function( node1, node2 ) {
+                return compare_nodes( node1, node2, sort_criterion );
+            };
         };
 
         // copy additional, expected fields
-        switch ( type ) {
+        switch ( sheet['type'] ) {
             case _enum['STANDARD']:
-                new_sheet['sort_query'] = other_fields['sort_query'];
-                new_sheet['any_selected'] = false;
+                sheet['sort_query'] = other_fields['sort_query'] || [];
+                sort_fun = sort_criterion_to_function( sheet['sort_query'] );
+                sheet['data'] = _tree.sort( sheet['data'], sort_fun );
+                sheet['any_selected'] = false;
                 break;
             case _enum['FILTERED']:
-                new_sheet['sort_query'] = other_fields['sort_query'];
-                new_sheet['filter_query'] = other_fields['filter_query'];
+                sheet['sort_query'] = other_fields['sort_query'] || [];
+                sheet['filter_query'] = other_fields['filter_query'];
+                sort_fun = sort_criterion_to_function( sheet['sort_query'] );
+                filter_fun = filter_criterion_to_function( sheet['filter_query'] );
+                sheet['data'] = _tree.sort( sheet['data'], sort_fun );
+                sheet['data'] = _tree.filter( sheet['data'], filter_fun );
                 break;
             case _enum['SEARCHED']:
-                new_sheet['query'] = other_fields['query'];
-                new_sheet['boxes'] = other_fields['boxes'];
+                sheet['query'] = other_fields['query'];
+                sheet['boxes'] = prepare_boxes( other_fields['boxes'], sheet['data'] );
                 break;
             default:
                 throw 'Bad sheet type';
         }
         // copy additional, unexpected fields
         for ( field in other_fields ) {
-            if ( other_fields.hasOwnProperty( field ) ) {
-                new_sheet[ field ] = other_fields[ field ];
+            if ( other_fields.hasOwnProperty( field ) && sheet[ field ] === undefined ) {
+                sheet[ field ] = other_fields[ field ];
             }
         }
-
-        return new_sheet;
     }
-    
+
     // Find FIRST blocked sheet that was created when data
     // was downloaded from the given endpoint.
     function find_blocked_sheet( endpoint ) {
         var sheet_id;
         var sheet;
-        
+
         for ( sheet_id in sheets ) {
             if ( sheets.hasOwnProperty( sheet_id ) ) {
                 sheet = get_sheet( sheet_id );
@@ -692,13 +665,8 @@ var _resource = (function () {
                 }
             }
         }
-        
+
         return undefined;
-    }
-    
-    function filter_sheet( sheet, filter_function ) {
-        var filtered_tree = _tree.filter( sheet['data'], filter_function );
-        sheet['data'] = filtered_tree;
     }
 
     var generate_sheet_id = ( function () {
@@ -723,19 +691,13 @@ var _resource = (function () {
     }
 
     function get_many( values, get_one, callbacks ) {
-        var get_next = function ( count ) {
-            var value = values.shift();
-            var callback = callbacks[ count ];
-
-            if ( value === undefined ) return;
+        values.forEach( function( value, index ) {
+            var callback = callbacks[ index ];
 
             get_one( value, function ( data ) {
                 callback( data );
-                get_next( count + 1 );
             });
-        };
-
-        get_next( 0 );
+        });
     }
 
     function prepare_table_data( sheet_id, data ) {
@@ -756,6 +718,35 @@ var _resource = (function () {
             'endpoint': sheet['endpoint'],
             'blocked' : !sheet['data']
         };
+    }
+
+    // Get description of all sheets' labels and top level data
+    // of the given endpoint.
+    function collect_sheets_data( endpoint, callback ) {
+        var tabs = that.get_sheets_labels();
+        get_top_level( endpoint, function( gui_data ) {
+            callback({
+                'tabs': tabs,
+                'data': gui_data
+            });
+        });
+    }
+
+    // Get top level data from store and prepare it for
+    // gui-understandable form.
+    function get_top_level( endpoint, callback ) {
+        _store.get_init_data( endpoint, function( data, meta ) {
+            var sheet_id;
+            var sheet;
+            var gui_data;
+
+            sheet = create_sheet( endpoint, data, meta );
+            sheet_id = find_blocked_sheet( endpoint );
+            sheet_id = add_sheet( sheet, sheet_id );
+            gui_data = prepare_table_data( sheet_id );
+
+            callback( gui_data );
+        });
     }
 
     // Return data that contains columns that are in columns list.
@@ -782,7 +773,7 @@ var _resource = (function () {
 
             new_node['state'] = {
                 'selected': undefined,
-                'is_open': false
+                'is_open' : false
             };
 
             return new_node;
@@ -859,18 +850,22 @@ var _resource = (function () {
 
         return selected_id;
     }
-    
+
     // Change boxes that come from server to boxes used by resource.
-    function prepare_boxes( boxes, data ) {
+    function prepare_boxes( boxes, data_tree ) {
         var sheet_boxes = [];
         var parents_list = [];
         var boxes_obj = {};
-        var data_tree = _tree.create_tree( data, 'id', 'parent' );
-        
+
+        // check if they come from permalink, if yes, then just copy
+        if ( boxes.length > 0 && !!boxes[0]['rows'] ) {
+            return boxes;
+        }
+
         boxes.forEach( function ( box ) {
             var node = _tree.get_node( data_tree, box['id'] );
             var parent_id = node['parent'];
-            
+
             if ( !boxes_obj[ parent_id ] ) {
                 boxes_obj[ parent_id ] = {
                     'rows': [],
@@ -879,15 +874,159 @@ var _resource = (function () {
                 };
                 parents_list.push( parent_id );
             }
-            
+
             boxes_obj[ parent_id ]['rows'].push( box );
         });
-        
+
         parents_list.forEach( function ( parent_id ) {
             sheet_boxes.push( boxes_obj[ parent_id ] );
         });
-        
+
         return sheet_boxes;
+    }
+
+    function compare_nodes( node1, node2, criterions ) {
+        var i;
+        var result = 0;
+        var key;
+        var preference;
+        var value1;
+        var value2;
+
+        if ( criterions.length >= 1 ) {
+            for ( i = 0; i < criterions.length; ++i ) {
+                key = criterions[ i ]['key'];
+                value1 = node1['data'][ key ];
+                value2 = node2['data'][ key ];
+                preference = criterions[ i ]['preference'];
+                result = compare_values( value1, value2, preference );
+                if ( !!result ) {
+                    break;
+                }
+            }
+            return result;
+        } else {
+            return node1['id'] - node2['id'];
+        }
+    }
+
+    function compare_values( value1, value2, preference ) {
+        var result;
+
+        switch ( typeof value1 ) {
+            case 'number':
+                result = compare_number( value1, value2 );
+                break;
+            case 'string':
+                result = compare_string( value1, value2 );
+                break;
+            default:
+                throw 'Bad sort value type';
+        }
+
+        if ( preference === 'lt' ) {
+            result = -result;
+        }
+
+        return result;
+    }
+
+    function compare_number( number1, number2 ) {
+        return number1 - number2;
+    }
+
+    function compare_string( string1, string2 ) {
+        var alphabet = "0123456789a\u0105bc\u0107de\u0119fghijkl\u0142mn\u0144o\u00f3pqrs\u015btuvwxyz\u017a\u017c";
+        // compare_letter is slighlty modified alpha function from
+        // http://stackoverflow.com/questions/3630645/how-to-compare-utf-8-strings-in-javascript/3633725#3633725
+        // written by Mic and Tomasz Wysocki
+        function compare_letter( a, b ) {
+            var ia = alphabet.indexOf( a );
+            var ib = alphabet.indexOf( b );
+
+            if ( a === b ) {
+                return 0;
+            }
+
+            if ( ia === -1 || ib === -1 ) {
+                if ( ia === -1 )
+                    return ( a > 'a' ) ? 1 : -1;
+                if ( ib === -1 )
+                    return ( b > 'a' ) ? -1 : 1;
+                return ( a > b ) ? 1 : -1;
+            } else {
+                return ia - ib;
+            }
+        }
+
+        var min_length = Math.min( string1.length, string2.length );
+        var lower_string1 = string1.toLowerCase();
+        var lower_string2 = string2.toLowerCase();
+        var i;
+        var result = 0;
+        for ( i = 0; i < min_length; ++i ) {
+            result = compare_letter( lower_string1[ i ], lower_string2[ i ] );
+            if ( !!result ) {
+                return result;
+            }
+        }
+
+        return string1.length - string2.length;
+    }
+
+    function filter_node( node, criterions ) {
+        var passed = true;
+
+        criterions.forEach( function ( criterion ) {
+            if ( !passed ) return;
+
+            passed = check_criterion( node, criterion );
+        });
+
+        return passed;
+    }
+
+    function check_criterion( node, criterion ) {
+        var node_value = node['data'][ criterion['key'] ];
+        var filter_value = criterion['value'];
+        var preference = criterion['preference'];
+
+        switch ( typeof node_value ) {
+            case 'number':
+                return check_number( node_value, filter_value, preference );
+            case 'string':
+                return check_string( node_value, filter_value, preference );
+            default:
+                throw 'Bad filter criterion type';
+        }
+    }
+
+    function check_number( node_value, filter_value, preference ) {
+        switch ( preference ) {
+            case 'lt':
+                return ( node_value < filter_value );
+            case 'eq':
+                return ( node_value === filter_value );
+            case 'gt':
+                return ( node_value > filter_value );
+            default:
+                throw 'Bad number critertion preference';
+        }
+    }
+
+    function check_string( node_value, filter_value, preference ) {
+        switch ( preference ) {
+            case 'nst':
+                return ( node_value.indexOf( filter_value ) !== 0 );
+            case 'ncnt':
+                return ( node_value.indexOf( filter_value ) === -1 );
+            case 'cnt':
+                return ( node_value.indexOf( filter_value ) !== -1 );
+            case 'st':
+                return ( node_value.indexOf( filter_value ) === 0 );
+            default:
+                throw 'Bad string critertion preference';
+        }
     }
 
     return that;

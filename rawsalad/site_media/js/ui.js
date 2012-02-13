@@ -188,19 +188,23 @@ var _ui = (function () {
         columns_for_gui = get_columns_description( sheet['columns'] );
         
         _tree.iterate( sheet['data'], function ( parent ) {
-            var box;
             var children_nodes = _tree.get_children_nodes( sheet['data'], parent );
+            var rows;
+            var breadcrumb;
             
-            if ( children_nodes.length > 0 ) {
-                box = {
-                    'breadcrumb': get_breadcrumb( sheet['data'], children_nodes[0]['id'] ),
-                    'rows': children_nodes.filter( function ( node ) {
-                                return _tree.is_filtered( sheet['data'], node['id'] );
-                            }).map( function ( node ) {
-                                return prepare_row( node, columns_for_gui );
-                            })
-                };
-                boxes.push( box );
+            rows = children_nodes.filter( function ( node ) {
+                            return _tree.is_filtered( sheet['data'], node['id'] ) &&
+                                   node['data']['type'] !== 'Total';
+                        }).map( function ( node ) {
+                            return prepare_row( node, columns_for_gui );
+                        });
+            if ( rows.length > 0 ) {
+                breadcrumb = get_breadcrumb( sheet['data'], children_nodes[0]['id'] );
+                boxes.push({
+                    'columns   ': columns_for_gui,
+                    'breadcrumb': breadcrumb,
+                    'rows'      : rows
+                });
             }
         }, _tree.root( sheet['data'] ) );
 
@@ -209,7 +213,6 @@ var _ui = (function () {
             'id': sheet_id,
             'type': sheet['type'],
             'label': sheet['label'],
-            'columns': columns_for_gui,
             'boxes': boxes
         };
     }
@@ -258,31 +261,33 @@ var _ui = (function () {
             var gui_context;
             var gui_rows
             
-            gui_rows = box['rows'].map( function ( row ) {
-                var node = _tree.get_node( sheet['data'], row['id'] );
-                hit_ids[ row['id'] ] = true;
-                return prepare_row( node, columns_for_gui, row['hits'] );
-            });
+            
             if ( box['breadcrumb'] ) {
                 gui_breadcrumb = _tree.get_parents( sheet['data'], box['rows'][0]['id'] )
                                     .map( function ( node ) {
                                         return prepare_row( node, columns_for_gui, [] );
                                     });
+            } else {
+                gui_breadcrumb = get_breadcrumb( sheet['data'], box['rows'][0]['id'] );
             }
             if ( box['context'] ) {
-                gui_context = _tree.get_children_nodes( sheet['data'], box['rows'][0]['id'] )
-                                .filter( function( node ) {
-                                    return !hit_ids[ node['id'] ];
-                                }).map( function ( node ) {
+                gui_rows = _tree.get_children_nodes( sheet['data'], box['rows'][0]['id'] )
+                                .map( function ( node ) {
                                     return prepare_row( node, columns_for_gui, [] );
                                 });
+            } else {
+                gui_rows = box['rows'].map( function ( row ) {
+                    var node = _tree.get_node( sheet['data'], row['id'] );
+                    hit_ids[ row['id'] ] = true;
+                    return prepare_row( node, columns_for_gui, row['hits'] );
+                });
             }
             
             return {
-                'rows': gui_rows,
-                'breadcrumb': gui_breadcrumb,
-                'context': gui_context
-            }
+                'columns'   : columns_for_gui,
+                'rows'      : gui_rows,
+                'breadcrumb': gui_breadcrumb
+            };
         });
         
         return {
@@ -290,7 +295,6 @@ var _ui = (function () {
             'id': sheet_id,
             'type': sheet['type'],
             'label': sheet['label'],
-            'columns': columns_for_gui,
             'boxes': gui_boxes
         };
     }

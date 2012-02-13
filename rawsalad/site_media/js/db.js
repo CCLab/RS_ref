@@ -32,9 +32,8 @@ var _db = (function () {
 
     that.get_collections_list = function ( callback ) {
         $.ajax({
-            // TODO: get_collections_list
-            // TODO: additional field format
-            url     : '/get_db_tree/',
+            url     : '/get_collections/',
+            data    : { 'format': 'list' },
             dataType: 'json',
             type    : 'GET',
             success : function ( received_data ) {

@@ -265,7 +265,7 @@ def get_permalink_endpoints( id ):
     return data
 
 
-def restore_group( id, endpoint ):
+def restore_group_old( id, endpoint ):
     '''Collect all data and metadata for a given endpoint.'''
     # connect to db
     cursor = db_cursor()
@@ -303,7 +303,101 @@ def restore_group( id, endpoint ):
     }
 
     return group
+    
 
+def restore_group( id, endpoint ):
+    '''Collect all data and metadata for a given endpoint.'''
+    # connect to db
+    cursor = db_cursor()
+    # get minimal JSON object stored in db
+    group  = get_snapshot( id, endpoint )
+
+    # collect ids of unique open nodes in the endpoint
+    unique_parents = set()
+    unique_nodes = set()
+    for sheet in group['sheets']:
+        if sheet['type'] in [0, 1]:
+            parents = get_standard_sheet_data( sheet['data'], cursor )
+            unique_parents = unique_parents | parents
+        else:
+            parents, nodes = get_searched_sheet_data( sheet['data'], cursor )
+            unique_parents = unique_parents | parents
+            unique_nodes = unique_nodes | nodes
+
+    # now collect the data (full data, not only ids!)
+    collection = Collection( endpoint, cursor )
+    
+    group['data'] = []
+    if None in unique_parents:
+        group['data'] = collection.get_top_level()
+        unique_parents.discard( None )
+
+    # collect all children of all open nodes in the endpoint
+    for parent in unique_parents:
+        children = collection.get_children( parent )
+        children_ids = [ child['id'] for child in children ]
+        map( unique_nodes.discard, children_ids )
+        group['data'] += children
+        
+    # collect other needed nodes
+    for node in unique_nodes:
+        prepared_node = collection.get_node( node )
+        group['data'].append( prepared_node )
+
+    group['data'].sort( key=lambda e: e['id'] )
+
+    # add metadata for the endpoint
+    group['meta'] = {
+        'label': collection.get_label(),
+        'columns': collection.get_columns()
+    }
+
+    return group
+    
+    
+def get_standard_sheet_data( data, cursor ):
+    # get parents of sheet's deepest open nodes
+    unique_parents = set()
+    query = '''SELECT DISTINCT unnest(parents) FROM p_tree
+               WHERE id IN ( %s )
+            ''' % str( data['ids'] ).strip('[]')
+    cursor.execute( query )
+    # remember that top level nodes are needed
+    unique_parents.add( None )
+    # gather all open nodes in the sheet
+    # TODO don't use the RealDictCursor here
+    open_nodes = data['ids'] + [ e['unnest'] for e in cursor.fetchall() ]
+    # collect only endpoint unique nodes
+    map( unique_parents.add, open_nodes )
+    
+    return unique_parents
+    
+    
+def get_searched_sheet_data( data, cursor ):
+    unique_parents = set()
+    unique_nodes = set()
+    for box in data['boxes']:
+        query = '''SELECT unnest(parents) FROM p_tree
+                   WHERE id = %d
+                ''' % box['rows'][0]['id']
+        cursor.execute( query )
+        parents = [ e['unnest'] for e in cursor.fetchall() ]
+        # remember ids of all ancestors
+        map( unique_nodes.add, parents )
+        if box['context']:
+            # remember that all children of parent are needed
+            if not parents:
+                # remember that top level is needed
+                unique_parents.add( None )
+            else:
+                unique_parents.add( parents[-1] )
+        else:
+            # remember which nodes are needed
+            ids = [ row['id'] for row in box['rows'] ]
+            map( unique_nodes.add, ids )
+    
+    return unique_parents, unique_nodes
+            
 
 def get_snapshot( id, endpoint ):
     '''Get the permalink's group snapshot from db'''

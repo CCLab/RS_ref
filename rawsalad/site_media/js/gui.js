@@ -33,18 +33,51 @@ var _gui = (function () {
     var that = {};
 
     that.init_gui = function() {
-    
-        // Test buttons
-        $('#test-button-1').click( function() {
-            draw_end_point( 'data_50001' );
-        });
-        $('#test-button-2').click( function() {
-            draw_end_point( 'data_50003' );
+
+        $('#tm-choose').click( function () {
+            _resource.get_collections_list( function ( collections ) {
+                // TODO make the submit button's callback a stand-alone function
+                _dbtree.draw_db_tree( collections, 'Pokaż dane', show_collections );
+                // start preloader
+                console.log( "Wczytuję dane. To może chwilę potrwać!" );
+            });
         });
 
-        // get_db_tree parmeters - draw db_tree, submit button text, submit callback function
-        // TODO change for get collection names
-        _resource.get_collections_list( _dbtree.draw_db_tree_panels, "Wyświetl wybrane" ); 
+        $('#tm-search').click( function () {
+            _resource.get_collections_list( function ( collections ) {
+                var html = [];
+                html.push( '<section class="panel-main">' );
+                html.push( '<input type="text" id="search-query" ' );
+                html.push( 'placeholder="Wpisz szukane słowo" /></section>' );
+
+                // TODO make the submit button's callback a stand-alone function
+                _dbtree.draw_db_tree( collections, 'Szukaj', function ( endpoints ) {
+                    console.log( "Szukam" );
+
+                    var query = $('#search-query').val();
+                    _resource.get_search_count( endpoints, query, function ( data ) {
+                        console.log( data );
+                        $('#pl-ch-area').empty();
+
+                        var html = [];
+                        data['results'].forEach( function ( e ) {
+                            html.push( '<h1>', e['dbtree_top_parent_name'], '</h1>' );
+                            e['data'].forEach( function ( ee ) {
+                                html.push( '<p>', ee['label'], ' :: ', ee['found_count'], '</p>' );
+                            });
+                        });
+                        $('#pl-ch-area').append( $(html.join('')));
+                    });
+                });
+
+                $('#pl-ch-area').prepend( $(html.join('')) );
+
+                // start preloader
+                console.log( "Wczytuję dane. To może chwilę potrwać!" );
+            });
+        });
+
+        $('#tm-choose').trigger('click');
     };
 
     //=====================================================//
@@ -55,23 +88,24 @@ var _gui = (function () {
 
     /////////////////////////////////
     // D R A W   F U N C T I O N S //
-    /////////////////////////////////   
+    /////////////////////////////////
 
-    
-    function draw_end_point( endpoint ) {
+
+    function draw_endpoint( data ) {
+        if( $('#panels').is(':visible') ) {
+            $('#panels').slideUp( 300 );
+        }
         display_application_panel();
-        _resource.get_top_level( endpoint, function ( data ) {
-            draw_table( data );
-            draw_tools( data );  
-            _resource.get_sheets_labels( draw_tabs );
-        });
+        draw_table( data );
+        draw_tools( data );
+        _resource.get_sheets_labels( draw_tabs );
     }
 
 
-    function draw_sheet( sheet_id ){  
+    function draw_sheet( sheet_id ){
         _resource.get_sheet_data( sheet_id, draw_table );
         _resource.get_sheet_name( sheet_id, draw_tools );
-        _resource.get_sheets_labels( draw_tabs );  
+        _resource.get_sheets_labels( draw_tabs );
     }
 
 
@@ -103,14 +137,14 @@ var _gui = (function () {
 
     ///////////////////////////////////////
     // D I S P L A Y   F U N C T I O N S //
-    ///////////////////////////////////////   
+    ///////////////////////////////////////
 
 
     // APLICATION PANEL
 
     function display_application_panel() {
         prepare_aplication_interface();
-        $('#application').show();        
+        $('#application').show();
     }
 
 
@@ -132,16 +166,16 @@ var _gui = (function () {
         }
     }
 
-    
+
     // APPLICATION TABLE
 
-    // active table should be loaded        
-    function display_tabs( tabs ) { 
+    // active table should be loaded
+    function display_tabs( tabs ) {
         var tabs_code = $(tabs);
 
         set_active_tab( tabs_code );
         preapare_tabs_interface( tabs_code );
-        
+
         $('#app-table>header').empty();
         $('#app-table>header').append( tabs_code );
     }
@@ -167,7 +201,7 @@ var _gui = (function () {
 
     /////////////////////////////////////////////////////////////
     // P R E A P A R E   I N T E R F A C E   F U N C T I O N S //
-    /////////////////////////////////////////////////////////////   
+    /////////////////////////////////////////////////////////////
 
 
     // APPLICATION TABS INTERFACE
@@ -257,17 +291,17 @@ var _gui = (function () {
             .click( open_node );
         selected_root
             .click( close_node );
-        
+
         open_in_select
             .click( close_node );
         close_in_select
-            .click( open_node );                
-            
+            .click( open_node );
+
         open_roots
             .click( reselect );
         not_root
             .click( reselect );
-            
+
 
 //        info_bt
 //            .click( display_info_panel );
@@ -277,7 +311,7 @@ var _gui = (function () {
 
     /////////////////////////////////////////////
     // G U I   E V E N T S   F U N C T I O N S //
-    /////////////////////////////////////////////   
+    /////////////////////////////////////////////
 
 
     // APPLICATION TABS EVENTS
@@ -325,7 +359,7 @@ var _gui = (function () {
         var sheet_id = active_sheet_id();
 
         var callback = function( data ) {
-            var new_sheet_id = data['sheet_id']; 
+            var new_sheet_id = data['sheet_id'];
             draw_sheet( data['sheet_id'] );
         }
         _resource.copy_sheet( sheet_id, callback );
@@ -336,7 +370,7 @@ var _gui = (function () {
 
     function show_rename_form() { // TODO test it
         var old_name
-        
+
         if ( $('#app-tb-tl-rename-input').is(":visible")){
             var new_name = $('#app-tb-tl-rename-input').val();
             var callback = function(){
@@ -377,6 +411,7 @@ var _gui = (function () {
 
     function clear_table() {
         var sheet_id = active_sheet_id();
+        // TODO make draw_sheet a direct callback
         var callback = function() {
             draw_sheet( sheet_id );
         }
@@ -388,12 +423,12 @@ var _gui = (function () {
     function display_sort_panel() {
         var sort_form_code = $( _templates.sort_form );
         preapare_sort_interface( sort_form_code );
-        $('#app-tb-tools>section').append( sort_form_code ); // TODO - add show and hide animations            
+        $('#app-tb-tools>section').append( sort_form_code ); // TODO - add show and hide animations
     }
 
 
     function display_filter_panel() {
- 
+
     }
 
 
@@ -412,8 +447,8 @@ var _gui = (function () {
                     $('#app-tb-tl-columns-button')
                         .trigger( $.Event( 'click' ));
                 });
-                
-            event.stopPropagation(); 
+
+            event.stopPropagation();
             prepare_columns_form_interface( columns_form );
         };
 
@@ -422,19 +457,19 @@ var _gui = (function () {
             .click( hide_add_columns );
 
         _resource.all_columns( sheet_id, callback ); //TODO - not ready - test it
-        
+
     }
-    
+
 
     function hide_add_columns( event ) {
-        
+
         $('#app-tb-tl-columns-form').slideUp( 200, function() {
             $('#app-tb-tl-columns-list').empty();
         } );
 
         $('html').unbind( 'click' );
 
-        event.stopPropagation();        
+        event.stopPropagation();
 
         $(this)
             .unbind( 'click' )
@@ -470,15 +505,15 @@ var _gui = (function () {
             var rows_code = $(new_rows);
 
             row.after( rows_code );
-            add_selection( rows_code ); 
+            add_selection( rows_code );
             prepare_rows_interface( rows_code );
 
             make_zebra();
             row
-                .attr( 'data-open', 'true' ) 
+                .attr( 'data-open', 'true' )
                 .click( close_node );
         }
-        
+
         row.unbind( 'click' );
 
         _resource.get_children( sheet_id, row_id, callback )
@@ -496,21 +531,21 @@ var _gui = (function () {
         var row_id = get_id( row );
         var children = row.siblings( '[data-parent="' + row_id +'"]' );
         var open_children = children.filter( '[data-open="true"]' );
-        
+
         open_children.trigger( 'click' );
-        
+
         _resource.remove_children( sheet_id, row_id );
         children.remove();
-            
+
         if ( row.hasClass( 'selected' ) ) {
             deselect();
         }
         make_zebra(); // TODO - how to make it only one time?
-        
+
         row
             .attr( 'data-open', 'false' )
             .unbind( 'click' )
-            .click( open_node );        
+            .click( open_node );
     }
 
 
@@ -523,7 +558,7 @@ var _gui = (function () {
 
     ///////////////////////////////////////
     // S U P P O R T   F U N C T I O N S //
-    ///////////////////////////////////////   
+    ///////////////////////////////////////
 
     // SHARE TABLE FUNCTIONS
 
@@ -574,7 +609,7 @@ var _gui = (function () {
         if ( tabs_num  > cut.length ){
             return 3;
         }
-        
+
         return cut[ tabs_num-1 ];
     }
 
@@ -629,11 +664,11 @@ var _gui = (function () {
         var sheet_id = tab_id.split( '-' )[1];
         return  parseInt( sheet_id, 10 );
     }
-    
-    
+
+
     // TOOLS FUNCTIONS
-    
-    
+
+
     function active_sheet_name() {
         var tab = $('#app-tb-tl-title');
         return tab.text();
@@ -672,7 +707,7 @@ var _gui = (function () {
 
                 checkboxes.map( function ( index, input ) {
                     columns.push( input['value'] );
-                });              
+                });
 
                 _resource.show_with_columns( sheet_id, columns, callback )
 
@@ -687,15 +722,15 @@ var _gui = (function () {
         add_sort_key( sort_form );
     }
 
-    
+
     function add_sort_key( sort_form ) {
         var sheet_id = active_sheet_id();
         var callback = function ( data ) {
             var keys = sort_form.find( 'tbody>tr' );
             var placeholder = keys.paren();
-            var keys_num = keys.length; 
+            var keys_num = keys.length;
             var key_html;
-            
+
             if ( keys_num === data.columns.length ){
                 $('#app-tb-tl-sort-add').hide();
             }
@@ -703,26 +738,26 @@ var _gui = (function () {
 //            else {
 //                $('#app-tb-tl-sort-add').show()
 //            }
-            
-            
+
+
             data['keys_num'] = keys_num;
-      
+
             eliminate_desame_keys( sort_form, data ); //TODO
             key_html = Mustache.to_html( _templates.sort_key, data );
-            placeholder.append( key_html );            
+            placeholder.append( key_html );
         };
-        
+
         _resource.get_sort_columns( sheet_id, callback )
     }
-    
+
 
     //TODO
     function eliminate_desame_keys( srt_form, data ) {
         var columns_selector = srt_form.find( '#app-tb-tl-sort-form-columns' );
         var selected_columns = columns_selector.find( 'select option:selected' );
         // TODO remove from data if it's in selected columns
-        
-        
+
+
     }
 
 
@@ -741,7 +776,7 @@ var _gui = (function () {
             old_selected_row_id = get_id( old_selected );
         }
 
-        if ( old_selected_row_id !== top_row_id ) {            
+        if ( old_selected_row_id !== top_row_id ) {
             select( rows_code );
             _resource.row_selected( sheet_id, top_row_id, old_selected_row_id );
         }
@@ -750,10 +785,10 @@ var _gui = (function () {
         }
     }
 
-    
+
     // row is 'tr' jQuery object or list of objects
     function select( row, isReselect ) {
-    
+
         var top_row = get_prev_top_row( row );
         var in_select = top_row.nextUntil( '.top' );
         var after_row = get_next_top_row( row );
@@ -774,13 +809,13 @@ var _gui = (function () {
             top_row
                 .unbind( 'click' )
                 .click( close_node );
-            after_row.unbind( 'click' ); 
+            after_row.unbind( 'click' );
             open_children.click( close_node );
             close_children.click( open_node );
-        }        
+        }
     }
-    
-    
+
+
     function deselect() {
         $('tr.selected')
             .removeClass( 'selected' )
@@ -793,7 +828,7 @@ var _gui = (function () {
         $('tr.after-selected').removeClass( 'after-selected' );
         $('tr.dim').removeClass( 'dim' );
     }
-    
+
     function reselect() {
         var row = $(this);
         select( row, true );
@@ -801,7 +836,7 @@ var _gui = (function () {
 
 
     //get root for rows
-    function get_prev_top_row( rows_code ) {        
+    function get_prev_top_row( rows_code ) {
         var row = rows_code.first();
         while ( ! row.hasClass( 'top' ) ) {
             row = row.prev();
@@ -813,7 +848,7 @@ var _gui = (function () {
     // check for last row, if no - return empty jQuery object
     function get_next_top_row( rows_code ) {
         var row = rows_code.last().next();
-        
+
         while ( ( row.length !== 0 ) && ! row.hasClass( 'top' ) ) {
             row = row.next();
         }
@@ -826,8 +861,8 @@ var _gui = (function () {
         var id = obj.attr( 'id' );
         return parseInt( id, 10 );
     }
-    
- 
+
+
     function make_zebra() {
         $('#app-tb-datatable')
             .find('tr:visible')
@@ -843,6 +878,35 @@ var _gui = (function () {
             });
     }
 
+
+
+    // DB TREE CALLBACKS
+    function show_collections( endpoints ) {
+        // TODO prepare a final list of callbacks
+        // each endpoint has it's own callback [ fun, fun, fun.... ]
+        // the first inits the app, the last cleans up the preloader
+        var callbacks = [];
+        var first_callback = function ( data ) {
+                console.log( "1 / " + endpoints.length );
+                draw_endpoint( data['data'] );
+        };
+        var mid_callback = function ( data ) {
+                console.log( (i+2) + " / " + endpoints.length );
+        };
+        var last_callback = function ( data ) {
+            console.log( (i+2) + " / " + endpoints.length );
+            console.log( "Skończone" );
+        };
+
+        // populate callbacks list with appropriate callbacks
+        callbacks.push( first_callback );
+        for( i = 0; i < endpoints.length-2; ++i ) {
+            callbacks.push( mid_callback );
+        }
+        callbacks.push( last_callback );
+
+        _resource.get_top_levels( endpoints, callbacks );
+    }
 
     // return public interface
     return that;
