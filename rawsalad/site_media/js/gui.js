@@ -35,8 +35,13 @@ var _gui = (function () {
     that.init_gui = function() {
 
         $('#tm-choose').click( function () {
-            _resource.get_collections_list( function ( collections ) {
+            _resource.get_collections( function ( collections ) {
+                // TODO replace old draw_db_tree with the new one
+                _dbtree.draw_db_tree_new( collections, 'Pokaż dane', 'unused_callback' );
                 // TODO make the submit button's callback a stand-alone function
+                // TODO fast temporary solution so that old and new db
+                // functions work
+                collections = _tree.tree_to_list( collections );
                 _dbtree.draw_db_tree( collections, 'Pokaż dane', show_collections );
                 // start preloader
                 console.log( "Wczytuję dane. To może chwilę potrwać!" );
@@ -44,7 +49,10 @@ var _gui = (function () {
         });
 
         $('#tm-search').click( function () {
-            _resource.get_collections_list( function ( collections ) {
+            _resource.get_collections( function ( collections ) {
+                // TODO fast temporary solution so that old and new db
+                // functions work
+                collections = _tree.tree_to_list( collections );
                 var html = [];
                 html.push( '<section class="panel-main">' );
                 html.push( '<input type="text" id="search-query" ' );
@@ -63,10 +71,22 @@ var _gui = (function () {
                         data['results'].forEach( function ( e ) {
                             html.push( '<h1>', e['dbtree_top_parent_name'], '</h1>' );
                             e['data'].forEach( function ( ee ) {
-                                html.push( '<p>', ee['label'], ' :: ', ee['found_count'], '</p>' );
+                                html.push( '<p data-endpoint="', ee['endpoint'],'">', ee['label'], ' :: ', ee['found_count'], '</p>' );
                             });
                         });
                         $('#pl-ch-area').append( $(html.join('')));
+                        $('#pl-ch-area').find('p').each( function () {
+                            var endpoint = $(this).attr('data-endpoint');
+                            $(this).click( function () {
+                                _resource.get_search_data( endpoint, data['query'], function ( ddd ) {
+                                    console.log( ddd );
+                                    var html = Mustache.to_html( _templates.search_box, ddd );
+
+                                    $('#pl-ch-area').empty();
+                                    $('#pl-ch-area').append( html );
+                                });
+                            });
+                        });
                     });
                 });
 
@@ -92,9 +112,9 @@ var _gui = (function () {
 
 
     function draw_endpoint( data ) {
-        if( $('#panels').is(':visible') ) {
-            $('#panels').slideUp( 300 );
-        }
+//        if( $('#panels').is(':visible') ) {
+//            $('#panels').slideUp( 300 );
+//        }
         display_application_panel();
         draw_table( data );
         draw_tools( data );
@@ -127,10 +147,7 @@ var _gui = (function () {
 
 
     function draw_table( data ) {
-        var callback = function( table_html ) {
-            display_table( table_html );
-        };
-        _table.create_table( data, callback );
+        _table.create_table( data, display_table );
     }
 
 
@@ -268,6 +285,7 @@ var _gui = (function () {
 
     // TABLE ROWS INTERFACE
 
+    // TODO redesign it from scratch
     function prepare_rows_interface( table_code ) {
 //        var info_bt = table_code.find( '.app-tb-info-button>img' );
 
@@ -359,7 +377,7 @@ var _gui = (function () {
         var sheet_id = active_sheet_id();
 
         var callback = function( data ) {
-            var new_sheet_id = data['sheet_id'];
+            // TODO give me just an id _resource
             draw_sheet( data['sheet_id'] );
         }
         _resource.copy_sheet( sheet_id, callback );
@@ -369,40 +387,40 @@ var _gui = (function () {
     // TOOLS EVENTS
 
     function show_rename_form() { // TODO test it
-        var old_name
+        var old_label
 
         if ( $('#app-tb-tl-rename-input').is(":visible")){
-            var new_name = $('#app-tb-tl-rename-input').val();
+            // TODO trim whitespaces around new label
+            var new_label = $('#app-tb-tl-rename-input').val();
             var callback = function(){
                 _resource.get_sheets_labels( draw_tabs );
             };
 
-            old_name = active_sheet_name();
-            
-            if ( ( new_name !== old_name ) && /\S/.test( new_name ) ) {
+            old_label = active_sheet_name();
+
+            if ( ( new_label !== old_label ) && /\S/.test(new_label) ) {
                 var sheet_id = active_sheet_id();
 
-                _resource.change_name( sheet_id, new_name, callback );
-                $('#app-tb-tl-title').html( new_name );
-                $('#app-tb-tl-old-title').html( old_name );
-                $('#app-tb-tl-old-title').show();
+                _resource.change_name( sheet_id, new_label, callback );
+                $('#app-tb-tl-title').html( new_label );
             }
             $('#app-tb-tl-rename-form').hide();
             $('#app-tb-tl-title').show();
         }
         else {
-            old_name = $('#app-tb-tl-title').html();
+            old_label = active_sheet_name();
 
             $('#app-tb-tl-title').hide();
             $('#app-tb-tl-rename-form')
                 .show()
+                // TODO bind enter key and esc key (at once)
                 .submit( function () {
                     $('#app-tb-tl-rename-button').trigger( $.Event( 'click' ) );
                     return false;
                 });
 
             $('#app-tb-tl-rename-input')
-                .val( old_name )
+                .val( old_label )
                 .select()
                 .focus();
         }
@@ -413,6 +431,7 @@ var _gui = (function () {
         var sheet_id = active_sheet_id();
         // TODO make draw_sheet a direct callback
         var callback = function() {
+            // TODO give me this id _resource
             draw_sheet( sheet_id );
         }
         _resource.clean_table( sheet_id, callback )
@@ -436,11 +455,10 @@ var _gui = (function () {
         var sheet_id = active_sheet_id();
 
         var callback = function( columns ){
-            var columns_object =  { 'columns': columns, };
+            var columns_object =  { 'columns': columns };
             var columns_form = Mustache.to_html( _templates.columns_form, columns_object );
-            var columns_form_code = $(columns_form);
 
-            $('#app-tb-tl-columns-list').append( columns_form );
+            $('#app-tb-tl-columns-list').append( $(columns_form) );
             $('#app-tb-tl-columns-form').slideDown( 200 );
             $('html')
                 .click( function () {
@@ -449,7 +467,7 @@ var _gui = (function () {
                 });
 
             event.stopPropagation();
-            prepare_columns_form_interface( columns_form );
+            prepare_columns_form_interface();
         };
 
         $(this)
@@ -488,11 +506,6 @@ var _gui = (function () {
     }
 
 
-    function add_columns() {
-
-    }
-
-
     // TABLE EVENTS
 
     function open_node() {
@@ -501,10 +514,11 @@ var _gui = (function () {
         var row_id = get_id( row );
 
         var callback = function ( new_data ) {
-            var new_rows = _table.generate_node( row_id, new_data );
+            var new_rows = _table.generate_node( new_data );
             var rows_code = $(new_rows);
 
             row.after( rows_code );
+            // TODO move it away from th callback
             add_selection( rows_code );
             prepare_rows_interface( rows_code );
 
@@ -532,7 +546,7 @@ var _gui = (function () {
         var children = row.siblings( '[data-parent="' + row_id +'"]' );
         var open_children = children.filter( '[data-open="true"]' );
 
-        open_children.trigger( 'click' );
+        open_children.trigger( 'click' ); //TODO remove by jQuery until next.data-parent === data-parent
 
         _resource.remove_children( sheet_id, row_id );
         children.remove();
@@ -675,7 +689,7 @@ var _gui = (function () {
     }
 
     // add columns functions
-    function prepare_columns_form_interface( columns_form ) {
+    function prepare_columns_form_interface() {
 
         $('#app-tb-tl-lt-select')
             .click( function () {
@@ -801,6 +815,7 @@ var _gui = (function () {
         after_row.addClass( 'after-selected' );
         rows.addClass( 'dim' );
 
+        // TODO change after changing click logic in the rows
         if ( !!isReselect ) {
             var clickable_children = in_select.find( 'td.click' ).parent();
             var open_children = clickable_children.filter( '[data-open="true"]' );
@@ -864,6 +879,7 @@ var _gui = (function () {
 
 
     function make_zebra() {
+        // TODO use even/odd CSS selectors
         $('#app-tb-datatable')
             .find('tr:visible')
             .each( function ( i ) {

@@ -28,12 +28,12 @@ var _table = (function () {
 
 //  P U B L I C   I N T E R F A C E
     var that = {};
-    
+
 
     that.create_table = function( data, callback ) {
         var type = data['type'];
-        
-        
+
+
         switch ( type ) {
             case _enum.STANDARD:
                 create_standard_table( data, callback );
@@ -48,45 +48,45 @@ var _table = (function () {
                 _assert.assert( true, '_table:create_table:wrong table type' );
         };
     };
-    
 
-    that.generate_node = function( row_id, data ) {
+
+    that.generate_node = function( data ) {
         var new_rows = create_rows( data );
-        return new_rows;        
+        return new_rows;
     };
-    
+
 
 //  P R I V A T E   I N T E R F A C E
-    
+
     // CREATE FUNCTIONS
     function create_standard_table( data, callback ) {
         var header_code;
         var tbody_code;
         var table_code;
         var table_tag;
- 
-                                     
+
+
         header_code = create_standard_header( data );
         tbody_code = create_tbody( data );
-        
+
         table_code = header_code.concat( tbody_code );
-        
+
         callback( table_code);
     }
 
-    
+
     function create_standard_header( data ) {
         var head_row_code;
         var standard_header_code;
-        var total_row_code = '';        
-        var total = data['total'] || false;
+        var total_row_code = '';
 
         head_row_code = Mustache.to_html( _templates.standard_head_row, data );
 
-        if ( !!total ) {
+        if ( !!data['total'] ) {
             total_row_code = Mustache.to_html( _templates.standard_total_row, data );
         }
-        
+
+        // TODO clean concat, +, join, push etc
         standard_header_code = '<thead data-sheet-id="' + data['id'] + '">'
                                 .concat( head_row_code, total_row_code, '</thead>' );
 
@@ -97,39 +97,39 @@ var _table = (function () {
     function create_tbody( data ) {
         var rows_code = create_rows( data );// TODO add and test selected
         var tbody_code = '<tbody>'.concat( rows_code, '</tbody>' );
-        
+
         return tbody_code;
     }
 
-        
+
     function create_rows( data ) {
         var rows_code;
 
-        add_rows_padding( data );                        
-        
+        add_rows_padding( data );
+
         rows_code = Mustache.to_html( _templates.standard_rows, data );
-                
+
         return rows_code;
     }
 
-    
+
     //OTHER FUNCTIONS
     // prepare padding value for child rows
     function add_rows_padding( data ) {
-        data['rows'] = data['rows'].map( function ( row ) { // TODO - test it                                       
+        data['rows'] = data['rows'].map( function ( row ) { // TODO - test it
             if ( row['level'] > 1 ) {
                 row['data']['0']['padding'] = { 'value': ( row['level'] - 1 ) * 10, };
-            } 
+            }
             else {
                 row['top_level'] = 'top';
             }
-            
-             
+
+
             return row;
-        });    
+        });
     }
 
-    
+
     // return public interface
     return that;
 })();

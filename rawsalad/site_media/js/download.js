@@ -26,198 +26,130 @@
 
 var _download = (function () {
 
+//  P U B L I C   I N T E R F A C E
     var that = {};
-
-    // ids = { '0': [ '2', '4' ], '4': [ '1' ], 'full': [ '0-1-2012.csv', '3-2-2011.csv' ] }
-    that.selected = function ( ids ) {
-        var i, columns;
-        var group, sheet;
-        var csv_string = '';
-
-        for( group_id in ids ) {
-            ids[group_id].forEach( function ( e ) {
-                if( group_id === 'full' ) {
-                    csv_string += e;
-                }
-                else {
-                    sheet = _store.get_sheet( group_id, e );
-                    columns = sheet['columns'];
-
-                    csv_string += translation['js_selected_header'];
-
-                    for( i = 0; i < columns.length; i += 1 ) {
-                        csv_string += columns[i]['label'];
-                        csv_string += ';';
-                    }
-                    csv_string += '|';
-
-                    if( sheet['filtered'] ) {
-                        csv_string += add_filtered( sheet );
-                    }
-                    else {
-                        csv_string += add_total( sheet );
-                        csv_string += add_children( sheet );
-                    }
-                }
-                // end of file string
-                csv_string += '--file--';
-            });
-        }
-
-        window.onbeforeunload = null;
-
-        // send it to server for further processing!!
-        $('#pl-dl-hidden-form')
-            .find('input')
-            .val( csv_string )
-            .end()
-            .submit();
-    };
-
+    
+    // Prepare object that will be sent to the server and will be
+    // used to get download data from db.
+    that.prepare_download_data = function( sheets, endpoints ) {
+        var download_json = [];
+        
+        sheets.forEach( function ( sheet ) {
+            download_json.push( prepare_sheet( sheet ) );
+        });
+        
+        endpoints.forEach( function( endpoint ) {
+            download_json.push( prepare_endpoint( endpoint ) );
+        });
+        
+        return JSON.stringify( download_json );
+    }
+    
     return that;
-
-
+    
+    
 //  P R I V A T E   I N T E R F A C E
 
-    function add_filtered( sheet ) {
-        var result = [];
-        var rows_copy = [];
-        $.extend( true, rows_copy, sheet['rows'] );
+    function prepare_sheet( sheet ) {
+        var ids = get_ids_in_sheet( sheet );
+        var column_names = sheet['columns'].map( function ( column ) {
+            return column['key'];
+        });
         
-        if ( !sheet['sorted'] ) {
-            rows_copy.sort( function (a, b) {
-                if ( a['data']['idef_sort'] < b['data']['idef_sort'] ) {
-                    return -1;
-                }
-                else {
-                    return a['data']['idef_sort'] > b['data']['idef_sort'];
-                };
-            });
-        }
-        rows_copy.forEach( function ( e ) {
-            result.push( add_row(e['data'], sheet['columns']) );
-        });
-
-        return result.join('');
+        return {
+            'endpoint': sheet['endpoint'],
+            'ids'     : ids,
+            'columns' : column_names
+        };
     }
-
-
-    function add_row( node, columns ) {
-        var result = '';
-
-        result += node['idef'] + ';';
-        if( !!node['parent'] === false ) {
-            result += ';';
-        }
-        else {
-            result += node['parent'] + ';';
-        }
-        result += node['level'] + ';';
-
-        columns.forEach( function ( e ) {
-            result += node[ e['key'] ];
-            result += ';';
-        });
-
-        result += '|';
-
-        return result;
+    
+    function prepare_endpoint( endpoint ) {
+        return {
+            'endpoint': endpoint
+        };
     }
-
-
-    function add_child( node, columns, csv ) {
-        var result = '';
-        var parent_position = csv.indexOf( '|' + node['parent'] );
-        var next_position;
-
-        result += node['idef'] + ';';
-        result += node['parent'] + ';';
-        result += node['level'] + ';';
-
-        columns.forEach( function ( e ) {
-            result += node[ e['key'] ];
-            result += ';';
-        });
-
-        result += '|';
-
-        if( parent_position !== -1 ) {
-            next_position = csv.indexOf( '|', parent_position+1 ) + 1;
-            csv = csv.slice( 0, next_position ) + result + csv.slice( next_position );
+    
+    function get_ids_in_sheet( sheet ) {
+        var ids;
+        
+        switch ( sheet['type'] ) {
+            case _enum['STANDARD']:
+                ids = get_ids_standard_sheet( sheet['data'] );
+                break;
+            case _enum['FILTERED']:
+                ids = get_ids_filtered_sheet( sheet['data'] );
+                break;
+            case _enum['SEARCHED']:
+                ids = get_ids_searched_sheet( sheet['data'], sheet['boxes'] );
+                break;
+            default:
+                throw 'Bad sheet type in download';
         }
-        else {
-            csv += result;
-        }
-
-        return csv;
+        
+        return ids;
     }
-
-
-    function add_children( sheet, parent, result ) {
-        var parent = parent || null;
-        var result = result || '';
-        var i, node, open;
-        var columns = sheet['columns'];
-        var children = sheet['rows'].filter( function ( e ) {
-            return e['data']['parent'] === parent;
+    
+    function get_ids_standard_sheet( data ) {
+        var ids = [];
+        
+        _tree.iterate( data, function ( node ) {
+            ids.push( node['id'] );
         });
-
-        if( children.length === 0 ) {
-            return result;
-        }
-
-        for( i = 0; i < children.length; i += 1 ) {
-            node = children[i]['data'];
-            open = children[i]['state']['open'];
-
-            result += node['idef'] + ';';
-            if( !!node['parent'] === false ) {
-                result += ';';
-            }
-            else {
-                result += node['parent'] + ';';
-            }
-            result += node['level'] + ';';
-
-            for( j = 0; j < columns.length; j += 1 ) {
-                result += node[ columns[j]['key'] ];
-                result += ';';
-            }
-            result += '|';
-
-            if( open === false ) {
-                continue;
-            }
-            else {
-                result = add_children( sheet, node['idef'], result );
-            }
-        }
-        return result;
+        
+        return ids;
     }
-
-    function add_total( sheet ) {
-        var result = '';
-        var columns = sheet['columns'];
-        var total;
-
-        try {
-            total = sheet['rows']['total']['data'];
-        }
-        catch ( err ) {
-            return '';
-        }
-
-        result += total['idef'] + ';';
-        result += ';';
-        result += total['level'] + ';';
-
-        columns.forEach( function ( e ) {
-            result += total[ e['key'] ];
-            result += ';';
+    
+    function get_ids_filtered_sheet( data ) {
+        var ids = [];
+        
+        _tree.iterate( data, function ( node ) {
+            ids.push( node['id'] );
         });
-        result += '|';
-
-        return result;
+        
+        return ids;
     }
-
+    
+    function get_ids_searched_sheet( data, boxes ) {
+        var ids = [];
+        var needed_ids = {};
+        var parent;
+        var node;
+        var nodes;
+        
+        // find which nodes are needed and remember them
+        boxes.forEach( function ( box ) {
+            if ( box['context'] ) {
+                // all nodes on this level are needed
+                node = _tree.get_node( data, box['rows'][0] );
+                parent = _tree.get_node( data, node['parent'] );
+                nodes = _tree.get_children_nodes( data, parent );
+                nodes.forEach( function ( node ) {
+                    needed_ids[ node['id'] ] = true;
+                });
+            } else {
+                // only searched nodes on this level are needed
+                box['rows'].forEach( function ( id ) {
+                    needed_ids[ id ] = true;
+                });
+            }
+            
+            if ( box['breadcrumb'] ) {
+                // all ancestors are needed
+                node = _tree.get_node( data, box['rows'][0]['parent'] );
+                nodes = _tree.get_parents( data, node );
+                nodes.forEach( function ( node ) {
+                    needed_ids[ node['id'] ] = true;
+                });
+            }
+        });
+        
+        data.iterate( data, function ( node ) {
+            if ( !!needed_ids[ node['id'] ] ) {
+                ids.push( node['id'] );
+            }
+        });
+        
+        return ids;
+    }
+    
 })();

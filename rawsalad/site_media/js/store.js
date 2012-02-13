@@ -32,9 +32,9 @@ var _store = (function () {
     // DBTREE FUNCTIONS
 
     // Download db tree describing collections.
-    that.get_collections_list = function ( callback ) {
+    that.get_collections = function ( callback ) {
         var respond = function () {
-            var data = _tree.tree_to_list( get_db_tree() );
+            var data = _tree.copy( get_db_tree() );
             callback( data );
         };
 
@@ -194,8 +194,6 @@ var _store = (function () {
             callback( endpoint_data );
         });
     };
-
-
 
 // P R I V A T E   I N T E R F A C E
 

@@ -30,7 +30,7 @@ var _db = (function () {
 //  P U B L I C   I N T E R F A C E
     var that = {};
 
-    that.get_collections_list = function ( callback ) {
+    that.get_collections_list = function( callback ) {
         $.ajax({
             url     : '/get_collections/',
             data    : { 'format': 'list' },
@@ -47,7 +47,7 @@ var _db = (function () {
     };
 
     // Gets the top-level from db
-    that.get_init_data = function ( endpoint, callback ) {
+    that.get_init_data = function( endpoint, callback ) {
         $.ajax({
             url     : '/get_init_data/',
             data    : { 'endpoint': endpoint },
@@ -85,7 +85,7 @@ var _db = (function () {
     };
 
 
-    that.get_search_count = function ( scope, query, callback ) {
+    that.get_search_count = function( scope, query, callback ) {
         var scope_str = JSON.stringify( scope );
         $.ajax({
             url     : '/search_count/',
@@ -105,7 +105,7 @@ var _db = (function () {
         });
     };
 
-    that.get_search_data = function ( endpoint, query, get_meta, callback ) {
+    that.get_search_data = function( endpoint, query, get_meta, callback ) {
         $.ajax({
             url     : '/search_data/',
             data    : {
@@ -125,7 +125,7 @@ var _db = (function () {
         });
     };
     
-    that.store_state = function ( permalink_data, callback ) {
+    that.store_state = function( permalink_data, callback ) {
         $.ajax({
             url     : '/store_state/',
             data    : {
@@ -143,7 +143,7 @@ var _db = (function () {
         });
     };
     
-    that.restore_state = function ( permalink_id, endpoint, callback ) {
+    that.restore_state = function( permalink_id, endpoint, callback ) {
         $.ajax({
             url     : '/restore_state/',
             data    : {

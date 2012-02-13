@@ -111,7 +111,8 @@ def download_data( request ):
 
     response = HttpResponse()
     # TODO check if this is the only way to create a sheets download!
-    files = request.POST.get( 'csv_string' ).split( '--file--' )[:-1]
+    json_data = request.POST.get( 'csv_string', '' )
+    files = json.loads( request.POST.get( 'csv_string', '' ) )
 
     # CSV for a single file and ZIP for multiple files
     if len( files ) == 1:
@@ -121,7 +122,7 @@ def download_data( request ):
         response.write( single_file( files.pop() ) )
     else:
         response['Content-Type'] = 'application/zip'
-        response['Content-Disposition'] = "attachment; filename=collected_data.zip"
+        response['Content-Disposition'] = 'attachment; filename=collected_data.zip'
 
         response.write( multiple_files( files ) )
 
@@ -133,7 +134,6 @@ def download_data( request ):
 @csrf_exempt
 def store_state( request ):
     data  = request.POST.get( 'state', '' )
-    print 'data=', data
 
     permalink_id = sqldb.save_permalink( json.loads( data ) )
 
