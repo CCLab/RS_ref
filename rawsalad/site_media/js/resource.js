@@ -303,11 +303,29 @@ var _resource = (function () {
         }).map( function ( column ) {
             return {
                 'label': column['label'],
-                'key': column['key']
+                'key'  : column['key']
             };
         });
 
         callback( {'columns': sortable_columns} );
+    };
+    
+    that.get_filterable_columns = function ( sheet_id, callback ) {
+        var sheet;
+        var filterable_columns;
+        
+        sheet = get_sheet( sheet_id );
+        filterable_columns = sheet['columns'].filter( function ( columns ) {
+            return !!columns['processable'];
+        }).map( function ( columns ) {
+            return {
+                'label': column['label'],
+                'key'  : column['key'],
+                'type' : column['type']
+            };
+        });
+        
+        callback( {'columns': filterable_columns} );
     };
 
     // Sort sheet(in specified order) and return it.

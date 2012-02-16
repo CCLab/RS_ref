@@ -439,15 +439,22 @@ var _gui = (function () {
     }
 
 
-    // TODO finish sort
+    // Shows sort panel with event handlers defined and the first sort key.
     function display_sort_panel() {
         var sort_form_code = $( _templates.sort_form );
         prepare_sort_interface( sort_form_code );
-        $('#app-tb-tl-srft-forms').append( sort_form_code ); // TODO - add show and hide animations
+        add_sort_key( sort_form_code );
+        // TODO - add show and hide animations
+        $('#app-tb-tl-srft-forms').append( sort_form_code );
     }
 
-
+    // Shows filter panel with event handlers defined and the first filter key.
     function display_filter_panel() {
+        var filter_form_code = $( _templates.filter_form );
+        prepare_filter_interface( filter_form_code );
+        add_filter_key( filter_form_code );
+        // TODO - add show and hide animations
+        $('#app-tb-tl-srft-forms').append( filter_form_code );
     }
 
 
@@ -731,7 +738,7 @@ var _gui = (function () {
     }
 
 
-    // Define event handlers for Add sort key button and sort button
+    // Define event handlers for Add sort key button and sort button.
     function prepare_sort_interface( sort_form ){
         var add_key_button = sort_form.find('#app-tb-tl-sort-add');
         var submit_button = sort_form.find('#app-tb-tl-sort-submit');
@@ -753,8 +760,6 @@ var _gui = (function () {
                 
             return false;
         });
-        
-        add_sort_key( sort_form );
     }
     
     function get_sort_settings() {
@@ -830,7 +835,66 @@ var _gui = (function () {
             return !selected_columns[ col['key'] ];
         });
     }
+    
+    function prepare_filter_interface( filter_form ){
+        var add_key_button = filter_form.find('#app-tb-tl-filter-add');
+        var submit_button = filter_form.find('#app-tb-tl-filter-submit');
+        
+        add_key_button.click( function () {
+            add_filter_key( );
+        });
+        
+        submit_button.click( function () {
+            filter_form.submit();
+        });
+        
+        filter_form.submit( function () {
+            var sheet_id = active_sheet_id();
+            var settings = get_filter_settings();
 
+            $(this).remove();
+            filter_table( sheet_id, settings );
+                
+            return false;
+        });
+    }
+    
+    function add_filter_key( filter_form ) {
+        var filter_form = filter_form || $('#app-tb-tl-filter-form');
+        var sheet_id = active_sheet_id();
+
+        _resource.get_sortable_columns( sheet_id, function ( data ) {
+            var placeholder = filter_form.find( 'tbody' );
+            var keys = placeholder.children();
+            var key_html;
+
+            data['keys_num'] = keys.length;
+            // TODO: ended here
+            /*
+            data['columns'].forEach( function( column ) {
+                var obj;
+                if ( column['type'] ) {
+                    obj = {
+                        'value'      : '
+                        'value_label':
+                    };
+                } else {
+                    obj = {
+                        'value'      : '
+                        'value_label':
+                    };
+                }
+            });*/
+
+            //eliminate_redundant_keys( filter_form, data );
+            key_html = Mustache.to_html( _templates.filter_key, data );
+            placeholder.append( key_html );
+            
+            if ( data['keys_num'] === data['columns'].length ){
+                filter_form.find('#app-tb-tl-filter-add').hide();
+            }
+        });
+    }
 
     // TABLE FUNCTIONS
     // rows_code is jQuery object of rows added to page

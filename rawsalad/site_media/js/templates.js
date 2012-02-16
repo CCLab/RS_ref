@@ -191,7 +191,7 @@ var _templates = (function () {
             '<div id="app-tb-tl-sort-submit" class="blue button">Sortuj</div>' +
         '</form>';
 
-    that.sort_key = //TODO test it ( key_num! )
+    that.sort_key =
         '<tr id="sort-key-{{keys_num}}">' +
             '<td>' +
                 '<select name="app-tb-tl-sort-form-columns" class="input-text key-{{keys_num}}">' +
@@ -202,11 +202,51 @@ var _templates = (function () {
                 '</select>' +
             '</td>' +
             '<td>' +
-                '<select name="name="app-tb-tl-sort-order" class="input-text key-{{keys_num}}">' +
+                '<select name="app-tb-tl-sort-order" class="input-text key-{{keys_num}}">' +
                     '<option value="null" class="order-key-{{keys_num}}" ></option>' +
                     '<option value="gt" class="order-key-{{keys_num}}" >Rosnąco</option>' +
                     '<option value="lt" class="order-key-{{keys_num}}" >Malejąco</option>' +
                 '</select>' +
+            '</td>' +
+         '</tr>';
+     
+    that.filter_form =
+        '<form id="app-tb-tl-filter-form" class="sort-filter-form left">' +
+            '<table>' +
+                '<thead>' +
+                    '<tr>' +
+                        '<th>Wybierz kolumnę</th>' +
+                        '<th>Wybierz porządek</th>' +
+                        '<th>Wybierz treść filtra</th>' +
+                    '</tr>' +
+                '</thead>' +
+                '<tbody>' +
+                '</tbody>' +
+            '</table>' +
+            '<div id="app-tb-tl-filter-add" class="grey button">Dodaj kolejny klucz</div>' +
+            '<div id="app-tb-tl-filter-submit" class="blue button">Filtruj</div>' +
+        '</form>';
+    
+    that.filter_key =
+        '<tr id="filter-key-{{keys_num}}">' +
+            '<td>' +
+                '<select name="app-tb-tl-filter-form-columns" class="input-text key-{{keys_num}}">' +
+                    '<option value="null" class="filter-column-{{keys_num}}" ></option>' +
+                    '{{#columns}}' +
+                        '<option value="{{key}}" class="filter-column-{{keys_num}}"> {{label}} </option>' +
+                    '{{/columns}}' +
+                '</select>' +
+            '</td>' +
+            '<td>' +
+                '<select id="filter-{{keys_num}}-operations" name="{{type}}-operation" class="input-text">' +
+                '<option value="null" class="filter-operation-{{keys_num}} selected" ></option>' +
+                '{{#filter_columns}}' +
+                    '<option value="{{value}}" class="filter-operation-{{keys_num}}" >{{value_label}}</option>' +
+                '{{/filter_columns}}' +
+                '</select>' +
+            '</td>' +
+            '<td>' +
+                '<input type="text" name="query" id="filter-{{keys_num}}-query" class="input_text">'
             '</td>' +
          '</tr>';
 
