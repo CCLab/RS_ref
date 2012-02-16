@@ -293,7 +293,7 @@ var _resource = (function () {
 
 
 
-    that.sortable_columns = function ( sheet_id, callback ) {
+    that.get_sortable_columns = function ( sheet_id, callback ) {
         var sheet;
         var sortable_columns;
 
@@ -307,7 +307,7 @@ var _resource = (function () {
             };
         });
 
-        callback( sortable_columns );
+        callback( {'columns': sortable_columns} );
     };
 
     // Sort sheet(in specified order) and return it.
@@ -327,7 +327,9 @@ var _resource = (function () {
         sorted_tree = _tree.sort( sheet['data'], sort_fun );
         sheet['data'] = sorted_tree;
 
-        that.get_sheet_data( sheet_id, callback );
+        if ( !!callback ) {
+            that.get_sheet_data( sheet_id, callback );
+        }
     };
 
 

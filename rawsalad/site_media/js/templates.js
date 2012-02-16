@@ -139,6 +139,8 @@ var _templates = (function () {
                 '<div id="app-tb-tl-filter-button" class="button left">Filtruj</div>' +
             '</div>' +
         '</section>' +
+        '<section id="app-tb-tl-srft-forms">' +
+        '</section>' +
         '<section>' +
             '<div id="app-tb-tl-columns-button" class="button right">Dodaj/Usuń kolumny</div>' +
             '<br class="clear"/>' +
@@ -195,15 +197,15 @@ var _templates = (function () {
                 '<select name="app-tb-tl-sort-form-columns" class="input-text key-{{keys_num}}">' +
                     '<option value="null" class="column-key-{{keys_num}}" ></option>' +
                     '{{#columns}}' +
-                        '<option value="{{column_key}}" class="column-key-{{keys_num}}"> {{column_label}} </option>' +
+                        '<option value="{{key}}" class="column-key-{{keys_num}}"> {{label}} </option>' +
                     '{{/columns}}' +
                 '</select>' +
             '</td>' +
             '<td>' +
                 '<select name="name="app-tb-tl-sort-order" class="input-text key-{{keys_num}}">' +
                     '<option value="null" class="order-key-{{keys_num}}" ></option>' +
-                    '<option value="-1" class="order-key-{{keys_num}}" >Rosnąco</option>' +
-                    '<option value="1" class="order-key-{{keys_num}}" >Malejąco</option>' +
+                    '<option value="gt" class="order-key-{{keys_num}}" >Rosnąco</option>' +
+                    '<option value="lt" class="order-key-{{keys_num}}" >Malejąco</option>' +
                 '</select>' +
             '</td>' +
          '</tr>';

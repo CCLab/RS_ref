@@ -280,6 +280,7 @@ var _gui = (function () {
 
         columns_bt
             .click( display_add_columns );
+        
     }
 
 
@@ -441,13 +442,12 @@ var _gui = (function () {
     // TODO finish sort
     function display_sort_panel() {
         var sort_form_code = $( _templates.sort_form );
-        preapare_sort_interface( sort_form_code );
-        $('#app-tb-tools>section').append( sort_form_code ); // TODO - add show and hide animations
+        prepare_sort_interface( sort_form_code );
+        $('#app-tb-tl-srft-forms').append( sort_form_code ); // TODO - add show and hide animations
     }
 
 
     function display_filter_panel() {
-
     }
 
 
@@ -496,8 +496,8 @@ var _gui = (function () {
 
 
     // not used yet:
-    function sort_table() {
-
+    function sort_table( sheet_id, settings ) {
+        _resource.sort( sheet_id, settings, draw_table );
     }
 
 
@@ -731,47 +731,104 @@ var _gui = (function () {
     }
 
 
-    // TODO - make sort
-    function preapare_sort_interface( sort_form ){
+    // Define event handlers for Add sort key button and sort button
+    function prepare_sort_interface( sort_form ){
+        var add_key_button = sort_form.find('#app-tb-tl-sort-add');
+        var submit_button = sort_form.find('#app-tb-tl-sort-submit');
+        
+        add_key_button.click( function () {
+            add_sort_key( );
+        });
+        
+        submit_button.click( function () {
+            sort_form.submit();
+        });
+        
+        sort_form.submit( function () {
+            var sheet_id = active_sheet_id();
+            var settings = get_sort_settings();
+
+            $(this).remove();
+            sort_table( sheet_id, settings );
+                
+            return false;
+        });
+        
         add_sort_key( sort_form );
+    }
+    
+    function get_sort_settings() {
+        var column, order;
+        var settings = [];
+        var i;
+        var keys_num = $('#app-tb-tl-sort-form').find('tbody > tr').length;
+
+        for( i = 0; i < keys_num; i += 1 ) {
+            column = $( '.column-key-'+ i +':selected' ).val();
+            // if column not selected by user
+            if( column === "null" ) {
+                // if it's a first key - quit
+                if( i === 1 ) {
+                    $(this).hide();
+                    return false;
+                }
+                // process the previous keys
+                else {
+                    break;
+                }
+            }
+            order = $('.order-key-'+ i +':selected').val();
+            // if order not set, set it to ascending
+            if( !order ) {
+                order = 'gt';
+            }
+            settings.push(
+                {
+                    "key"       : column,
+                    "preference": order
+                }
+            );
+        }
+        
+        return settings;
     }
 
 
     function add_sort_key( sort_form ) {
+        var sort_form = sort_form || $('#app-tb-tl-sort-form');
         var sheet_id = active_sheet_id();
-        var callback = function ( data ) {
-            var keys = sort_form.find( 'tbody>tr' );
-            var placeholder = keys.paren();
-            var keys_num = keys.length;
+
+        _resource.get_sortable_columns( sheet_id, function ( data ) {
+            var placeholder = sort_form.find( 'tbody' );
+            var keys = placeholder.children();
             var key_html;
 
-            if ( keys_num === data.columns.length ){
-                $('#app-tb-tl-sort-add').hide();
-            }
-// TODO not need it - remove
-//            else {
-//                $('#app-tb-tl-sort-add').show()
-//            }
+            data['keys_num'] = keys.length;
 
-
-            data['keys_num'] = keys_num;
-
-            eliminate_desame_keys( sort_form, data ); //TODO
+            eliminate_redundant_keys( sort_form, data );
             key_html = Mustache.to_html( _templates.sort_key, data );
             placeholder.append( key_html );
-        };
-
-        _resource.get_sort_columns( sheet_id, callback )
+            
+            if ( data['keys_num'] === data['columns'].length ){
+                sort_form.find('#app-tb-tl-sort-add').hide();
+            }
+        });
     }
 
 
-    //TODO
-    function eliminate_desame_keys( srt_form, data ) {
-        var columns_selector = srt_form.find( '#app-tb-tl-sort-form-columns' );
-        var selected_columns = columns_selector.find( 'select option:selected' );
-        // TODO remove from data if it's in selected columns
-
-
+    function eliminate_redundant_keys( sort_form, data ) {
+        var selected_columns = {};
+        var column;
+        var i;
+        
+        for ( i = 0; i < data['keys_num']; i += 1 ) {
+            column = sort_form.find('.column-key-'+ i +':selected').val();
+            selected_columns[ column ] = true;
+        }
+        
+        data['columns'] = data['columns'].filter( function ( col ) {
+            return !selected_columns[ col['key'] ];
+        });
     }
 
 
