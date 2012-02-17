@@ -501,15 +501,16 @@ var _gui = (function () {
             .click( display_add_columns );
     }
 
-
-    // not used yet:
+    
     function sort_table( sheet_id, settings ) {
         _resource.sort( sheet_id, settings, draw_table );
     }
 
 
-    function filter_table() {
-
+    function filter_table( sheet_id, settings ) {
+        _resource.filter( sheet_id, settings, function ( data ) {
+            console.log( data );
+        });
     }
 
 
@@ -744,7 +745,7 @@ var _gui = (function () {
         var submit_button = sort_form.find('#app-tb-tl-sort-submit');
         
         add_key_button.click( function () {
-            add_sort_key( );
+            add_sort_key();
         });
         
         submit_button.click( function () {
@@ -814,7 +815,8 @@ var _gui = (function () {
             key_html = Mustache.to_html( _templates.sort_key, data );
             placeholder.append( key_html );
             
-            if ( data['keys_num'] === data['columns'].length ){
+            if ( data['keys_num'] === data['columns'].length ||
+                 _enum['MAX_KEYS'] === data['keys_num'] + 1 ){
                 sort_form.find('#app-tb-tl-sort-add').hide();
             }
         });
@@ -853,47 +855,107 @@ var _gui = (function () {
             var settings = get_filter_settings();
 
             $(this).remove();
-            filter_table( sheet_id, settings );
-                
+            if ( !!settings ) {
+                filter_table( sheet_id, settings );
+            }
+
             return false;
         });
+    }
+    
+    function get_filter_settings() {
+        var column, operation, query;
+        var i;
+        var keys_num = $('#app-tb-tl-filter-form').find('tbody > tr').length;
+        var settings = [];
+        var tmp, type;
+        
+        for ( i = 0; i < keys_num; ++i ) {
+            column = $('.filter-column-'+ i +':selected').val();
+            if ( column === "null" ) {
+                if ( i === 1 ) {
+                    return undefined;
+                } else {
+                    break;
+                }
+            }
+            operation = $('.filter-operation-'+i+':selected').val();
+            query = $('#filter-'+i+'-query').val();
+            type = $('#filter-' + i + '-operations').attr('name');
+            
+            
+            if ( type === 'number-operation' ) {
+                query = parseInt( query, 10 );
+                if ( isNaN( query ) ) {
+                    return undefined;
+                }
+            }
+
+            settings.push({
+                'key'        : column,
+                'value'      : query,
+                'preference' : operation
+            });
+        }
+        
+        return settings;
     }
     
     function add_filter_key( filter_form ) {
         var filter_form = filter_form || $('#app-tb-tl-filter-form');
         var sheet_id = active_sheet_id();
 
-        _resource.get_sortable_columns( sheet_id, function ( data ) {
+        _resource.get_filterable_columns( sheet_id, function ( data ) {
             var placeholder = filter_form.find( 'tbody' );
             var keys = placeholder.children();
             var key_html;
+            var keys_num = keys.length;
 
-            data['keys_num'] = keys.length;
-            // TODO: ended here
-            /*
-            data['columns'].forEach( function( column ) {
-                var obj;
-                if ( column['type'] ) {
-                    obj = {
-                        'value'      : '
-                        'value_label':
-                    };
-                } else {
-                    obj = {
-                        'value'      : '
-                        'value_label':
-                    };
-                }
-            });*/
+            data['keys_num'] = keys_num;
 
-            //eliminate_redundant_keys( filter_form, data );
             key_html = Mustache.to_html( _templates.filter_key, data );
             placeholder.append( key_html );
             
-            if ( data['keys_num'] === data['columns'].length ){
+            filter_form.find('#filter-'+ keys_num +'-columns').change( function () {
+                var selected_column = $(this).val();
+                var operations_html = get_operations( data['columns'], selected_column, keys_num );
+                
+                $('#filter-' + keys_num + '-operations').remove();
+                $(this).parent().next().append( $( operations_html ) );
+            });
+            
+            if ( _enum['MAX_KEYS'] === keys_num + 1 ) {
                 filter_form.find('#app-tb-tl-filter-add').hide();
             }
         });
+    }
+    
+    function get_operations( columns, selected_column, keys_num ) {
+        var type;
+        var column;
+        var operations;
+        var data = { 'keys_num': keys_num };
+        
+        column = columns.filter( function ( column ) {
+            return column['key'] === selected_column;
+        })[0];
+        type = ( !!column ) ? column['type'] : 'null';
+        
+        switch ( type ) {
+            case 'string':
+                operations = Mustache.to_html( _templates.string_operations, data );
+                break;
+            case 'number':
+                operations = Mustache.to_html( _templates.number_operations, data );
+                break;
+            case 'null':
+                operations = Mustache.to_html( _templates.null_operations, data );
+                break;
+            default:
+                throw 'Add filter operation: unexpected type: ' + type;
+        }
+        
+        return operations;
     }
 
     // TABLE FUNCTIONS

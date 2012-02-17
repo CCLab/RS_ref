@@ -317,7 +317,7 @@ var _resource = (function () {
         sheet = get_sheet( sheet_id );
         filterable_columns = sheet['columns'].filter( function ( columns ) {
             return !!columns['processable'];
-        }).map( function ( columns ) {
+        }).map( function ( column ) {
             return {
                 'label': column['label'],
                 'key'  : column['key'],
@@ -1004,14 +1004,18 @@ var _resource = (function () {
 
     function check_criterion( node, criterion ) {
         var node_value = node['data'][ criterion['key'] ];
+        var node_lowercase;
         var filter_value = criterion['value'];
+        var filter_lowercase;
         var preference = criterion['preference'];
 
         switch ( typeof node_value ) {
             case 'number':
                 return check_number( node_value, filter_value, preference );
             case 'string':
-                return check_string( node_value, filter_value, preference );
+                node_lowercase = node_value.toLowerCase();
+                filter_lowercase = filter_value.toLowerCase();
+                return check_string( node_lowercase, filter_lowercase, preference );
             default:
                 throw 'Bad filter criterion type';
         }
@@ -1047,18 +1051,3 @@ var _resource = (function () {
 
     return that;
 }) ();
-
-function open_all() {
-    $('.odd').each( function() {
-        var this_node = $(this);
-        if ( this_node.attr("data-open") === "false" ) {
-            this_node.click();
-        }
-    });
-    $('.even').each( function() {
-        var this_node = $(this);
-        if ( this_node.attr("data-open") === "false" ) {
-            this_node.click();
-        }
-    });
-}

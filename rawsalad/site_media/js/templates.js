@@ -216,8 +216,8 @@ var _templates = (function () {
                 '<thead>' +
                     '<tr>' +
                         '<th>Wybierz kolumnę</th>' +
-                        '<th>Wybierz porządek</th>' +
-                        '<th>Wybierz treść filtra</th>' +
+                        '<th>Wybierz operację</th>' +
+                        '<th>Wpisz treść filtra</th>' +
                     '</tr>' +
                 '</thead>' +
                 '<tbody>' +
@@ -230,7 +230,8 @@ var _templates = (function () {
     that.filter_key =
         '<tr id="filter-key-{{keys_num}}">' +
             '<td>' +
-                '<select name="app-tb-tl-filter-form-columns" class="input-text key-{{keys_num}}">' +
+                '<select name="app-tb-tl-filter-form-columns" class="input-text key-{{keys_num}}" ' +
+                 'id="filter-{{keys_num}}-columns">' +
                     '<option value="null" class="filter-column-{{keys_num}}" ></option>' +
                     '{{#columns}}' +
                         '<option value="{{key}}" class="filter-column-{{keys_num}}"> {{label}} </option>' +
@@ -238,17 +239,34 @@ var _templates = (function () {
                 '</select>' +
             '</td>' +
             '<td>' +
-                '<select id="filter-{{keys_num}}-operations" name="{{type}}-operation" class="input-text">' +
-                '<option value="null" class="filter-operation-{{keys_num}} selected" ></option>' +
-                '{{#filter_columns}}' +
-                    '<option value="{{value}}" class="filter-operation-{{keys_num}}" >{{value_label}}</option>' +
-                '{{/filter_columns}}' +
+                '<select id="filter-{{keys_num}}-operations" name="null-operation" class="input-text" disabled>' +
                 '</select>' +
             '</td>' +
             '<td>' +
                 '<input type="text" name="query" id="filter-{{keys_num}}-query" class="input_text">'
             '</td>' +
          '</tr>';
+     
+    that.string_operations = 
+        '<select id="filter-{{keys_num}}-operations" name="string-operation" class="input-text">' +
+            '<option value="null" class="filter-operation-{{keys_num}}" selected></option>' +
+            '<option value="cnt" class="filter-operation-{{keys_num}}">Zawiera</option>' +
+            '<option value="st" class="filter-operation-{{keys_num}}">Zaczyna się od</option>' +
+            '<option value="ncnt" class="filter-operation-{{keys_num}}">Nie zawiera</option>' +
+            '<option value="nst" class="filter-operation-{{keys_num}}">Nie zaczyna się od</option>' +
+        '</select>';
+    
+    that.number_operations = 
+        '<select id="filter-{{keys_num}}-operations" name="number-operation" class="input-text">' +
+            '<option value="null" class="filter-operation-{{keys_num}}" selected></option>' +
+            '<option value="gt" class="filter-operation-{{keys_num}}">&gt;</option>' +
+            '<option value="eq" class="filter-operation-{{keys_num}}">=</option>' +
+            '<option value="lt" class="filter-operation-{{keys_num}}">&lt;</option>' +
+        '</select>';
+    
+    that.null_operations = 
+        '<select id="filter-{{keys_num}}-operations" name="null-operation" class="input-text" disabled>' +
+        '</select>';
 
     that.close_sheet_button = '<div class="close-sheet-button button">x</div>';
 

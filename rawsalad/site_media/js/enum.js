@@ -30,6 +30,7 @@ var _enum = (function () {
     return {
         'STANDARD': 0,
         'FILTERED': 1,
-        'SEARCHED': 2
+        'SEARCHED': 2,
+        'MAX_KEYS': 3
     };
 }) ();
