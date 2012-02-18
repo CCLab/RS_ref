@@ -511,6 +511,7 @@ var _gui = (function () {
         _resource.filter( sheet_id, settings, function ( data ) {
             console.log( data );
         });
+        draw_sheet( sheet_id );
     }
 
 

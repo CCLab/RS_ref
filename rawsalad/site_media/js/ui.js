@@ -162,7 +162,7 @@ var _ui = (function () {
         var prepare_row = function( row, columns ) {
             // insert standard values
             var new_row = {
-                'id' : row['id'],
+                'id' : row['id']
             };
             if ( !!row['aux']['info'] ) {
                 new_row['info'] = row['aux']['info'];
@@ -219,11 +219,12 @@ var _ui = (function () {
         });
 
         return {
-            'group': sheet['group_id'],
-            'id': sheet_id,
-            'type': sheet['type'],
-            'label': sheet['label'],
-            'boxes': boxes
+            'group'  : sheet['group_id'],
+            'id'     : sheet_id,
+            'type'   : sheet['type'],
+            'label'  : sheet['label'],
+            'boxes'  : boxes,
+            'columns': columns_for_gui
         };
     }
 
@@ -301,11 +302,12 @@ var _ui = (function () {
         });
         
         return {
-            'group': sheet['group_id'],
-            'id': sheet_id,
-            'type': sheet['type'],
-            'label': sheet['label'],
-            'boxes': gui_boxes
+            'group'  : sheet['group_id'],
+            'id'     : sheet_id,
+            'type'   : sheet['type'],
+            'label'  : sheet['label'],
+            'boxes'  : gui_boxes,
+            'columns': columns_for_gui
         };
     }
     

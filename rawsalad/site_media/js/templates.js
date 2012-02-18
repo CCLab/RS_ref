@@ -327,6 +327,21 @@ var _templates = (function () {
                 '</tr>' +
             '{{/rows}}' +
         '{{/boxes}}';
+    
+    that.filter_box =
+        '<tr>' +
+        '<td style="padding-top: 15px; background-color: #eee;" colspan="3">' +
+            '{{breadcrumb}}' +
+        '</td>' +
+        '</tr>' +
+        '{{#rows}}' +
+            '<tr id="{{id}}">' +
+                '{{#data}}' +
+                    '<td class="{{column_key}} {{column_type}}">{{content}}</td>' +
+                '{{/data}}' +
+            '</tr>' +
+        '{{/rows}}' +
+        '</tr>';
 
     // return public interface
     return that;

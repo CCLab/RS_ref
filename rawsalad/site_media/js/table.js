@@ -71,7 +71,29 @@ var _table = (function () {
 
         table_code = header_code.concat( tbody_code );
 
-        callback( table_code);
+        callback( table_code );
+    }
+    
+    function create_filtered_table( data, callback ) {
+        var header_code;
+        var boxes_code;
+        var table_code;
+        
+        header_code = create_standard_header( data );
+        boxes_code = create_filtered_boxes( data['boxes'] );
+        table_code = header_code.concat( boxes_code );
+        
+        callback( table_code );
+    }
+    
+    function create_filtered_boxes( boxes ) {
+        var boxes_html = [];
+        
+        boxes.forEach( function ( box ) {
+            boxes_html.push( Mustache.to_html( _templates.filter_box, box ) );
+        });
+        
+        return boxes_html.join('');
     }
 
 
