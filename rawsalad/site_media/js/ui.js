@@ -183,30 +183,40 @@ var _ui = (function () {
         
         var columns_for_gui;
         var boxes = [];
+        var box_ids = [];
+        var box_obj = {};
+        var boxes_count = 0;
         
         // columns description for gui
         columns_for_gui = get_columns_description( sheet['columns'] );
         
-        _tree.iterate( sheet['data'], function ( parent ) {
-            var children_nodes = _tree.get_children_nodes( sheet['data'], parent );
-            var rows;
-            var breadcrumb;
-            
-            rows = children_nodes.filter( function ( node ) {
-                            return _tree.is_filtered( sheet['data'], node['id'] ) &&
-                                   node['data']['type'] !== 'Total';
-                        }).map( function ( node ) {
-                            return prepare_row( node, columns_for_gui );
-                        });
-            if ( rows.length > 0 ) {
-                breadcrumb = get_breadcrumb( sheet['data'], children_nodes[0]['id'] );
-                boxes.push({
-                    'columns   ': columns_for_gui,
-                    'breadcrumb': breadcrumb,
-                    'rows'      : rows
-                });
-            }
-        }, _tree.root( sheet['data'] ) );
+        _tree.tree_to_list( sheet['data'] )
+             .filter( function ( node ) {
+                 return _tree.is_filtered( sheet['data'], node['id'] );
+             }).forEach( function ( node ) {
+                 var box;
+                 var box_id;
+                 if ( !box_obj[ node['parent'] ] ) {
+                     box = {
+                         'columns'   : columns_for_gui,
+                         'breadcrumb': get_breadcrumb( sheet['data'], node['id'] ),
+                         'rows'      : []
+                     };
+                     boxes_count += 1;
+                     box_id = node['parent'] || boxes_count;
+                     box_obj[ box_id ] = box;
+                     box_ids.push( box_id );
+                 } else {
+                    box = box_obj[ node['parent'] ];
+                    box_id = node['parent'];
+                 }
+                 
+                 box['rows'].push( prepare_row( node, columns_for_gui ) );
+             });
+             
+        box_ids.forEach( function ( id ) {
+            boxes.push( box_obj[ id ] );
+        });
 
         return {
             'group': sheet['group_id'],
