@@ -510,8 +510,8 @@ var _gui = (function () {
     function filter_table( sheet_id, settings ) {
         _resource.filter( sheet_id, settings, function ( data ) {
             console.log( data );
+            draw_sheet( data['id'] );
         });
-        draw_sheet( sheet_id );
     }
 
 
