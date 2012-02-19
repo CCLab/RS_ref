@@ -728,6 +728,7 @@ Form of created tree:
                 var sortedTree;
                 var sortedChildren;
                 var actNode;
+                var thisTree;
                 
                 assertFunction(fun, 'sort');
                 
@@ -735,11 +736,13 @@ Form of created tree:
                 actNode = root();
                 sortedTree = new Tree(idColumn, parentColumn);
                 
+                thisTree = this;
                 // add children of next nodes
                 while (!!actNode) {
                     sortedChildren = this.children(actNode, true).sort(fun);
                     sortedChildren.forEach(function(node) {
-                        sortedTree.insertNode(node);
+                        var isFiltered = thisTree.isNodeFiltered( node[idColumn] );
+                        sortedTree.insertNode(node, isFiltered);
                     });
                     actNode = this.next(actNode);
                 }
