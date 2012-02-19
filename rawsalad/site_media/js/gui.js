@@ -444,7 +444,9 @@ var _gui = (function () {
         var sort_form_code = $( _templates.sort_form );
         prepare_sort_interface( sort_form_code );
         add_sort_key( sort_form_code );
+        
         // TODO - add show and hide animations
+        $('#app-tb-tl-srft-forms').children().remove();
         $('#app-tb-tl-srft-forms').append( sort_form_code );
     }
 
@@ -453,7 +455,9 @@ var _gui = (function () {
         var filter_form_code = $( _templates.filter_form );
         prepare_filter_interface( filter_form_code );
         add_filter_key( filter_form_code );
+        
         // TODO - add show and hide animations
+        $('#app-tb-tl-srft-forms').children().remove();
         $('#app-tb-tl-srft-forms').append( filter_form_code );
     }
 
@@ -922,6 +926,7 @@ var _gui = (function () {
                 var operations_html = get_operations( data['columns'], selected_column, keys_num );
                 
                 $('#filter-' + keys_num + '-operations').remove();
+                $('#filter-'+ keys_num +'-query').val( '' );
                 $(this).parent().next().append( $( operations_html ) );
             });
             
