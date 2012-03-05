@@ -83,6 +83,14 @@ var _resource = (function () {
         }
     };
 
+    // Remove node from tree.
+    that.remove_row = function ( sheet_id, row_id ) {
+        var sheet;
+
+        sheet = get_sheet( sheet_id );
+        _tree.remove_node( sheet['data'], row_id );
+    };
+
     // Remove children of node_id node.
     that.remove_children = function ( sheet_id, parent_id ) {
         var sheet;
@@ -420,6 +428,8 @@ var _resource = (function () {
     that.toggle_context = function ( sheet_id, box_id, callback ) {
         var box = get_box( sheet_id, box_id );
         var parent_id = box['rows'][0]['parent'];
+        var sheet = get_sheet( sheet_id );
+        var box_ids = {};
         
         if ( !box['context'] ) {
             that.get_children( sheet_id, parent_id, function ( children ) {            
@@ -427,9 +437,17 @@ var _resource = (function () {
                 that.get_sheet_data( sheet_id, callback );
             });
         } else {
+            box['rows'].forEach( function ( row ) {
+                box_ids[ row['id'] ] = true;
+            });
+            _tree.get_children_nodes( sheet['data'], parent_id ).filter( function ( row ) {
+                return !_tree.get_children_number( sheet['data'], parent_id );
+            }).forEach( function ( row ) {
+                that.remove_node( sheet_id, row['id'] );
+            });
+
             box['context'] = !box['context'];
-            // TODO:
-            //that.remove_children( sheet_id, parent_id );
+            that.get_sheet_data( sheet_id, callback );
         }
     };
 
