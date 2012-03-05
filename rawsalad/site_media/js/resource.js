@@ -63,10 +63,10 @@ var _resource = (function () {
             callback( gui_data );
         };
         var sheet = get_sheet( sheet_id );
+        var should_ask_store = ( sheet['type'] === _enum['SEARCHED'] ||
+                    !!_tree.get_children_number( sheet['data'], parent_id ) );
 
-        if ( !!_tree.get_children_number( sheet['data'], parent_id ) ) {
-            respond();
-        } else {
+        if ( should_ask_store ) {
             _store.get_children( sheet['endpoint'], parent_id, function( data ) {
                 var cleaned_data;
 
@@ -80,6 +80,8 @@ var _resource = (function () {
 
                 respond();
             });
+        } else {
+            respond();
         }
     };
 
@@ -427,8 +429,8 @@ var _resource = (function () {
     
     that.toggle_context = function ( sheet_id, box_id, callback ) {
         var box = get_box( sheet_id, box_id );
-        var parent_id = box['rows'][0]['parent'];
         var sheet = get_sheet( sheet_id );
+        var parent_id = _tree.get_parent_id( sheet['data'], box['rows'][0]['id'] );
         var box_ids = {};
         
         if ( !box['context'] ) {
@@ -651,7 +653,7 @@ var _resource = (function () {
     function get_box( sheet_id, box_id ) {
         var sheet = get_sheet( sheet_id );
         
-        if ( sheet['type'] !== 'SEARCHED' ) {
+        if ( sheet['type'] !== _enum['SEARCHED'] ) {
             return undefined;
         } else {
             // TODO: is it the best way? maybe each box should have id

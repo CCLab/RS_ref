@@ -37,6 +37,15 @@ var _tree = (function () {
     that.get_node = function( tree, id ) {
         return tree.getNode( id );
     };
+
+    that.get_parent = function( tree, id ) {
+        var node = tree.getNode( id );
+        return that.get_node( tree, node['parent'] );
+    };
+
+    that.get_parent_id = function( tree, id ) {
+        return that.get_parent( tree, id )['id'];
+    };
     
     that.get_top_parent = function( tree, id ) {
         return tree.topParent( id, true );

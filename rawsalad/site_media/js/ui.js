@@ -270,7 +270,8 @@ var _ui = (function () {
             var hit_ids = {};
             var gui_breadcrumb;
             var gui_context;
-            var gui_rows
+            var gui_rows;
+            var parent_id;
             
             
             if ( box['breadcrumb'] ) {
@@ -282,7 +283,8 @@ var _ui = (function () {
                 gui_breadcrumb = get_breadcrumb( sheet['data'], box['rows'][0]['id'] );
             }
             if ( box['context'] ) {
-                gui_rows = _tree.get_children_nodes( sheet['data'], box['rows'][0]['id'] )
+                parent_id = _tree.get_parent_id( sheet['data'], box['rows'][0]['id'] );
+                gui_rows = _tree.get_children_nodes( sheet['data'], parent_id )
                                 .map( function ( node ) {
                                     return prepare_row( node, columns_for_gui, [] );
                                 });
