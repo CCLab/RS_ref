@@ -78,13 +78,14 @@ var _gui = (function () {
                         $('#pl-ch-area').find('p').each( function () {
                             var endpoint = $(this).attr('data-endpoint');
                             $(this).click( function () {
-                                _resource.get_search_data( endpoint, data['query'], function ( ddd ) {
+                                /*_resource.get_search_data( endpoint, data['query'], function ( ddd ) {
                                     console.log( ddd );
                                     var html = Mustache.to_html( _templates.search_box, ddd );
 
                                     $('#pl-ch-area').empty();
                                     $('#pl-ch-area').append( html );
-                                });
+                                });*/
+                                show_search( endpoint, data['query'] );
                             });
                         });
                     });
@@ -1111,6 +1112,15 @@ var _gui = (function () {
         callbacks.push( last_callback );
 
         _resource.get_top_levels( endpoints, callbacks );
+    }
+
+    function show_search( endpoint, query ) {
+        _resource.get_search_data( endpoint, query, function ( data ) {
+            draw_endpoint( data );
+            /*var html = Mustache.to_html( _templates.search_box, ddd );
+            $('#pl-ch-area').empty();
+            $('#pl-ch-area').append( html );*/
+        });
     }
 
     // return public interface

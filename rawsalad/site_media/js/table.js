@@ -85,6 +85,33 @@ var _table = (function () {
         
         callback( table_code );
     }
+
+    function create_searched_table( data, callback ) {
+        var header_code;
+        var boxes_code;
+        var table_code;
+
+        header_code = create_standard_header( data );
+        boxes_code = create_searched_boxes( data['boxes'] );
+        table_code = header_code.concat( boxes_code );
+
+        callback( table_code );
+    }
+
+    function create_searched_boxes( boxes ) {
+        var boxes_html = [];
+
+        boxes.forEach( function ( box, i ) {
+            box['box_id'] = i;
+            if ( typeof box['breadcrumb'] === 'string' ) {
+                boxes_html.push( Mustache.to_html( _templates.search_box, box ) );
+            } else {
+                boxes_html.push( Mustache.to_html( _templates.search_box_breadcrumbed, box ) );
+            }
+        });
+
+        return boxes_html.join('');
+    }
     
     function create_filtered_boxes( boxes ) {
         var boxes_html = [];
