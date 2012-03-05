@@ -408,6 +408,30 @@ var _resource = (function () {
 
         callback( sheet_descr );
     };
+    
+    that.toggle_breadcrumb = function ( sheet_id, box_id, callback ) {
+        var box = get_box( sheet_id, box_id );
+        
+        box['breadcrumb'] = !box['breadcrumb'];
+        
+        that.get_sheet_data( sheet_id, callback );
+    };
+    
+    that.toggle_context = function ( sheet_id, box_id, callback ) {
+        var box = get_box( sheet_id, box_id );
+        var parent_id = box['rows'][0]['parent'];
+        
+        if ( !box['context'] ) {
+            that.get_children( sheet_id, parent_id, function ( children ) {            
+                box['context'] = !box['context'];
+                that.get_sheet_data( sheet_id, callback );
+            });
+        } else {
+            box['context'] = !box['context'];
+            // TODO:
+            //that.remove_children( sheet_id, parent_id );
+        }
+    };
 
     // SEARCH FUNCTIONS
     // Get number of rows that match query in endpoints from enpoints_list.
@@ -604,6 +628,17 @@ var _resource = (function () {
         }
 
         return group_id;
+    }
+    
+    function get_box( sheet_id, box_id ) {
+        var sheet = get_sheet( sheet_id );
+        
+        if ( sheet['type'] !== 'SEARCHED' ) {
+            return undefined;
+        } else {
+            // TODO: is it the best way? maybe each box should have id
+            return sheet['boxes'][ box_id ];
+        }
     }
 
     // Create new sheet from data.
