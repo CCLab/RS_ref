@@ -55,6 +55,10 @@ var _table = (function () {
         return new_rows;
     };
 
+    that.generate_search_box = function( data, i ) {
+        return create_search_box( data['boxes'], i );
+    };
+
 
 //  P R I V A T E   I N T E R F A C E
 
@@ -98,16 +102,24 @@ var _table = (function () {
         callback( table_code );
     }
 
+    function create_search_box( box, i ) {
+        // Prepare box for templates
+        box['box_id'] = i;
+        box['context_action'] = (box['context_showed']) ? 'Schowaj kontekst' : 'Pokaż kontekst';
+        box['breadcrumb_action'] = (box['breadcrumb_showed']) ? 'Schowaj rodziców' : 'Pokaż rodziców';
+
+        if ( box['breadcrumb_showed'] ) {
+            return Mustache.to_html( _templates.search_box_breadcrumbed, box );
+        } else {
+            return Mustache.to_html( _templates.search_box, box );
+        }
+    }
+
     function create_searched_boxes( boxes ) {
         var boxes_html = [];
 
         boxes.forEach( function ( box, i ) {
-            box['box_id'] = i;
-            if ( typeof box['breadcrumb'] === 'string' ) {
-                boxes_html.push( Mustache.to_html( _templates.search_box, box ) );
-            } else {
-                boxes_html.push( Mustache.to_html( _templates.search_box_breadcrumbed, box ) );
-            }
+            boxes_html.push( create_search_box( box, i ) );
         });
 
         return boxes_html.join('');

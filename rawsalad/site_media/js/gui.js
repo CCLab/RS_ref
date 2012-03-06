@@ -306,6 +306,11 @@ var _gui = (function () {
         var selected_root = $('tr.selected');
         var not_root = clickable.not( '.top' ).not( '.in-selected' );
 
+        var all_buttons = table_code.find('button');
+
+        all_buttons
+            .click( show_breadcrumb_context_pressed );
+
         // EVENTS
         close_roots
             .click( open_node );
@@ -545,6 +550,49 @@ var _gui = (function () {
         row.unbind( 'click' );
 
         _resource.get_children( sheet_id, row_id, callback )
+    }
+
+    function show_breadcrumb_context_pressed() {
+        var id = $(this).attr('id');
+        var id_parts = id.split('-');
+        if ( id_parts[ 1 ] === 'breadcrumb' ) {
+            toggle_breadcrumb( parseInt( id_parts[ 2 ] ) ); 
+        } else {
+            toggle_context( parseInt( id_parts[ 2 ] ) );
+        }
+
+    }
+
+    function refresh_box( box_id, data ) {
+        var box_code = $( _table.generate_search_box( data, box_id ) );
+        var box = $('[box_id = ' + box_id + ']');
+
+        box.remove();
+       
+        if ( box_id > 0 ) {
+            $('[box_id = ' + (box_id-1) + ']').last().after( box_code );
+        } else {
+            $('#app-tb-datatable > tbody').prepend( box_code );
+        }
+
+        $('#show-breadcrumb-' + box_id).click( show_breadcrumb_context_pressed );
+        $('#show-context-' + box_id).click( show_breadcrumb_context_pressed );
+    }
+
+    function toggle_context( box_id ) {
+        var sheet_id = active_sheet_id();
+
+        _resource.toggle_context( sheet_id, box_id, function ( data ) {
+            refresh_box( box_id, data );
+        });
+    }
+
+    function toggle_breadcrumb( box_id ) {
+        var sheet_id = active_sheet_id();
+
+        _resource.toggle_breadcrumb( sheet_id, box_id, function ( data ) {
+            refresh_box( box_id, data );
+        });
     }
 
 
@@ -1117,9 +1165,7 @@ var _gui = (function () {
     function show_search( endpoint, query ) {
         _resource.get_search_data( endpoint, query, function ( data ) {
             draw_endpoint( data );
-            /*var html = Mustache.to_html( _templates.search_box, ddd );
             $('#pl-ch-area').empty();
-            $('#pl-ch-area').append( html );*/
         });
     }
 

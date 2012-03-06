@@ -327,45 +327,51 @@ var _templates = (function () {
 
 
     that.search_box =
-        '<tr>' +
+        '<tr box_id="{{box_id}}">' +
         '<td style="padding-top: 15px; background-color: #eee;" colspan="3">' +
             '{{breadcrumb}}' +
         '</td>' +
         '</tr>' +
         '{{#rows}}' +
-            '<tr id="{{id}}">' +
+            '<tr id="{{id}}" box_id="{{box_id}}">' +
                 '{{#data}}' +
                     '<td style="{{#hit}} background-color: #ddddaa;{{/hit}}">{{content}}</td>' +
                 '{{/data}}' +
             '</tr>' +
         '{{/rows}}' +
-        '<tr>' +
+        '<tr box_id="{{box_id}}">' +
             '<td>' +
-                '<button id="show-breadcrumb-{{box_id}}" type="button">Pokaż rodziców</button>' +
+                '<button id="show-breadcrumb-{{box_id}}" type="button">{{breadcrumb_action}}</button>' +
             '</td>' +
             '<td>' +
-                '<button id="show-context-{{box_id}}" type="button">Pokaż kontekst</button>' +
+                '<button id="show-context-{{box_id}}" type="button">{{context_action}}</button>' +
             '</td>' +
         '</tr>';
 
 
     that.search_box_breadcrumbed =
         '{{#breadcrumb}}' +
-            '<tr>' +
+            '<tr box_id="{{box_id}}">' +
                 '{{#data}}' +
                     '<td>{{content}}</td>' +
                 '{{/data}}' +
             '</tr>' +
         '{{/breadcrumb}}' +
         '{{#rows}}' +
-            '<tr id="{{id}}">' +
+            '<tr id="{{id}}" box_id="{{box_id}}">' +
                 '{{#data}}' +
                     '<td style="{{#hit}} background-color: #ddddaa;{{/hit}}">{{content}}</td>' +
                 '{{/data}}' +
             '</tr>' +
         '{{/rows}}' +
-        '<button id="show-breadcrumb-{{box_id}}" type="button">Pokaż breadcrumb</button>' +
-        '<button id="show-context-{{box_id}}" type="button">Pokaż kontekst</button>';
+        '<tr box_id="{{box_id}}">' +
+            '<td>' +
+                '<button id="show-breadcrumb-{{box_id}}" type="button">{{breadcrumb_action}}</button>' +
+            '</td>' +
+            '<td>' +
+                '<button id="show-context-{{box_id}}" type="button">{{context_action}}</button>' +
+            '</td>' +
+        '</tr>';
     
     // return public interface
     return that;

@@ -59,12 +59,17 @@ var _resource = (function () {
             var gui_data;
             var children = _tree.get_children_nodes( sheet['data'], parent_id );
 
-            gui_data = prepare_table_data( sheet_id, children );
-            callback( gui_data );
+            if ( should_return ) {
+                gui_data = prepare_table_data( sheet_id, children );
+                callback( gui_data );
+            } else {
+                callback( {} );
+            }
         };
         var sheet = get_sheet( sheet_id );
         var should_ask_store = ( sheet['type'] === _enum['SEARCHED'] ||
-                    !!_tree.get_children_number( sheet['data'], parent_id ) );
+                    !_tree.get_children_number( sheet['data'], parent_id ) );
+        var should_return = ( sheet['type'] !== _enum['SEARCHED'] );
 
         if ( should_ask_store ) {
             _store.get_children( sheet['endpoint'], parent_id, function( data ) {
@@ -421,13 +426,21 @@ var _resource = (function () {
     
     that.toggle_breadcrumb = function ( sheet_id, box_id, callback ) {
         var box = get_box( sheet_id, box_id );
+        var gui_data;
         
         box['breadcrumb'] = !box['breadcrumb'];
         
-        that.get_sheet_data( sheet_id, callback );
+        gui_data = prepare_table_data( sheet_id, box );
+        callback( gui_data );
     };
     
     that.toggle_context = function ( sheet_id, box_id, callback ) {
+        function response( sheet_id, box ) {
+            var gui_data;
+            box['context'] = !box['context'];
+            gui_data = prepare_table_data( sheet_id, box );
+            callback( gui_data );
+        }
         var box = get_box( sheet_id, box_id );
         var sheet = get_sheet( sheet_id );
         var parent_id = _tree.get_parent_id( sheet['data'], box['rows'][0]['id'] );
@@ -435,9 +448,9 @@ var _resource = (function () {
         
         if ( !box['context'] ) {
             that.get_children( sheet_id, parent_id, function ( children ) {            
-                box['context'] = !box['context'];
-                that.get_sheet_data( sheet_id, callback );
+                response( sheet_id, box );
             });
+            
         } else {
             box['rows'].forEach( function ( row ) {
                 box_ids[ row['id'] ] = true;
@@ -448,8 +461,7 @@ var _resource = (function () {
                 that.remove_node( sheet_id, row['id'] );
             });
 
-            box['context'] = !box['context'];
-            that.get_sheet_data( sheet_id, callback );
+            response( sheet_id, box );
         }
     };
 
@@ -792,9 +804,14 @@ var _resource = (function () {
     function prepare_table_data( sheet_id, data ) {
         var sheet = get_sheet( sheet_id );
         // if data to prepare was not passed, use full data from sheet
-        var data = data || _tree.tree_to_list( sheet['data'] );
+        var ui_data;
+        if ( sheet['type'] !== _enum['SEARCHED'] ) {
+            ui_data = data || _tree.tree_to_list( sheet['data'] );
+        } else {
+            ui_data = data;
+        }
 
-        return _ui.prepare_data_package( sheet, sheet_id, data );
+        return _ui.prepare_data_package( sheet, sheet_id, ui_data );
     }
 
     function get_sheet_description( sheet_id ) {
