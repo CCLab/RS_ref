@@ -52,6 +52,63 @@ var _templates = (function () {
         '</ul>';
 
     // D B   T R E E
+    that.dbtree_root =
+        '<section>' +
+            '<h1>{{header}}</h1>' +
+            '<ul>' +
+                '{{#children}}' +
+                    '<li>' +
+                        '{{{.}}}' +
+                    '</li>' +
+                '{{/children}}' +
+            '</ul>' +
+        '</section>';
+
+    that.dbtree_high =
+        '<section>' +
+            '<div id="node-{{id}}-pointer" class="pl-tree-pointer"></div>' +
+            '<div id="node-{{id}}-check" class="pl-tree-node-unchecked pl-tree-node"></div>' +
+            '<div id="node-{{id}}" class="pl-tree-arrow"></div>' +
+            '<h1>{{name}}</h1>' +
+            '<h1 id="node-{{id}}-description">{{description}}</h1>' +
+            '<ul id="node-{{id}}-children" style="display: none;">' +
+            '{{#children}}' +
+                '<li>' +
+                    '{{{.}}}' +
+                '</li>' +
+            '{{/children}}' +
+            '</ul>' +
+        '</section>';
+
+    that.dbtree_leaf =
+        '<table>' +
+            '<thead>' +
+                '<tr>' +
+                    '<th>' + 
+                        '&nbsp;' +
+                    '</th>' +
+                    '{{#header}}' +
+                    '<th>' +
+                        '{{label}}' +
+                    '</th>' +
+                    '{{/header}}' +
+                '</tr>' +
+            '</thead>' +
+
+            '<tbody>' +
+                '<tr>' +
+                    '<td>' +
+                        '{{name}}' +
+                    '</td>' +
+                    '{{#children}}' +
+                    '<td>' +
+                        '<div endpoint={{endpoint}} class="pl-tree-end-unchecked pl-tree-end-checkbox"></div>' +
+                    '</td>' +
+                    '{{/children}}' +
+                '</tr>' +
+            '</tbody>' +
+        '</table>';
+
     that.tree_list =
         '<ul class="left pl-tree-list' +
             '{{#even}}' +

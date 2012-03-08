@@ -28,7 +28,88 @@ var _dbtree = (function () {
 
 // P U B L I C   I N T E R F A C E
     var that = {};
-    
+
+    // Draw tree that shows available collections.
+    that.draw_db_tree_ultra_new = function( db_tree, header, callback ) {
+        // Generate html code for node and his children.
+        function generate_node( node, even ) {
+            var name = node['name'];
+            var children_code = _tree.get_children_nodes( db_tree, node['id'] )
+                                     .map( function( n ) {
+                                         if ( is_high_level( n ) ) {
+                                             return generate_node( n, !even );
+                                         } else {
+                                             return generate_leaf( n, !even );
+                                         }
+                                     });
+            var html_info = {
+                'id'         : node['id'],
+                'name'       : name,
+                'description': node['description'],
+                'children'   : children_code
+            };
+
+            return Mustache.to_html( _templates.dbtree_high, html_info );
+        }
+
+        function generate_leaf( node ) {
+            var header_list = _tree.get_children_nodes( db_tree, node['id'] )
+                                       .map( function ( n ) {
+                                           return {
+                                               'label': n['name'],
+                                           };
+                                       });
+            var children_list = _tree.get_children_nodes( db_tree, node['id'] )
+                                       .map( function ( n ) {
+                                           return {
+                                               'endpoint': n['endpoint'],
+                                           };
+                                       });
+            var html_info = {
+                'id'      : node['id'],
+                'header'  : header_list,
+                'name'    : node['name'],
+                'children': children_list
+            };
+
+            return Mustache.to_html( _templates.dbtree_leaf, html_info );
+        }
+
+        var db_tree_code;
+        var root = _tree.root( db_tree );
+        var top_level_nodes = _tree.get_children_nodes( db_tree, root['id'] )
+                                   .map( function ( n ) {
+                                       if ( is_high_level( n ) ) {
+                                           return generate_node( n, true );
+                                       } else {
+                                           return generate_leaf( n, true );
+                                       }
+                                   });
+
+        var html_info = {
+            'header'  : header,
+            'children': top_level_nodes
+        };
+        db_tree_code = Mustache.to_html( _templates.dbtree_root, html_info );
+
+        console.log( db_tree_code );
+        $('body').append( db_tree_code );
+        prepare_dbtree_interface();
+    };
+
+    function is_high_level( node ) {
+        return node['max_depth'] >= 2;
+    }
+
+    function prepare_dbtree_interface() {
+        $('.pl-tree-arrow').click( function () {
+            var this_node = $(this);
+            var id = this_node.attr('id');
+            $('#' + id + '-description').toggle();
+            $('#' + id + '-children').toggle();
+        });
+    }
+
     // Draw tree that shows available collections.
     that.draw_db_tree_new = function( db_tree, header, callback ) {
         // Generate html code for node and his children.
