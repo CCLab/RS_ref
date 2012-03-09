@@ -114,16 +114,95 @@ var _dbtree = (function () {
         function handle_click( this_node ) {
             var fullid = this_node.attr('id');
             var id = parseInt( fullid.split('-')[1] );
+            var parent_id = get_real_parent_id( db_tree, id );
             if ( this_node.hasClass('pl-tree-end-checked') ||
                  this_node.hasClass('pl-tree-node-checked') ) {
 
                 _tree.inSubtreeDo( db_tree, id, uncheck_box );
-                // check if the parent has all children marked
+                try_select_parent( db_tree, parent_id);
             } else {
                 _tree.inSubtreeDo( db_tree, id, check_box );
+                // check if all were marked and parent needs to be unmerked
+                // check if the parent has all children marked, then grandparent
+                try_select_parent( db_tree, parent_id );
             }
         }
 
+        function get_real_parent_id ( db_tree, id ) {
+            var node = _tree.get_node( db_tree, id );
+            var parent_id;
+
+            parent_id = _tree.get_parent_id( db_tree, id );
+            if ( node['min_depth'] === 0 ) {
+                return _tree.get_parent_id( db_tree, parent_id );
+            } else {
+                return parent_id;
+            }
+        }
+
+        function all_endpoints_checked( db_tree, parent_id ) {
+            var not_selected = _tree.get_children_nodes( db_tree, parent_id )
+                                    .map( function ( higher_node ) {
+                                        var inner_not_selected = _tree.get_children_nodes( db_tree, higher_node['id'] )
+                                                                      .filter( function ( n ) {
+                                                                          var endpoint = $('#endpoint-' + n['id']);
+                                                                          return endpoint.hasClass('pl-tree-endpoint-unchecked');
+                                                                      });
+                                        return inner_not_selected.length;
+                                    })
+                                    .filter( function ( len ) {
+                                        return len > 0;
+                                    });
+            return not_selected.length === 0;
+        }
+
+        function all_subnodes_checked( db_tree, parent_id ) {
+            var not_selected = _tree.get_children_nodes( db_tree, parent_id )
+                                    .filter( function ( n ) {
+                                        var subnode = $('#node-' + n['id'] + '-check');
+                                        return subnode.hasClass('pl-tree-node-unchecked');
+                                    });
+            return not_selected.length === 0;
+        }
+
+        function subtree_selected( db_tree, subtree_root_id ) {
+            function check_node( node ) {
+                if ( _tree.get_children_number( db_tree, node['id'] )  === 0
+                     && !is_endpoint_selected( node['id'] ) ) {
+                    all_subtree_selected = false;
+                }
+            }
+            var all_subtree_selected = true;
+
+            _tree.inSubtreeDo( db_tree, subtree_root_id, check_node );
+            
+            return all_subtree_selected;
+        }
+
+        function is_endpoint_selected( id ) {
+            return $('#endpoint-' + id).hasClass('pl-tree-end-checked');
+        }
+
+        function try_select_parent( db_tree, parent_id ) {
+            if ( !parent_id ) {
+                return;
+            }
+
+            var parent_node = $('#node-' + parent_id + '-check');
+            var higher_parent_id;
+
+            if ( subtree_selected( db_tree, parent_id ) ) {
+                parent_node.removeClass('pl-tree-node-unchecked')
+                           .addClass('pl-tree-node-checked');
+            } else {
+                parent_node.removeClass('pl-tree-node-checked')
+                           .addClass('pl-tree-node-unchecked');
+            }
+
+            higher_parent_id = _tree.get_parent_id( db_tree, parent_id );
+            try_select_parent( db_tree, higher_parent_id );
+        }
+                                                    
         $('.pl-tree-node').click( function () {
             handle_click( $(this) );
         });

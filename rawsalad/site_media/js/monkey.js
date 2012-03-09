@@ -761,8 +761,6 @@ Form of created tree:
                 subtreeRoot = isIdType(elem) ? this.getNode(elem) : elem;
                 nextNode = this.next(elem);
 
-                console.log( subtreeRoot['id'] );
-                console.log( nextNode['id'] );
                 while ( !!nextNode && this.isAncestor(subtreeRoot, nextNode)) {
                     nextNode = this.next(nextNode);
                 }
