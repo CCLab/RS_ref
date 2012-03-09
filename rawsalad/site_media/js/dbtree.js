@@ -119,12 +119,10 @@ var _dbtree = (function () {
                  this_node.hasClass('pl-tree-node-checked') ) {
 
                 _tree.inSubtreeDo( db_tree, id, uncheck_box );
-                try_select_parent( db_tree, parent_id);
+                try_change_parent_selection( db_tree, parent_id);
             } else {
                 _tree.inSubtreeDo( db_tree, id, check_box );
-                // check if all were marked and parent needs to be unmerked
-                // check if the parent has all children marked, then grandparent
-                try_select_parent( db_tree, parent_id );
+                try_change_parent_selection( db_tree, parent_id );
             }
         }
 
@@ -140,32 +138,7 @@ var _dbtree = (function () {
             }
         }
 
-        function all_endpoints_checked( db_tree, parent_id ) {
-            var not_selected = _tree.get_children_nodes( db_tree, parent_id )
-                                    .map( function ( higher_node ) {
-                                        var inner_not_selected = _tree.get_children_nodes( db_tree, higher_node['id'] )
-                                                                      .filter( function ( n ) {
-                                                                          var endpoint = $('#endpoint-' + n['id']);
-                                                                          return endpoint.hasClass('pl-tree-endpoint-unchecked');
-                                                                      });
-                                        return inner_not_selected.length;
-                                    })
-                                    .filter( function ( len ) {
-                                        return len > 0;
-                                    });
-            return not_selected.length === 0;
-        }
-
-        function all_subnodes_checked( db_tree, parent_id ) {
-            var not_selected = _tree.get_children_nodes( db_tree, parent_id )
-                                    .filter( function ( n ) {
-                                        var subnode = $('#node-' + n['id'] + '-check');
-                                        return subnode.hasClass('pl-tree-node-unchecked');
-                                    });
-            return not_selected.length === 0;
-        }
-
-        function subtree_selected( db_tree, subtree_root_id ) {
+        function is_subtree_selected( db_tree, subtree_root_id ) {
             function check_node( node ) {
                 if ( _tree.get_children_number( db_tree, node['id'] )  === 0
                      && !is_endpoint_selected( node['id'] ) ) {
@@ -183,7 +156,7 @@ var _dbtree = (function () {
             return $('#endpoint-' + id).hasClass('pl-tree-end-checked');
         }
 
-        function try_select_parent( db_tree, parent_id ) {
+        function try_change_parent_selection( db_tree, parent_id ) {
             if ( !parent_id ) {
                 return;
             }
@@ -191,7 +164,7 @@ var _dbtree = (function () {
             var parent_node = $('#node-' + parent_id + '-check');
             var higher_parent_id;
 
-            if ( subtree_selected( db_tree, parent_id ) ) {
+            if ( is_subtree_selected( db_tree, parent_id ) ) {
                 parent_node.removeClass('pl-tree-node-unchecked')
                            .addClass('pl-tree-node-checked');
             } else {
@@ -200,7 +173,7 @@ var _dbtree = (function () {
             }
 
             higher_parent_id = _tree.get_parent_id( db_tree, parent_id );
-            try_select_parent( db_tree, higher_parent_id );
+            try_change_parent_selection( db_tree, higher_parent_id );
         }
                                                     
         $('.pl-tree-node').click( function () {
@@ -240,40 +213,6 @@ var _dbtree = (function () {
                 node.removeClass('pl-tree-node-unchecked')
                     .addClass('pl-tree-node-checked');
             }
-        }
-    }
-
-    function check_children( this_node ) {
-        var node_id = this_node.attr('id');
-        var id = node_id.split('-')[1];
-
-        $('[parent_node=' + id + ']')
-            .each ( function ( i, e ) {
-                uncheck_box( $(e) );
-                check_children( $(e) );
-            });
-    }
-
-    function check_parents( this_node ) {
-        var node_id = this_node.attr('id');
-        var id = node_id.split('-')[1];
-        var parent_id = this_node.attr('parent_node');
-        var parent_node = $('#node-' + parent_id + '-check');
-        if ( parent_node.length === 0 ) {
-            return;
-        }
-
-        var all_siblings_ok = true;
-        $('[parent_node=' + parent_id + ']').each( function ( e, i ) {
-            if ( $(e).hasClass('pl-tree-node-unchecked') ) {
-                all_siblings_ok = false;
-            }
-        });
-
-        if ( all_siblings_ok ) {
-            parent_node.removeClass('pl-tree-node-unchecked')
-                       .addClass('pl-tree-node-checked');
-            check_parents( parent_node );
         }
     }
 
