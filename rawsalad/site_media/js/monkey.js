@@ -749,6 +749,25 @@ Form of created tree:
                 
                 return sortedTree;
             },
+
+            // Calls function for every node in a subtree specified by subtree root(elem).
+            inSubtreeDo: function(elem, fun) {
+                var subtreeRoot;
+                var nextNode;
+
+                isIdType(elem) ? assertId(elem, 'inSubtreeDo') : assertNodeInTree(this, this.nodeId(elem), false, 'inSubtreeDo');
+                assertFunction(fun);
+
+                subtreeRoot = isIdType(elem) ? this.getNode(elem) : elem;
+                nextNode = this.next(elem);
+
+                console.log( subtreeRoot['id'] );
+                console.log( nextNode['id'] );
+                while ( !!nextNode && this.isAncestor(subtreeRoot, nextNode)) {
+                    nextNode = this.next(nextNode);
+                }
+                this.iterate(fun, elem, nextNode);
+            },
             
             // Returns number of nodes in subtree with root specified by elem(node or its id).
             countSubtree: function(elem) {

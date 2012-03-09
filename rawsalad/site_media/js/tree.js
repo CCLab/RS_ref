@@ -44,7 +44,8 @@ var _tree = (function () {
     };
 
     that.get_parent_id = function( tree, id ) {
-        return that.get_parent( tree, id )['id'];
+        var parent = that.get_parent( tree, id );
+        return (!!parent) ? parent['id'] : undefined;
     };
     
     that.get_top_parent = function( tree, id ) {
@@ -138,6 +139,10 @@ var _tree = (function () {
         });
         
         return filtered_nodes;
+    };
+
+    that.inSubtreeDo = function( tree, subtree_root, fun ) {
+        tree.inSubtreeDo( subtree_root, fun );
     };
 
     return that;

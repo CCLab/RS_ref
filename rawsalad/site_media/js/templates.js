@@ -54,7 +54,6 @@ var _templates = (function () {
     // D B   T R E E
     that.dbtree_root =
         '<section>' +
-            '<h1>{{header}}</h1>' +
             '<ul>' +
                 '{{#children}}' +
                     '<li>' +
@@ -62,12 +61,13 @@ var _templates = (function () {
                     '</li>' +
                 '{{/children}}' +
             '</ul>' +
+        '<div id="pl-ch-submit" class="clear blue button">{{header}}</div>' +
         '</section>';
 
     that.dbtree_high =
         '<section>' +
             '<div id="node-{{id}}-pointer" class="pl-tree-pointer"></div>' +
-            '<div id="node-{{id}}-check" class="pl-tree-node-unchecked pl-tree-node"></div>' +
+            '<div id="node-{{id}}-check" parent_node="{{parent_id}}" class="pl-tree-node-unchecked pl-tree-node"></div>' +
             '<div id="node-{{id}}" class="pl-tree-arrow"></div>' +
             '<h1>{{name}}</h1>' +
             '<h1 id="node-{{id}}-description">{{description}}</h1>' +
@@ -102,7 +102,7 @@ var _templates = (function () {
                     '</td>' +
                     '{{#children}}' +
                     '<td>' +
-                        '<div endpoint={{endpoint}} class="pl-tree-end-unchecked pl-tree-end-checkbox"></div>' +
+                        '<div id="endpoint-{{id}}" endpoint={{endpoint}} parent_node={{parent_id}} class="pl-tree-end-unchecked pl-tree-end-checkbox"></div>' +
                     '</td>' +
                     '{{/children}}' +
                 '</tr>' +

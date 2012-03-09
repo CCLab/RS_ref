@@ -44,6 +44,7 @@ var _dbtree = (function () {
                                      });
             var html_info = {
                 'id'         : node['id'],
+                'parent_id'  : _tree.get_parent_id( db_tree, node['id'] ),
                 'name'       : name,
                 'description': node['description'],
                 'children'   : children_code
@@ -63,13 +64,15 @@ var _dbtree = (function () {
                                        .map( function ( n ) {
                                            return {
                                                'endpoint': n['endpoint'],
+                                               'id'      : n['id']
                                            };
                                        });
             var html_info = {
-                'id'      : node['id'],
-                'header'  : header_list,
-                'name'    : node['name'],
-                'children': children_list
+                //'id'       : node['id'],
+                'parent_id': _tree.get_parent_id( db_tree, node['id'] ),
+                'header'   : header_list,
+                'name'     : node['name'],
+                'children' : children_list
             };
 
             return Mustache.to_html( _templates.dbtree_leaf, html_info );
@@ -94,20 +97,105 @@ var _dbtree = (function () {
 
         console.log( db_tree_code );
         $('body').append( db_tree_code );
-        prepare_dbtree_interface();
+        prepare_dbtree_interface( db_tree );
     };
 
     function is_high_level( node ) {
         return node['max_depth'] >= 2;
     }
 
-    function prepare_dbtree_interface() {
+    function prepare_dbtree_interface( db_tree ) {
         $('.pl-tree-arrow').click( function () {
-            var this_node = $(this);
-            var id = this_node.attr('id');
+            var id = $(this).attr('id');
             $('#' + id + '-description').toggle();
             $('#' + id + '-children').toggle();
         });
+
+        function handle_click( this_node ) {
+            var fullid = this_node.attr('id');
+            var id = parseInt( fullid.split('-')[1] );
+            if ( this_node.hasClass('pl-tree-end-checked') ||
+                 this_node.hasClass('pl-tree-node-checked') ) {
+
+                _tree.inSubtreeDo( db_tree, id, uncheck_box );
+                // check if the parent has all children marked
+            } else {
+                _tree.inSubtreeDo( db_tree, id, check_box );
+            }
+        }
+
+        $('.pl-tree-node').click( function () {
+            handle_click( $(this) );
+        });
+
+        $('.pl-tree-end-checkbox').click( function () {
+            handle_click( $(this) );
+        });
+    }
+
+    function check_box( dbtree_node ) {
+        change_check_box( dbtree_node, 'on' );
+    }
+
+    function uncheck_box( dbtree_node ) {
+        change_check_box( dbtree_node, 'off' );
+    }
+
+    function change_check_box( dbtree_node, new_state ) {
+        var node_id = dbtree_node['id'];
+        var node = $('#node-' + node_id + '-check');
+        if ( !node.length ) {
+            node = $('#endpoint-' + node_id);
+            if ( new_state === 'off' ) {
+                node.removeClass('pl-tree-end-checked')
+                    .addClass('pl-tree-end-unchecked');
+            } else {
+                node.removeClass('pl-tree-end-unchecked')
+                    .addClass('pl-tree-end-checked');
+            }
+        } else {
+            if ( new_state === 'off' ) {
+                node.removeClass('pl-tree-node-checked')
+                    .addClass('pl-tree-node-unchecked');
+            } else {
+                node.removeClass('pl-tree-node-unchecked')
+                    .addClass('pl-tree-node-checked');
+            }
+        }
+    }
+
+    function check_children( this_node ) {
+        var node_id = this_node.attr('id');
+        var id = node_id.split('-')[1];
+
+        $('[parent_node=' + id + ']')
+            .each ( function ( i, e ) {
+                uncheck_box( $(e) );
+                check_children( $(e) );
+            });
+    }
+
+    function check_parents( this_node ) {
+        var node_id = this_node.attr('id');
+        var id = node_id.split('-')[1];
+        var parent_id = this_node.attr('parent_node');
+        var parent_node = $('#node-' + parent_id + '-check');
+        if ( parent_node.length === 0 ) {
+            return;
+        }
+
+        var all_siblings_ok = true;
+        $('[parent_node=' + parent_id + ']').each( function ( e, i ) {
+            if ( $(e).hasClass('pl-tree-node-unchecked') ) {
+                all_siblings_ok = false;
+            }
+        });
+
+        if ( all_siblings_ok ) {
+            parent_node.removeClass('pl-tree-node-unchecked')
+                       .addClass('pl-tree-node-checked');
+            check_parents( parent_node );
+        }
     }
 
     // Draw tree that shows available collections.
