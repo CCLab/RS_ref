@@ -37,11 +37,12 @@ var _gui = (function () {
         $('#tm-choose').click( function () {
             _resource.get_collections( function ( collections ) {
                 // TODO replace old draw_db_tree with the new one
-                //_dbtree.draw_db_tree_new( collections, 'Pokaż dane', 'unused_callback' );
-                _dbtree.draw_db_tree_ultra_new( collections, 'Pokaż dane', 'unused_callback' );
+                // !!!: comment next line not to draw new db tree
+                _dbtree.draw_db_tree_new( collections, 'Pokaż dane', 'unused_callback' );
                 // TODO make the submit button's callback a stand-alone function
                 // TODO fast temporary solution so that old and new db
                 // functions work
+                // !!!: uncomment next 2 lines to draw old db tree
                 //collections = _tree.tree_to_list( collections );
                 //_dbtree.draw_db_tree( collections, 'Pokaż dane', show_collections );
                 // start preloader

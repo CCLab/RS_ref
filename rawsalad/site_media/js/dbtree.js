@@ -30,22 +30,22 @@ var _dbtree = (function () {
     var that = {};
 
     // Draw tree that shows available collections.
-    that.draw_db_tree_ultra_new = function( db_tree, header, callback ) {
+    that.draw_db_tree_new = function( db_tree, header, callback ) {
         // Generate html code for node and his children.
-        function generate_node( node, even ) {
-            var name = node['name'];
-            var children_code = _tree.get_children_nodes( db_tree, node['id'] )
-                                     .map( function( n ) {
-                                         if ( is_high_level( n ) ) {
-                                             return generate_node( n, !even );
-                                         } else {
-                                             return generate_leaf( n, !even );
-                                         }
-                                     });
+        function generate_high_level_node( node, even ) {
+            var children_code = _tree
+                .get_children_nodes( db_tree, node['id'] )
+                .map( function( n ) {
+                    if ( is_high_level( n ) ) {
+                        return generate_high_level_node( n, !even );
+                    } else {
+                        return generate_leaf( n, !even );
+                    }
+                });
             var html_info = {
                 'id'         : node['id'],
                 'parent_id'  : _tree.get_parent_id( db_tree, node['id'] ),
-                'name'       : name,
+                'name'       : node['name'],
                 'description': node['description'],
                 'children'   : children_code
             };
@@ -53,20 +53,21 @@ var _dbtree = (function () {
             return Mustache.to_html( _templates.dbtree_high, html_info );
         }
 
+        // Generate html code for leaf => table with endpoints.
         function generate_leaf( node ) {
-            var header_list = _tree.get_children_nodes( db_tree, node['id'] )
-                                       .map( function ( n ) {
-                                           return {
-                                               'label': n['name'],
-                                           };
-                                       });
-            var children_list = _tree.get_children_nodes( db_tree, node['id'] )
-                                       .map( function ( n ) {
-                                           return {
-                                               'endpoint': n['endpoint'],
-                                               'id'      : n['id']
-                                           };
-                                       });
+            var header_list = _tree
+                .get_children_nodes( db_tree, node['id'] )
+                .map( function ( n ) {
+                    return n['name'];
+                });
+            var children_list = _tree
+                .get_children_nodes( db_tree, node['id'] )
+                .map( function ( n ) {
+                    return {
+                        'endpoint': n['endpoint'],
+                        'id'      : n['id']
+                    };
+                });
             var html_info = {
                 //'id'       : node['id'],
                 'parent_id': _tree.get_parent_id( db_tree, node['id'] ),
@@ -80,14 +81,15 @@ var _dbtree = (function () {
 
         var db_tree_code;
         var root = _tree.root( db_tree );
-        var top_level_nodes = _tree.get_children_nodes( db_tree, root['id'] )
-                                   .map( function ( n ) {
-                                       if ( is_high_level( n ) ) {
-                                           return generate_node( n, true );
-                                       } else {
-                                           return generate_leaf( n, true );
-                                       }
-                                   });
+        var top_level_nodes = _tree
+            .get_children_nodes( db_tree, root['id'] )
+            .map( function ( n ) {
+                if ( is_high_level( n ) ) {
+                    return generate_high_level_node( n, true );
+                } else {
+                    return generate_leaf( n, true );
+                }
+            });
 
         var html_info = {
             'header'  : header,
@@ -100,193 +102,20 @@ var _dbtree = (function () {
         prepare_dbtree_interface( db_tree );
     };
 
-    function is_high_level( node ) {
-        return node['max_depth'] >= 2;
-    }
+    that.get_selected_endpoints = function() {
+        var values = [];
 
-    function prepare_dbtree_interface( db_tree ) {
-        $('.pl-tree-arrow').click( function () {
-            var id = $(this).attr('id');
-            $('#' + id + '-description').toggle();
-            $('#' + id + '-children').toggle();
+        $('.pl-tree-end-checkbox').each( function ( i, e ) {
+            var checkbox = $(e);
+            if ( checkbox.hasClass('pl-tree-end-checked') ) {
+                values.push( checkbox.attr('endpoint') );
+            }
         });
 
-        function handle_click( this_node ) {
-            var fullid = this_node.attr('id');
-            var id = parseInt( fullid.split('-')[1] );
-            var parent_id = get_real_parent_id( db_tree, id );
-            if ( this_node.hasClass('pl-tree-end-checked') ||
-                 this_node.hasClass('pl-tree-node-checked') ) {
-
-                _tree.inSubtreeDo( db_tree, id, uncheck_box );
-                try_change_parent_selection( db_tree, parent_id);
-            } else {
-                _tree.inSubtreeDo( db_tree, id, check_box );
-                try_change_parent_selection( db_tree, parent_id );
-            }
-        }
-
-        function get_real_parent_id ( db_tree, id ) {
-            var node = _tree.get_node( db_tree, id );
-            var parent_id;
-
-            parent_id = _tree.get_parent_id( db_tree, id );
-            if ( node['min_depth'] === 0 ) {
-                return _tree.get_parent_id( db_tree, parent_id );
-            } else {
-                return parent_id;
-            }
-        }
-
-        function is_subtree_selected( db_tree, subtree_root_id ) {
-            function check_node( node ) {
-                if ( _tree.get_children_number( db_tree, node['id'] )  === 0
-                     && !is_endpoint_selected( node['id'] ) ) {
-                    all_subtree_selected = false;
-                }
-            }
-            var all_subtree_selected = true;
-
-            _tree.inSubtreeDo( db_tree, subtree_root_id, check_node );
-            
-            return all_subtree_selected;
-        }
-
-        function is_endpoint_selected( id ) {
-            return $('#endpoint-' + id).hasClass('pl-tree-end-checked');
-        }
-
-        function try_change_parent_selection( db_tree, parent_id ) {
-            if ( !parent_id ) {
-                return;
-            }
-
-            var parent_node = $('#node-' + parent_id + '-check');
-            var higher_parent_id;
-
-            if ( is_subtree_selected( db_tree, parent_id ) ) {
-                parent_node.removeClass('pl-tree-node-unchecked')
-                           .addClass('pl-tree-node-checked');
-            } else {
-                parent_node.removeClass('pl-tree-node-checked')
-                           .addClass('pl-tree-node-unchecked');
-            }
-
-            higher_parent_id = _tree.get_parent_id( db_tree, parent_id );
-            try_change_parent_selection( db_tree, higher_parent_id );
-        }
-                                                    
-        $('.pl-tree-node').click( function () {
-            handle_click( $(this) );
-        });
-
-        $('.pl-tree-end-checkbox').click( function () {
-            handle_click( $(this) );
-        });
-    }
-
-    function check_box( dbtree_node ) {
-        change_check_box( dbtree_node, 'on' );
-    }
-
-    function uncheck_box( dbtree_node ) {
-        change_check_box( dbtree_node, 'off' );
-    }
-
-    function change_check_box( dbtree_node, new_state ) {
-        var node_id = dbtree_node['id'];
-        var node = $('#node-' + node_id + '-check');
-        if ( !node.length ) {
-            node = $('#endpoint-' + node_id);
-            if ( new_state === 'off' ) {
-                node.removeClass('pl-tree-end-checked')
-                    .addClass('pl-tree-end-unchecked');
-            } else {
-                node.removeClass('pl-tree-end-unchecked')
-                    .addClass('pl-tree-end-checked');
-            }
-        } else {
-            if ( new_state === 'off' ) {
-                node.removeClass('pl-tree-node-checked')
-                    .addClass('pl-tree-node-unchecked');
-            } else {
-                node.removeClass('pl-tree-node-unchecked')
-                    .addClass('pl-tree-node-checked');
-            }
-        }
-    }
-
-    // Draw tree that shows available collections.
-    that.draw_db_tree_new = function( db_tree, header, callback ) {
-        // Generate html code for node and his children.
-        function generate_node( node, even ) {
-            var html_code;
-            var params = {};
-            var children_code = '';
-            var endpoints_table = false;
-            var children_nodes = _tree.get_children_nodes( db_tree, node['id'] );
-            
-            // generate code for children nodes
-            children_nodes.forEach( function( node ) {
-                var code = generate_node( node, !even );
-                if ( !!code['leaf'] ) {
-                    endpoints_table = true;
-                }
-                children_code += code;
-            });
-            
-            // generate code for this node using code for children nodes
-            if ( children_nodes.length === 0 ) {
-                // code cannot be generated for endpoint, remember its leaf
-                html_code = { 'leaf': true };
-            } else if ( endpoints_table ) {
-                // his children are leaves, generate endpoint table
-                params = {
-                    'label'    : node['name'],
-                    'even'     : even,
-                    'endpoints': children_nodes.map( function ( child_node ) {
-                        return {
-                            'label'   : child_node['name'],
-                            'endpoint': child_node['endpoint']
-                        }
-                    })
-                };
-                html_code = gen_html( params, children_code );
-            } else {
-                // his children are tables or parents of tables
-                params = {
-                    'label': node['name'] || header, // header for root node
-                    'even' : even
-                };
-                html_code = gen_html( params, children_code );
-            }
-            
-            return html_code;
-        }
-        var db_tree_code;
-        var root = _tree.root( db_tree );
-        
-        
-        db_tree_code = generate_node( root, true );
-        console.log( db_tree_code );
+        return values;
     };
     
-    function gen_html( params, children_code ) {
-        html = '<node ';
-        if ( !params['endpoints'] ) {
-            html += 'label=' + params['label'] + ' even=' + params['even'] + '>\n';
-            html += children_code;
-        } else {
-            html += 'label=' + params['label'] + ' even=' + params['even'] + '>\n';
-            html += '<endpoints>\n';
-            params['endpoints'].forEach( function( endpoint ) {
-                html += '<label=' + endpoint['label'] + ' endpoint=' + endpoint['endpoint'] + '>\n';
-            });
-            html += '</endpoints>\n';
-        }
-        html += '</node>\n';
-        return html;
-    }
+    
 
     that.draw_db_tree = function( data, submit_name, callback ) {
         var choose_panel = $('#pl-ch-datasets').empty();
@@ -317,6 +146,135 @@ var _dbtree = (function () {
     };
 
 // P R I V A T E   I N T E R F A C E
+
+    function is_high_level( node ) {
+        return node['max_depth'] >= 2;
+    }
+
+    function prepare_dbtree_interface( db_tree ) {
+        // Hiding and showing children of higher level nodes.
+        $('.pl-tree-arrow').click( function () {
+            var id = $(this).attr('id');
+            $('#' + id + '-description').toggle();
+            $('#' + id + '-children').toggle();
+        });
+
+        // Handle checkboxes selection in dbtree.
+        $('.pl-tree-node').click( function () {
+            handle_checkbox_selection( db_tree, $(this) );
+        });
+
+        $('.pl-tree-end-checkbox').click( function () {
+            handle_checkbox_selection( db_tree, $(this) );
+        });
+    }
+
+    // Select/deselect checkbox and checkboxes in subtree,
+    // update parent checkboxes.
+    function handle_checkbox_selection( db_tree, this_node ) {
+        var html_id = this_node.attr('id');
+        var id = parseInt( html_id.split('-')[1] );
+        var parent_id = get_dbtree_parent_id( db_tree, id );
+        if ( this_node.hasClass('pl-tree-end-checked') ||
+             this_node.hasClass('pl-tree-node-checked') ) {
+            _tree.inSubtreeDo( db_tree, id, uncheck_box );
+        } else {
+            _tree.inSubtreeDo( db_tree, id, check_box );
+        }
+        update_parent_selection( db_tree, parent_id );
+    }
+
+    // Return id of nodes parent in dbtree.
+    function get_dbtree_parent_id ( db_tree, id ) {
+        var node = _tree.get_node( db_tree, id );
+        var parent_id = _tree.get_parent_id( db_tree, id );
+
+        // If it is endpoint, then grandparent id should be returned, since
+        // direct parent is not showed in dbtree.
+        if ( node['min_depth'] === 0 ) {
+            return _tree.get_parent_id( db_tree, parent_id );
+        } else {
+            return parent_id;
+        }
+    }
+
+    // Return true if all endpoints in the subtree are selected, otherwise false.
+    function is_subtree_selected( db_tree, subtree_root_id ) {
+        function is_any_not_selected( node ) {
+            if ( is_not_selected_endpoint( db_tree, node ) ) {
+                all_subtree_selected = false;
+            }
+        }
+        function is_not_selected_endpoint( db_tree, node ) {
+            if ( _tree.get_children_number( db_tree, node['id'] ) === 0 ) {
+                if ( $('#endpoint-' + node['id']).hasClass('pl-tree-end-unchecked') ) {
+                    return true;
+                }
+                return false;
+            }
+            return false;
+        }
+        var all_subtree_selected = true;
+
+        _tree.inSubtreeDo( db_tree, subtree_root_id, is_any_not_selected );
+        
+        return all_subtree_selected;
+    }
+
+    // Recursively update parents selection.
+    function update_parent_selection( db_tree, parent_id ) {
+        if ( !parent_id ) {
+            return;
+        }
+
+        var parent_node = $('#node-' + parent_id + '-check');
+        var higher_parent_id;
+
+        if ( is_subtree_selected( db_tree, parent_id ) ) {
+            parent_node.removeClass('pl-tree-node-unchecked')
+                       .addClass('pl-tree-node-checked');
+        } else {
+            parent_node.removeClass('pl-tree-node-checked')
+                       .addClass('pl-tree-node-unchecked');
+        }
+
+        higher_parent_id = _tree.get_parent_id( db_tree, parent_id );
+        update_parent_selection( db_tree, higher_parent_id );
+    }
+
+    function check_box( dbtree_node ) {
+        change_check_box( dbtree_node, 'on' );
+    }
+
+    function uncheck_box( dbtree_node ) {
+        change_check_box( dbtree_node, 'off' );
+    }
+
+    // Toggle higher node or endpoint checkbox selection.
+    function change_check_box( dbtree_node, new_state ) {
+        var node_id = dbtree_node['id'];
+        var node = $('#node-' + node_id + '-check');
+        if ( !node.length ) {
+            node = $('#endpoint-' + node_id);
+            if ( new_state === 'off' ) {
+                node.removeClass('pl-tree-end-checked')
+                    .addClass('pl-tree-end-unchecked');
+            } else {
+                node.removeClass('pl-tree-end-unchecked')
+                    .addClass('pl-tree-end-checked');
+            }
+        } else {
+            if ( new_state === 'off' ) {
+                node.removeClass('pl-tree-node-checked')
+                    .addClass('pl-tree-node-unchecked');
+            } else {
+                node.removeClass('pl-tree-node-unchecked')
+                    .addClass('pl-tree-node-checked');
+            }
+        }
+    }
+
+
 
     function add_tree_node( data, id, choose_list, even ){
         var html;

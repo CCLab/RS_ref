@@ -89,7 +89,7 @@ var _templates = (function () {
                     '</th>' +
                     '{{#header}}' +
                     '<th>' +
-                        '{{label}}' +
+                        '{{.}}' +
                     '</th>' +
                     '{{/header}}' +
                 '</tr>' +
