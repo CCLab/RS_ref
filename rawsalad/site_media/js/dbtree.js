@@ -48,7 +48,8 @@ var _dbtree = (function () {
                 'parent_id'  : _tree.get_parent_id( db_tree, node['id'] ),
                 'name'       : node['name'],
                 'description': node['description'],
-                'children'   : children_code
+                'children'   : children_code,
+                'even'       : even
             };
 
             return Mustache.to_html( _templates.dbtree_high, html_info );
@@ -98,7 +99,6 @@ var _dbtree = (function () {
         };
         db_tree_code = Mustache.to_html( _templates.dbtree_root, html_info );
 
-        console.log( db_tree_code );
         $('#pl-ch-datasets').append( db_tree_code );
         prepare_dbtree_interface( db_tree, callback );
     };
@@ -157,6 +157,13 @@ var _dbtree = (function () {
         $('.pl-tree-arrow').click( function () {
             var id = $(this).attr('id');
             $('#' + id + '-children').toggle();
+
+            if( $(this).css('background-image').indexOf('left') !== -1 ) {
+                $(this).css('background-image','url("/site_media/img/arrow_down.png")');
+            }
+            else {
+                $(this).css('background-image','url("/site_media/img/arrow_left.png")');
+            }
         });
 
         // Handle checkboxes selection in dbtree.

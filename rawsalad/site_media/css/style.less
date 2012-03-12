@@ -150,7 +150,7 @@ td {
 h2 {
   margin-bottom: 0px;
   margin-top: 15px;
-}
+} 
 
 h3 {
   display: block;
@@ -460,6 +460,13 @@ textarea {
     > ul > li:last-child {
         border-bottom-width: 0px;
     } 
+
+    .even {
+      background-color: #fff;
+    }
+    .odd {
+      background-color: @panel-tree-even-background;
+    }
     
     .pl-tree-nodes-holder {
     }
@@ -471,9 +478,6 @@ textarea {
     width: 28px;
     height: 22px;
     cursor: pointer;
-
-    margin-right: 15px;
-    margin-top: 10px;
   }
   
   .pl-tree-node-unchecked {
@@ -612,7 +616,6 @@ textarea {
     
     margin-left: 5px;
     margin-right: 20px;
-    margin-top: 4px;
     background-image: url("/site_media/img/arrow_left.png");              
     
     cursor: pointer;

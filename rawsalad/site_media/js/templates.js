@@ -53,7 +53,7 @@ var _templates = (function () {
 
     // D B   T R E E
     that.dbtree_root =
-        '<ul style="width: 75%">' +
+        '<ul style="width: 65%; margin-left: 0px;">' +
             '{{#children}}' +
                 '<li>' +
                     '{{{.}}}' +
@@ -63,7 +63,7 @@ var _templates = (function () {
         '<div id="pl-ch-submit" class="clear blue button">{{header}}</div>';
 
     that.dbtree_high =
-        '<section class="tree-holder">' +
+        '<section class="tree-holder{{#even}} even{{/even}}{{^even}} odd{{/even}}">' +
             '<div id="node-{{id}}-check" parent_node="{{parent_id}}" class="left pl-tree-node-unchecked pl-tree-node"></div>' +
             '<div id="node-{{id}}" class="left pl-tree-arrow"></div>' +
             '<h1>{{name}}</h1>' +
