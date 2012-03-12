@@ -44,6 +44,7 @@ var _dbtree = (function () {
                 });
             var html_info = {
                 'id'         : node['id'],
+                'even'       : even,
                 'parent_id'  : _tree.get_parent_id( db_tree, node['id'] ),
                 'name'       : node['name'],
                 'description': node['description'],
@@ -54,7 +55,7 @@ var _dbtree = (function () {
         }
 
         // Generate html code for leaf => table with endpoints.
-        function generate_leaf( node ) {
+        function generate_leaf( node, even ) {
             var header_list = _tree
                 .get_children_nodes( db_tree, node['id'] )
                 .map( function ( n ) {
@@ -69,8 +70,8 @@ var _dbtree = (function () {
                     };
                 });
             var html_info = {
-                //'id'       : node['id'],
                 'parent_id': _tree.get_parent_id( db_tree, node['id'] ),
+                'even'     : even,
                 'header'   : header_list,
                 'name'     : node['name'],
                 'children' : children_list
@@ -155,7 +156,6 @@ var _dbtree = (function () {
         // Hiding and showing children of higher level nodes.
         $('.pl-tree-arrow').click( function () {
             var id = $(this).attr('id');
-            $('#' + id + '-description').toggle();
             $('#' + id + '-children').toggle();
         });
 
@@ -166,6 +166,11 @@ var _dbtree = (function () {
 
         $('.pl-tree-end-checkbox').click( function () {
             handle_checkbox_selection( db_tree, $(this) );
+        });
+
+        $('#pl-ch-submit').click( function () {
+            var selected_endpoints = that.get_selected_endpoints();
+            console.log(selected_endpoints);
         });
     }
 
