@@ -53,7 +53,7 @@ var _templates = (function () {
 
     // D B   T R E E
     that.dbtree_root =
-        '<ul style="width: 65%">' +
+        '<ul style="width: 75%">' +
             '{{#children}}' +
                 '<li>' +
                     '{{{.}}}' +
