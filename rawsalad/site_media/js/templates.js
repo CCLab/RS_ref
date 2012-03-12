@@ -53,25 +53,22 @@ var _templates = (function () {
 
     // D B   T R E E
     that.dbtree_root =
-        '<section>' +
-            '<ul>' +
-                '{{#children}}' +
-                    '<li>' +
-                        '{{{.}}}' +
-                    '</li>' +
-                '{{/children}}' +
-            '</ul>' +
-        '<div id="pl-ch-submit" class="clear blue button">{{header}}</div>' +
-        '</section>';
+        '<ul style="width: 65%">' +
+            '{{#children}}' +
+                '<li>' +
+                    '{{{.}}}' +
+                '</li>' +
+            '{{/children}}' +
+        '</ul>' +
+        '<div id="pl-ch-submit" class="clear blue button">{{header}}</div>';
 
     that.dbtree_high =
-        '<section>' +
-            '<div id="node-{{id}}-pointer" class="pl-tree-pointer"></div>' +
-            '<div id="node-{{id}}-check" parent_node="{{parent_id}}" class="pl-tree-node-unchecked pl-tree-node"></div>' +
-            '<div id="node-{{id}}" class="pl-tree-arrow"></div>' +
+        '<section class="tree-holder">' +
+            '<div id="node-{{id}}-check" parent_node="{{parent_id}}" class="left pl-tree-node-unchecked pl-tree-node"></div>' +
+            '<div id="node-{{id}}" class="left pl-tree-arrow"></div>' +
             '<h1>{{name}}</h1>' +
-            '<h1 id="node-{{id}}-description">{{description}}</h1>' +
-            '<ul id="node-{{id}}-children" style="display: none;">' +
+            '<h2 id="node-{{id}}-description">{{description}}</h2>' +
+            '<ul id="node-{{id}}-children" class="pl-tree-nodes-holder" style="display: none;">' +
             '{{#children}}' +
                 '<li>' +
                     '{{{.}}}' +
@@ -84,7 +81,7 @@ var _templates = (function () {
         '<table>' +
             '<thead>' +
                 '<tr>' +
-                    '<th>' + 
+                    '<th>' +
                         '&nbsp;' +
                     '</th>' +
                     '{{#header}}' +
@@ -101,7 +98,7 @@ var _templates = (function () {
                         '{{name}}' +
                     '</td>' +
                     '{{#children}}' +
-                    '<td>' +
+                    '<td class="check">' +
                         '<div id="endpoint-{{id}}" endpoint={{endpoint}} parent_node={{parent_id}} class="pl-tree-end-unchecked pl-tree-end-checkbox"></div>' +
                     '</td>' +
                     '{{/children}}' +
@@ -266,7 +263,7 @@ var _templates = (function () {
                 '</select>' +
             '</td>' +
          '</tr>';
-     
+
     that.filter_form =
         '<form id="app-tb-tl-filter-form" class="sort-filter-form left">' +
             '<table>' +
@@ -283,7 +280,7 @@ var _templates = (function () {
             '<div id="app-tb-tl-filter-add" class="grey button">Dodaj kolejny klucz</div>' +
             '<div id="app-tb-tl-filter-submit" class="blue button">Filtruj</div>' +
         '</form>';
-    
+
     that.filter_key =
         '<tr id="filter-key-{{keys_num}}">' +
             '<td>' +
@@ -303,8 +300,8 @@ var _templates = (function () {
                 '<input type="text" name="query" id="filter-{{keys_num}}-query" class="input_text">'
             '</td>' +
          '</tr>';
-     
-    that.string_operations = 
+
+    that.string_operations =
         '<select id="filter-{{keys_num}}-operations" name="string-operation" class="input-text">' +
             '<option value="null" class="filter-operation-{{keys_num}}" selected></option>' +
             '<option value="cnt" class="filter-operation-{{keys_num}}">Zawiera</option>' +
@@ -312,16 +309,16 @@ var _templates = (function () {
             '<option value="ncnt" class="filter-operation-{{keys_num}}">Nie zawiera</option>' +
             '<option value="nst" class="filter-operation-{{keys_num}}">Nie zaczyna się od</option>' +
         '</select>';
-    
-    that.number_operations = 
+
+    that.number_operations =
         '<select id="filter-{{keys_num}}-operations" name="number-operation" class="input-text">' +
             '<option value="null" class="filter-operation-{{keys_num}}" selected></option>' +
             '<option value="gt" class="filter-operation-{{keys_num}}">&gt;</option>' +
             '<option value="eq" class="filter-operation-{{keys_num}}">=</option>' +
             '<option value="lt" class="filter-operation-{{keys_num}}">&lt;</option>' +
         '</select>';
-    
-    that.null_operations = 
+
+    that.null_operations =
         '<select id="filter-{{keys_num}}-operations" name="null-operation" class="input-text" disabled>' +
         '</select>';
 
@@ -429,7 +426,7 @@ var _templates = (function () {
                 '<button id="show-context-{{box_id}}" type="button">{{context_action}}</button>' +
             '</td>' +
         '</tr>';
-    
+
     // return public interface
     return that;
 

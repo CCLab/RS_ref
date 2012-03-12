@@ -339,7 +339,7 @@ textarea {
   }
 
   .panel-main {
-    overflow: hidden;   
+    overflow: hidden; 
     margin: 5px;
     padding: 5px;
     clear: both;
@@ -385,7 +385,6 @@ textarea {
     
     li {
       margin: 15px;
-      padding: 10px;
     }
     
     > header {
@@ -406,6 +405,17 @@ textarea {
     width: 98%;
     clear: none;
     
+    section.tree-holder {
+      overflow: auto;
+
+      width: 90%;
+      margin: 10px; 
+      padding: 20px;
+      position: relative; 
+      border: solid 1px #555;
+      display: block;
+    }
+
     > div.button {
       float: left;
 
@@ -413,16 +423,45 @@ textarea {
       margin-left: 25px;
     }
     
-    > ul > li {
-      padding-bottom: 25px;
+    table {
+      table-collapse: collapse;
+      width: 100%;
+    }
+
+    th {
+      border-bottom: 1px solid #555;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    td {
+      padding-top: 8px;
+      vertical-align: top;
+    }
     
-      border-style: solid;
-      border-color: @panel-tree-li-border;
-      border-bottom-width: 1px;
+    td.check {
+      width: 39px;
+      padding: 5px 3px;
+    }
+    td.check > div {
+      margin: 0px auto;
+    }
+    
+    h1 {
+      font-size: 18px;
+    }
+
+    ul {
+      width: 95%;
+      margin-left: 25px;
+      clear: both;
     }
       
     > ul > li:last-child {
         border-bottom-width: 0px;
+    } 
+    
+    .pl-tree-nodes-holder {
     }
   }
     
@@ -520,6 +559,8 @@ textarea {
         background-color: @panel-tree-even-background;           
 
         > div.pl-tree-pointer {
+          position: absolute;
+          left: -7px;
           background-image: url("/site_media/img/corner2.png");           
         }
       }
@@ -587,7 +628,6 @@ textarea {
   }
 
   .pl-tree-end-det {
-    overflow: auto;
     display: none;
 
     clear: both;

@@ -98,7 +98,7 @@ var _dbtree = (function () {
         db_tree_code = Mustache.to_html( _templates.dbtree_root, html_info );
 
         console.log( db_tree_code );
-        $('body').append( db_tree_code );
+        $('#pl-ch-datasets').append( db_tree_code );
         prepare_dbtree_interface( db_tree );
     };
 
@@ -114,8 +114,8 @@ var _dbtree = (function () {
 
         return values;
     };
-    
-    
+
+
 
     that.draw_db_tree = function( data, submit_name, callback ) {
         var choose_panel = $('#pl-ch-datasets').empty();
@@ -217,7 +217,7 @@ var _dbtree = (function () {
         var all_subtree_selected = true;
 
         _tree.inSubtreeDo( db_tree, subtree_root_id, is_any_not_selected );
-        
+
         return all_subtree_selected;
     }
 
