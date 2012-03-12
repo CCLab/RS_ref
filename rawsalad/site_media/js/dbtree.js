@@ -99,7 +99,8 @@ var _dbtree = (function () {
         };
         db_tree_code = Mustache.to_html( _templates.dbtree_root, html_info );
 
-        $('#pl-ch-datasets').append( db_tree_code );
+        $('#pl-ch-area').empty().append('<div id="pl-ch-datasets" class="panel-main"></div>');
+        $('#pl-ch-datasets').empty().append( db_tree_code );
         prepare_dbtree_interface( db_tree, callback );
     };
 

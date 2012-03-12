@@ -35,18 +35,11 @@ var _gui = (function () {
     that.init_gui = function() {
 
         $('#tm-choose').click( function () {
+            if( $('#panels').not(':visible') ) {
+                $('#panels').slideDown( 30 );
+            }
             _resource.get_collections( function ( collections ) {
-                // TODO replace old draw_db_tree with the new one
-                // !!!: comment next line not to draw new db tree
                 _dbtree.draw_db_tree_new( collections, 'Pokaż dane', show_endpoints );
-                // TODO make the submit button's callback a stand-alone function
-                // TODO fast temporary solution so that old and new db
-                // functions work
-                // !!!: uncomment next 2 lines to draw old db tree
-                //collections = _tree.tree_to_list( collections );
-                //_dbtree.draw_db_tree( collections, 'Pokaż dane', show_collections );
-                // start preloader
-                console.log( "Wczytuję dane. To może chwilę potrwać!" );
             });
         });
 
@@ -54,14 +47,14 @@ var _gui = (function () {
             _resource.get_collections( function ( collections ) {
                 // TODO fast temporary solution so that old and new db
                 // functions work
-                collections = _tree.tree_to_list( collections );
+                //collections = _tree.tree_to_list( collections );
                 var html = [];
                 html.push( '<section class="panel-main">' );
                 html.push( '<input type="text" id="search-query" ' );
                 html.push( 'placeholder="Wpisz szukane słowo" /></section>' );
 
                 // TODO make the submit button's callback a stand-alone function
-                _dbtree.draw_db_tree( collections, 'Szukaj', function ( endpoints ) {
+                _dbtree.draw_db_tree_new( collections, 'Szukaj', function ( endpoints ) {
                     console.log( "Szukam" );
 
                     var query = $('#search-query').val();
@@ -108,6 +101,10 @@ var _gui = (function () {
     //=====================================================//
 
     function show_endpoints( endpoints ) {
+        var init_callback = function () {
+            $('#application').show();
+            _resource.get_sheets_labels( draw_tabs );
+        };
         var callbacks = [];
         callbacks = endpoints.map( function ( e ) {
             return _resource.get_sheets_labels( draw_tabs );
@@ -115,10 +112,17 @@ var _gui = (function () {
         callbacks[0] = function ( data ) {
             draw_endpoint( data['data'] );
         };
-        var init_callback = function () {
-            $('#application').show();
-            _resource.get_sheets_labels( draw_tabs );
-        };
+
+        if( $('#panels').is(':visible') ) {
+            $('#panels').slideUp( 30 );
+        }
+        display_application_panel( function () {
+            $('#application').find('.panel-main').append(
+                '<h1 style="font-size: 24px; font-weight: bold;">Wczytuję dane</h1>' +
+                '<p>W zależności od jakości łącza, pogody itp to może potrwać dłuższą chwilę</p>'
+            );
+        });
+
         _resource.get_top_levels( endpoints, init_callback, callbacks );
     }
 
@@ -128,10 +132,16 @@ var _gui = (function () {
 
 
     function draw_endpoint( data ) {
-//        if( $('#panels').is(':visible') ) {
-//            $('#panels').slideUp( 300 );
-//        }
-        display_application_panel();
+        (function sleep( milliseconds ) {
+            var i;
+            var start = new Date().getTime();
+            for( i = 0; i < 1e7; i++ ) {
+                if( (new Date().getTime() - start ) > milliseconds ) {
+                    break;
+                }
+            }
+        })( 3000 );
+
         draw_table( data );
         draw_tools( data );
         _resource.get_sheets_labels( draw_tabs );
@@ -155,8 +165,8 @@ var _gui = (function () {
 
     function draw_tools( names ) {
         var tools;
-        names['changed_label'] = ( names['label'] === names['original_label'] ) ? false : true;        
-        
+        names['changed_label'] = ( names['label'] === names['original_label'] ) ? false : true;
+
         tools = Mustache.to_html( _templates.app_table_tools, names );
         display_tools( tools );
     }
@@ -175,9 +185,13 @@ var _gui = (function () {
 
     // APLICATION PANEL
 
-    function display_application_panel() {
+    function display_application_panel( callback ) {
         prepare_aplication_interface();
         $('#application').show();
+
+        if( !!callback ) {
+            callback();
+        }
     }
 
 
@@ -296,7 +310,7 @@ var _gui = (function () {
 
         columns_bt
             .click( display_add_columns );
-        
+
     }
 
 
@@ -465,7 +479,7 @@ var _gui = (function () {
         var sort_form_code = $( _templates.sort_form );
         prepare_sort_interface( sort_form_code );
         add_sort_key( sort_form_code );
-        
+
         // TODO - add show and hide animations
         $('#app-tb-tl-srft-forms').children().remove();
         $('#app-tb-tl-srft-forms').append( sort_form_code );
@@ -476,7 +490,7 @@ var _gui = (function () {
         var filter_form_code = $( _templates.filter_form );
         prepare_filter_interface( filter_form_code );
         add_filter_key( filter_form_code );
-        
+
         // TODO - add show and hide animations
         $('#app-tb-tl-srft-forms').children().remove();
         $('#app-tb-tl-srft-forms').append( filter_form_code );
@@ -526,7 +540,7 @@ var _gui = (function () {
             .click( display_add_columns );
     }
 
-    
+
     function sort_table( sheet_id, settings ) {
         _resource.sort( sheet_id, settings, draw_table );
     }
@@ -571,7 +585,7 @@ var _gui = (function () {
         var id = $(this).attr('id');
         var id_parts = id.split('-');
         if ( id_parts[ 1 ] === 'breadcrumb' ) {
-            toggle_breadcrumb( parseInt( id_parts[ 2 ] ) ); 
+            toggle_breadcrumb( parseInt( id_parts[ 2 ] ) );
         } else {
             toggle_context( parseInt( id_parts[ 2 ] ) );
         }
@@ -583,7 +597,7 @@ var _gui = (function () {
         var box = $('[box_id = ' + box_id + ']');
 
         box.remove();
-       
+
         if ( box_id > 0 ) {
             $('[box_id = ' + (box_id-1) + ']').last().after( box_code );
         } else {
@@ -812,26 +826,26 @@ var _gui = (function () {
     function prepare_sort_interface( sort_form ){
         var add_key_button = sort_form.find('#app-tb-tl-sort-add');
         var submit_button = sort_form.find('#app-tb-tl-sort-submit');
-        
+
         add_key_button.click( function () {
             add_sort_key();
         });
-        
+
         submit_button.click( function () {
             sort_form.submit();
         });
-        
+
         sort_form.submit( function () {
             var sheet_id = active_sheet_id();
             var settings = get_sort_settings();
 
             $(this).remove();
             sort_table( sheet_id, settings );
-                
+
             return false;
         });
     }
-    
+
     function get_sort_settings() {
         var column, order;
         var settings = [];
@@ -864,7 +878,7 @@ var _gui = (function () {
                 }
             );
         }
-        
+
         return settings;
     }
 
@@ -883,7 +897,7 @@ var _gui = (function () {
             eliminate_redundant_keys( sort_form, data );
             key_html = Mustache.to_html( _templates.sort_key, data );
             placeholder.append( key_html );
-            
+
             if ( data['keys_num'] === data['columns'].length ||
                  _enum['MAX_KEYS'] === data['keys_num'] + 1 ){
                 sort_form.find('#app-tb-tl-sort-add').hide();
@@ -896,29 +910,29 @@ var _gui = (function () {
         var selected_columns = {};
         var column;
         var i;
-        
+
         for ( i = 0; i < data['keys_num']; i += 1 ) {
             column = sort_form.find('.column-key-'+ i +':selected').val();
             selected_columns[ column ] = true;
         }
-        
+
         data['columns'] = data['columns'].filter( function ( col ) {
             return !selected_columns[ col['key'] ];
         });
     }
-    
+
     function prepare_filter_interface( filter_form ){
         var add_key_button = filter_form.find('#app-tb-tl-filter-add');
         var submit_button = filter_form.find('#app-tb-tl-filter-submit');
-        
+
         add_key_button.click( function () {
             add_filter_key( );
         });
-        
+
         submit_button.click( function () {
             filter_form.submit();
         });
-        
+
         filter_form.submit( function () {
             var sheet_id = active_sheet_id();
             var settings = get_filter_settings();
@@ -931,14 +945,14 @@ var _gui = (function () {
             return false;
         });
     }
-    
+
     function get_filter_settings() {
         var column, operation, query;
         var i;
         var keys_num = $('#app-tb-tl-filter-form').find('tbody > tr').length;
         var settings = [];
         var tmp, type;
-        
+
         for ( i = 0; i < keys_num; ++i ) {
             column = $('.filter-column-'+ i +':selected').val();
             if ( column === "null" ) {
@@ -951,8 +965,8 @@ var _gui = (function () {
             operation = $('.filter-operation-'+i+':selected').val();
             query = $('#filter-'+i+'-query').val();
             type = $('#filter-' + i + '-operations').attr('name');
-            
-            
+
+
             if ( type === 'number-operation' ) {
                 query = parseInt( query, 10 );
                 if ( isNaN( query ) ) {
@@ -966,10 +980,10 @@ var _gui = (function () {
                 'preference' : operation
             });
         }
-        
+
         return settings;
     }
-    
+
     function add_filter_key( filter_form ) {
         var filter_form = filter_form || $('#app-tb-tl-filter-form');
         var sheet_id = active_sheet_id();
@@ -984,33 +998,33 @@ var _gui = (function () {
 
             key_html = Mustache.to_html( _templates.filter_key, data );
             placeholder.append( key_html );
-            
+
             filter_form.find('#filter-'+ keys_num +'-columns').change( function () {
                 var selected_column = $(this).val();
                 var operations_html = get_operations( data['columns'], selected_column, keys_num );
-                
+
                 $('#filter-' + keys_num + '-operations').remove();
                 $('#filter-'+ keys_num +'-query').val( '' );
                 $(this).parent().next().append( $( operations_html ) );
             });
-            
+
             if ( _enum['MAX_KEYS'] === keys_num + 1 ) {
                 filter_form.find('#app-tb-tl-filter-add').hide();
             }
         });
     }
-    
+
     function get_operations( columns, selected_column, keys_num ) {
         var type;
         var column;
         var operations;
         var data = { 'keys_num': keys_num };
-        
+
         column = columns.filter( function ( column ) {
             return column['key'] === selected_column;
         })[0];
         type = ( !!column ) ? column['type'] : 'null';
-        
+
         switch ( type ) {
             case 'string':
                 operations = Mustache.to_html( _templates.string_operations, data );
@@ -1024,7 +1038,7 @@ var _gui = (function () {
             default:
                 throw 'Add filter operation: unexpected type: ' + type;
         }
-        
+
         return operations;
     }
 
