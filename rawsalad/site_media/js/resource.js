@@ -59,6 +59,7 @@ var _resource = (function () {
         var respond = function() {
             var gui_data;
             var children = _tree.get_children_nodes( sheet['data'], parent_id );
+            open_row( sheet_id, parent_id );
 
             if ( should_return ) {
                 gui_data = prepare_table_data( sheet_id, children );
@@ -109,7 +110,10 @@ var _resource = (function () {
         children.forEach( function ( node ) {
             _tree.remove_node( sheet['data'], node['id'] );
         });
+        close_row( sheet_id, parent_id );
     };
+
+    
 
     that.row_selected = function ( sheet_id, selected_id, prev_selected_id ) {
         var sheet = get_sheet( sheet_id );
@@ -823,17 +827,16 @@ var _resource = (function () {
             'sheet_id': sheet_id,
             'group_id': sheet['group_id'],
             'endpoint': sheet['endpoint'],
-            'blocked' : !sheet['data']
+            'blocked' : sheet['blocked'] || false
         };
     }
 
     // Get description of all sheets' labels and top level data
     // of the given endpoint.
     function collect_sheets_data( endpoint, callback ) {
-        var tabs = that.get_sheets_labels();
         get_top_level( endpoint, function( gui_data ) {
             callback({
-                'tabs': tabs,
+                'tabs': that.get_sheets_labels(),
                 'data': gui_data
             });
         });
@@ -891,6 +894,20 @@ var _resource = (function () {
         });
 
         return cleaned_data;
+    }
+
+    function set_open_state( sheet_id, id, new_state ) {
+        var sheet = get_sheet( sheet_id );
+        var node = _tree.get_node( sheet['data'], id );
+        node['state']['is_open'] = new_state;
+    }
+
+    function open_row( sheet_id, id ) {
+        set_open_state( sheet_id, id, true );
+    }
+
+    function close_row( sheet_id, id ) {
+        set_open_state( sheet_id, id, false );
     }
 
     // selected row get 'top' attribute, his descdendants 'inside'

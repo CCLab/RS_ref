@@ -107,7 +107,9 @@ var _gui = (function () {
         };
         var callbacks = [];
         callbacks = endpoints.map( function ( e ) {
-            return _resource.get_sheets_labels( draw_tabs );
+            return function () {
+                _resource.get_sheets_labels( draw_tabs );
+            };
         });
         callbacks[0] = function ( data ) {
             draw_endpoint( data['data'] );
