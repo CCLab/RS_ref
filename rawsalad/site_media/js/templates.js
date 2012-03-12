@@ -36,9 +36,9 @@ var _templates = (function () {
         '<div id="app-tb-save-sheet" class="blue button left">Kopiuj do arkusza</div>' +
         '<ul id="app-tb-sheets">' +
             '{{#sheets}}' +
-                '<li id="snap-{{sheet_id}}" data-end-point="{{end_id}}" data-group="{{group_id}}" class="sheet tab button' +
+                '<li id="snap-{{sheet_id}}" data-end-point="{{endpoint}}" data-group="{{group_id}}" class="sheet tab button' +
                     '{{#blocked}}' +
-                        'ready' +
+                        ' ready' +
                     '{{/blocked}}' +
                 '" title="{{name}}">' +
                     '<p>' +

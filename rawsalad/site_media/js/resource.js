@@ -823,17 +823,16 @@ var _resource = (function () {
             'sheet_id': sheet_id,
             'group_id': sheet['group_id'],
             'endpoint': sheet['endpoint'],
-            'blocked' : !sheet['data']
+            'blocked' : sheet['blocked'] || false
         };
     }
 
     // Get description of all sheets' labels and top level data
     // of the given endpoint.
     function collect_sheets_data( endpoint, callback ) {
-        var tabs = that.get_sheets_labels();
         get_top_level( endpoint, function( gui_data ) {
             callback({
-                'tabs': tabs,
+                'tabs': that.get_sheets_labels(),
                 'data': gui_data
             });
         });
