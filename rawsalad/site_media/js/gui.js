@@ -38,7 +38,7 @@ var _gui = (function () {
             _resource.get_collections( function ( collections ) {
                 // TODO replace old draw_db_tree with the new one
                 // !!!: comment next line not to draw new db tree
-                _dbtree.draw_db_tree_new( collections, 'Pokaż dane', 'unused_callback' );
+                _dbtree.draw_db_tree_new( collections, 'Pokaż dane', show_endpoints );
                 // TODO make the submit button's callback a stand-alone function
                 // TODO fast temporary solution so that old and new db
                 // functions work
@@ -107,7 +107,20 @@ var _gui = (function () {
     //          P R I V A T E   I N T E R F A C E          //
     //=====================================================//
 
-
+    function show_endpoints( endpoints ) {
+        var callbacks = [];
+        callbacks = endpoints.map( function ( e ) {
+            return _resource.get_sheets_labels( draw_tabs );
+        });
+        callbacks[0] = function ( data ) {
+            draw_endpoint( data['data'] );
+        };
+        var init_callback = function () {
+            $('#application').show();
+            _resource.get_sheets_labels( draw_tabs );
+        };
+        _resource.get_top_levels( endpoints, init_callback, callbacks );
+    }
 
     /////////////////////////////////
     // D R A W   F U N C T I O N S //

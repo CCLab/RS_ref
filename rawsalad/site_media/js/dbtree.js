@@ -100,7 +100,7 @@ var _dbtree = (function () {
 
         console.log( db_tree_code );
         $('#pl-ch-datasets').append( db_tree_code );
-        prepare_dbtree_interface( db_tree );
+        prepare_dbtree_interface( db_tree, callback );
     };
 
     that.get_selected_endpoints = function() {
@@ -152,7 +152,7 @@ var _dbtree = (function () {
         return node['max_depth'] >= 2;
     }
 
-    function prepare_dbtree_interface( db_tree ) {
+    function prepare_dbtree_interface( db_tree, callback ) {
         // Hiding and showing children of higher level nodes.
         $('.pl-tree-arrow').click( function () {
             var id = $(this).attr('id');
@@ -170,7 +170,7 @@ var _dbtree = (function () {
 
         $('#pl-ch-submit').click( function () {
             var selected_endpoints = that.get_selected_endpoints();
-            console.log(selected_endpoints);
+            callback( selected_endpoints );
         });
     }
 

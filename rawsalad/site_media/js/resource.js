@@ -36,7 +36,7 @@ var _resource = (function () {
 
     // Get top levels and call callbacks with data (top level + meta) from them,
     // order of callbacks is the same as order of endpoints.
-    that.get_top_levels = function ( endpoints, callbacks ) {
+    that.get_top_levels = function ( endpoints, init_callback, callbacks ) {
         // Create_empty_sheets for endpoints
         // with data for sheet tabs(get_sheets_names)
         endpoints.forEach( function ( endpoint ) {
@@ -49,6 +49,7 @@ var _resource = (function () {
                                             _enum['STANDARD'], add_fields );
             add_sheet( empty_sheet );
         });
+        init_callback();
 
         get_many( endpoints, collect_sheets_data, callbacks );
     };
