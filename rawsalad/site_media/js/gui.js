@@ -106,24 +106,38 @@ var _gui = (function () {
 
             _resource.get_collections( function ( collections ) {
                 _dbtree.draw_db_tree_new( collections, 'Pobierz', function ( endpoints ) {
-                    console.log( "Szukam" );
+                    var sheets = $('#dl-sheets').find('input:checked').map( function ( e ) {
+                                     return $(this).attr('id');
+                                 });
+                    var checked = {
+                        'db_tree' : _dbtree.get_selected_endpoints(),
+                        'sheets'  : $.makeArray( sheets )
+                    };
+
+                    console.log( "vvvvvvvvvvvvvvvvvvvv <--- DO THE MAGIC WITH THIS" );
+                    console.log( checked );
                 });
             });
 
             var open_sheets = _resource.get_grouped_sheets();
             $('#pl-ch-datasets').append(
+                '<div id="dl-sheets">'+
                 open_sheets.map( function ( e ) {
                     return '<h1 style="clear: both;">' + e['group_name'] + '</h1>' +
                            '<ul>' +
                                 e['sheets'].map( function ( s ) {
-                                   return '<li id="' + s['id'] + '">' + s['name'] + '</li>';
+                                   return '<li>' +
+                                            '<input class="left" type="checkbox" id="' + s['id'] + '"/>' +
+                                            s['name'] +
+                                          '</li>';
                                 }).join('') +
                            '</ul>';
-                }).join('')
+                }).join('') +
+                '</div>'
             );
         });
 
-        $('#tm-choose').trigger('click');
+        //$('#tm-choose').trigger('click');
     };
 
     //=====================================================//
@@ -160,15 +174,25 @@ var _gui = (function () {
 
     function hide_panels( clicked ) {
 
+        if( clicked.hasClass('active') ) {
+            $('#panels').slideUp( 300 );
+            clicked.removeClass('active');
+
+            return true;
+        }
+
         $('#top-menu').find('.active').removeClass('active');
         clicked.addClass('active');
 
         if( $('#panels').is(':visible') ) {
-            $('#panels').slideUp( 300 );
-            return true;
+            $('#panels').slideUp( 300, function () {
+                $('#panels').slideDown( 300 );
+            });
+        }
+        else {
+            $('#panels').slideDown( 300 );
         }
 
-        $('#panels').slideDown( 300 );
         return false;
     }
 
