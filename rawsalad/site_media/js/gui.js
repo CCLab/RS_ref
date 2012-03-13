@@ -35,15 +35,20 @@ var _gui = (function () {
     that.init_gui = function() {
 
         $('#tm-choose').click( function () {
-            if( $('#panels').not(':visible') ) {
-                $('#panels').slideDown( 30 );
+            if( hide_panels( $(this) ) ) {
+                return;
             }
+
             _resource.get_collections( function ( collections ) {
                 _dbtree.draw_db_tree_new( collections, 'Pokaż dane', show_endpoints );
             });
         });
 
         $('#tm-search').click( function () {
+            if( hide_panels( $(this) ) ) {
+                return;
+            }
+
             _resource.get_collections( function ( collections ) {
                 // TODO fast temporary solution so that old and new db
                 // functions work
@@ -93,6 +98,31 @@ var _gui = (function () {
             });
         });
 
+        $('#tm-download').click( function () {
+            if( hide_panels( $(this) ) ) {
+                return;
+            }
+
+
+            _resource.get_collections( function ( collections ) {
+                _dbtree.draw_db_tree_new( collections, 'Pobierz', function ( endpoints ) {
+                    console.log( "Szukam" );
+                });
+            });
+
+            var open_sheets = _resource.get_grouped_sheets();
+            $('#pl-ch-datasets').append(
+                open_sheets.map( function ( e ) {
+                    return '<h1 style="clear: both;">' + e['group_name'] + '</h1>' +
+                           '<ul>' +
+                                e['sheets'].map( function ( s ) {
+                                   return '<li id="' + s['id'] + '">' + s['name'] + '</li>';
+                                }).join('') +
+                           '</ul>';
+                }).join('')
+            );
+        });
+
         $('#tm-choose').trigger('click');
     };
 
@@ -128,6 +158,20 @@ var _gui = (function () {
         _resource.get_top_levels( endpoints, init_callback, callbacks );
     }
 
+    function hide_panels( clicked ) {
+
+        $('#top-menu').find('.active').removeClass('active');
+        clicked.addClass('active');
+
+        if( $('#panels').is(':visible') ) {
+            $('#panels').slideUp( 300 );
+            return true;
+        }
+
+        $('#panels').slideDown( 300 );
+        return false;
+    }
+
     /////////////////////////////////
     // D R A W   F U N C T I O N S //
     /////////////////////////////////
@@ -135,7 +179,7 @@ var _gui = (function () {
 
     function draw_endpoint( data ) {
         draw_table( data );
-        $('#application').show();
+        $('#application').fadeIn( 300 );
         draw_tools( data );
         _resource.get_sheets_labels( draw_tabs );
     }
