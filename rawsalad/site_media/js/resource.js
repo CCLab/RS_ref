@@ -288,13 +288,16 @@ var _resource = (function () {
 
     // Get grouped sheets for download
     that.get_grouped_sheets = function ( callback ) {
-        function create_group( sheet ) {
+        var create_group = function( sheet ) {
             return {
                 'group_name': _store.get_collection_name( sheet['endpoint'] ),
                 'sheets'    : []
             };
-        }
+        };
         var sheets_list = that.get_sheets_labels();
+        if ( sheets_list.length === 0 ) {
+            return [];
+        }
         var last_group = create_group( sheets_list['sheets'][0] );
         var grouped_sheets = [ last_group ];
         sheets_list['sheets'].forEach( function ( sheet_info ) {
