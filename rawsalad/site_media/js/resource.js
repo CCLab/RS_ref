@@ -288,6 +288,32 @@ var _resource = (function () {
 
     // Get grouped sheets for download
     that.get_grouped_sheets = function ( callback ) {
+        function create_group( sheet ) {
+            return {
+                'group_name': _store.get_collection_name( sheet['endpoint'] ),
+                'sheets'    : []
+            };
+        }
+        var sheets_list = that.get_sheets_labels();
+        var last_group = create_group( sheets_list['sheets'][0] );
+        var grouped_sheets = [ last_group ];
+        sheets_list['sheets'].forEach( function ( sheet_info ) {
+            var endpoint_name = _store.get_collection_name( sheet_info['endpoint'] );
+            if ( last_group['group_name'] !== endpoint_name ) {
+                last_group = create_group( sheet_info );
+                grouped_sheets.push( last_group );
+            }
+            last_group['sheets'].push({
+                'id': sheet_info['sheet_id'],
+                'name': sheet_info['name']
+            });
+        });
+
+        if ( !!callback ) {
+            callback( grouped_sheets );
+        } else {
+            return grouped_sheets;
+        }
     };
 
     that.get_sheet_name = function ( sheet_id, callback ) {
