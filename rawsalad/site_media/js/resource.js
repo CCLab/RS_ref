@@ -295,7 +295,7 @@ var _resource = (function () {
             };
         };
         var sheets_list = that.get_sheets_labels();
-        if ( sheets_list.length === 0 ) {
+        if ( sheets_list['sheets'].length === 0 ) {
             return [];
         }
         var last_group = create_group( sheets_list['sheets'][0] );
