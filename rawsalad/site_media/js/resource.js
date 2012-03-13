@@ -286,6 +286,10 @@ var _resource = (function () {
         }
     };
 
+    // Get grouped sheets for download
+    that.get_grouped_sheets = function ( callback ) {
+    };
+
     that.get_sheet_name = function ( sheet_id, callback ) {
         var sheet = get_sheet( sheet_id );
         var original_label = _store.get_collection_name( sheet['endpoint'] );

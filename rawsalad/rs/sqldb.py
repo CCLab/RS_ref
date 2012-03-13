@@ -453,6 +453,14 @@ class Collection:
         self.cursor.execute( query )
         self.label = self.cursor.fetchone()['label']
 
+        # get list describing hierarchy
+        query = '''SELECT * FROM hierarchy
+                   WHERE endpoint = '%s'
+                ''' % ( self.endpoint, )
+        self.cursor.execute( query )
+        hierarchy = self.cursor.fetchall()
+        self.hierarchy = sorted( hierarchy, key=lambda e: e['nr'] )
+
 
     def get_columns( self ):
         '''Get only these columns that are used by GUI'''
@@ -464,6 +472,18 @@ class Collection:
             del column['searchable']
 
         return columns
+
+
+    def get_hierarchy( self ):
+        '''Get fields describing hierarchy in that collection'''
+        from copy import deepcopy
+        hierarchy = deepcopy( self.hierarchy )
+
+        for element in hierarchy:
+            del element['endpoint']
+            del element['nr']
+
+        return hierarchy
 
 
     def get_label( self ):
