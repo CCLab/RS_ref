@@ -134,17 +134,8 @@ var _gui = (function () {
 
 
     function draw_endpoint( data ) {
-        (function sleep( milliseconds ) {
-            var i;
-            var start = new Date().getTime();
-            for( i = 0; i < 1e7; i++ ) {
-                if( (new Date().getTime() - start ) > milliseconds ) {
-                    break;
-                }
-            }
-        })( 3000 );
-
         draw_table( data );
+        $('#application').show();
         draw_tools( data );
         _resource.get_sheets_labels( draw_tabs );
     }
