@@ -4,7 +4,7 @@ CREATE TABLE hierarchy (
     nr              integer,
     label           varchar(100),
     aux             boolean DEFAULT FALSE,
-    aux_level       varchar(100),
+    aux_label       varchar(100),
     PRIMARY KEY (endpoint, nr)
 );
 

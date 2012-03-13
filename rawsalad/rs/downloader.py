@@ -148,10 +148,11 @@ def get_aux_value( value ):
 
 # TODO: make a table in db and get hierarchy from it
 def get_hierarchy( endpoint ):
-    #from sqldb import Collection
-    #collection = Collection( endpoint )
-    #hierarchy = collection.get_hierarchy()
-    return [
+    from sqldb import Collection
+    collection = Collection( endpoint )
+    hierarchy = collection.get_hierarchy()
+    return hierarchy
+    '''return [
         {
             'label'    : 'Czesc',
             'aux'      : True,
@@ -167,7 +168,7 @@ def get_hierarchy( endpoint ):
             'aux'      : True,
             'aux_label': 'Numer rozdzialu'
         }
-    ]
+    ]'''
 
 # write unicoded file
 class UnicodeWriter:
