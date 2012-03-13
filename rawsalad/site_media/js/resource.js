@@ -137,7 +137,6 @@ var _resource = (function () {
             sheet['any_selected'] = true;
             reset_selection( sheet_id );
         }
-
     };
 
 
