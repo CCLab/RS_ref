@@ -183,18 +183,19 @@ var _resource = (function () {
         var new_tree;
         var selected_id;
 
+        sheet = get_sheet( sheet_id );
+
         // Get selected columns description.
         selected_column_keys = {};
         columns.forEach( function ( column ) {
             selected_column_keys[ column ] = true;
         });
-        all_columns = that.all_columns( sheet_id );
+        all_columns = _store.get_columns( sheet['endpoint'] );
         selected_columns = all_columns.filter( function ( column ) {
             return !!selected_column_keys[ column['key'] ];
         });
 
         // Update columns in sheet.
-        sheet = get_sheet( sheet_id );
         sheet['columns'] = selected_columns;
 
         // Get list of all nodes with needed columns only
@@ -212,7 +213,14 @@ var _resource = (function () {
 
         // Update tree
         selected_id = find_selected_row( sheet_id );
-        sheet['data'] = new_tree;
+        sheet['data'] = sort_tree( new_tree );
+        //that.sort( sheet_id, sheet['sort_query'] );
+        if ( !!sheet['sort_query'] ) {
+            sheet['data'] = sort_data( sheet['data'], sheet['sort_query'] );
+        }
+        if ( !!sheet['filter_query'] ) {
+            sheet['data'] = filter_data( sheet['data'], sheet['filter_query'] );
+        }
         if ( !!sheet['any_selected'] ) {
             reset_selection( sheet_id );
         }
@@ -391,11 +399,11 @@ var _resource = (function () {
         var sorted_tree;
         var sort_fun;
 
-
         sheet = get_sheet( sheet_id );
         sort_fun = sort_criterion_to_function( sort_criterion );
         sorted_tree = _tree.sort( sheet['data'], sort_fun );
         sheet['data'] = sorted_tree;
+        sheet['sort_query'] = sort_criterion;
 
         if ( !!callback ) {
             that.get_sheet_data( sheet_id, callback );
@@ -424,7 +432,9 @@ var _resource = (function () {
                                   meta, _enum['FILTERED'], additional_parameters );
         new_sheet_id = add_sheet( new_sheet );
 
-        that.get_sheet_data( new_sheet_id, callback );
+        if ( !!callback ) {
+            that.get_sheet_data( new_sheet_id, callback );
+        }
     };
 
     // Return gui-understandable data from sheet_id sheet.
@@ -763,7 +773,7 @@ var _resource = (function () {
             case _enum['STANDARD']:
                 sheet['sort_query'] = other_fields['sort_query'] || [];
                 sort_fun = sort_criterion_to_function( sheet['sort_query'] );
-                sheet['data'] = _tree.sort( sheet['data'], sort_fun );
+                sheet['data'] = sort_data( sheet['data'], sheet['sort_query'] );
                 sheet['any_selected'] = false;
                 break;
             case _enum['FILTERED']:
@@ -771,8 +781,8 @@ var _resource = (function () {
                 sheet['filter_query'] = other_fields['filter_query'];
                 sort_fun = sort_criterion_to_function( sheet['sort_query'] );
                 filter_fun = filter_criterion_to_function( sheet['filter_query'] );
-                sheet['data'] = _tree.sort( sheet['data'], sort_fun );
-                sheet['data'] = _tree.filter( sheet['data'], filter_fun );
+                sheet['data'] = sort_data( sheet['data'], sheet['sort_query'] );
+                sheet['data'] = filter_data( sheet['data'], sheet['filter_query'] );
                 break;
             case _enum['SEARCHED']:
                 sheet['query'] = other_fields['query'];
@@ -787,6 +797,26 @@ var _resource = (function () {
                 sheet[ field ] = other_fields[ field ];
             }
         }
+    }
+
+    function sort_data( data, criterions ) {
+        var sort_fun = (function( sort_criterion ) {
+            return function( node1, node2 ) {
+                return compare_nodes( node1, node2, sort_criterion );
+            };
+        })(criterions);
+
+        return _tree.sort( data, sort_fun );
+    }
+
+    function filter_data( data, criterions ) {
+        var filter_fun = (function( filter_criterion ) {
+            return function( node ) {
+                return filter_node( node, filter_criterion );
+            };
+        })(criterions);
+
+        return _tree.filter( data, filter_fun );
     }
 
     // Find FIRST blocked sheet that was created when data
