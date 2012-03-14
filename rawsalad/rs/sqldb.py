@@ -9,10 +9,13 @@ from time import time
 import simplejson as json
 
 
-def db_cursor():
+def db_cursor( cfile=None ):
     '''Define a connection object for a selected database'''
-    from django.conf import settings
-    conf_file = settings.DBCONF
+    if cfile is None:
+        from django.conf import settings
+        conf_file = settings.DBCONF
+    else:
+        conf_file = cfile
 
     cfg = ConfigParser()
     cfg.read( conf_file )
@@ -278,6 +281,7 @@ def get_permalink_endpoints( id ):
     return data
 
 
+# TODO: remove ??
 def restore_group_old( id, endpoint ):
     '''Collect all data and metadata for a given endpoint.'''
     # connect to db
@@ -431,9 +435,9 @@ def get_snapshot( id, endpoint ):
 class Collection:
     '''Class for extracting data from acenrtain endpoint in the db'''
     # TODO move db cursor to the session
-    def __init__( self, endpoint, cursor=None ):
+    def __init__( self, endpoint, cursor=None, cfile=None ):
         # connect to db
-        self.cursor = cursor or db_cursor()
+        self.cursor = cursor or db_cursor(cfile=cfile)
 
         # define the endpoint
         self.endpoint = endpoint
@@ -572,3 +576,12 @@ class Collection:
         parents.reverse()
         
         return parents
+
+    def get_all_ids( self ):
+        '''Get ids of all nodes'''
+        query = '''SELECT id FROM %s''' % ( self.endpoint, )
+        self.cursor.execute( query )
+
+        results = self.cursor.fetchall()
+        return [ t['id'] for t in results ]
+

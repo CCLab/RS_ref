@@ -6,19 +6,21 @@ from zipfile import ZipFile
 
 
 # prepare a single csv file to download
-def single_file( f ):
+def single_file( file_descr ):
+    from sqldb import Collection
     # if it's a full collection - read it from server
-    endpoint = f['endpoint']
+    endpoint = file_descr['endpoint']
     try:
-        ids = f['ids']
-        columns = f['columns']
+        ids = file_descr['ids']
+        columns = file_descr['columns']
     except KeyError:
         # full collection
         return open( 'site_media/csv/' + endpoint + '.csv' ).read()
     else:
         # table
         in_memory = StringIO()
-        data = get_table_data( endpoint, ids, columns )
+        collection = Collection( endpoint )
+        data = get_table_data( collection, ids, columns )
         writer = UnicodeWriter( in_memory )
         for row in data:
             writer.writerow( row )
@@ -47,10 +49,8 @@ def multiple_files( files ):
 
 # Get data for rows with id in ids list, each row has changed
 # hierarchy and data fields matching columns.
-def get_table_data( endpoint, ids, columns ):
-    from sqldb import Collection
-    collection = Collection( endpoint )
-    hierarchy = get_hierarchy( endpoint )
+def get_table_data( collection, ids, columns ):
+    hierarchy = collection.get_hierarchy()
     cleaned_columns = clean_columns( columns )
     
     header = get_header( collection, hierarchy, cleaned_columns )
@@ -86,7 +86,8 @@ def get_header( collection, hierarchy, keys ):
 def get_row( collection, id, columns, hierarchy ):
     node = collection.get_nodes( id )[0]
     parents = collection.get_unique_parents( id )
-    path = get_hierarchy_path( node, parents )
+    sorted_parents = sorted( parents, key=lambda p: p['id'] )
+    path = get_hierarchy_path( node, sorted_parents )
     hierarchy_fields = get_hierarchy_fields( path, hierarchy )
     data_fields = [ node['data'][ column ] for column in columns ]
     row = hierarchy_fields + data_fields
@@ -146,29 +147,6 @@ def get_aux_value( value ):
     except:
         return aux_value
 
-# TODO: make a table in db and get hierarchy from it
-def get_hierarchy( endpoint ):
-    from sqldb import Collection
-    collection = Collection( endpoint )
-    hierarchy = collection.get_hierarchy()
-    return hierarchy
-    '''return [
-        {
-            'label'    : 'Czesc',
-            'aux'      : True,
-            'aux_label': 'Numer czesci'
-        },
-        {
-            'label'    : 'Dzial',
-            'aux'      : True,
-            'aux_label': 'Numer dzialu'
-        },
-        {
-            'label'    : 'Rozdzial',
-            'aux'      : True,
-            'aux_label': 'Numer rozdzialu'
-        }
-    ]'''
 
 # write unicoded file
 class UnicodeWriter:

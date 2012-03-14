@@ -109,13 +109,13 @@ var _gui = (function () {
                     var sheets = $('#dl-sheets').find('input:checked').map( function ( e ) {
                                      return $(this).attr('id');
                                  });
-                    var checked = {
-                        'db_tree' : _dbtree.get_selected_endpoints(),
-                        'sheets'  : $.makeArray( sheets )
-                    };
+                    var checked_endpoints = _dbtree.get_selected_endpoints();
+                    var checked_sheets = $.makeArray( sheets );
 
-                    console.log( "vvvvvvvvvvvvvvvvvvvv <--- DO THE MAGIC WITH THIS" );
-                    console.log( checked );
+                    _resource.download_data( checked_sheets, checked_endpoints, function () {
+                        // TODO: what callback should do, is it needed?
+                        console.log("Dane są pobrane(TODO)");
+                    });
                 });
             });
 
