@@ -35,109 +35,97 @@ var _gui = (function () {
     that.init_gui = function() {
 
         $('#tm-choose').click( function () {
-            if( hide_panels( $(this) ) ) {
-                return;
-            }
-
-            _resource.get_collections( function ( collections ) {
-                _dbtree.draw_db_tree_new( collections, 'Pokaż dane', show_endpoints );
+            hide_panels( $(this), function () {
+                _resource.get_collections( function ( collections ) {
+                    _dbtree.draw_db_tree_new( collections, 'Pokaż dane', show_endpoints );
+                });
             });
         });
 
         $('#tm-search').click( function () {
-            if( hide_panels( $(this) ) ) {
-                return;
-            }
+            hide_panels( $(this), function () {
+                _resource.get_collections( function ( collections ) {
+                    // TODO fast temporary solution so that old and new db
+                    // functions work
+                    //collections = _tree.tree_to_list( collections );
+                    var html = [];
+                    html.push( '<section class="panel-main">' );
+                    html.push( '<input type="text" id="search-query" ' );
+                    html.push( 'placeholder="Wpisz szukane słowo" /></section>' );
 
-            _resource.get_collections( function ( collections ) {
-                // TODO fast temporary solution so that old and new db
-                // functions work
-                //collections = _tree.tree_to_list( collections );
-                var html = [];
-                html.push( '<section class="panel-main">' );
-                html.push( '<input type="text" id="search-query" ' );
-                html.push( 'placeholder="Wpisz szukane słowo" /></section>' );
+                    // TODO make the submit button's callback a stand-alone function
+                    _dbtree.draw_db_tree_new( collections, 'Szukaj', function ( endpoints ) {
+                        console.log( "Szukam" );
 
-                // TODO make the submit button's callback a stand-alone function
-                _dbtree.draw_db_tree_new( collections, 'Szukaj', function ( endpoints ) {
-                    console.log( "Szukam" );
+                        var query = $('#search-query').val();
+                        _resource.get_search_count( endpoints, query, function ( data ) {
+                            console.log( data );
+                            $('#pl-ch-area').empty();
 
-                    var query = $('#search-query').val();
-                    _resource.get_search_count( endpoints, query, function ( data ) {
-                        console.log( data );
-                        $('#pl-ch-area').empty();
-
-                        var html = [];
-                        data['results'].forEach( function ( e ) {
-                            html.push( '<h1>', e['dbtree_top_parent_name'], '</h1>' );
-                            e['data'].forEach( function ( ee ) {
-                                html.push( '<p data-endpoint="', ee['endpoint'],'">', ee['label'], ' :: ', ee['found_count'], '</p>' );
+                            var html = [];
+                            data['results'].forEach( function ( e ) {
+                                html.push( '<h1>', e['dbtree_top_parent_name'], '</h1>' );
+                                e['data'].forEach( function ( ee ) {
+                                    html.push( '<p data-endpoint="', ee['endpoint'],'">', ee['label'], ' :: ', ee['found_count'], '</p>' );
+                                });
                             });
-                        });
-                        $('#pl-ch-area').append( $(html.join('')));
-                        $('#pl-ch-area').find('p').each( function () {
-                            var endpoint = $(this).attr('data-endpoint');
-                            $(this).click( function () {
-                                /*_resource.get_search_data( endpoint, data['query'], function ( ddd ) {
-                                    console.log( ddd );
-                                    var html = Mustache.to_html( _templates.search_box, ddd );
-
-                                    $('#pl-ch-area').empty();
-                                    $('#pl-ch-area').append( html );
-                                });*/
-                                show_search( endpoint, data['query'] );
+                            $('#pl-ch-area').append( $(html.join('')));
+                            $('#pl-ch-area').find('p').each( function () {
+                                var endpoint = $(this).attr('data-endpoint');
+                                $(this).click( function () {
+                                    show_search( endpoint, data['query'] );
+                                });
                             });
                         });
                     });
+
+                    $('#pl-ch-area').prepend( $(html.join('')) );
+
+                    // start preloader
+                    console.log( "Wczytuję dane. To może chwilę potrwać!" );
                 });
-
-                $('#pl-ch-area').prepend( $(html.join('')) );
-
-                // start preloader
-                console.log( "Wczytuję dane. To może chwilę potrwać!" );
             });
         });
 
         $('#tm-download').click( function () {
-            if( hide_panels( $(this) ) ) {
-                return;
-            }
+            hide_panels( $(this), function () {
+                var open_sheets;
 
+                _resource.get_collections( function ( collections ) {
+                    _dbtree.draw_db_tree_new( collections, 'Pobierz', function ( endpoints ) {
+                        var sheets = $('#dl-sheets').find('input:checked').map( function ( e ) {
+                                         return $(this).attr('id');
+                                     });
+                        var checked_endpoints = _dbtree.get_selected_endpoints();
+                        var checked_sheets = $.makeArray( sheets );
 
-            _resource.get_collections( function ( collections ) {
-                _dbtree.draw_db_tree_new( collections, 'Pobierz', function ( endpoints ) {
-                    var sheets = $('#dl-sheets').find('input:checked').map( function ( e ) {
-                                     return $(this).attr('id');
-                                 });
-                    var checked_endpoints = _dbtree.get_selected_endpoints();
-                    var checked_sheets = $.makeArray( sheets );
-
-                    _resource.download_data( checked_sheets, checked_endpoints, function () {
-                        // TODO: what callback should do, is it needed?
-                        console.log("Dane są pobrane(TODO)");
+                        _resource.download_data( checked_sheets, checked_endpoints, function () {
+                            // TODO: what callback should do, is it needed?
+                            console.log("Dane są pobrane(TODO)");
+                        });
                     });
                 });
-            });
 
-            var open_sheets = _resource.get_grouped_sheets();
-            $('#pl-ch-datasets').append(
-                '<div id="dl-sheets">'+
-                open_sheets.map( function ( e ) {
-                    return '<h1 style="clear: both;">' + e['group_name'] + '</h1>' +
-                           '<ul>' +
-                                e['sheets'].map( function ( s ) {
-                                   return '<li>' +
-                                            '<input class="left" type="checkbox" id="' + s['id'] + '"/>' +
-                                            s['name'] +
-                                          '</li>';
-                                }).join('') +
-                           '</ul>';
-                }).join('') +
-                '</div>'
-            );
+                open_sheets = _resource.get_grouped_sheets();
+                $('#pl-ch-datasets').prepend(
+                    '<div id="dl-sheets">'+
+                    open_sheets.map( function ( e ) {
+                        return '<h1 style="clear: both;">' + e['group_name'] + '</h1>' +
+                               '<ul>' +
+                                    e['sheets'].map( function ( s ) {
+                                       return '<li>' +
+                                                '<input class="left" type="checkbox" id="' + s['id'] + '"/>' +
+                                                s['name'] +
+                                              '</li>';
+                                    }).join('') +
+                               '</ul>';
+                    }).join('') +
+                    '</div>'
+                );
+            });
         });
 
-        //$('#tm-choose').trigger('click');
+        $('#tm-choose').trigger('click');
     };
 
     //=====================================================//
@@ -162,38 +150,35 @@ var _gui = (function () {
         if( $('#panels').is(':visible') ) {
             $('#panels').slideUp( 30 );
         }
-        display_application_panel( function () {
-            $('#application').find('.panel-main').append(
-                '<h1 style="font-size: 24px; font-weight: bold;">Wczytuję dane</h1>' +
-                '<p>W zależności od jakości łącza, pogody itp to może potrwać dłuższą chwilę</p>'
-            );
-        });
+        display_application_panel();
 
         _resource.get_top_levels( endpoints, init_callback, callbacks );
     }
 
-    function hide_panels( clicked ) {
+    function hide_panels( clicked, callback ) {
 
         if( clicked.hasClass('active') ) {
             $('#panels').slideUp( 300 );
             clicked.removeClass('active');
-
-            return true;
-        }
-
-        $('#top-menu').find('.active').removeClass('active');
-        clicked.addClass('active');
-
-        if( $('#panels').is(':visible') ) {
-            $('#panels').slideUp( 300, function () {
-                $('#panels').slideDown( 300 );
-            });
         }
         else {
-            $('#panels').slideDown( 300 );
-        }
 
-        return false;
+            if( $('#panels').is(':visible') ) {
+                $('#panels').slideUp( 300, function () {
+                    $('#top-menu').find('.active').removeClass('active');
+                    callback();
+                    $('#panels').slideDown( 300, function () {
+                        clicked.addClass('active');
+                    });
+                });
+            }
+            else {
+                callback();
+                $('#panels').slideDown( 300, function () {
+                    clicked.addClass('active');
+                });
+            }
+        }
     }
 
     /////////////////////////////////
@@ -729,7 +714,32 @@ var _gui = (function () {
     // SHARE TABLE FUNCTIONS
 
     function update_share_tab() { //TODO
+        var open_sheets = _resource.get_grouped_sheets();
+        $('#app-sh-panel').empty().append(
+            '<div id="dl-sheets">'+
+            open_sheets.map( function ( e ) {
+                return '<h1 style="clear: both;">' + e['group_name'] + '</h1>' +
+                       '<ul>' +
+                            e['sheets'].map( function ( s ) {
+                               return '<li>' +
+                                        '<input class="left" type="checkbox" id="' + s['id'] + '"/>' +
+                                        s['name'] +
+                                      '</li>';
+                            }).join('') +
+                       '</ul>';
+            }).join('') +
+            '</div>'
+        );
 
+        $('#app-sh-submit').click( function () {
+            var checked = $('#app-sh-panel').find('input:checked').map( function () {
+                                return $(this).attr('id');
+                            });
+
+            _resource.create_permalink( $.makeArray( checked ), function ( permalink_id ) {
+                console.log( permalink_id );
+            });
+        });
     }
 
 
