@@ -26,111 +26,67 @@
 
 var _gui = (function () {
 
-    //===================================================//
-    //          P U B L I C   I N T E R F A C E          //
-    //===================================================//
-
+// P U B L I C   I N T E R F A C E
     var that = {};
 
     that.init_gui = function() {
+        // arm top menu buttons
+        $('#top-menu li').click( function () {
+            // register callbacks for all top-menu buttons
+            var callbacks = {
+                'tm-choose'   : show_browse,
+                'tm-search'   : show_search,
+                'tm-download' : show_download
+            };
+            var id = $(this).attr('id');
 
-        $('#tm-choose').click( function () {
-            hide_panels( $(this), function () {
-                _resource.get_collections( function ( collections ) {
-                    _dbtree.draw_db_tree_new( collections, 'Pokaż dane', show_endpoints );
-                });
-            });
+            manage_top_panel( $(this), callbacks[id] );
         });
 
-        $('#tm-search').click( function () {
-            hide_panels( $(this), function () {
-                _resource.get_collections( function ( collections ) {
-                    // TODO fast temporary solution so that old and new db
-                    // functions work
-                    //collections = _tree.tree_to_list( collections );
-                    var html = [];
-                    html.push( '<section class="panel-main">' );
-                    html.push( '<input type="text" id="search-query" ' );
-                    html.push( 'placeholder="Wpisz szukane słowo" /></section>' );
-
-                    // TODO make the submit button's callback a stand-alone function
-                    _dbtree.draw_db_tree_new( collections, 'Szukaj', function ( endpoints ) {
-                        console.log( "Szukam" );
-
-                        var query = $('#search-query').val();
-                        _resource.get_search_count( endpoints, query, function ( data ) {
-                            console.log( data );
-                            $('#pl-ch-area').empty();
-
-                            var html = [];
-                            data['results'].forEach( function ( e ) {
-                                html.push( '<h1>', e['dbtree_top_parent_name'], '</h1>' );
-                                e['data'].forEach( function ( ee ) {
-                                    html.push( '<p data-endpoint="', ee['endpoint'],'">', ee['label'], ' :: ', ee['found_count'], '</p>' );
-                                });
-                            });
-                            $('#pl-ch-area').append( $(html.join('')));
-                            $('#pl-ch-area').find('p').each( function () {
-                                var endpoint = $(this).attr('data-endpoint');
-                                $(this).click( function () {
-                                    show_search( endpoint, data['query'] );
-                                });
-                            });
-                        });
-                    });
-
-                    $('#pl-ch-area').prepend( $(html.join('')) );
-
-                    // start preloader
-                    console.log( "Wczytuję dane. To może chwilę potrwać!" );
-                });
-            });
-        });
-
-        $('#tm-download').click( function () {
-            hide_panels( $(this), function () {
-                var open_sheets;
-
-                _resource.get_collections( function ( collections ) {
-                    _dbtree.draw_db_tree_new( collections, 'Pobierz', function ( endpoints ) {
-                        var sheets = $('#dl-sheets').find('input:checked').map( function ( e ) {
-                                         return $(this).attr('id');
-                                     });
-                        var checked_endpoints = _dbtree.get_selected_endpoints();
-                        var checked_sheets = $.makeArray( sheets );
-
-                        _resource.download_data( checked_sheets, checked_endpoints, function () {
-                            // TODO: what callback should do, is it needed?
-                            console.log("Dane są pobrane(TODO)");
-                        });
-                    });
-                });
-
-                open_sheets = _resource.get_grouped_sheets();
-                $('#pl-ch-datasets').prepend(
-                    '<div id="dl-sheets">'+
-                    open_sheets.map( function ( e ) {
-                        return '<h1 style="clear: both;">' + e['group_name'] + '</h1>' +
-                               '<ul>' +
-                                    e['sheets'].map( function ( s ) {
-                                       return '<li>' +
-                                                '<input class="left" type="checkbox" id="' + s['id'] + '"/>' +
-                                                s['name'] +
-                                              '</li>';
-                                    }).join('') +
-                               '</ul>';
-                    }).join('') +
-                    '</div>'
-                );
-            });
-        });
-
+        // show browse panel at the beginning
         $('#tm-choose').trigger('click');
     };
 
-    //=====================================================//
-    //          P R I V A T E   I N T E R F A C E          //
-    //=====================================================//
+
+// P R I V A T E   I N T E R F A C E
+
+    //  T O P   M E N U   C A L L B A C K S
+    function show_browse() {
+        _resource.get_collections( function ( collections ) {
+            _dbtree.get_dbtree( collections, 'Pokaż dane', show_endpoints );
+        });
+    }
+
+    function show_search() {
+        _resource.get_collections( function ( collections ) {
+            _dbtree.get_dbtree( collections, 'Szukaj', show_search_propositions );
+
+            $('#pl-ch-area').prepend( _tmpl.search_input );
+
+        });
+    }
+
+    function show_download() {
+        var open_sheets;
+
+        _resource.get_collections( function ( collections ) {
+            _dbtree.get_dbtree( collections, 'Pobierz', function ( endpoints ) {
+                var sheets = $('#dl-sheets').find('input:checked').map( function ( e ) {
+                                 return $(this).attr('id');
+                             });
+                var checked_endpoints = _dbtree.get_selected_endpoints();
+                var checked_sheets = $.makeArray( sheets );
+
+                _resource.download_data( checked_sheets, checked_endpoints, function () {
+                    // TODO: what callback should do, is it needed?
+                    console.log("Dane są pobrane(TODO)");
+                });
+            });
+        });
+
+        open_sheets = { 'groups': _resource.get_grouped_sheets() };
+        $('#pl-ch-datasets').prepend( Mustache.to_html( _tmpl.panel_sheets, open_sheets ) );
+    }
 
     function show_endpoints( endpoints ) {
         var init_callback = function () {
@@ -155,28 +111,71 @@ var _gui = (function () {
         _resource.get_top_levels( endpoints, init_callback, callbacks );
     }
 
-    function hide_panels( clicked, callback ) {
+    function show_search_propositions( endpoints ) {
+        var query = $('#search-query').val();
+        _resource.get_search_count( endpoints, query, function ( data ) {
+            var propositions = Mustache.to_html( _tmpl.search_propositions, data );
+            $('#pl-ch-area').empty().append( propositions );
 
+            $('#pl-ch-area').find('p').each( function () {
+                var endpoint = $(this).attr('data-endpoint');
+                $(this).click( function () {
+                    show_search_results( endpoint, data['query'] );
+                });
+            });
+        });
+    }
+
+    function manage_top_panel( clicked, callback ) {
+
+        // hide active panel
         if( clicked.hasClass('active') ) {
-            $('#panels').slideUp( 300 );
+            // deactivate clicked button
             clicked.removeClass('active');
+            clicked.animate({
+                'padding-top': '5px',
+                'padding-bottom': '5px'
+            }, 100);
+
+            // hide panel
+            $('#panels').slideUp( 300 );
         }
         else {
-
+            // some other panel is currently open
             if( $('#panels').is(':visible') ) {
-                $('#panels').slideUp( 300, function () {
-                    $('#top-menu').find('.active').removeClass('active');
-                    callback();
-                    $('#panels').slideDown( 300, function () {
-                        clicked.addClass('active');
+                // deactivate active button
+                $('#top-menu').find('.active').animate({
+                        'padding-top': '5px',
+                        'padding-bottom': '5px'
+                    }, 100, function () {
+                        $(this).removeClass('active');
                     });
+
+                // activate clicked button
+                clicked.addClass('active');
+                clicked.animate({
+                    'padding-top': '8px',
+                    'padding-bottom': '8px'
+                }, 100);
+
+                // hide current panel and show the new one
+                $('#panels').slideUp( 300, function () {
+                    callback();
+                    $('#panels').slideDown( 300 );
                 });
             }
+            // no panel is currently open
             else {
+                // activate button
+                clicked.addClass('active');
+                clicked.animate({
+                    'padding-top': '8px',
+                    'padding-bottom': '8px'
+                }, 100);
+
+                // draw and show the panel
                 callback();
-                $('#panels').slideDown( 300, function () {
-                    clicked.addClass('active');
-                });
+                $('#panels').slideDown( 300 );
             }
         }
     }
@@ -204,7 +203,7 @@ var _gui = (function () {
     function draw_tabs( data ) {
         var tabs;
         adjust_tabs_length( data );
-        tabs = Mustache.to_html( _templates.app_table_header, data );
+        tabs = Mustache.to_html( _tmpl.app_table_header, data );
         display_tabs( tabs );
     }
 
@@ -213,7 +212,7 @@ var _gui = (function () {
         var tools;
         names['changed_label'] = ( names['label'] === names['original_label'] ) ? false : true;
 
-        tools = Mustache.to_html( _templates.app_table_tools, names );
+        tools = Mustache.to_html( _tmpl.app_table_tools, names );
         display_tools( tools );
     }
 
@@ -522,7 +521,7 @@ var _gui = (function () {
 
     // Shows sort panel with event handlers defined and the first sort key.
     function display_sort_panel() {
-        var sort_form_code = $( _templates.sort_form );
+        var sort_form_code = $( _tmpl.sort_form );
         prepare_sort_interface( sort_form_code );
         add_sort_key( sort_form_code );
 
@@ -533,7 +532,7 @@ var _gui = (function () {
 
     // Shows filter panel with event handlers defined and the first filter key.
     function display_filter_panel() {
-        var filter_form_code = $( _templates.filter_form );
+        var filter_form_code = $( _tmpl.filter_form );
         prepare_filter_interface( filter_form_code );
         add_filter_key( filter_form_code );
 
@@ -548,7 +547,7 @@ var _gui = (function () {
 
         var callback = function( columns ){
             var columns_object =  { 'columns': columns };
-            var columns_form = Mustache.to_html( _templates.columns_form, columns_object );
+            var columns_form = Mustache.to_html( _tmpl.columns_form, columns_object );
 
             $('#app-tb-tl-columns-list').append( $(columns_form) );
             $('#app-tb-tl-columns-form').slideDown( 200 );
@@ -714,22 +713,8 @@ var _gui = (function () {
     // SHARE TABLE FUNCTIONS
 
     function update_share_tab() { //TODO
-        var open_sheets = _resource.get_grouped_sheets();
-        $('#app-sh-panel').empty().append(
-            '<div id="dl-sheets">'+
-            open_sheets.map( function ( e ) {
-                return '<h1 style="clear: both;">' + e['group_name'] + '</h1>' +
-                       '<ul>' +
-                            e['sheets'].map( function ( s ) {
-                               return '<li>' +
-                                        '<input class="left" type="checkbox" id="' + s['id'] + '"/>' +
-                                        s['name'] +
-                                      '</li>';
-                            }).join('') +
-                       '</ul>';
-            }).join('') +
-            '</div>'
-        );
+        var open_sheets = { 'groups': _resource.get_grouped_sheets() };
+        $('#app-sh-panel').append( Mustache.to_html( _tmpl.panel_sheets, open_sheets ) );
 
         $('#app-sh-submit').click( function () {
             var checked = $('#app-sh-panel').find('input:checked').map( function () {
@@ -746,7 +731,7 @@ var _gui = (function () {
     // TABLE TABS FUNCTIONS
 
     function new_active_tab( button ) {
-        var close_bt = $(_templates.close_sheet_button);
+        var close_bt = $(_tmpl.close_sheet_button);
         var siblings = button.siblings();
 
         siblings.removeClass( 'active' );
@@ -966,7 +951,7 @@ var _gui = (function () {
             data['keys_num'] = keys.length;
 
             eliminate_redundant_keys( sort_form, data );
-            key_html = Mustache.to_html( _templates.sort_key, data );
+            key_html = Mustache.to_html( _tmpl.sort_key, data );
             placeholder.append( key_html );
 
             if ( data['keys_num'] === data['columns'].length ||
@@ -1067,7 +1052,7 @@ var _gui = (function () {
 
             data['keys_num'] = keys_num;
 
-            key_html = Mustache.to_html( _templates.filter_key, data );
+            key_html = Mustache.to_html( _tmpl.filter_key, data );
             placeholder.append( key_html );
 
             filter_form.find('#filter-'+ keys_num +'-columns').change( function () {
@@ -1098,13 +1083,13 @@ var _gui = (function () {
 
         switch ( type ) {
             case 'string':
-                operations = Mustache.to_html( _templates.string_operations, data );
+                operations = Mustache.to_html( _tmpl.string_operations, data );
                 break;
             case 'number':
-                operations = Mustache.to_html( _templates.number_operations, data );
+                operations = Mustache.to_html( _tmpl.number_operations, data );
                 break;
             case 'null':
-                operations = Mustache.to_html( _templates.null_operations, data );
+                operations = Mustache.to_html( _tmpl.null_operations, data );
                 break;
             default:
                 throw 'Add filter operation: unexpected type: ' + type;
@@ -1262,7 +1247,7 @@ var _gui = (function () {
         _resource.get_top_levels( endpoints, callbacks );
     }
 
-    function show_search( endpoint, query ) {
+    function show_search_results( endpoint, query ) {
         _resource.get_search_data( endpoint, query, function ( data ) {
             draw_endpoint( data );
             $('#pl-ch-area').empty();
