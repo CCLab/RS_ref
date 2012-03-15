@@ -101,7 +101,7 @@ var _dbtree = (function () {
         return M.to_html( _tmpl.dbtree_root, html_data );
     };
 
-    that.get_selected_endpoints = function() {
+    that.selected_endpoints = function () {
         var values = [];
 
         $('.pl-tree-end-checkbox').each( function ( i, e ) {

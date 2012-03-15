@@ -53,8 +53,7 @@ var _gui = (function () {
     //  T O P   M E N U   C A L L B A C K S
     function show_browse() {
         _resource.get_collections( function ( collections ) {
-            _dbtree.get_dbtree( collections );
-
+            // generate the dbtree html code
             var dbtree = _dbtree.get_dbtree( collections );
             $('#pl-ch-area').empty().append( _tmpl.datasets );
             $('#pl-ch-datasets')
@@ -65,31 +64,57 @@ var _gui = (function () {
             _dbtree.arm( collections );
 
             $('#pl-ch-submit').click( function () {
-                var selected_endpoints = _dbtree.get_selected_endpoints();
-                show_endpoints( selected_endpoints );
+                show_endpoints( _dbtree.selected_endpoints() );
             });
         });
     }
 
     function show_search() {
         _resource.get_collections( function ( collections ) {
-            _dbtree.get_dbtree( collections, 'Szukaj', show_search_propositions );
+            // generate dbtree html code
+            var dbtree = _dbtree.get_dbtree( collections );
+            $('#pl-ch-area')
+                .empty()
+                .append( _tmpl.search_input )
+                .append( _tmpl.datasets );
 
-            $('#pl-ch-area').prepend( _tmpl.search_input );
+            $('#pl-ch-datasets')
+                .empty()
+                .append( dbtree )
+                .append( M.to_html( _tmpl.panel_submit, {'label': 'Pokaż dane'} ));
 
+            _dbtree.arm( collections );
+
+            $('#pl-ch-submit').click( function () {
+                show_search_propositions( _dbtree.selected_endpoints() );
+            });
         });
     }
 
     function show_download() {
-        var open_sheets;
-
         _resource.get_collections( function ( collections ) {
-            _dbtree.get_dbtree( collections, 'Pobierz', function ( endpoints ) {
+            // generate dbtree html code
+            var dbtree = _dbtree.get_dbtree( collections );
+            var open_sheets = { 'groups': _resource.get_grouped_sheets() };
+
+            $('#pl-ch-area')
+                .empty()
+                .append( _tmpl.datasets );
+
+            $('#pl-ch-datasets')
+                .empty()
+                .append( M.to_html( _tmpl.panel_sheets, open_sheets ) )
+                .append( dbtree )
+                .append( M.to_html( _tmpl.panel_submit, {'label': 'Pokaż dane'} ));
+
+            _dbtree.arm( collections );
+
+            $('#pl-ch-submit').click( function () {
                 var sheets = $('#dl-sheets').find('input:checked').map( function ( e ) {
                                  return $(this).attr('id');
                              });
-                var checked_endpoints = _dbtree.get_selected_endpoints();
-                var checked_sheets = $.makeArray( sheets );
+                var checked_endpoints = _dbtree.selected_endpoints();
+                var checked_sheets    = $.makeArray( sheets );
 
                 _resource.download_data( checked_sheets, checked_endpoints, function () {
                     // TODO: what callback should do, is it needed?
@@ -97,11 +122,9 @@ var _gui = (function () {
                 });
             });
         });
-
-        open_sheets = { 'groups': _resource.get_grouped_sheets() };
-        $('#pl-ch-datasets').prepend( M.to_html( _tmpl.panel_sheets, open_sheets ) );
     }
 
+    // P A N E L   B U T T O N S   C A L L B A C K S
     function show_endpoints( endpoints ) {
         var init_callback = function () {
             $('#application').show();
@@ -139,6 +162,10 @@ var _gui = (function () {
             });
         });
     }
+
+
+
+
 
     function manage_top_panel( clicked, callback ) {
 

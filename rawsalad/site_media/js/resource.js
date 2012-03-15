@@ -113,7 +113,7 @@ var _resource = (function () {
         close_row( sheet_id, parent_id );
     };
 
-    
+
 
     that.row_selected = function ( sheet_id, selected_id, prev_selected_id ) {
         var sheet = get_sheet( sheet_id );
@@ -369,11 +369,11 @@ var _resource = (function () {
 
         callback( {'columns': sortable_columns} );
     };
-    
+
     that.get_filterable_columns = function ( sheet_id, callback ) {
         var sheet;
         var filterable_columns;
-        
+
         sheet = get_sheet( sheet_id );
         filterable_columns = sheet['columns'].filter( function ( columns ) {
             return !!columns['processable'];
@@ -384,7 +384,7 @@ var _resource = (function () {
                 'type' : column['type']
             };
         });
-        
+
         callback( {'columns': filterable_columns} );
     };
 
@@ -470,17 +470,17 @@ var _resource = (function () {
 
         callback( sheet_descr );
     };
-    
+
     that.toggle_breadcrumb = function ( sheet_id, box_id, callback ) {
         var box = get_box( sheet_id, box_id );
         var gui_data;
-        
+
         box['breadcrumb'] = !box['breadcrumb'];
-        
+
         gui_data = prepare_table_data( sheet_id, box );
         callback( gui_data );
     };
-    
+
     that.toggle_context = function ( sheet_id, box_id, callback ) {
         function response( sheet_id, box ) {
             var gui_data;
@@ -492,12 +492,12 @@ var _resource = (function () {
         var sheet = get_sheet( sheet_id );
         var parent_id = _tree.get_parent_id( sheet['data'], box['rows'][0]['id'] );
         var box_ids = {};
-        
+
         if ( !box['context'] ) {
-            that.get_children( sheet_id, parent_id, function ( children ) {            
+            that.get_children( sheet_id, parent_id, function ( children ) {
                 response( sheet_id, box );
             });
-            
+
         } else {
             box['rows'].forEach( function ( row ) {
                 box_ids[ row['id'] ] = true;
@@ -627,15 +627,16 @@ var _resource = (function () {
             });
         });
     };
-    
+
     // DOWNLOAD FUNCTIONS
     // Download data from selected sheets and endpoints.
+    // TODO what the callback does in this function?!
     that.download_data = function( sheet_ids, endpoints, callback ) {
         var sheets = sheet_ids.map( function ( id ) {
             return get_sheet( id );
         });
         var data = _download.prepare_download_data( sheets, endpoints );
-        
+
         callback = function ( x ) {
             $('#pl-dl-hidden-form')
                 .find('input')
@@ -708,10 +709,10 @@ var _resource = (function () {
 
         return group_id;
     }
-    
+
     function get_box( sheet_id, box_id ) {
         var sheet = get_sheet( sheet_id );
-        
+
         if ( sheet['type'] !== _enum['SEARCHED'] ) {
             return undefined;
         } else {
