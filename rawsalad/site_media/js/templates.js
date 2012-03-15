@@ -24,7 +24,7 @@
 // LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-var _templates = (function () {
+var _tmpl = (function () {
 
 // P U B L I C   I N T E R F A C E
     var that = {};
@@ -167,7 +167,42 @@ var _templates = (function () {
             '</tbody>' +
         '</table>';
 
+    that.panel_sheets =
+        // TODO potentially buggy, when used a few times
+        '<div id="dl-sheets" style="margin-left: 25px; margin-bottom: 25px;">' +
+            '{{#groups}}' +
+                '<h1 style="clear: both;">{{group_name}}</h1>' +
+                '<table>' +
+                    '{{#sheets}}' +
+                        '<tr>' +
+                            '<td style="width: 25px;">' +
+                                '<input class="left" type="checkbox" id="{{id}}" />' +
+                            '</td>' +
+                            '<td style="vertical-align: middle;">' +
+                                '{{name}}' +
+                            '</td>' +
+                        '</tr>' +
+                    '{{/sheets}}' +
+                '</table>' +
+            '{{/groups}}' +
+        '</div>';
 
+    that.search_input =
+        '<section class="panel-main">' +
+            '<input type="text" id="search-query" placeholder="Wpisz szukane słowo" />' +
+        '</section>';
+
+    that.search_propositions =
+        '<div class="panel-main">' +
+            '{{#results}}' +
+                '<h1 style="font-size: 16px; margin-bottom: 15px;">' +
+                    '{{dbtree_top_parent_name}}' +
+                '</h1>' +
+                '{{#data}}' +
+                    '<p style="margin-bottom: 10px;" data-endpoint="{{endpoint}}">{{label}} :: {{found_count}}</p>' +
+                '{{/data}}' +
+            '{{/results}}' +
+        '</div>';
 
 
     // T O O L S

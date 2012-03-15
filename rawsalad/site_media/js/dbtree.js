@@ -30,9 +30,10 @@ var _dbtree = (function () {
     var that = {};
 
     // Draw tree that shows available collections.
-    that.draw_db_tree_new = function( db_tree, header, callback ) {
+    // TODO get rid of side-effects - return ready to use html instead!
+    that.get_dbtree = function( db_tree, header, callback ) {
         // Generate html code for node and his children.
-        function generate_high_level_node( node, even ) {
+        var generate_high_level_node = function ( node, even ) {
             var children_code = _tree
                 .get_children_nodes( db_tree, node['id'] )
                 .map( function( n ) {
@@ -52,11 +53,11 @@ var _dbtree = (function () {
                 'even'       : even
             };
 
-            return Mustache.to_html( _templates.dbtree_high, html_info );
+            return Mustache.to_html( _tmpl.dbtree_high, html_info );
         }
 
         // Generate html code for leaf => table with endpoints.
-        function generate_leaf( node, even ) {
+        var generate_leaf = function ( node, even ) {
             var header_list = _tree
                 .get_children_nodes( db_tree, node['id'] )
                 .map( function ( n ) {
@@ -78,7 +79,7 @@ var _dbtree = (function () {
                 'children' : children_list
             };
 
-            return Mustache.to_html( _templates.dbtree_leaf, html_info );
+            return Mustache.to_html( _tmpl.dbtree_leaf, html_info );
         }
 
         var db_tree_code;
@@ -97,7 +98,8 @@ var _dbtree = (function () {
             'header'  : header,
             'children': top_level_nodes
         };
-        db_tree_code = Mustache.to_html( _templates.dbtree_root, html_info );
+
+        db_tree_code = Mustache.to_html( _tmpl.dbtree_root, html_info );
 
         $('#pl-ch-area').empty().append('<div id="pl-ch-datasets" class="panel-main"></div>');
         $('#pl-ch-datasets').empty().append( db_tree_code );
@@ -132,7 +134,7 @@ var _dbtree = (function () {
         };
 
         // prepare place for dbtree list elements
-        panel_content = Mustache.to_html( _templates.tree_list, even_level );
+        panel_content = Mustache.to_html( _tmpl.tree_list, even_level );
         panel_content_code = $(panel_content);
         choose_list_code = panel_content_code.closest('ul');
 
@@ -316,11 +318,11 @@ var _dbtree = (function () {
                     var even_level = { 'even': even, };
 
                     // prepare place for new dbtree list
-                    new_list = Mustache.to_html( _templates.tree_list, even_level );
+                    new_list = Mustache.to_html( _tmpl.tree_list, even_level );
                     new_list_code = $(new_list);
 
                     // generate new node code
-                    html = $( Mustache.to_html( _templates.tree_node, node ) );
+                    html = $( Mustache.to_html( _tmpl.tree_node, node ) );
 
                     // get place for new dbtree list
                     new_placeholder = html.find( '.pl-tree' );
@@ -340,7 +342,7 @@ var _dbtree = (function () {
     function endpoints_table( node, data, levels ) {
         var html_code;
         var nodes_leafs = prepare_ends( node, data, levels );
-        var ends = Mustache.to_html( _templates.double_end, nodes_leafs );
+        var ends = Mustache.to_html( _tmpl.double_end, nodes_leafs );
 
         // levels === 1 - generate one level table
         if ( levels === 1 ) {
@@ -349,7 +351,7 @@ var _dbtree = (function () {
         // levels === 2 - generate two levels table
         else if ( levels === 2 ) {
             var table_placeholder;
-            var html = Mustache.to_html( _templates.tree_node, node );
+            var html = Mustache.to_html( _tmpl.tree_node, node );
             html_code = $(html);
             table_placeholder = html_code.find( '.pl-tree-end-det' );
             table_placeholder.append( ends );

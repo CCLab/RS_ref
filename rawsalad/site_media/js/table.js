@@ -77,16 +77,16 @@ var _table = (function () {
 
         callback( table_code );
     }
-    
+
     function create_filtered_table( data, callback ) {
         var header_code;
         var boxes_code;
         var table_code;
-        
+
         header_code = create_standard_header( data );
         boxes_code = create_filtered_boxes( data['boxes'] );
         table_code = header_code.concat( boxes_code );
-        
+
         callback( table_code );
     }
 
@@ -109,9 +109,9 @@ var _table = (function () {
         box['breadcrumb_action'] = (box['breadcrumb_showed']) ? 'Schowaj rodziców' : 'Pokaż rodziców';
 
         if ( box['breadcrumb_showed'] ) {
-            return Mustache.to_html( _templates.search_box_breadcrumbed, box );
+            return Mustache.to_html( _tmpl.search_box_breadcrumbed, box );
         } else {
-            return Mustache.to_html( _templates.search_box, box );
+            return Mustache.to_html( _tmpl.search_box, box );
         }
     }
 
@@ -124,14 +124,14 @@ var _table = (function () {
 
         return boxes_html.join('');
     }
-    
+
     function create_filtered_boxes( boxes ) {
         var boxes_html = [];
-        
+
         boxes.forEach( function ( box ) {
-            boxes_html.push( Mustache.to_html( _templates.filter_box, box ) );
+            boxes_html.push( Mustache.to_html( _tmpl.filter_box, box ) );
         });
-        
+
         return boxes_html.join('');
     }
 
@@ -141,10 +141,10 @@ var _table = (function () {
         var standard_header_code;
         var total_row_code = '';
 
-        head_row_code = Mustache.to_html( _templates.standard_head_row, data );
+        head_row_code = Mustache.to_html( _tmpl.standard_head_row, data );
 
         if ( !!data['total'] ) {
-            total_row_code = Mustache.to_html( _templates.standard_total_row, data );
+            total_row_code = Mustache.to_html( _tmpl.standard_total_row, data );
         }
 
         // TODO clean concat, +, join, push etc
@@ -168,7 +168,7 @@ var _table = (function () {
 
         add_rows_padding( data );
 
-        rows_code = Mustache.to_html( _templates.standard_rows, data );
+        rows_code = Mustache.to_html( _tmpl.standard_rows, data );
 
         return rows_code;
     }

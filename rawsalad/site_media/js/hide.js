@@ -1,6 +1,7 @@
 (function () {
     // hide what's not needed now
     $('#main-wrapper').hide();
+    $('#panels').hide();
     $('#pl-ch-views').hide();
     $('#pl-search').hide();
     $('#pl-sr-full').hide();
