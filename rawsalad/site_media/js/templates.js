@@ -407,7 +407,7 @@ var _templates = (function () {
         '{{#breadcrumb}}' +
             '<tr box_id="{{box_id}}">' +
                 '{{#data}}' +
-                    '<td>{{content}}</td>' +
+                    '<td style="{{#hit}} background-color: #ddddaa;{{/hit}}">{{content}}</td>' +
                 '{{/data}}' +
             '</tr>' +
         '{{/breadcrumb}}' +
