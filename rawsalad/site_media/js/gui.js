@@ -53,7 +53,21 @@ var _gui = (function () {
     //  T O P   M E N U   C A L L B A C K S
     function show_browse() {
         _resource.get_collections( function ( collections ) {
-            _dbtree.get_dbtree( collections, 'Pokaż dane', show_endpoints );
+            _dbtree.get_dbtree( collections );
+
+            var dbtree = _dbtree.get_dbtree( collections );
+            $('#pl-ch-area').empty().append( _tmpl.datasets );
+            $('#pl-ch-datasets')
+                .empty()
+                .append( dbtree )
+                .append( M.to_html( _tmpl.panel_submit, {'label': 'Pokaż dane'} ));
+
+            _dbtree.arm( collections );
+
+            $('#pl-ch-submit').click( function () {
+                var selected_endpoints = _dbtree.get_selected_endpoints();
+                show_endpoints( selected_endpoints );
+            });
         });
     }
 
@@ -85,7 +99,7 @@ var _gui = (function () {
         });
 
         open_sheets = { 'groups': _resource.get_grouped_sheets() };
-        $('#pl-ch-datasets').prepend( Mustache.to_html( _tmpl.panel_sheets, open_sheets ) );
+        $('#pl-ch-datasets').prepend( M.to_html( _tmpl.panel_sheets, open_sheets ) );
     }
 
     function show_endpoints( endpoints ) {
@@ -114,7 +128,7 @@ var _gui = (function () {
     function show_search_propositions( endpoints ) {
         var query = $('#search-query').val();
         _resource.get_search_count( endpoints, query, function ( data ) {
-            var propositions = Mustache.to_html( _tmpl.search_propositions, data );
+            var propositions = M.to_html( _tmpl.search_propositions, data );
             $('#pl-ch-area').empty().append( propositions );
 
             $('#pl-ch-area').find('p').each( function () {
@@ -203,7 +217,7 @@ var _gui = (function () {
     function draw_tabs( data ) {
         var tabs;
         adjust_tabs_length( data );
-        tabs = Mustache.to_html( _tmpl.app_table_header, data );
+        tabs = M.to_html( _tmpl.app_table_header, data );
         display_tabs( tabs );
     }
 
@@ -212,7 +226,7 @@ var _gui = (function () {
         var tools;
         names['changed_label'] = ( names['label'] === names['original_label'] ) ? false : true;
 
-        tools = Mustache.to_html( _tmpl.app_table_tools, names );
+        tools = M.to_html( _tmpl.app_table_tools, names );
         display_tools( tools );
     }
 
@@ -547,7 +561,7 @@ var _gui = (function () {
 
         var callback = function( columns ){
             var columns_object =  { 'columns': columns };
-            var columns_form = Mustache.to_html( _tmpl.columns_form, columns_object );
+            var columns_form = M.to_html( _tmpl.columns_form, columns_object );
 
             $('#app-tb-tl-columns-list').append( $(columns_form) );
             $('#app-tb-tl-columns-form').slideDown( 200 );
@@ -714,7 +728,7 @@ var _gui = (function () {
 
     function update_share_tab() { //TODO
         var open_sheets = { 'groups': _resource.get_grouped_sheets() };
-        $('#app-sh-panel').append( Mustache.to_html( _tmpl.panel_sheets, open_sheets ) );
+        $('#app-sh-panel').append( M.to_html( _tmpl.panel_sheets, open_sheets ) );
 
         $('#app-sh-submit').click( function () {
             var checked = $('#app-sh-panel').find('input:checked').map( function () {
@@ -951,7 +965,7 @@ var _gui = (function () {
             data['keys_num'] = keys.length;
 
             eliminate_redundant_keys( sort_form, data );
-            key_html = Mustache.to_html( _tmpl.sort_key, data );
+            key_html = M.to_html( _tmpl.sort_key, data );
             placeholder.append( key_html );
 
             if ( data['keys_num'] === data['columns'].length ||
@@ -1052,7 +1066,7 @@ var _gui = (function () {
 
             data['keys_num'] = keys_num;
 
-            key_html = Mustache.to_html( _tmpl.filter_key, data );
+            key_html = M.to_html( _tmpl.filter_key, data );
             placeholder.append( key_html );
 
             filter_form.find('#filter-'+ keys_num +'-columns').change( function () {
@@ -1083,13 +1097,13 @@ var _gui = (function () {
 
         switch ( type ) {
             case 'string':
-                operations = Mustache.to_html( _tmpl.string_operations, data );
+                operations = M.to_html( _tmpl.string_operations, data );
                 break;
             case 'number':
-                operations = Mustache.to_html( _tmpl.number_operations, data );
+                operations = M.to_html( _tmpl.number_operations, data );
                 break;
             case 'null':
-                operations = Mustache.to_html( _tmpl.null_operations, data );
+                operations = M.to_html( _tmpl.null_operations, data );
                 break;
             default:
                 throw 'Add filter operation: unexpected type: ' + type;

@@ -59,8 +59,12 @@ var _tmpl = (function () {
                     '{{{.}}}' +
                 '</li>' +
             '{{/children}}' +
-        '</ul>' +
-        '<div id="pl-ch-submit" class="clear blue button">{{header}}</div>';
+        '</ul>';
+
+    that.datasets = '<div id="pl-ch-datasets" class="panel-main"></div>';
+
+    that.panel_submit =
+        '<div id="pl-ch-submit" class="clear blue button">{{label}}</div>';
 
     that.dbtree_high =
         '<section class="tree-holder{{#even}} even{{/even}}{{^even}} odd{{/even}}">' +
