@@ -630,21 +630,17 @@ var _resource = (function () {
 
     // DOWNLOAD FUNCTIONS
     // Download data from selected sheets and endpoints.
-    // TODO what the callback does in this function?!
-    that.download_data = function( sheet_ids, endpoints, callback ) {
+    that.download_data = function( sheet_ids, endpoints ) {
         var sheets = sheet_ids.map( function ( id ) {
             return get_sheet( id );
         });
         var data = _download.prepare_download_data( sheets, endpoints );
 
-        callback = function ( x ) {
-            $('#pl-dl-hidden-form')
-                .find('input')
-                .val( x )
-                .end()
-                .submit();
-        }
-        callback( data );
+        $('#pl-dl-hidden-form')
+            .find('input')
+            .val( data )
+            .end()
+            .submit();
     }
 
 // P R I V A T E   I N T E R F A C E
@@ -914,6 +910,7 @@ var _resource = (function () {
             var gui_data;
 
             sheet = create_sheet( endpoint, data, meta );
+            // TODO what is that?!
             sheet_id = find_blocked_sheet( endpoint );
             sheet_id = add_sheet( sheet, sheet_id );
             gui_data = prepare_table_data( sheet_id );

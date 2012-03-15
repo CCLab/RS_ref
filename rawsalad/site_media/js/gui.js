@@ -48,9 +48,13 @@ var _gui = (function () {
     };
 
 
+    return that;
+
 // P R I V A T E   I N T E R F A C E
 
     //  T O P   M E N U   C A L L B A C K S
+    // TODO refactor these three callbacks
+    // TODO specify the header of panels for each function
     function show_browse() {
         _resource.get_collections( function ( collections ) {
             // generate the dbtree html code
@@ -81,7 +85,7 @@ var _gui = (function () {
             $('#pl-ch-datasets')
                 .empty()
                 .append( dbtree )
-                .append( M.to_html( _tmpl.panel_submit, {'label': 'Pokaż dane'} ));
+                .append( M.to_html( _tmpl.panel_submit, {'label': 'Szukaj'} ));
 
             _dbtree.arm( collections );
 
@@ -105,7 +109,7 @@ var _gui = (function () {
                 .empty()
                 .append( M.to_html( _tmpl.panel_sheets, open_sheets ) )
                 .append( dbtree )
-                .append( M.to_html( _tmpl.panel_submit, {'label': 'Pokaż dane'} ));
+                .append( M.to_html( _tmpl.panel_submit, {'label': 'Pobież dane'} ));
 
             _dbtree.arm( collections );
 
@@ -116,10 +120,7 @@ var _gui = (function () {
                 var checked_endpoints = _dbtree.selected_endpoints();
                 var checked_sheets    = $.makeArray( sheets );
 
-                _resource.download_data( checked_sheets, checked_endpoints, function () {
-                    // TODO: what callback should do, is it needed?
-                    console.log("Dane są pobrane(TODO)");
-                });
+                _resource.download_data( checked_sheets, checked_endpoints );
             });
         });
     }
@@ -127,8 +128,7 @@ var _gui = (function () {
     // P A N E L   B U T T O N S   C A L L B A C K S
     function show_endpoints( endpoints ) {
         var init_callback = function () {
-            $('#application').show();
-            _resource.get_sheets_labels( draw_tabs );
+            console.log( "Wczytuję dane" );
         };
         var callbacks = [];
         callbacks = endpoints.map( function ( e ) {
@@ -139,11 +139,6 @@ var _gui = (function () {
         callbacks[0] = function ( data ) {
             draw_endpoint( data['data'] );
         };
-
-        if( $('#panels').is(':visible') ) {
-            $('#panels').slideUp( 30 );
-        }
-        display_application_panel();
 
         _resource.get_top_levels( endpoints, init_callback, callbacks );
     }
@@ -163,11 +158,17 @@ var _gui = (function () {
         });
     }
 
+    function show_search_results( endpoint, query ) {
+        _resource.get_search_data( endpoint, query, function ( data ) {
+            draw_endpoint( data );
+        });
+    }
 
 
 
 
     function manage_top_panel( clicked, callback ) {
+        var callback = callback || function () {};
 
         // hide active panel
         if( clicked.hasClass('active') ) {
@@ -179,7 +180,7 @@ var _gui = (function () {
             }, 100);
 
             // hide panel
-            $('#panels').slideUp( 300 );
+            $('#panels').slideUp( 300, callback );
         }
         else {
             // some other panel is currently open
@@ -228,9 +229,15 @@ var _gui = (function () {
 
     function draw_endpoint( data ) {
         draw_table( data );
-        $('#application').fadeIn( 300 );
         draw_tools( data );
+
         _resource.get_sheets_labels( draw_tabs );
+
+        // deactivate menu button and hide the panel
+        manage_top_panel( $('#top-menu').find('.active'), function () {
+            $('#application').fadeIn( 300 );
+            make_zebra();
+        });
     }
 
 
@@ -242,10 +249,8 @@ var _gui = (function () {
 
 
     function draw_tabs( data ) {
-        var tabs;
         adjust_tabs_length( data );
-        tabs = M.to_html( _tmpl.app_table_header, data );
-        display_tabs( tabs );
+        display_tabs( M.to_html( _tmpl.app_table_header, data ));
     }
 
 
@@ -267,18 +272,6 @@ var _gui = (function () {
     ///////////////////////////////////////
     // D I S P L A Y   F U N C T I O N S //
     ///////////////////////////////////////
-
-
-    // APLICATION PANEL
-
-    function display_application_panel( callback ) {
-        prepare_aplication_interface();
-        $('#application').show();
-
-        if( !!callback ) {
-            callback();
-        }
-    }
 
 
     // APPLICATION TABS
@@ -1257,45 +1250,5 @@ var _gui = (function () {
                 }
             });
     }
-
-
-
-    // DB TREE CALLBACKS
-    function show_collections( endpoints ) {
-        // TODO prepare a final list of callbacks
-        // each endpoint has it's own callback [ fun, fun, fun.... ]
-        // the first inits the app, the last cleans up the preloader
-        var callbacks = [];
-        var first_callback = function ( data ) {
-                console.log( "1 / " + endpoints.length );
-                draw_endpoint( data['data'] );
-        };
-        var mid_callback = function ( data ) {
-                console.log( (i+2) + " / " + endpoints.length );
-        };
-        var last_callback = function ( data ) {
-            console.log( (i+2) + " / " + endpoints.length );
-            console.log( "Skończone" );
-        };
-
-        // populate callbacks list with appropriate callbacks
-        callbacks.push( first_callback );
-        for( i = 0; i < endpoints.length-2; ++i ) {
-            callbacks.push( mid_callback );
-        }
-        callbacks.push( last_callback );
-
-        _resource.get_top_levels( endpoints, callbacks );
-    }
-
-    function show_search_results( endpoint, query ) {
-        _resource.get_search_data( endpoint, query, function ( data ) {
-            draw_endpoint( data );
-            $('#pl-ch-area').empty();
-        });
-    }
-
-    // return public interface
-    return that;
 
 })();
