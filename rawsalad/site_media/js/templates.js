@@ -173,13 +173,13 @@ var _tmpl = (function () {
 
     that.panel_sheets =
         // TODO potentially buggy, when used a few times
-        '<div id="dl-sheets" style="margin-left: 25px; margin-bottom: 25px;">' +
+        '<div id="dl-sheets" class="panel-main" style="padding-left: 30px;">' +
+            '<table>' +
             '{{#groups}}' +
-                '<h1 style="clear: both;">{{group_name}}</h1>' +
-                '<table>' +
+                '<tr><td colspan="2" style="font-size: 16px;">{{group_name}}</td></tr>' +
                     '{{#sheets}}' +
                         '<tr>' +
-                            '<td style="width: 25px;">' +
+                            '<td style="width: 25px; padding-left: 15px;">' +
                                 '<input class="left" type="checkbox" id="{{id}}" />' +
                             '</td>' +
                             '<td style="vertical-align: middle;">' +
@@ -187,8 +187,8 @@ var _tmpl = (function () {
                             '</td>' +
                         '</tr>' +
                     '{{/sheets}}' +
-                '</table>' +
             '{{/groups}}' +
+            '</table>' +
         '</div>';
 
     that.search_input =
@@ -208,6 +208,7 @@ var _tmpl = (function () {
             '{{/results}}' +
         '</div>';
 
+    that.cover = '<div id="cover"></div>';
 
     // T O O L S
     // TODO split for two different placeholders and templates
@@ -218,10 +219,7 @@ var _tmpl = (function () {
                 '<input type="text" class="input-text" id="app-tb-tl-rename-input" />' +
             '</form>' +
             '{{#changed_label}}' +
-                '<div id="app-tb-tl-old-title" class="left"> {{original_label}} </div>' +
-            '{{/changed_label}}' +
-            '{{^changed_label}}'+
-                '<div id="app-tb-tl-old-title" class="left" style="display: none;"> </div>' +
+                '<div id="app-tb-tl-old-title" class="left">{{old_label}}</div>' +
             '{{/changed_label}}' +
             '<div id="app-tb-tl-old-title" class="left" style="display: none;"> </div>' +
             '<div id="app-tb-tl-rename-button" class="button left">Zmień nazwę</div>' +
