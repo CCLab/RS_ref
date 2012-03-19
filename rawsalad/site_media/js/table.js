@@ -97,9 +97,10 @@ var _table = (function () {
 
         header_code = create_standard_header( data );
         boxes_code = create_searched_boxes( data['boxes'] );
-        table_code = header_code.concat( boxes_code );
+        table_code = header_code.concat( boxes_code ); 
 
-        callback( table_code );
+        callback( table_code ); 
+//          callback( boxes_code );
     }
 
     function create_search_box( box, i ) {
@@ -141,14 +142,16 @@ var _table = (function () {
 
 
     function create_standard_header( data ) {
-        var head_row_code;
-        var standard_header_code;
+        var head_row_code = '';
         var total_row_code = '';
+        var standard_header_code;
 
-        head_row_code = M.to_html( _tmpl.standard_head_row, data );
+        if ( data['type'] !== 2 ) { // it is not search result
+            head_row_code = M.to_html( _tmpl.standard_head_row, data );
 
-        if ( !!data['total'] ) {
-            total_row_code = M.to_html( _tmpl.standard_total_row, data );
+            if ( !!data['total'] ) {
+                total_row_code = M.to_html( _tmpl.standard_total_row, data );
+            }
         }
 
         // TODO clean concat, +, join, push etc
