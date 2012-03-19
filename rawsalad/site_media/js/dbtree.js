@@ -53,7 +53,7 @@ var _dbtree = (function () {
                 'even'       : even
             };
 
-            return Mustache.to_html( _tmpl.dbtree_high, html_info );
+            return M.to_html( _tmpl.dbtree_high, html_info );
         }
 
         // Generate html code for leaf => table with endpoints.
@@ -79,7 +79,7 @@ var _dbtree = (function () {
                 'children' : children_list
             };
 
-            return Mustache.to_html( _tmpl.dbtree_leaf, html_info );
+            return M.to_html( _tmpl.dbtree_leaf, html_info );
         }
 
         var db_tree_code;
@@ -94,19 +94,14 @@ var _dbtree = (function () {
                 }
             });
 
-        var html_info = {
-            'header'  : header,
+        var html_data = {
             'children': top_level_nodes
         };
 
-        db_tree_code = Mustache.to_html( _tmpl.dbtree_root, html_info );
-
-        $('#pl-ch-area').empty().append('<div id="pl-ch-datasets" class="panel-main"></div>');
-        $('#pl-ch-datasets').empty().append( db_tree_code );
-        prepare_dbtree_interface( db_tree, callback );
+        return M.to_html( _tmpl.dbtree_root, html_data );
     };
 
-    that.get_selected_endpoints = function() {
+    that.selected_endpoints = function () {
         var values = [];
 
         $('.pl-tree-end-checkbox').each( function ( i, e ) {
@@ -134,7 +129,7 @@ var _dbtree = (function () {
         };
 
         // prepare place for dbtree list elements
-        panel_content = Mustache.to_html( _tmpl.tree_list, even_level );
+        panel_content = M.to_html( _tmpl.tree_list, even_level );
         panel_content_code = $(panel_content);
         choose_list_code = panel_content_code.closest('ul');
 
@@ -149,13 +144,7 @@ var _dbtree = (function () {
         choose_panel.append( panel_content_code );
     };
 
-// P R I V A T E   I N T E R F A C E
-
-    function is_high_level( node ) {
-        return node['max_depth'] >= 2;
-    }
-
-    function prepare_dbtree_interface( db_tree, callback ) {
+    that.arm = function ( db_tree ) {
         // Hiding and showing children of higher level nodes.
         $('.pl-tree-arrow').click( function () {
             var id = $(this).attr('id');
@@ -178,11 +167,14 @@ var _dbtree = (function () {
             handle_checkbox_selection( db_tree, $(this) );
         });
 
-        $('#pl-ch-submit').click( function () {
-            var selected_endpoints = that.get_selected_endpoints();
-            callback( selected_endpoints );
-        });
+    };
+
+// P R I V A T E   I N T E R F A C E
+
+    function is_high_level( node ) {
+        return node['max_depth'] >= 2;
     }
+
 
     // Select/deselect checkbox and checkboxes in subtree,
     // update parent checkboxes.
@@ -318,11 +310,11 @@ var _dbtree = (function () {
                     var even_level = { 'even': even, };
 
                     // prepare place for new dbtree list
-                    new_list = Mustache.to_html( _tmpl.tree_list, even_level );
+                    new_list = M.to_html( _tmpl.tree_list, even_level );
                     new_list_code = $(new_list);
 
                     // generate new node code
-                    html = $( Mustache.to_html( _tmpl.tree_node, node ) );
+                    html = $( M.to_html( _tmpl.tree_node, node ) );
 
                     // get place for new dbtree list
                     new_placeholder = html.find( '.pl-tree' );
@@ -342,7 +334,7 @@ var _dbtree = (function () {
     function endpoints_table( node, data, levels ) {
         var html_code;
         var nodes_leafs = prepare_ends( node, data, levels );
-        var ends = Mustache.to_html( _tmpl.double_end, nodes_leafs );
+        var ends = M.to_html( _tmpl.double_end, nodes_leafs );
 
         // levels === 1 - generate one level table
         if ( levels === 1 ) {
@@ -351,7 +343,7 @@ var _dbtree = (function () {
         // levels === 2 - generate two levels table
         else if ( levels === 2 ) {
             var table_placeholder;
-            var html = Mustache.to_html( _tmpl.tree_node, node );
+            var html = M.to_html( _tmpl.tree_node, node );
             html_code = $(html);
             table_placeholder = html_code.find( '.pl-tree-end-det' );
             table_placeholder.append( ends );

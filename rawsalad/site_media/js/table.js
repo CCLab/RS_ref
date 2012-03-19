@@ -109,9 +109,9 @@ var _table = (function () {
         box['breadcrumb_action'] = (box['breadcrumb_showed']) ? 'Schowaj rodziców' : 'Pokaż rodziców';
 
         if ( box['breadcrumb_showed'] ) {
-            return Mustache.to_html( _tmpl.search_box_breadcrumbed, box );
+            return M.to_html( _tmpl.search_box_breadcrumbed, box );
         } else {
-            return Mustache.to_html( _tmpl.search_box, box );
+            return M.to_html( _tmpl.search_box, box );
         }
     }
 
@@ -129,7 +129,7 @@ var _table = (function () {
         var boxes_html = [];
 
         boxes.forEach( function ( box ) {
-            boxes_html.push( Mustache.to_html( _tmpl.filter_box, box ) );
+            boxes_html.push( M.to_html( _tmpl.filter_box, box ) );
         });
 
         return boxes_html.join('');
@@ -141,10 +141,10 @@ var _table = (function () {
         var standard_header_code;
         var total_row_code = '';
 
-        head_row_code = Mustache.to_html( _tmpl.standard_head_row, data );
+        head_row_code = M.to_html( _tmpl.standard_head_row, data );
 
         if ( !!data['total'] ) {
-            total_row_code = Mustache.to_html( _tmpl.standard_total_row, data );
+            total_row_code = M.to_html( _tmpl.standard_total_row, data );
         }
 
         // TODO clean concat, +, join, push etc
@@ -168,7 +168,7 @@ var _table = (function () {
 
         add_rows_padding( data );
 
-        rows_code = Mustache.to_html( _tmpl.standard_rows, data );
+        rows_code = M.to_html( _tmpl.standard_rows, data );
 
         return rows_code;
     }

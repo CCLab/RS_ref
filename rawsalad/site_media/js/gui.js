@@ -48,50 +48,87 @@ var _gui = (function () {
     };
 
 
+    return that;
+
 // P R I V A T E   I N T E R F A C E
 
     //  T O P   M E N U   C A L L B A C K S
+    // TODO refactor these three callbacks
+    // TODO specify the header of panels for each function
     function show_browse() {
         _resource.get_collections( function ( collections ) {
-            _dbtree.get_dbtree( collections, 'Pokaż dane', show_endpoints );
+            // generate the dbtree html code
+            var dbtree = _dbtree.get_dbtree( collections );
+            $('#pl-ch-area').empty().append( _tmpl.datasets );
+            $('#pl-ch-datasets')
+                .empty()
+                .append( dbtree )
+                .append( M.to_html( _tmpl.panel_submit, {'label': 'Pokaż dane'} ));
+
+            _dbtree.arm( collections );
+
+            $('#pl-ch-submit').click( function () {
+                show_endpoints( _dbtree.selected_endpoints() );
+            });
         });
     }
 
     function show_search() {
         _resource.get_collections( function ( collections ) {
-            _dbtree.get_dbtree( collections, 'Szukaj', show_search_propositions );
+            // generate dbtree html code
+            var dbtree = _dbtree.get_dbtree( collections );
+            $('#pl-ch-area')
+                .empty()
+                .append( _tmpl.search_input )
+                .append( _tmpl.datasets );
 
-            $('#pl-ch-area').prepend( _tmpl.search_input );
+            $('#pl-ch-datasets')
+                .empty()
+                .append( dbtree )
+                .append( M.to_html( _tmpl.panel_submit, {'label': 'Szukaj'} ));
 
+            _dbtree.arm( collections );
+
+            $('#pl-ch-submit').click( function () {
+                show_search_propositions( _dbtree.selected_endpoints() );
+            });
         });
     }
 
     function show_download() {
-        var open_sheets;
-
         _resource.get_collections( function ( collections ) {
-            _dbtree.get_dbtree( collections, 'Pobierz', function ( endpoints ) {
+            // generate dbtree html code
+            var dbtree = _dbtree.get_dbtree( collections );
+            var open_sheets = { 'groups': _resource.get_grouped_sheets() };
+
+            $('#pl-ch-area')
+                .empty()
+                .append( M.to_html( _tmpl.panel_sheets, open_sheets ) )
+                .append( _tmpl.datasets );
+
+            $('#pl-ch-datasets')
+                .empty()
+                .append( dbtree )
+                .append( M.to_html( _tmpl.panel_submit, {'label': 'Pobież dane'} ));
+
+            _dbtree.arm( collections );
+
+            $('#pl-ch-submit').click( function () {
                 var sheets = $('#dl-sheets').find('input:checked').map( function ( e ) {
                                  return $(this).attr('id');
                              });
-                var checked_endpoints = _dbtree.get_selected_endpoints();
-                var checked_sheets = $.makeArray( sheets );
+                var checked_endpoints = _dbtree.selected_endpoints();
+                var checked_sheets    = $.makeArray( sheets );
 
-                _resource.download_data( checked_sheets, checked_endpoints, function () {
-                    // TODO: what callback should do, is it needed?
-                    console.log("Dane są pobrane(TODO)");
-                });
+                _resource.download_data( checked_sheets, checked_endpoints );
             });
         });
-
-        open_sheets = { 'groups': _resource.get_grouped_sheets() };
-        $('#pl-ch-datasets').prepend( Mustache.to_html( _tmpl.panel_sheets, open_sheets ) );
     }
 
+    // P A N E L   B U T T O N S   C A L L B A C K S
     function show_endpoints( endpoints ) {
         var init_callback = function () {
-            $('#application').show();
-            _resource.get_sheets_labels( draw_tabs );
+            console.log( "Wczytuję dane" );
         };
         var callbacks = [];
         callbacks = endpoints.map( function ( e ) {
@@ -103,18 +140,13 @@ var _gui = (function () {
             draw_endpoint( data['data'] );
         };
 
-        if( $('#panels').is(':visible') ) {
-            $('#panels').slideUp( 30 );
-        }
-        display_application_panel();
-
         _resource.get_top_levels( endpoints, init_callback, callbacks );
     }
 
     function show_search_propositions( endpoints ) {
         var query = $('#search-query').val();
         _resource.get_search_count( endpoints, query, function ( data ) {
-            var propositions = Mustache.to_html( _tmpl.search_propositions, data );
+            var propositions = M.to_html( _tmpl.search_propositions, data );
             $('#pl-ch-area').empty().append( propositions );
 
             $('#pl-ch-area').find('p').each( function () {
@@ -125,6 +157,15 @@ var _gui = (function () {
             });
         });
     }
+
+    function show_search_results( endpoint, query ) {
+        _resource.get_search_data( endpoint, query, function ( data ) {
+            draw_endpoint( data );
+        });
+    }
+
+
+
 
     function manage_top_panel( clicked, callback ) {
 
@@ -138,7 +179,11 @@ var _gui = (function () {
             }, 100);
 
             // hide panel
-            $('#panels').slideUp( 300 );
+            $('#panels').slideUp( 300, function () {
+                if( !!callback ) callback();
+            });
+            $('#application').animate({ 'opacity': '1.0' }, 300 );
+            $('#cover').remove();
         }
         else {
             // some other panel is currently open
@@ -162,6 +207,10 @@ var _gui = (function () {
                 $('#panels').slideUp( 300, function () {
                     callback();
                     $('#panels').slideDown( 300 );
+                    $('#application').animate({ 'opacity': '0.3' }, 300 );
+                    if( !$('#cover').length ) {
+                        $('#application').append( _tmpl.cover );
+                    }
                 });
             }
             // no panel is currently open
@@ -176,6 +225,10 @@ var _gui = (function () {
                 // draw and show the panel
                 callback();
                 $('#panels').slideDown( 300 );
+                $('#application').animate({ 'opacity': '0.3' }, 300 );
+                if( !$('#cover').length ) {
+                    $('#application').append( _tmpl.cover );
+                }
             }
         }
     }
@@ -186,34 +239,36 @@ var _gui = (function () {
 
 
     function draw_endpoint( data ) {
-        draw_table( data );
-        $('#application').fadeIn( 300 );
+
         draw_tools( data );
+        draw_table( data );
         _resource.get_sheets_labels( draw_tabs );
+
+        // deactivate menu button and hide the panel
+        manage_top_panel( $('#top-menu').find('.active'), function () {
+            $('#application').fadeIn( 300 );
+            make_zebra();
+        });
     }
 
 
     function draw_sheet( sheet_id ){
-        _resource.get_sheet_data( sheet_id, draw_table );
-        _resource.get_sheet_name( sheet_id, draw_tools );
-        _resource.get_sheets_labels( draw_tabs );
+        draw_table( _resource.get_sheet_data( sheet_id ) );
+        draw_tools( _resource.get_sheet_name( sheet_id ) );
+        draw_tabs ( _resource.get_sheets_labels() );
     }
 
 
     function draw_tabs( data ) {
-        var tabs;
         adjust_tabs_length( data );
-        tabs = Mustache.to_html( _tmpl.app_table_header, data );
-        display_tabs( tabs );
+        display_tabs( M.to_html( _tmpl.app_table_header, data ));
     }
 
 
     function draw_tools( names ) {
-        var tools;
-        names['changed_label'] = ( names['label'] === names['original_label'] ) ? false : true;
+        names['changed_label'] = !( names['label'] === names['old_label'] );
 
-        tools = Mustache.to_html( _tmpl.app_table_tools, names );
-        display_tools( tools );
+        display_tools( M.to_html( _tmpl.app_table_tools, names ) );
     }
 
 
@@ -226,18 +281,6 @@ var _gui = (function () {
     ///////////////////////////////////////
     // D I S P L A Y   F U N C T I O N S //
     ///////////////////////////////////////
-
-
-    // APLICATION PANEL
-
-    function display_application_panel( callback ) {
-        prepare_aplication_interface();
-        $('#application').show();
-
-        if( !!callback ) {
-            callback();
-        }
-    }
 
 
     // APPLICATION TABS
@@ -468,22 +511,18 @@ var _gui = (function () {
     // TOOLS EVENTS
 
     function show_rename_form() { // TODO test it
-        var old_label
+        var label;
+        var old_label;
+        var sheet_id = active_sheet_id();
 
-        if ( $('#app-tb-tl-rename-input').is(":visible")){
-            // TODO trim whitespaces around new label
-            var new_label = $('#app-tb-tl-rename-input').val();
-            var callback = function(){
-                _resource.get_sheets_labels( draw_tabs );
-            };
-
+        if( $('#app-tb-tl-rename-input').is(":visible") ) {
+            label = $('#app-tb-tl-rename-input').val().replace( /^\s*|\s$/g,'' );
             old_label = active_sheet_name();
 
-            if ( ( new_label !== old_label ) && /\S/.test(new_label) ) {
-                var sheet_id = active_sheet_id();
-
-                _resource.change_name( sheet_id, new_label, callback );
-                $('#app-tb-tl-title').html( new_label );
+            if( ( label !== old_label ) && /\S/.test( label ) ) {
+                _resource.change_name( sheet_id, label );
+                draw_tabs ( _resource.get_sheets_labels() );
+                draw_tools( _resource.get_sheet_name( sheet_id ) );
             }
             $('#app-tb-tl-rename-form').hide();
             $('#app-tb-tl-title').show();
@@ -496,7 +535,7 @@ var _gui = (function () {
                 .show()
                 // TODO bind enter key and esc key (at once)
                 .submit( function () {
-                    $('#app-tb-tl-rename-button').trigger( $.Event( 'click' ) );
+                    $('#app-tb-tl-rename-button').trigger('click');
                     return false;
                 });
 
@@ -506,7 +545,6 @@ var _gui = (function () {
                 .focus();
         }
     }
-
 
     function clear_table() {
         var sheet_id = active_sheet_id();
@@ -547,7 +585,7 @@ var _gui = (function () {
 
         var callback = function( columns ){
             var columns_object =  { 'columns': columns };
-            var columns_form = Mustache.to_html( _tmpl.columns_form, columns_object );
+            var columns_form = M.to_html( _tmpl.columns_form, columns_object );
 
             $('#app-tb-tl-columns-list').append( $(columns_form) );
             $('#app-tb-tl-columns-form').slideDown( 200 );
@@ -714,7 +752,7 @@ var _gui = (function () {
 
     function update_share_tab() { //TODO
         var open_sheets = { 'groups': _resource.get_grouped_sheets() };
-        $('#app-sh-panel').append( Mustache.to_html( _tmpl.panel_sheets, open_sheets ) );
+        $('#app-sh-panel').append( M.to_html( _tmpl.panel_sheets, open_sheets ) );
 
         $('#app-sh-submit').click( function () {
             var checked = $('#app-sh-panel').find('input:checked').map( function () {
@@ -951,7 +989,7 @@ var _gui = (function () {
             data['keys_num'] = keys.length;
 
             eliminate_redundant_keys( sort_form, data );
-            key_html = Mustache.to_html( _tmpl.sort_key, data );
+            key_html = M.to_html( _tmpl.sort_key, data );
             placeholder.append( key_html );
 
             if ( data['keys_num'] === data['columns'].length ||
@@ -1052,7 +1090,7 @@ var _gui = (function () {
 
             data['keys_num'] = keys_num;
 
-            key_html = Mustache.to_html( _tmpl.filter_key, data );
+            key_html = M.to_html( _tmpl.filter_key, data );
             placeholder.append( key_html );
 
             filter_form.find('#filter-'+ keys_num +'-columns').change( function () {
@@ -1083,13 +1121,13 @@ var _gui = (function () {
 
         switch ( type ) {
             case 'string':
-                operations = Mustache.to_html( _tmpl.string_operations, data );
+                operations = M.to_html( _tmpl.string_operations, data );
                 break;
             case 'number':
-                operations = Mustache.to_html( _tmpl.number_operations, data );
+                operations = M.to_html( _tmpl.number_operations, data );
                 break;
             case 'null':
-                operations = Mustache.to_html( _tmpl.null_operations, data );
+                operations = M.to_html( _tmpl.null_operations, data );
                 break;
             default:
                 throw 'Add filter operation: unexpected type: ' + type;
@@ -1216,45 +1254,5 @@ var _gui = (function () {
                 }
             });
     }
-
-
-
-    // DB TREE CALLBACKS
-    function show_collections( endpoints ) {
-        // TODO prepare a final list of callbacks
-        // each endpoint has it's own callback [ fun, fun, fun.... ]
-        // the first inits the app, the last cleans up the preloader
-        var callbacks = [];
-        var first_callback = function ( data ) {
-                console.log( "1 / " + endpoints.length );
-                draw_endpoint( data['data'] );
-        };
-        var mid_callback = function ( data ) {
-                console.log( (i+2) + " / " + endpoints.length );
-        };
-        var last_callback = function ( data ) {
-            console.log( (i+2) + " / " + endpoints.length );
-            console.log( "Skończone" );
-        };
-
-        // populate callbacks list with appropriate callbacks
-        callbacks.push( first_callback );
-        for( i = 0; i < endpoints.length-2; ++i ) {
-            callbacks.push( mid_callback );
-        }
-        callbacks.push( last_callback );
-
-        _resource.get_top_levels( endpoints, callbacks );
-    }
-
-    function show_search_results( endpoint, query ) {
-        _resource.get_search_data( endpoint, query, function ( data ) {
-            draw_endpoint( data );
-            $('#pl-ch-area').empty();
-        });
-    }
-
-    // return public interface
-    return that;
 
 })();
