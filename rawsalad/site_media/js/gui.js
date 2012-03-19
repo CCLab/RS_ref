@@ -168,7 +168,6 @@ var _gui = (function () {
 
 
     function manage_top_panel( clicked, callback ) {
-
         // hide active panel
         if( clicked.hasClass('active') ) {
             // deactivate clicked button
@@ -246,8 +245,10 @@ var _gui = (function () {
 
         // deactivate menu button and hide the panel
         manage_top_panel( $('#top-menu').find('.active'), function () {
-            $('#application').fadeIn( 300 );
-            make_zebra();
+            $('#application').fadeIn( 300, function () {
+                make_zebra();
+                arm_application();
+            });
         });
     }
 
@@ -287,10 +288,6 @@ var _gui = (function () {
 
     function display_share_panel() {
 
-        if( change_application_tab( $(this) ) ) {
-            update_share_tab(); // TODO
-            $('#app-share').show();
-        }
     }
 
 
@@ -341,13 +338,17 @@ var _gui = (function () {
 
     // APPLICATION TABS INTERFACE
 
-    function prepare_aplication_interface() {
+    function arm_application() {
         var share_bt = $('#app-tbs-share');
         var table_bt = $('#app-tbs-table');
 
         // EVENTS
-        share_bt
-            .click( display_share_panel );
+        share_bt.click( function () {
+            if( change_application_tab( $(this) ) ) {
+                update_share_tab(); // TODO
+                $('#app-share').show();
+            }
+        });
 
         table_bt
             .click( display_table_panel );
@@ -752,7 +753,7 @@ var _gui = (function () {
 
     function update_share_tab() { //TODO
         var open_sheets = { 'groups': _resource.get_grouped_sheets() };
-        $('#app-sh-panel').append( M.to_html( _tmpl.panel_sheets, open_sheets ) );
+        $('#app-sh-panel').empty().append( M.to_html( _tmpl.panel_sheets, open_sheets ) );
 
         $('#app-sh-submit').click( function () {
             var checked = $('#app-sh-panel').find('input:checked').map( function () {
