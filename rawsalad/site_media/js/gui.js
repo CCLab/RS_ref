@@ -109,11 +109,11 @@ var _gui = (function () {
 
             $('#pl-ch-area')
                 .empty()
+                .append( M.to_html( _tmpl.panel_sheets, open_sheets ) )
                 .append( _tmpl.datasets );
 
             $('#pl-ch-datasets')
                 .empty()
-                .append( M.to_html( _tmpl.panel_sheets, open_sheets ) )
                 .append( dbtree )
                 .append( M.to_html( _tmpl.panel_submit, {'label': 'Pobież dane'} ));
 
@@ -179,7 +179,6 @@ var _gui = (function () {
 
 
     function manage_top_panel( clicked, callback ) {
-        var callback = callback || function () {};
 
         // hide active panel
         if( clicked.hasClass('active') ) {
@@ -191,7 +190,11 @@ var _gui = (function () {
             }, 100);
 
             // hide panel
-            $('#panels').slideUp( 300, callback );
+            $('#panels').slideUp( 300, function () {
+                if( !!callback ) callback();
+            });
+            $('#application').animate({ 'opacity': '1.0' }, 300 );
+            $('#cover').remove();
         }
         else {
             // some other panel is currently open
@@ -215,6 +218,10 @@ var _gui = (function () {
                 $('#panels').slideUp( 300, function () {
                     callback();
                     $('#panels').slideDown( 300 );
+                    $('#application').animate({ 'opacity': '0.3' }, 300 );
+                    if( !$('#cover').length ) {
+                        $('#application').append( _tmpl.cover );
+                    }
                 });
             }
             // no panel is currently open
@@ -229,6 +236,10 @@ var _gui = (function () {
                 // draw and show the panel
                 callback();
                 $('#panels').slideDown( 300 );
+                $('#application').animate({ 'opacity': '0.3' }, 300 );
+                if( !$('#cover').length ) {
+                    $('#application').append( _tmpl.cover );
+                }
             }
         }
     }
@@ -239,9 +250,9 @@ var _gui = (function () {
 
 
     function draw_endpoint( data ) {
-        draw_table( data );
-        draw_tools( data );
 
+        draw_tools( data );
+        draw_table( data );
         _resource.get_sheets_labels( draw_tabs );
 
         // deactivate menu button and hide the panel
@@ -253,9 +264,9 @@ var _gui = (function () {
 
 
     function draw_sheet( sheet_id ){
-        _resource.get_sheet_data( sheet_id, draw_table );
-        _resource.get_sheet_name( sheet_id, draw_tools );
-        _resource.get_sheets_labels( draw_tabs );
+        draw_table( _resource.get_sheet_data( sheet_id ) );
+        draw_tools( _resource.get_sheet_name( sheet_id ) );
+        draw_tabs ( _resource.get_sheets_labels() );
     }
 
 
@@ -266,11 +277,9 @@ var _gui = (function () {
 
 
     function draw_tools( names ) {
-        var tools;
-        names['changed_label'] = ( names['label'] === names['original_label'] ) ? false : true;
+        names['changed_label'] = !( names['label'] === names['old_label'] );
 
-        tools = M.to_html( _tmpl.app_table_tools, names );
-        display_tools( tools );
+        display_tools( M.to_html( _tmpl.app_table_tools, names ) );
     }
 
 
@@ -513,22 +522,18 @@ var _gui = (function () {
     // TOOLS EVENTS
 
     function show_rename_form() { // TODO test it
-        var old_label
+        var label;
+        var old_label;
+        var sheet_id = active_sheet_id();
 
-        if ( $('#app-tb-tl-rename-input').is(":visible")){
-            // TODO trim whitespaces around new label
-            var new_label = $('#app-tb-tl-rename-input').val();
-            var callback = function(){
-                _resource.get_sheets_labels( draw_tabs );
-            };
-
+        if( $('#app-tb-tl-rename-input').is(":visible") ) {
+            label = $('#app-tb-tl-rename-input').val().replace( /^\s*|\s$/g,'' );
             old_label = active_sheet_name();
 
-            if ( ( new_label !== old_label ) && /\S/.test(new_label) ) {
-                var sheet_id = active_sheet_id();
-
-                _resource.change_name( sheet_id, new_label, callback );
-                $('#app-tb-tl-title').html( new_label );
+            if( ( label !== old_label ) && /\S/.test( label ) ) {
+                _resource.change_name( sheet_id, label );
+                draw_tabs ( _resource.get_sheets_labels() );
+                draw_tools( _resource.get_sheet_name( sheet_id ) );
             }
             $('#app-tb-tl-rename-form').hide();
             $('#app-tb-tl-title').show();
@@ -541,7 +546,7 @@ var _gui = (function () {
                 .show()
                 // TODO bind enter key and esc key (at once)
                 .submit( function () {
-                    $('#app-tb-tl-rename-button').trigger( $.Event( 'click' ) );
+                    $('#app-tb-tl-rename-button').trigger('click');
                     return false;
                 });
 
@@ -551,7 +556,6 @@ var _gui = (function () {
                 .focus();
         }
     }
-
 
     function clear_table() {
         var sheet_id = active_sheet_id();

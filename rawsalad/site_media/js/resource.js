@@ -251,8 +251,11 @@ var _resource = (function () {
         sheet['label'] = new_name;
 
         // for future possible implementations
-        if ( !!callback ) {
+        if( !!callback ) {
             callback();
+        }
+        else {
+            return sheet['label'];
         }
     };
 
@@ -327,14 +330,14 @@ var _resource = (function () {
         }
     };
 
-    that.get_sheet_name = function ( sheet_id, callback ) {
+    that.get_sheet_name = function ( sheet_id ) {
         var sheet = get_sheet( sheet_id );
         var original_label = _store.get_collection_name( sheet['endpoint'] );
 
-        callback({
-            'label'         : sheet['label'],
-            'original_label': original_label
-        });
+        return {
+            'label'     : sheet['label'],
+            'old_label' : original_label
+        };
     };
 
 
@@ -439,13 +442,15 @@ var _resource = (function () {
 
     // Return gui-understandable data from sheet_id sheet.
     that.get_sheet_data = function ( sheet_id, callback ) {
-        var sheet;
-        var gui_data;
+        var sheet    = get_sheet( sheet_id );
+        var gui_data = prepare_table_data( sheet_id );
 
-        sheet = get_sheet( sheet_id );
-        gui_data = prepare_table_data( sheet_id );
-
-        callback( gui_data );
+        if( !!callback ) {
+            callback( gui_data );
+        }
+        else {
+            return gui_data;
+        }
     };
 
 

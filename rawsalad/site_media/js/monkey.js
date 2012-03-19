@@ -111,9 +111,11 @@ Form of created tree:
                     var subtreeRoot = tree.getNode(rootId);
                     var actNode = tree.next(subtreeRoot);
                     var innerId = idMap[rootId];
+                    var newInnerId;
                     var newBaseId;
                     var oldBaseLength = innerId.length;
                     var lastPart = parseInt( innerId.slice(innerId.lastIndexOf('-') + 1) );
+                    var oldPosition;
                     
                     if (getParentId(innerId) === '__root__') {
                         newBaseId = lastPart + delta + '';
@@ -122,10 +124,15 @@ Form of created tree:
                     }
 
                     idMap[ tree.nodeId(subtreeRoot) ] = newBaseId;
+
+                    oldPosition = subtreeRoot.__parent__.__children__.getPosition(innerId);
+                    subtreeRoot.__parent__.__children__.changePosition(newBaseId, innerId, oldPosition + delta);
                     
                     while ( !!actNode && tree.isAncestor(subtreeRoot, actNode) ) {
                         innerId = idMap[ tree.nodeId(actNode) ];
                         newInnerId = newBaseId + innerId.slice(oldBaseLength);
+                        oldPosition = actNode.__parent__.__children__.getPosition(innerId);
+                        actNode.__parent__.__children__.changePosition(newInnerId, innerId, oldPosition);
                         idMap[ tree.nodeId(actNode) ] = newInnerId;
                         actNode = tree.next(actNode);
                     }
@@ -157,7 +164,9 @@ Form of created tree:
                     var veryNewNodes = [];
                     var oldIds = {};
                     oldNodes.forEach(function(node) {
-                        oldIds[ node[idColumn] ] = true;
+                        if (!!node) {
+                            oldIds[ node[idColumn] ] = true;
+                        }
                     });
                     
                     veryNewNodes = newNodes
@@ -169,7 +178,7 @@ Form of created tree:
                         })
                         .filter(function(node) {
                             return !oldIds[ node['node'][idColumn] ];
-                    });
+                        });
 
                     return veryNewNodes;
                 };
@@ -256,19 +265,19 @@ Form of created tree:
             // If node is not in the tree, undefined will be returned.
             getNode: function(id, copy) {    
                 var node;
-                var realId;
+                var innerId;
                 var copy = copy || false;
 
                 assertId(id, 'getNode');
                 
                 if (id === '__root__') return root();
                 
-                realId = idMap[id];
-                if (!realId) return undefined;
+                innerId = idMap[id];
+                if (!innerId) return undefined;
                 
                 node = root();
                 while (!!node && this.nodeId(node) !== id) {
-                    node = getChild(node, realId, idMap);
+                    node = getChild(node, id, idMap);
                 }
                 
                 if (!!node)
@@ -425,33 +434,19 @@ Form of created tree:
             // If copy is set to false(default value), reference is returned, otherwise
             // returns copy of left sibling node without tree hierarchy info(parent and children).
             leftSibling: function(elem, copy) {
-                var siblingsNodes;
-                var i;
-                var last;
-                var id;
-                var copy = copy || false;
-                
+                var node;
+                var leftNode;
+
                 isIdType(elem) ? assertId(elem, 'leftSibling') : assertNodeInTree(this, this.nodeId(elem), false, 'leftSibling');
                 
-                if (isRoot(elem)) return undefined;
-                
-                id = isIdType(elem) ? elem : this.nodeId(elem);
-                parentNode = this.parent(elem);
-                if (!parentNode) return undefined;
-                
-                siblingsNodes = this.children(parentNode);
-                last = siblingsNodes.length;
-                for (i = 1; i < last; ++i) {
-                    if (this.nodeId(siblingsNodes[i]) === id) {
-                        if (copy) {
-                            return this.value(siblingsNodes[i - 1]);
-                        } else {
-                            return siblingsNodes[i - 1];
-                        }
-                    }
-                }
-                
-                return undefined;
+                if ( isRoot(elem) ) return undefined;
+
+                node = isIdType(elem) ? this.getNode(elem) : elem;
+                if (!node) return undefined;
+
+                leftNode = node.__parent__.__children__.getLeft(this.nodeId(node));
+
+                return (copy) ? deepCopy(leftNode, idColumn, parentColumn) : leftNode;
             },
             
             // Returns right sibling of node specified by elem(node or its id).
@@ -459,34 +454,19 @@ Form of created tree:
             // If copy is set to false(default value), reference is returned, otherwise
             // returns copy of right sibling node without tree hierarchy info(parent and children).
             rightSibling: function(elem, copy) {
-                var parentNode;
-                var siblingsNodes;
-                var i;
-                var nextToLast;
-                var id;
-                var copy = copy || false;
-                
-                isIdType(elem) ? assertId(elem, 'leftSibling') : assertNodeInTree(this, this.nodeId(elem), false, 'leftSibling');
+                var node;
+                var rightNode;
+
+                isIdType(elem) ? assertId(elem, 'rightSibling') : assertNodeInTree(this, this.nodeId(elem), false, 'rightSibling');
                 
                 if ( isRoot(elem) ) return undefined;
-                
-                id = isIdType(elem) ? elem : this.nodeId(elem);
-                parentNode = this.parent(elem);
-                if (!parentNode) return undefined;
-                
-                siblingsNodes = this.children(parentNode);
-                nextToLast = siblingsNodes.length - 1;
-                for (i = 0; i < nextToLast; ++i) {
-                    if (this.nodeId(siblingsNodes[i]) === id) {
-                        if (copy) {
-                            return this.value(siblingsNodes[i + 1]);
-                        } else {
-                            return siblingsNodes[i + 1];
-                        }
-                    }
-                }
-                
-                return undefined;
+
+                node = isIdType(elem) ? this.getNode(elem) : elem;
+                if (!node) return undefined;
+
+                rightNode = node.__parent__.__children__.getRight(this.nodeId(node));
+
+                return (copy) ? deepCopy(rightNode, idColumn, parentColumn) : rightNode;
             },
             
             // Returns sibling of node specified by elem(node or its id),
@@ -912,30 +892,88 @@ Form of created tree:
         var nodes = [];
         var i;
         var len;
+        var positionMap = {};
         
         this.add = function(node, idMap) {
+            var innerId;
             if (!idMap[node.__id__]) {
-                idMap[node.__id__] = generateInnerId(parentId, idMap);
+                innerId = generateInnerId(parentId, idMap);
+                idMap[node.__id__] = innerId;
+                positionMap[innerId] = nodes.length;
                 nodes.push(node);
             }
         };
         this.insert = function(node, idMap, index) {
+            var i;
+            var innerId;
             if (!idMap[node.__id__]) {
-                idMap[node.__id__] = generateInnerId(parentId, idMap, index);
-                nodes.splice(index, 0, node);
+                innerId = generateInnerId(parentId, idMap, index);
+                idMap[node.__id__] = innerId; 
+                positionMap[innerId] = index;
+                nodes[index] = node;
+                /*nodes.splice(index, 0, node);
+                for (i = index + 1; i < nodes.length; ++i) {
+                    innerId = idMap[nodes[i].__id__];
+                    ++positionMap[innerId];
+                }*/
             }
         };
-        this.remove = function(id) {
-            for (i = 0; i < nodes.length; ++i) {
-                if (nodes[i].__id__=== id) {
-                    delete nodes[ i ];
-                    nodes.splice(i, 1);
-                    break;
-                }
+        this.remove = function(realId) {
+            var innerId;
+            var index;
+            var i;
+
+            innerId = idMap[realId];
+            index = positionMap[innerId];
+            nodes.splice(index, 1);
+            
+            for (i = index; i < nodes.length; ++i) {
+                innerId = idMap[nodes[i].__id__];
+                --positionMap[innerId];
             }
         };
-        this.get = function(nr) {
-            return (nr === undefined) ? nodes : nodes[nr];
+        this.get = function(realId, isInner) {
+            var innerId;
+            var index;
+            var isInner = isInner || false;
+
+            if (realId === undefined) return nodes;
+
+            innerId = (isInner) ? realId : idMap[realId];
+            index = positionMap[innerId];
+
+            return (index === undefined) ? undefined : nodes[index];
+        };
+        this.getLeft = function(realId) {
+            var innerId;
+            var index;
+
+            innerId = idMap[realId];
+            index = positionMap[innerId];
+            return (index > 0) ? nodes[index - 1] : undefined;
+        };
+        this.getRight = function(realId) {
+            var innerId;
+            var index;
+            var maxIndex = nodes.length - 1;
+
+            innerId = idMap[realId];
+            index = positionMap[innerId];
+            return (index < maxIndex) ? nodes[index + 1] : undefined;
+        };
+        this.getPosition = function(innerId) {
+            return positionMap[innerId];
+        };
+        this.changePosition = function(innerId, oldInnerId, position) {
+            var oldPosition;
+
+            oldPosition = positionMap[oldInnerId];
+            if (oldPosition !== position ) {
+                nodes[position] = nodes[oldPosition];
+                nodes[oldPosition] = undefined;
+            }
+            positionMap[innerId] = position;
+            positionMap[oldInnerId] = undefined;
         };
         this.length = function() {
             return nodes.length;
@@ -944,7 +982,7 @@ Form of created tree:
         if (!!data) {
             assertList(data, 'Children');
             data.forEach(function(e) {
-                this.add(node, parentId, idMap);
+                this.add(node, idMap);
             });
         }
         
@@ -959,11 +997,23 @@ Form of created tree:
     // Returns childNode with id = childId from node's children collection,
     // idMap is map: userId -> treeId
     var getChild = function(node, childId, idMap) {
-        var childrenList;
+        var innerId;
+        var level;
+        var levelId;
         
         assertNode(node, 'getChild');
-        assertNonEmptyString(childId, 'getChild');
+        //assertNonEmptyString(childId, 'getChild');
+
+        innerId = idMap[childId];
+        //level = count(innerId, '-') - 1;
+        parentLevel = getLevel(idMap[node.__id__]);
+        levelId = getIdOnLevel(innerId, parentLevel + 1);
+        //level = count(node.__id__, '-');
+        //levelId = getIdOnLevel(childId, level);
+
+        return node.__children__.get(levelId, true);
         
+        /*
         childrenList = node.__children__.get().filter(function(e) {
             var realId = idMap[e.__id__];
             var level = count(realId, '-');
@@ -972,6 +1022,7 @@ Form of created tree:
         });
         
         return (childrenList.length > 0) ? childrenList[0] : undefined;
+        */
     };
     
     // Creates tree hierarchy with root node,
@@ -1018,6 +1069,12 @@ Form of created tree:
         
         return (lastIndex !== -1) ? id.substring(0, lastIndex) : '__root__';
     };
+
+    // Returns level of node with specified inner id. Root level is -1,
+    // root's children have 0, their children 1, etc.
+    var getLevel = function(id) {
+        return (id !== '') ? count(id, '-') : -1;
+    }
     
     // Returns id on specified level(returns id cut off in place when
     // separator number level+1 starts, separator is "-")

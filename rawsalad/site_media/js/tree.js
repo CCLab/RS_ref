@@ -112,7 +112,7 @@ var _tree = (function () {
     
     that.get_children_number = function( tree, parent_id ) {
         if ( parent_id === undefined ) {
-            parent_id = tree.rootId();
+            parent_id = tree.root();
         }
         return tree.children( parent_id ).length;
     };
