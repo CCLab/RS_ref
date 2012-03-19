@@ -431,9 +431,11 @@ var _tmpl = (function () {
             '</tr>' +
         '{{/rows}}' +
         '<tr box_id="{{box_id}}">' +
+            '{{#has_parent}}' +
             '<td>' +
                 '<button id="show-breadcrumb-{{box_id}}" type="button">{{breadcrumb_action}}</button>' +
             '</td>' +
+            '{{/has_parent}}' +
             '<td>' +
                 '<button id="show-context-{{box_id}}" type="button">{{context_action}}</button>' +
             '</td>' +
