@@ -197,16 +197,20 @@ var _tmpl = (function () {
         '</section>';
 
     that.search_propositions =
-        '<div class="panel-main">' +
-            '{{#results}}' +
-                '<h1 style="font-size: 16px; margin-bottom: 15px;">' +
-                    '{{dbtree_top_parent_name}}' +
-                '</h1>' +
-                '{{#data}}' +
-                    '<p style="margin-bottom: 10px;" data-endpoint="{{endpoint}}">{{label}} :: {{found_count}}</p>' +
-                '{{/data}}' +
-            '{{/results}}' +
-        '</div>';
+        '<section id="pl-sr-results" class="panel-main">' + 
+            '<p  class="pl-sr-res-col"> liczba wystąpień </p>' +          
+            '<p class="pl-sr-res-col"> kolekcja </p >' +          
+            '<section id="pl-sr-res-list" >' +
+                '{{#results}}' +
+                    '<h1 style="font-size: 16px; margin-bottom: 15px;">' +
+                        '{{dbtree_top_parent_name}}' +
+                    '</h1>' +
+                    '{{#data}}' +
+                        '<p style="margin-bottom: 10px;" data-endpoint="{{endpoint}}">{{label}} :: {{found_count}}</p>' +
+                    '{{/data}}' +
+                '{{/results}}' +
+            '</section>' +
+        '</section>';
 
     that.cover = '<div id="cover"></div>';
 
@@ -431,9 +435,11 @@ var _tmpl = (function () {
             '</tr>' +
         '{{/rows}}' +
         '<tr box_id="{{box_id}}">' +
+            '{{#has_parent}}' +
             '<td>' +
                 '<button id="show-breadcrumb-{{box_id}}" type="button">{{breadcrumb_action}}</button>' +
             '</td>' +
+            '{{/has_parent}}' +
             '<td>' +
                 '<button id="show-context-{{box_id}}" type="button">{{context_action}}</button>' +
             '</td>' +
@@ -444,7 +450,7 @@ var _tmpl = (function () {
         '{{#breadcrumb}}' +
             '<tr box_id="{{box_id}}">' +
                 '{{#data}}' +
-                    '<td>{{content}}</td>' +
+                    '<td style="{{#hit}} background-color: #ddddaa;{{/hit}}">{{content}}</td>' +
                 '{{/data}}' +
             '</tr>' +
         '{{/breadcrumb}}' +
