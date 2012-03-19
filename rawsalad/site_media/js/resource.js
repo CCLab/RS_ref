@@ -627,7 +627,10 @@ var _resource = (function () {
                 var sheet_id;
                 var gui_data;
                 var additional_fields = _permalinks.get_additional_fields( permalink_sheet );
-                sheet = create_sheet( group['endpoint'], sheet_data, group['meta'],
+                var sheet_meta = $.extend( true, [],  group['meta'] );
+                sheet_meta['label'] = permalink_sheet['label'];
+                    
+                sheet = create_sheet( group['endpoint'], sheet_data, sheet_meta,
                                       permalink_sheet['type'], additional_fields );
                 sheet_id = add_sheet( sheet );
                 gui_data = prepare_table_data( sheet_id );
