@@ -574,9 +574,11 @@ var _gui = (function () {
 
     // TOOLS EVENTS
 
-    function show_rename_form() { // TODO test it
+    function show_rename_form() {
         var label;
+        var tmp_label;
         var old_label;
+
         var sheet_id = active_sheet_id();
 
         if( $('#app-tb-tl-rename-input').is(":visible") ) {
@@ -592,12 +594,12 @@ var _gui = (function () {
             $('#app-tb-tl-title').show();
         }
         else {
+            tmp_label = $('#app-tb-tl-title').html();
             old_label = active_sheet_name();
 
             $('#app-tb-tl-title').hide();
             $('#app-tb-tl-rename-form')
                 .show()
-                // TODO bind enter key and esc key (at once)
                 .submit( function () {
                     $('#app-tb-tl-rename-button').trigger('click');
                     return false;
@@ -606,7 +608,16 @@ var _gui = (function () {
             $('#app-tb-tl-rename-input')
                 .val( old_label )
                 .select()
-                .focus();
+                .focus()
+                .keyup( function( event ) {
+                    if( event.keyCode === 27 ) {
+                        $('#app-tb-tl-title')
+                            .show();
+                        $('#app-tb-tl-rename-form')
+                            .unbind('submit')
+                            .hide();
+                    }
+                });
         }
     }
 
