@@ -722,6 +722,7 @@ textarea {
 
 
   /*  SEARCH PANEL  */  
+  /*TODO need it? */ 
   #pl-sr-more {
     margin: 0px;
     margin-bottom: 5px;
@@ -763,7 +764,61 @@ textarea {
   
     background-color: @search-res-button-background; 
 
-    .border-radius(3px);
+   .border-radius(3px);
+  }
+  /* TODO end */
+
+  .pl-sr-res-col {
+    display: inline-block;
+
+    margin: 15px;
+    margin-bottom: 0px;
+  }
+
+  .pl-sr-res-col:first-child {
+      width: 80px;
+  }
+
+  .pl-sr-res-num {
+    display: inline-block;
+    
+    width: 80px;
+    height: 13px;
+    padding-left: 20px;
+
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .pl-sr-res-name {
+    display: inline-block;
+    
+    cursor: pointer;
+
+    padding-left: 15px; 
+    vertical-align: top;
+  }
+
+  .pl-sr-res-colection-name {
+    margin-left: 20px;
+    margin-bottom: 0px;
+    margin-top: 20px;
+
+    font-weight: bold;
+  }
+
+
+  .pl-sr-res-button {
+    margin-left: 10px; 
+    padding: 0px 5px; 
+
+    background-color: #c1c1c1; 
+    color: #fff; 
+
+    border-radius: 3px;    
+    -moz-border-radius: 3px;    
+    -webkit-border-radius: 3px;    
+    -o-border-radius: 3px;    
   }
   
 /*  A P P L I C A T I O N  */
