@@ -197,16 +197,20 @@ var _tmpl = (function () {
         '</section>';
 
     that.search_propositions =
-        '<div class="panel-main">' +
-            '{{#results}}' +
-                '<h1 style="font-size: 16px; margin-bottom: 15px;">' +
-                    '{{dbtree_top_parent_name}}' +
-                '</h1>' +
-                '{{#data}}' +
-                    '<p style="margin-bottom: 10px;" data-endpoint="{{endpoint}}">{{label}} :: {{found_count}}</p>' +
-                '{{/data}}' +
-            '{{/results}}' +
-        '</div>';
+        '<section id="pl-sr-results" class="panel-main">' + 
+            '<p  class="pl-sr-res-col"> liczba wystąpień </p>' +          
+            '<p class="pl-sr-res-col"> kolekcja </p >' +          
+            '<section id="pl-sr-res-list" >' +
+                '{{#results}}' +
+                    '<h1 style="font-size: 16px; margin-bottom: 15px;">' +
+                        '{{dbtree_top_parent_name}}' +
+                    '</h1>' +
+                    '{{#data}}' +
+                        '<p style="margin-bottom: 10px;" data-endpoint="{{endpoint}}">{{label}} :: {{found_count}}</p>' +
+                    '{{/data}}' +
+                '{{/results}}' +
+            '</section>' +
+        '</section>';
 
     that.cover = '<div id="cover"></div>';
 

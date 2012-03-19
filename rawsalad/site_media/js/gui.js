@@ -92,7 +92,13 @@ var _gui = (function () {
             $('#pl-ch-submit').click( function () {
                 show_search_propositions( _dbtree.selected_endpoints() );
             });
-        });
+           $('#search-query')
+                .keypress( function( event ) {
+                    if ( event.which == 13 ) {
+                        $('#pl-ch-submit').trigger( $.Event( 'click' ) );
+                    }
+                });
+            });               
     }
 
     function show_download() {
@@ -145,11 +151,16 @@ var _gui = (function () {
 
     function show_search_propositions( endpoints ) {
         var query = $('#search-query').val();
+        
+        if ( endpoints.length === 0 ) {
+            endpoints = _dbtree.get_all_endpoints();
+        }
+        
         _resource.get_search_count( endpoints, query, function ( data ) {
             var propositions = M.to_html( _tmpl.search_propositions, data );
-            $('#pl-ch-area').empty().append( propositions );
+            $('#pl-ch-datasets').empty().append( propositions );
 
-            $('#pl-ch-area').find('p').each( function () {
+            $('#pl-sr-results').find('p').each( function () {
                 var endpoint = $(this).attr('data-endpoint');
                 $(this).click( function () {
                     show_search_results( endpoint, data['query'] );

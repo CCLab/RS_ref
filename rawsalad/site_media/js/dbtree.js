@@ -113,6 +113,17 @@ var _dbtree = (function () {
 
         return values;
     };
+    
+    that.get_all_endpoints = function () {
+        var values = [];
+        
+        $('.pl-tree-end-checkbox').each( function( i, e ) {
+            var checkbox = $(e);
+            values.push( checkbox.attr('endpoint') );        
+        });
+        
+        return values;
+    }
 
 
 
