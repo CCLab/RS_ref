@@ -191,15 +191,20 @@ var _tmpl = (function () {
             '</table>' +
         '</div>';
 
+    that.permalink =
+        '<div>' +
+            '<input type="text" id="perma-link" value="{{permalink}}" />' +
+        '</div>';
+
     that.search_input =
         '<section class="panel-main">' +
             '<input type="text" id="search-query" placeholder="Wpisz szukane słowo" />' +
         '</section>';
 
     that.search_propositions =
-        '<section id="pl-sr-results" class="panel-main">' + 
-            '<p  class="pl-sr-res-col"> liczba wystąpień </p>' +          
-            '<p class="pl-sr-res-col"> kolekcja </p >' +          
+        '<section id="pl-sr-results" class="panel-main">' +
+            '<p  class="pl-sr-res-col"> liczba wystąpień </p>' +
+            '<p class="pl-sr-res-col"> kolekcja </p >' +
             '<section id="pl-sr-res-list" >' +
                 '{{#results}}' +
                     '<h1 style="font-size: 16px; margin-bottom: 15px;">' +

@@ -599,6 +599,7 @@ var _resource = (function () {
     // each endpoint a callback from the callbacks list is called. Sequence
     // of callbacks has the same order as sequence of endpoints.
     that.restore_permalink = function ( permalink_id, endpoints, callbacks ) {
+        // TODO specify this object on the server-side
         var permalinks_data = endpoints.map( function ( e ) {
             return {
                 'permalink_id': permalink_id,

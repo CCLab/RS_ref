@@ -48,6 +48,16 @@ var _gui = (function () {
     };
 
 
+    that.restore_session = function ( id, permalinks ) {
+        var endpoints = permalinks.map( function ( e ) {
+            return e['endpoint'];
+        });
+        // TODO where the init_callback has gone?
+        var callbacks = callbacks_for( endpoints )['callbacks'];
+
+        _resource.restore_permalink( id, endpoints, callbacks );
+    };
+
     return that;
 
 // P R I V A T E   I N T E R F A C E
@@ -68,7 +78,11 @@ var _gui = (function () {
             _dbtree.arm( collections );
 
             $('#pl-ch-submit').click( function () {
-                show_endpoints( _dbtree.selected_endpoints() );
+                var cbacks        = callbacks_for( _dbtree.selected_endpoints() );
+                var init_callback = cbacks['init_callback'];
+                var callbacks     = cbacks['callbacks'];
+
+                _resource.get_top_levels( endpoints, init_callback, callbacks );
             });
         });
     }
@@ -98,7 +112,7 @@ var _gui = (function () {
                         $('#pl-ch-submit').trigger( $.Event( 'click' ) );
                     }
                 });
-            });               
+            });
     }
 
     function show_download() {
@@ -132,7 +146,7 @@ var _gui = (function () {
     }
 
     // P A N E L   B U T T O N S   C A L L B A C K S
-    function show_endpoints( endpoints ) {
+    function callbacks_for( endpoints ) {
         var init_callback = function () {
             console.log( "Wczytuję dane" );
         };
@@ -146,16 +160,19 @@ var _gui = (function () {
             draw_endpoint( data['data'] );
         };
 
-        _resource.get_top_levels( endpoints, init_callback, callbacks );
+        return {
+            'init_callback' : init_callback,
+            'callbacks'     : callbacks
+        };
     }
 
     function show_search_propositions( endpoints ) {
         var query = $('#search-query').val();
-        
+
         if ( endpoints.length === 0 ) {
             endpoints = _dbtree.get_all_endpoints();
         }
-        
+
         _resource.get_search_count( endpoints, query, function ( data ) {
             var propositions = M.to_html( _tmpl.search_propositions, data );
             $('#pl-ch-datasets').empty().append( propositions );
@@ -772,7 +789,11 @@ var _gui = (function () {
                             });
 
             _resource.create_permalink( $.makeArray( checked ), function ( permalink_id ) {
-                console.log( permalink_id );
+                $('#app-sh-submit').remove();
+                $('#app-sh-permalink').show()
+                                      .find('input')
+                                      .val( 'http://localhost:8000/' + permalink_id )
+                                      .focus();
             });
         });
     }
