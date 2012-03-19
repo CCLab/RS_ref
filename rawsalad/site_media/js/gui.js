@@ -79,6 +79,10 @@ var _gui = (function () {
 
             $('#pl-ch-submit').click( function () {
                 var endpoints     = _dbtree.selected_endpoints();
+                // if no endpoints selected - do nothing
+                if( !endpoints.length ) {
+                    return;
+                }
                 var cbacks        = callbacks_for( endpoints );
                 var init_callback = cbacks['init_callback'];
                 var callbacks     = cbacks['callbacks'];
@@ -97,23 +101,49 @@ var _gui = (function () {
                 .append( _tmpl.search_input )
                 .append( _tmpl.datasets );
 
+            $('#query-container')
+                .append( M.to_html( _tmpl.panel_submit, {'label': 'Szukaj'} ));
+
             $('#pl-ch-datasets')
                 .empty()
                 .append( dbtree )
-                .append( M.to_html( _tmpl.panel_submit, {'label': 'Szukaj'} ));
 
             _dbtree.arm( collections );
 
             $('#pl-ch-submit').click( function () {
+                var query = $('#search-query').val().replace( /^\s*|\s$/g,'' );
+                if( query.length < 3 || /^\d*$/.test( query ) ) {
+                    return;
+                }
                 show_search_propositions( _dbtree.selected_endpoints() );
             });
-           $('#search-query')
+
+            $( $('.pl-tree-node')[0] ).trigger('click');
+
+            $('#search-query')
                 .keypress( function( event ) {
                     if ( event.which == 13 ) {
                         $('#pl-ch-submit').trigger( $.Event( 'click' ) );
                     }
                 });
-            });
+        });
+
+
+        var query_panel = $('#pl-ch-area > section');
+        var org_offset  = query_panel.offset().top;
+
+        $(window).scroll( function () {
+            var scroll_position = $(window).scrollTop();
+
+            if( scroll_position > org_offset ) {
+                org_offset = query_panel.offset().top;
+                query_panel.addClass('fixed');
+            }
+            else {
+                query_panel.removeClass('fixed');
+                org_offset = query_panel.offset().top;
+            }
+        });
     }
 
     function show_download() {
@@ -124,7 +154,6 @@ var _gui = (function () {
 
             $('#pl-ch-area')
                 .empty()
-                .append( M.to_html( _tmpl.panel_sheets, open_sheets ) )
                 .append( _tmpl.datasets );
 
             $('#pl-ch-datasets')
@@ -133,6 +162,11 @@ var _gui = (function () {
                 .append( M.to_html( _tmpl.panel_submit, {'label': 'Pobież dane'} ));
 
             _dbtree.arm( collections );
+
+            if( !!open_sheets['groups'].length ) {
+                $('#pl-ch-area')
+                    .prepend( M.to_html( _tmpl.panel_sheets, open_sheets ) );
+            }
 
             $('#pl-ch-submit').click( function () {
                 var sheets = $('#dl-sheets').find('input:checked').map( function ( e ) {
@@ -174,15 +208,21 @@ var _gui = (function () {
             endpoints = _dbtree.get_all_endpoints();
         }
 
+        // TODO refactor this not to use html
         _resource.get_search_count( endpoints, query, function ( data ) {
             var propositions = M.to_html( _tmpl.search_propositions, data );
             $('#pl-ch-datasets').empty().append( propositions );
 
-            $('#pl-sr-results').find('p').each( function () {
+            $('#pl-sr-results').find('p[data-endpoint]').each( function () {
                 var endpoint = $(this).attr('data-endpoint');
-                $(this).click( function () {
-                    show_search_results( endpoint, data['query'] );
-                });
+                if( $(this).prev().html() === '0' ) {
+                    return;
+                }
+                $(this)
+                    .addClass('handy')
+                    .click( function () {
+                        show_search_results( endpoint, data['query'] );
+                    });
             });
         });
     }
@@ -276,7 +316,14 @@ var _gui = (function () {
         manage_top_panel( $('#top-menu').find('.active'), function () {
             $('#application').fadeIn( 300, function () {
                 make_zebra();
-                arm_application();
+                // arm application ui
+                $('#app-tbs-share').click( function () {
+                    if( change_application_tab( $(this) ) ) {
+                        update_share_tab(); // TODO
+                        $('#app-share').show();
+                    }
+                });
+                $('#app-tbs-table').click( display_table_panel );
             });
         });
     }
@@ -366,25 +413,6 @@ var _gui = (function () {
     /////////////////////////////////////////////////////////////
     // P R E A P A R E   I N T E R F A C E   F U N C T I O N S //
     /////////////////////////////////////////////////////////////
-
-
-    // APPLICATION TABS INTERFACE
-
-    function arm_application() {
-        var share_bt = $('#app-tbs-share');
-        var table_bt = $('#app-tbs-table');
-
-        // EVENTS
-        share_bt.click( function () {
-            if( change_application_tab( $(this) ) ) {
-                update_share_tab(); // TODO
-                $('#app-share').show();
-            }
-        });
-
-        table_bt
-            .click( display_table_panel );
-    }
 
 
     // TABLE TABS INTERFACE
@@ -787,17 +815,24 @@ var _gui = (function () {
         var open_sheets = { 'groups': _resource.get_grouped_sheets() };
         $('#app-sh-panel').empty().append( M.to_html( _tmpl.panel_sheets, open_sheets ) );
 
-        $('#app-sh-submit').click( function () {
+        $('#app-sh-permalink').hide();
+        $('#app-sh-submit').show().click( function () {
             var checked = $('#app-sh-panel').find('input:checked').map( function () {
                                 return $(this).attr('id');
                             });
 
+            // no sheet selected
+            if( !checked.length ) {
+                return;
+            }
+
             _resource.create_permalink( $.makeArray( checked ), function ( permalink_id ) {
-                $('#app-sh-submit').remove();
+                $('#app-sh-submit').hide();
                 $('#app-sh-permalink').show()
                                       .find('input')
                                       .val( 'http://localhost:8000/' + permalink_id )
-                                      .focus();
+                                      .focus()
+                                      .select();
             });
         });
     }

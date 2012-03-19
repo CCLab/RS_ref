@@ -64,7 +64,7 @@ var _tmpl = (function () {
     that.datasets = '<div id="pl-ch-datasets" class="panel-main"></div>';
 
     that.panel_submit =
-        '<div id="pl-ch-submit" class="clear blue button">{{label}}</div>';
+            '<div id="pl-ch-submit" style="margin-top: 2px;" class="clear blue button">{{label}}</div>';
 
     that.dbtree_high =
         '<section class="tree-holder{{#even}} even{{/even}}{{^even}} odd{{/even}}">' +
@@ -198,12 +198,14 @@ var _tmpl = (function () {
 
     that.search_input =
         '<section class="panel-main">' +
-            '<input type="text" id="search-query" placeholder="Wpisz szukane słowo" />' +
+            '<div id="query-container" style="width: 220px;">' +
+                '<input type="text" id="search-query" placeholder="Wpisz szukane słowo" />' +
+            '</div>' +
         '</section>';
 
     that.search_propositions =
         '<section id="pl-sr-results" class="panel-main">' +
-            '<p  class="pl-sr-res-col"> liczba wystąpień </p>' +
+            '<p class="pl-sr-res-col"> liczba wystąpień </p>' +
             '<p class="pl-sr-res-col"> kolekcja </p >' +
             '<section id="pl-sr-res-list" >' +
                 '{{#results}}' +
@@ -212,7 +214,7 @@ var _tmpl = (function () {
                     '</p>' +
                     '{{#data}}' +
                         '<section>' +
-                            '<p class="pl-sr-res-num">{{found_count}} </p>' +
+                            '<p class="pl-sr-res-num">{{found_count}}</p>' +
                             '<p class="pl-sr-res-name" data-endpoint="{{endpoint}}">{{label}}</p>' +
                         '</section>' +
                     '{{/data}}' +
@@ -238,7 +240,7 @@ var _tmpl = (function () {
             '<div id="app-tb-tl-bt-container" class="right"' +
             '{{#search_result}}' +
                 'style="display: none;"' +
-            '{{/search_result}}' +            
+            '{{/search_result}}' +
             '>' +
                 // TODO check how it works with different types of tables
                 '<div id="app-tb-tl-clear-button" class="button left">Wyczyść tabelę</div>' +
