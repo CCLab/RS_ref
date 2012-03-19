@@ -105,8 +105,12 @@ var _table = (function () {
     function create_search_box( box, i ) {
         // Prepare box for templates
         box['box_id'] = i;
-        box['context_action'] = (box['context_showed']) ? 'Schowaj kontekst' : 'Pokaż kontekst';
         box['breadcrumb_action'] = (box['breadcrumb_showed']) ? 'Schowaj rodziców' : 'Pokaż rodziców';
+        if ( box['empty_context'] ) {
+            box['context_action'] = 'Pusty kontekst';
+        } else {
+            box['context_action'] = (box['context_showed']) ? 'Schowaj kontekst' : 'Pokaż kontekst';
+        }
 
         if ( box['breadcrumb_showed'] ) {
             return M.to_html( _tmpl.search_box_breadcrumbed, box );

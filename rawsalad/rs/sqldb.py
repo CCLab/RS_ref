@@ -508,7 +508,7 @@ class Collection:
         '''Get the certain node in the collection'''
         query = '''SELECT * FROM %s
                    WHERE id IN ( %s )
-                ''' % ( self.endpoint, ids )
+                ''' % ( self.endpoint, str( ids ).strip('[]') )
         data = self.get_data( query )
 
         return data
@@ -574,7 +574,7 @@ class Collection:
                 ''' % ( self.endpoint, id )
         parents = self.get_data( query )
         parents.reverse()
-        
+
         return parents
 
     def get_all_ids( self ):

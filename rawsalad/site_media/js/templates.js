@@ -191,15 +191,20 @@ var _tmpl = (function () {
             '</table>' +
         '</div>';
 
+    that.permalink =
+        '<div>' +
+            '<input type="text" id="perma-link" value="{{permalink}}" />' +
+        '</div>';
+
     that.search_input =
         '<section class="panel-main">' +
             '<input type="text" id="search-query" placeholder="Wpisz szukane słowo" />' +
         '</section>';
 
     that.search_propositions =
-        '<section id="pl-sr-results" class="panel-main">' + 
-            '<p  class="pl-sr-res-col"> liczba wystąpień </p>' +          
-            '<p class="pl-sr-res-col"> kolekcja </p >' +          
+        '<section id="pl-sr-results" class="panel-main">' +
+            '<p  class="pl-sr-res-col"> liczba wystąpień </p>' +
+            '<p class="pl-sr-res-col"> kolekcja </p >' +
             '<section id="pl-sr-res-list" >' +
                 '{{#results}}' +
                     '<p class="pl-sr-res-colection-name">' +
@@ -438,14 +443,24 @@ var _tmpl = (function () {
             '</tr>' +
         '{{/rows}}' +
         '<tr box_id="{{box_id}}">' +
-            '{{#has_parent}}' +
             '<td>' +
+            '{{#has_parent}}' +
                 '<button id="show-breadcrumb-{{box_id}}" type="button">{{breadcrumb_action}}</button>' +
-            '</td>' +
             '{{/has_parent}}' +
+            '</td>' +
+            '{{#empty_context}}' +
+            '<td>' +
+                '<button id="show-context-{{box_id}}" type="button" class="empty-context">{{context_action}}</button>' +
+            '</td>' +
+            '{{/empty_context}}' +
+            '{{^empty_context}}' +
             '<td>' +
                 '<button id="show-context-{{box_id}}" type="button">{{context_action}}</button>' +
             '</td>' +
+            '<td>' +
+                'Pusty kontekst' +
+            '</td>' +
+            '{{/empty_context}}' +
         '</tr>';
 
 
@@ -466,7 +481,9 @@ var _tmpl = (function () {
         '{{/rows}}' +
         '<tr box_id="{{box_id}}">' +
             '<td>' +
+            '{{#has_parent}}' +
                 '<button id="show-breadcrumb-{{box_id}}" type="button">{{breadcrumb_action}}</button>' +
+            '{{/has_parent}}' +
             '</td>' +
             '<td>' +
                 '<button id="show-context-{{box_id}}" type="button">{{context_action}}</button>' +

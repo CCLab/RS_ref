@@ -599,6 +599,7 @@ var _resource = (function () {
     // each endpoint a callback from the callbacks list is called. Sequence
     // of callbacks has the same order as sequence of endpoints.
     that.restore_permalink = function ( permalink_id, endpoints, callbacks ) {
+        // TODO specify this object on the server-side
         var permalinks_data = endpoints.map( function ( e ) {
             return {
                 'permalink_id': permalink_id,
@@ -624,11 +625,16 @@ var _resource = (function () {
                 var sheet_data = _permalinks.restore_sheet_data( permalink_sheet, data_tree );
                 var sheet;
                 var sheet_id;
+                var gui_data;
                 var additional_fields = _permalinks.get_additional_fields( permalink_sheet );
                 sheet = create_sheet( group['endpoint'], sheet_data, group['meta'],
                                       permalink_sheet['type'], additional_fields );
                 sheet_id = add_sheet( sheet );
-                that.get_sheet_data( sheet_id, callback );
+                gui_data = prepare_table_data( sheet_id );
+                callback({
+                    'tabs': that.get_sheets_labels(),
+                    'data': gui_data
+                });
             });
         });
     };
