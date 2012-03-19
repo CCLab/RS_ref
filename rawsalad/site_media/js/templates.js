@@ -235,7 +235,11 @@ var _tmpl = (function () {
             '{{/changed_label}}' +
             '<div id="app-tb-tl-old-title" class="left" style="display: none;"> </div>' +
             '<div id="app-tb-tl-rename-button" class="button left">Zmień nazwę</div>' +
-            '<div id="app-tb-tl-bt-container" class="right">' +
+            '<div id="app-tb-tl-bt-container" class="right"' +
+            '{{#search_result}}' +
+                'style="display: none;"' +
+            '{{/search_result}}' +            
+            '>' +
                 // TODO check how it works with different types of tables
                 '<div id="app-tb-tl-clear-button" class="button left">Wyczyść tabelę</div>' +
                 '<div id="app-tb-tl-sort-button" class="button left">Sortuj</div>' +

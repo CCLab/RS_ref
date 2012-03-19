@@ -297,6 +297,9 @@ var _gui = (function () {
 
     function draw_tools( names ) {
         names['changed_label'] = !( names['label'] === names['old_label'] );
+        if ( names['type'] === 2 ) {
+            names['search_result'] = true;
+        }
 
         display_tools( M.to_html( _tmpl.app_table_tools, names ) );
     }
