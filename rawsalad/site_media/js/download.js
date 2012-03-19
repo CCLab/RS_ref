@@ -101,10 +101,12 @@ var _download = (function () {
     
     function get_ids_filtered_sheet( data ) {
         var ids = [];
-        
-        _tree.iterate( data, function ( node ) {
-            ids.push( node['id'] );
-        });
+
+        ids = _tree
+            .get_filtered_nodes( data )
+            .map( function ( node ) {
+                return node['id'];
+            });
         
         return ids;
     }
