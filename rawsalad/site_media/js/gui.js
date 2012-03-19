@@ -78,7 +78,8 @@ var _gui = (function () {
             _dbtree.arm( collections );
 
             $('#pl-ch-submit').click( function () {
-                var cbacks        = callbacks_for( _dbtree.selected_endpoints() );
+                var endpoints     = _dbtree.selected_endpoints();
+                var cbacks        = callbacks_for( endpoints );
                 var init_callback = cbacks['init_callback'];
                 var callbacks     = cbacks['callbacks'];
 
