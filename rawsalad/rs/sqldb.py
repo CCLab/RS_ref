@@ -331,8 +331,11 @@ def restore_group( id, endpoint ):
 
     # collect ids of unique open nodes in the endpoint
     unique_parents = set()
-    unique_nodes = set()
+    unique_nodes   = set()
     for sheet in group['sheets']:
+        if not sheet['data'].get('ids', None):
+            continue
+
         if sheet['type'] in [0, 1]:
             parents = get_standard_sheet_data( sheet['data'], cursor )
             unique_parents = unique_parents | parents
