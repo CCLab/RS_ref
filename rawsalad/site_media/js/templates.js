@@ -207,11 +207,14 @@ var _tmpl = (function () {
             '<p class="pl-sr-res-col"> kolekcja </p >' +
             '<section id="pl-sr-res-list" >' +
                 '{{#results}}' +
-                    '<h1 style="font-size: 16px; margin-bottom: 15px;">' +
+                    '<p class="pl-sr-res-colection-name">' +
                         '{{dbtree_top_parent_name}}' +
-                    '</h1>' +
+                    '</p>' +
                     '{{#data}}' +
-                        '<p style="margin-bottom: 10px;" data-endpoint="{{endpoint}}">{{label}} :: {{found_count}}</p>' +
+                        '<section>' +
+                            '<p class="pl-sr-res-num">{{found_count}} </p>' +
+                            '<p class="pl-sr-res-name" data-endpoint="{{endpoint}}">{{label}}</p>' +
+                        '</section>' +
                     '{{/data}}' +
                 '{{/results}}' +
             '</section>' +
@@ -232,7 +235,11 @@ var _tmpl = (function () {
             '{{/changed_label}}' +
             '<div id="app-tb-tl-old-title" class="left" style="display: none;"> </div>' +
             '<div id="app-tb-tl-rename-button" class="button left">Zmień nazwę</div>' +
-            '<div id="app-tb-tl-bt-container" class="right">' +
+            '<div id="app-tb-tl-bt-container" class="right"' +
+            '{{#search_result}}' +
+                'style="display: none;"' +
+            '{{/search_result}}' +            
+            '>' +
                 // TODO check how it works with different types of tables
                 '<div id="app-tb-tl-clear-button" class="button left">Wyczyść tabelę</div>' +
                 '<div id="app-tb-tl-sort-button" class="button left">Sortuj</div>' +
