@@ -31,7 +31,7 @@ var _ui = (function () {
 
     that.prepare_data_package = function( sheet, sheet_id, data ) {
         var data_package;
-        
+
         switch ( sheet['type'] ) {
             case _enum['STANDARD']:
                 data_package = prepare_standard_data_package( sheet, sheet_id, data );
@@ -48,9 +48,9 @@ var _ui = (function () {
 
         return data_package;
     }
-    
+
 //  P R I V A T E   I N T E R F A C E
-    
+
     // Prepare data in standard sheet for gui.
     function prepare_standard_data_package( sheet, sheet_id, data ) {
         // Used to generate gui row levels. If row does not have parent,
@@ -112,12 +112,24 @@ var _ui = (function () {
         var prepare_total_row = function( rows, columns ) {
             var total_row = [];
             var last_row = rows.pop();
-            
+
+            console.log( new Date() );
+            console.log( last_row );
+            (function ( t ) {
+                var start = new Date().getMilliseconds();
+                for( var i = 0; i < 1000000; ++i ) {
+                    if( new Date().getMilliseconds() > start + t  ) {
+                        break;
+                    }
+                }
+            })( 3000 );
+            console.log( new Date() );
+
             if ( last_row['data']['type'] !== 'Total' ) {
                 rows.push( last_row );
                 return undefined;
             }
-            
+
             // push values to be showed in total row
             columns.forEach( function ( column ) {
                 total_row.push( {
@@ -135,7 +147,7 @@ var _ui = (function () {
         var data_package;
         var id_map;
         var full_data = _tree.tree_to_list( sheet['data'] );
-        
+
         // columns description for gui
         columns_for_gui = get_columns_description( sheet['columns'] );
         total_row = prepare_total_row( data, columns_for_gui );
@@ -180,16 +192,16 @@ var _ui = (function () {
 
             return new_row;
         };
-        
+
         var columns_for_gui;
         var boxes = [];
         var box_ids = [];
         var box_obj = {};
         var boxes_count = 0;
-        
+
         // columns description for gui
         columns_for_gui = get_columns_description( sheet['columns'] );
-        
+
         _tree.tree_to_list( sheet['data'] )
              .filter( function ( node ) {
                  return _tree.is_filtered( sheet['data'], node['id'] );
@@ -210,10 +222,10 @@ var _ui = (function () {
                     box = box_obj[ node['parent'] ];
                     box_id = node['parent'];
                  }
-                 
+
                  box['rows'].push( prepare_row( node, columns_for_gui ) );
              });
-             
+
         box_ids.forEach( function ( id ) {
             boxes.push( box_obj[ id ] );
         });
@@ -237,11 +249,11 @@ var _ui = (function () {
                 'id' : row['id'],
             };
             var hit_obj = {};
-            
+
             if ( !!row['aux']['info'] ) {
                 new_row['info'] = row['aux']['info'];
             }
-            
+
             hit_list.forEach( function ( e ) {
                 hit_obj[ e ] = true;
             });
@@ -259,13 +271,13 @@ var _ui = (function () {
 
             return new_row;
         };
-        
+
         var columns_for_gui;
         var gui_boxes;
-        
+
         // columns description for gui
         columns_for_gui = get_columns_description( sheet['columns'] );
-        
+
         if ( !!box ) {
             gui_boxes = prepare_box( sheet, box, columns_for_gui );
         } else {
@@ -273,7 +285,7 @@ var _ui = (function () {
                 return prepare_box( sheet, box, columns_for_gui );
             });
         }
-       
+
         return {
             'group'  : sheet['group_id'],
             'id'     : sheet_id,
@@ -292,11 +304,11 @@ var _ui = (function () {
                 'id' : row['id'],
             };
             var hit_obj = {};
-            
+
             if ( !!row['aux']['info'] ) {
                 new_row['info'] = row['aux']['info'];
             }
-            
+
             hit_list.forEach( function ( e ) {
                 hit_obj[ e ] = true;
             });
@@ -314,7 +326,7 @@ var _ui = (function () {
 
             return new_row;
         };
-        
+
         var hit_ids = {};
         var gui_breadcrumb;
         var gui_context;
@@ -332,7 +344,7 @@ var _ui = (function () {
         });
         first_row = box['rows'][0];
         parent_id = _tree.get_parent_id( sheet['data'], first_row['id'] );
-            
+
         if ( box['breadcrumb'] ) {
             gui_breadcrumb = _tree
                 .get_parents( sheet['data'], first_row['id'] )
@@ -364,7 +376,7 @@ var _ui = (function () {
         siblings_length = _tree.get_children_number( sheet['data'], parent_id );
         has_context = siblings_length > hit_length;
         empty_context = box['context'] && !has_context;
-        
+
         return {
             'columns'          : columns_for_gui,
             'rows'             : gui_rows,
@@ -399,13 +411,13 @@ var _ui = (function () {
             };
         });
     }
-    
+
     function get_parents_ids( tree, node_id ) {
         return _tree.get_parents( tree, node_id ).map( function ( node ) {
             return node['id'];
         });
     }
-    
+
     function get_breadcrumb( tree, node_id ) {
         var parents_descr = _tree.get_parents( tree, node_id )
                                  .map( function ( node ) {
@@ -414,15 +426,15 @@ var _ui = (function () {
                                         'name': node['data']['name']
                                     };
                                  });
-        
+
         var breadcrumb = [];
         parents_descr.forEach( function ( pair ) {
             breadcrumb.push( pair['type'] + ' ' + pair['name'] );
         });
-        
+
         return breadcrumb.join(' > ');
     }
-    
+
     function format_value( value, type, format ) {
         if ( type !== 'string' ) {
             value = value + '';
