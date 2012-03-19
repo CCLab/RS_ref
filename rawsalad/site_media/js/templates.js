@@ -435,14 +435,24 @@ var _tmpl = (function () {
             '</tr>' +
         '{{/rows}}' +
         '<tr box_id="{{box_id}}">' +
-            '{{#has_parent}}' +
             '<td>' +
+            '{{#has_parent}}' +
                 '<button id="show-breadcrumb-{{box_id}}" type="button">{{breadcrumb_action}}</button>' +
-            '</td>' +
             '{{/has_parent}}' +
+            '</td>' +
+            '{{#empty_context}}' +
+            '<td>' +
+                '<button id="show-context-{{box_id}}" type="button" class="empty-context">{{context_action}}</button>' +
+            '</td>' +
+            '{{/empty_context}}' +
+            '{{^empty_context}}' +
             '<td>' +
                 '<button id="show-context-{{box_id}}" type="button">{{context_action}}</button>' +
             '</td>' +
+            '<td>' +
+                'Pusty kontekst' +
+            '</td>' +
+            '{{/empty_context}}' +
         '</tr>';
 
 
@@ -463,7 +473,9 @@ var _tmpl = (function () {
         '{{/rows}}' +
         '<tr box_id="{{box_id}}">' +
             '<td>' +
+            '{{#has_parent}}' +
                 '<button id="show-breadcrumb-{{box_id}}" type="button">{{breadcrumb_action}}</button>' +
+            '{{/has_parent}}' +
             '</td>' +
             '<td>' +
                 '<button id="show-context-{{box_id}}" type="button">{{context_action}}</button>' +

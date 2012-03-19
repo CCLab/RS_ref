@@ -363,6 +363,7 @@ var _ui = (function () {
         hit_length = box['rows'].length;
         siblings_length = _tree.get_children_number( sheet['data'], parent_id );
         has_context = siblings_length > hit_length;
+        empty_context = box['context'] && !has_context;
         
         return {
             'columns'          : columns_for_gui,
@@ -371,7 +372,8 @@ var _ui = (function () {
             'breadcrumb_showed': box['breadcrumb'],
             'context_showed'   : box['context'],
             'has_parent'       : has_parent,
-            'has_context'      : has_context
+            'has_context'      : has_context,
+            'empty_context'    : empty_context
         };
     }
 
