@@ -93,7 +93,11 @@ var _gui = (function () {
     }
 
     function show_search() {
+
         _resource.get_collections( function ( collections ) {
+            // for fixed floating
+            var query_panel;
+            var org_offset;
             // generate dbtree html code
             var dbtree = _dbtree.get_dbtree( collections );
             $('#pl-ch-area')
@@ -115,6 +119,8 @@ var _gui = (function () {
                 if( query.length < 3 || /^\d*$/.test( query ) ) {
                     return;
                 }
+                $('html,body').animate({ 'scrollTop': 0 }, 500 );
+
                 show_search_propositions( _dbtree.selected_endpoints() );
             });
 
@@ -126,23 +132,20 @@ var _gui = (function () {
                         $('#pl-ch-submit').trigger( $.Event( 'click' ) );
                     }
                 });
-        });
 
+            query_panel = $('#pl-ch-area > section');
+            $(window).scroll( function () {
+                var scroll_position = $(window).scrollTop();
+                org_offset = org_offset || query_panel.offset().top;
 
-        var query_panel = $('#pl-ch-area > section');
-        var org_offset  = query_panel.offset().top;
-
-        $(window).scroll( function () {
-            var scroll_position = $(window).scrollTop();
-
-            if( scroll_position > org_offset ) {
-                org_offset = query_panel.offset().top;
-                query_panel.addClass('fixed');
-            }
-            else {
-                query_panel.removeClass('fixed');
-                org_offset = query_panel.offset().top;
-            }
+                console.log( scroll_position + " :: " + org_offset );
+                if( scroll_position >= org_offset ) {
+                    query_panel.addClass('fixed');
+                }
+                else {
+                    query_panel.removeClass('fixed');
+                }
+            });
         });
     }
 
@@ -817,9 +820,11 @@ var _gui = (function () {
 
         $('#app-sh-permalink').hide();
         $('#app-sh-submit').show().click( function () {
-            var checked = $('#app-sh-panel').find('input:checked').map( function () {
-                                return $(this).attr('id');
-                            });
+            var checked = $('#app-sh-panel')
+                                .find('input:checked')
+                                .map( function () {
+                                    return $(this).attr('id');
+                                });
 
             // no sheet selected
             if( !checked.length ) {
@@ -828,7 +833,7 @@ var _gui = (function () {
 
             _resource.create_permalink( $.makeArray( checked ), function ( permalink_id ) {
                 $('#app-sh-submit').hide();
-                $('#app-sh-permalink').show()
+                $('#app-sh-permalink').slideDown( 150 )
                                       .find('input')
                                       .val( 'http://localhost:8000/' + permalink_id )
                                       .focus()
