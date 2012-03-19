@@ -120,7 +120,7 @@ var _download = (function () {
         boxes.forEach( function ( box ) {
             if ( box['context'] ) {
                 // all nodes on this level are needed
-                node = _tree.get_node( data, box['rows'][0] );
+                node = _tree.get_node( data, box['rows'][0]['id'] );
                 parent = _tree.get_node( data, node['parent'] );
                 nodes = _tree.get_children_nodes( data, parent );
                 nodes.forEach( function ( node ) {
@@ -128,14 +128,14 @@ var _download = (function () {
                 });
             } else {
                 // only searched nodes on this level are needed
-                box['rows'].forEach( function ( id ) {
-                    needed_ids[ id ] = true;
+                box['rows'].forEach( function ( node ) {
+                    needed_ids[ node['id'] ] = true;
                 });
             }
             
             if ( box['breadcrumb'] ) {
                 // all ancestors are needed
-                node = _tree.get_node( data, box['rows'][0]['parent'] );
+                node = _tree.get_node( data, box['rows'][0]['id'] );
                 nodes = _tree.get_parents( data, node );
                 nodes.forEach( function ( node ) {
                     needed_ids[ node['id'] ] = true;
@@ -143,7 +143,7 @@ var _download = (function () {
             }
         });
         
-        data.iterate( data, function ( node ) {
+        data.iterate( function ( node ) {
             if ( !!needed_ids[ node['id'] ] ) {
                 ids.push( node['id'] );
             }
