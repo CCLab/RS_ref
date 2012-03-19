@@ -202,11 +202,14 @@ var _tmpl = (function () {
             '<p class="pl-sr-res-col"> kolekcja </p >' +          
             '<section id="pl-sr-res-list" >' +
                 '{{#results}}' +
-                    '<h1 style="font-size: 16px; margin-bottom: 15px;">' +
+                    '<p class="pl-sr-res-colection-name">' +
                         '{{dbtree_top_parent_name}}' +
-                    '</h1>' +
+                    '</p>' +
                     '{{#data}}' +
-                        '<p style="margin-bottom: 10px;" data-endpoint="{{endpoint}}">{{label}} :: {{found_count}}</p>' +
+                        '<section>' +
+                            '<p class="pl-sr-res-num">{{found_count}} </p>' +
+                            '<p class="pl-sr-res-name" data-endpoint="{{endpoint}}">{{label}}</p>' +
+                        '</section>' +
                     '{{/data}}' +
                 '{{/results}}' +
             '</section>' +
