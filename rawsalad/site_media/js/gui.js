@@ -48,6 +48,16 @@ var _gui = (function () {
     };
 
 
+    that.restore_session = function ( id, permalinks ) {
+        var endpoints = permalinks.map( function ( e ) {
+            return e['endpoint'];
+        });
+        // TODO where the init_callback has gone?
+        var callbacks = callbacks_for( endpoints )['callbacks'];
+
+        _resource.restore_permalink( id, endpoints, callbacks );
+    };
+
     return that;
 
 // P R I V A T E   I N T E R F A C E
@@ -68,7 +78,11 @@ var _gui = (function () {
             _dbtree.arm( collections );
 
             $('#pl-ch-submit').click( function () {
-                show_endpoints( _dbtree.selected_endpoints() );
+                var cbacks        = callbacks_for( _dbtree.selected_endpoints() );
+                var init_callback = cbacks['init_callback'];
+                var callbacks     = cbacks['callbacks'];
+
+                _resource.get_top_levels( endpoints, init_callback, callbacks );
             });
         });
     }
@@ -98,7 +112,7 @@ var _gui = (function () {
                         $('#pl-ch-submit').trigger( $.Event( 'click' ) );
                     }
                 });
-            });               
+            });
     }
 
     function show_download() {
@@ -132,7 +146,7 @@ var _gui = (function () {
     }
 
     // P A N E L   B U T T O N S   C A L L B A C K S
-    function show_endpoints( endpoints ) {
+    function callbacks_for( endpoints ) {
         var init_callback = function () {
             console.log( "Wczytuję dane" );
         };
@@ -146,16 +160,19 @@ var _gui = (function () {
             draw_endpoint( data['data'] );
         };
 
-        _resource.get_top_levels( endpoints, init_callback, callbacks );
+        return {
+            'init_callback' : init_callback,
+            'callbacks'     : callbacks
+        };
     }
 
     function show_search_propositions( endpoints ) {
         var query = $('#search-query').val();
-        
+
         if ( endpoints.length === 0 ) {
             endpoints = _dbtree.get_all_endpoints();
         }
-        
+
         _resource.get_search_count( endpoints, query, function ( data ) {
             var propositions = M.to_html( _tmpl.search_propositions, data );
             $('#pl-ch-datasets').empty().append( propositions );
@@ -179,7 +196,6 @@ var _gui = (function () {
 
 
     function manage_top_panel( clicked, callback ) {
-
         // hide active panel
         if( clicked.hasClass('active') ) {
             // deactivate clicked button
@@ -257,8 +273,10 @@ var _gui = (function () {
 
         // deactivate menu button and hide the panel
         manage_top_panel( $('#top-menu').find('.active'), function () {
-            $('#application').fadeIn( 300 );
-            make_zebra();
+            $('#application').fadeIn( 300, function () {
+                make_zebra();
+                arm_application();
+            });
         });
     }
 
@@ -298,10 +316,6 @@ var _gui = (function () {
 
     function display_share_panel() {
 
-        if( change_application_tab( $(this) ) ) {
-            update_share_tab(); // TODO
-            $('#app-share').show();
-        }
     }
 
 
@@ -352,13 +366,17 @@ var _gui = (function () {
 
     // APPLICATION TABS INTERFACE
 
-    function prepare_aplication_interface() {
+    function arm_application() {
         var share_bt = $('#app-tbs-share');
         var table_bt = $('#app-tbs-table');
 
         // EVENTS
-        share_bt
-            .click( display_share_panel );
+        share_bt.click( function () {
+            if( change_application_tab( $(this) ) ) {
+                update_share_tab(); // TODO
+                $('#app-share').show();
+            }
+        });
 
         table_bt
             .click( display_table_panel );
@@ -763,7 +781,7 @@ var _gui = (function () {
 
     function update_share_tab() { //TODO
         var open_sheets = { 'groups': _resource.get_grouped_sheets() };
-        $('#app-sh-panel').append( M.to_html( _tmpl.panel_sheets, open_sheets ) );
+        $('#app-sh-panel').empty().append( M.to_html( _tmpl.panel_sheets, open_sheets ) );
 
         $('#app-sh-submit').click( function () {
             var checked = $('#app-sh-panel').find('input:checked').map( function () {
@@ -771,7 +789,11 @@ var _gui = (function () {
                             });
 
             _resource.create_permalink( $.makeArray( checked ), function ( permalink_id ) {
-                console.log( permalink_id );
+                $('#app-sh-submit').remove();
+                $('#app-sh-permalink').show()
+                                      .find('input')
+                                      .val( 'http://localhost:8000/' + permalink_id )
+                                      .focus();
             });
         });
     }
