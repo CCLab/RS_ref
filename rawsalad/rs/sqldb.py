@@ -330,13 +330,12 @@ def restore_group( id, endpoint ):
     group  = get_snapshot( id, endpoint )
 
     # collect ids of unique open nodes in the endpoint
-    unique_parents = set()
+    unique_parents = set([ None ]) 
     unique_nodes   = set()
     for sheet in group['sheets']:
-        if not sheet['data'].get('ids', None):
-            continue
-
         if sheet['type'] in [0, 1]:
+            if not sheet['data'].get('ids', None):
+                continue
             parents = get_standard_sheet_data( sheet['data'], cursor )
             unique_parents = unique_parents | parents
         else:
@@ -382,8 +381,6 @@ def get_standard_sheet_data( data, cursor ):
                WHERE id IN ( %s )
             ''' % str( data['ids'] ).strip('[]')
     cursor.execute( query )
-    # remember that top level nodes are needed
-    unique_parents.add( None )
     # gather all open nodes in the sheet
     # TODO don't use the RealDictCursor here
     open_nodes = data['ids'] + [ e['unnest'] for e in cursor.fetchall() ]
