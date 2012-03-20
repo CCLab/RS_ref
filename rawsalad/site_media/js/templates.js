@@ -383,19 +383,19 @@ var _tmpl = (function () {
     // T A B L E
     that.standard_rows =
         '{{#rows}}' + //TODO add info panel
-          '<tr id="{{id}}" data-open="{{is_open}}" ' +
-          'data-parent="{{parent}}" ' +
-          'class="{{selected}} {{top_level}}">' +
-            '{{#data}}' +
-              '<td class="{{column_key}} {{column_type}} {{click}}"' +
-                '{{#padding}}' +
-                  'style="padding-left: {{value}}px;" ' +
-                '{{/padding}} '+
-              '>' +
-                '{{content}}' +
-              '</td>' +
-            '{{/data}}' +
-          '</tr>' +
+            '<tr id="{{id}}" data-open="{{is_open}}" ' +
+            'data-parent="{{parent}}" ' +
+            'class="{{selected}} {{top_level}}">' +
+                '{{#data}}' +
+                    '<td class="{{column_key}} {{column_type}} {{click}}"' +
+                    '{{#padding}}' +
+                        'style="padding-left: {{value}}px;" ' +
+                    '{{/padding}} '+
+                    '>' +
+                        '{{content}}' +
+                    '</td>' +
+                '{{/data}}' +
+            '</tr>' +
         '{{/rows}}';
 
 
@@ -437,40 +437,52 @@ var _tmpl = (function () {
 
     that.search_box =
         '<tr box_id="{{box_id}}">' +
-        '<td style="padding-top: 15px; background-color: #eee;" colspan="3">' +
-            '{{breadcrumb}}' +
-        '</td>' +
+            '<td style="padding-top: 15px; background-color: #eee;" colspan="{{columns_num}}">' + 
+                '<p class="app-tb-srch-bred">{{breadcrumb}}</p>' +
+                '{{#has_parent}}' +
+                    '<button class="app-tb-srch-parents-bt" id="show-breadcrumb-{{box_id}}" type="button" >' +
+                        '{{breadcrumb_action}}' +
+                    '</button>' +
+                '{{/has_parent}}' +            
+            '</td>' +
+        '</tr>' +
+        '<tr class="add-tb-search-header" box_id="{{box_id}}">'+
+            '{{#columns}}' +
+                '<td>{{label}}</td>' +
+            '{{/columns}}' +
         '</tr>' +
         '{{#rows}}' +
             '<tr id="{{id}}" box_id="{{box_id}}">' +
                 '{{#data}}' +
-                    '<td style="{{#hit}} background-color: #ddddaa;{{/hit}}">{{content}}</td>' +
+                    '<td style="{{#hit}} background-color: #ddddaa;{{/hit}}" class="{{column_type}}">{{content}}</td>' +
                 '{{/data}}' +
             '</tr>' +
         '{{/rows}}' +
         '<tr box_id="{{box_id}}">' +
-            '<td>' +
-            '{{#has_parent}}' +
-                '<button id="show-breadcrumb-{{box_id}}" type="button">{{breadcrumb_action}}</button>' +
-            '{{/has_parent}}' +
+            '<td colspan="{{columns_num}}">' +
+                '{{#empty_context}}' +
+                    '<button id="show-context-{{box_id}}" type="button" class="empty-context">{{context_action}}</button>' +
+                '{{/empty_context}}' +
+                '{{^empty_context}}' +
+                    '<button id="show-context-{{box_id}}" type="button">{{context_action}}</button>' +
+                '{{/empty_context}}' +
             '</td>' +
-            '{{#empty_context}}' +
-            '<td>' +
-                '<button id="show-context-{{box_id}}" type="button" class="empty-context">{{context_action}}</button>' +
-            '</td>' +
-            '{{/empty_context}}' +
-            '{{^empty_context}}' +
-            '<td>' +
-                '<button id="show-context-{{box_id}}" type="button">{{context_action}}</button>' +
-            '</td>' +
-            '<td>' +
-                'Pusty kontekst' +
-            '</td>' +
-            '{{/empty_context}}' +
         '</tr>';
 
 
     that.search_box_breadcrumbed =
+        '<tr box_id="{{box_id}}">' +
+            '<td colspan="{{columns_num}}">' +
+                '{{#has_parent}}' +
+                    '<button id="show-breadcrumb-{{box_id}}" type="button">{{breadcrumb_action}}</button>' +
+                '{{/has_parent}}' +
+            '</td>' +
+        '</tr>' +
+        '<tr class="add-tb-search-header" box_id="{{box_id}}">'+
+            '{{#columns}}' +
+                '<td>{{label}}</td>' +
+            '{{/columns}}' +
+        '</tr>' +
         '{{#breadcrumb}}' +
             '<tr box_id="{{box_id}}">' +
                 '{{#data}}' +
@@ -481,17 +493,12 @@ var _tmpl = (function () {
         '{{#rows}}' +
             '<tr id="{{id}}" box_id="{{box_id}}">' +
                 '{{#data}}' +
-                    '<td style="{{#hit}} background-color: #ddddaa;{{/hit}}">{{content}}</td>' +
+                    '<td style="{{#hit}} background-color: #ddddaa;{{/hit}}" class="{{column_type}}">{{content}}</td>' +
                 '{{/data}}' +
             '</tr>' +
         '{{/rows}}' +
         '<tr box_id="{{box_id}}">' +
-            '<td>' +
-            '{{#has_parent}}' +
-                '<button id="show-breadcrumb-{{box_id}}" type="button">{{breadcrumb_action}}</button>' +
-            '{{/has_parent}}' +
-            '</td>' +
-            '<td>' +
+            '<td colspan="{{columns_num}}">' +
                 '<button id="show-context-{{box_id}}" type="button">{{context_action}}</button>' +
             '</td>' +
         '</tr>';

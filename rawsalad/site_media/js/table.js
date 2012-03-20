@@ -96,7 +96,7 @@ var _table = (function () {
         var table_code;
 
         header_code = create_standard_header( data );
-        boxes_code = create_searched_boxes( data['boxes'] );
+        boxes_code = create_searched_boxes( data );
         table_code = header_code.concat( boxes_code ); 
 
         callback( table_code ); 
@@ -106,6 +106,8 @@ var _table = (function () {
     function create_search_box( box, i ) {
         // Prepare box for templates
         box['box_id'] = i;
+        box['columns_num'] = box['columns'].length;
+
         box['breadcrumb_action'] = (box['breadcrumb_showed']) ? 'Schowaj rodziców' : 'Pokaż rodziców';
         if ( box['empty_context'] ) {
             box['context_action'] = 'Pusty kontekst';
@@ -120,14 +122,22 @@ var _table = (function () {
         }
     }
 
-    function create_searched_boxes( boxes ) {
+    function create_searched_boxes( data ) {
         var boxes_html = [];
+        var tbody_html = [];
+        var boxes = data['boxes'];
+        
 
         boxes.forEach( function ( box, i ) {
+            box['columns'] = data['columns'];            
             boxes_html.push( create_search_box( box, i ) );
         });
 
-        return boxes_html.join('');
+        tbody_html.push( '<tbody class="app-tb-search-result" >' );
+        tbody_html.push( boxes_html );
+        tbody_html.push( '</tbody>' );
+
+        return tbody_html.join('');
     }
 
     function create_filtered_boxes( boxes ) {
@@ -157,7 +167,6 @@ var _table = (function () {
         // TODO clean concat, +, join, push etc
         standard_header_code = '<thead data-sheet-id="' + data['id'] + '">'
                                 .concat( head_row_code, total_row_code, '</thead>' );
-
         return standard_header_code;
     }
 
@@ -201,4 +210,3 @@ var _table = (function () {
     // return public interface
     return that;
 })();
-
