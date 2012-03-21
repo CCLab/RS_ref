@@ -38,6 +38,10 @@ var _tree = (function () {
         return tree.getNode( id );
     };
 
+    that.get_node_copy = function( tree, id ) {
+        return that.get_node( tree, id, true );
+    };
+
     that.get_parent = function( tree, id ) {
         var node = tree.getNode( id );
         return that.get_node( tree, node['parent'] );

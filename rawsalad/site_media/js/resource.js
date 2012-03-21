@@ -206,6 +206,7 @@ var _resource = (function () {
         old_tree = sheet['data'];
         // Insert to new tree cleaned nodes(only those that were in old tree)
         cleaned_full_data.forEach( function ( node ) {
+            // TODO: add update function to monkey
             if ( _tree.has_node( old_tree, node['id'] ) ) {
                 _tree.insert_node( new_tree, node );
             }
@@ -213,8 +214,7 @@ var _resource = (function () {
 
         // Update tree
         selected_id = find_selected_row( sheet_id );
-        sheet['data'] = sort_tree( new_tree );
-        //that.sort( sheet_id, sheet['sort_query'] );
+        sheet['data'] = new_tree;
         if ( !!sheet['sort_query'] ) {
             sheet['data'] = sort_data( sheet['data'], sheet['sort_query'] );
         }
@@ -956,9 +956,14 @@ var _resource = (function () {
             });
 
             new_node['state'] = {
+                'selected': node['selected'] || undefined,
+                'is_open' : node['is_open'] || false
+            };
+
+            /*new_node['state'] = {
                 'selected': undefined,
                 'is_open' : false
-            };
+            };*/
 
             return new_node;
         };

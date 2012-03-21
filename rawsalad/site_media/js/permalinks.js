@@ -305,16 +305,18 @@ var _permalinks = (function () {
             var nodes_in_box = [];
             var ancestors;
             var children;
+            var last_ancestor;
             
             ancestors = _tree.get_parents( data_tree, rows[0]['id'] );
             nodes_in_box = ancestors;
             
             if ( box['context'] ) {
-                children = _tree.get_children_nodes( data_tree, ancestors[0] );
+                last_ancestor = ancestors[ancestors.length - 1];
+                children = _tree.get_children_nodes( data_tree, last_ancestor['id'] );
                 nodes_in_box = nodes_in_box.concat( children );
             } else {
                 box['rows'].forEach( function ( row ) {
-                    var node = _tree.get_node( data_tree, row['id'] );
+                    var node = _tree.get_node_copy( data_tree, row['id'] );
                     nodes_in_box.push( node );
                 });
             }
