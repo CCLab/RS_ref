@@ -412,7 +412,7 @@ var _gui = (function () {
         var table_code = $(table);
         $('#app-tb-datatable').empty();
         $('#app-tb-datatable').append( table_code );
-        arm_rows( $('td.click').parent() );
+        arm_rows( $('tbody > tr') );
         make_zebra();
     }
 
@@ -673,9 +673,7 @@ var _gui = (function () {
 
 
     function arm_rows( rows ) {
-        //console.log( rows );
         rows.find('.click').parent().click( function () {
-            console.log('------------------------------ arm_rows');
             var clicked = $(this);
             // check state of the clicked node and it's	neighborhood
             var is_top      = clicked.attr('data-parent') === '';
@@ -684,20 +682,12 @@ var _gui = (function () {
                               clicked.hasClass('in-selected');
 
             if( is_open ) {
-                console.log('is_open');
                 if( is_selected ) {
-                    console.log('is_open & selected');
                     hide_children_of( clicked );
-                }
-                else {
-                    console.log('is_open & not selected');
-                  //  select_children_of( clicked );
                 }
             }
             else {
-                console.log('is not open');
                 if( is_selected || is_top ) {
-                    console.log('is not open & selected or top');
                     show_children_of( clicked );
                 }
             }
@@ -706,14 +696,22 @@ var _gui = (function () {
         // arm for selection functionality
         // TODO debug it
         rows.click( function () {
-            console.log('row clicked');
             var clicked = $(this);
+            var is_top      = clicked.attr('data-parent') === '';
             var is_selected = clicked.hasClass('selected') ||
                               clicked.hasClass('in-selected');
 
             if( !is_selected ) {
-                console.log( "<<< PURE SELECTION" );
                 select_children_of( clicked );
+            }
+            if( is_selected && is_top ) {
+                // clean previous selection
+                $('tr').removeClass('selected')
+                       .removeClass('in-selected')
+                       .removeClass('after-selected')
+                       .removeClass('dim');
+
+                _resource.unselect_all( active_sheet_id() );
             }
         });
 
@@ -729,7 +727,6 @@ var _gui = (function () {
                        .after( new_rows );
 
             arm_rows( new_rows );
-            //select_children_of( clicked_row );
             make_zebra();
         }
 

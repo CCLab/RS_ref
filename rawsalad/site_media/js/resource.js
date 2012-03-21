@@ -116,24 +116,25 @@ var _resource = (function () {
         var sheet = get_sheet( sheet_id );
 
         // if there was a selected row
-        if ( prev_selected_id !== undefined ) {
-            // if selected_id is not a previous one, which would be deselection
-            if ( prev_selected_id !== selected_id) {
-                set_selection( sheet_id, prev_selected_id, 'dim' );
-                set_selection( sheet_id, selected_id, 'selected' );
-                sheet['any_selected'] = true;
-                reset_selection( sheet_id );
-            } else {
-                // if a row is deselected
-                set_selection( sheet_id, prev_selected_id, undefined );
-                sheet['any_selected'] = false;
-                reset_selection( sheet_id );
-            }
+        // tested against undefined to keep 0 as potential id
+        if( prev_selected_id !== undefined ) {
+            set_selection( sheet_id, prev_selected_id, 'dim' );
+            set_selection( sheet_id, selected_id, 'selected' );
+            sheet['any_selected'] = true;
+            reset_selection( sheet_id );
         } else {
             set_selection( sheet_id, selected_id, 'selected' );
             sheet['any_selected'] = true;
             reset_selection( sheet_id );
         }
+    };
+
+    that.unselect_all = function ( sheet_id ) {
+        var sheet = get_sheet( sheet_id );
+
+        set_selection( sheet_id, undefined, undefined );
+        sheet['any_selected'] = false;
+        reset_selection( sheet_id );
     };
 
 
@@ -1009,6 +1010,9 @@ var _resource = (function () {
         var sheet = get_sheet( sheet_id );
         var subtree_root;
 
+        if( !root_id ) {
+            return;
+        }
         subtree_root = _tree.get_node( sheet['data'], root_id );
         if( !subtree_root ) {
             return;
@@ -1235,5 +1239,6 @@ var _resource = (function () {
         }
     }
 
+    that.row_selected = _logger.log( that.row_selected );
     return that;
 }) ();
