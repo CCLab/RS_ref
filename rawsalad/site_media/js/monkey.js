@@ -96,6 +96,22 @@ Form of created tree:
                 
                 return this;
             },
+
+            // Updates node using passed object contating data. Can add new
+            // properties, delete or update existing ones.
+            // Returns tree after operation.
+            updateNode: function(elem, value) {
+                var node;
+
+                assertObject(value, 'updateNode');
+                isIdType(elem) ? assertId(elem, 'removeNode') : assertNodeInTree(this, this.nodeId(elem), false, 'removeNode');
+
+                node = (isIdType(elem)) ? this.getNode(elem) : elem;
+
+                merge(node, value);   
+
+                return this;
+            },
             
             // Inserts values inside tree. Finds direct parent of new nodes and
             // inserts only nodes that were not inserted earlier in order in which
@@ -1134,7 +1150,45 @@ Form of created tree:
             return objectCopy;
         }
     };
-    
+
+    var merge = function(srcObj, value, checkReserved) {
+        var checkReserved = !!checkReserved;
+        var property;
+        for (property in value) {
+            if (checkReserved && isFieldReserved(property)) {
+                continue;
+            }
+            if (value.hasOwnProperty(property)) {
+                if (value[property] === undefined) {
+                    delete srcObj[property];
+                } else if (value[property].constructor === Object) {
+                    merge(srcObj[property], value[property], false);
+                } else if (value[property].constructor === Array) {
+                    // TODO
+                    srcObj[property] = value[property];
+                } else {
+                    srcObj[property] = value[property];
+                }
+            }
+        }
+    };
+
+    var isFieldReserved = (function() {
+        var reservedFields = ['__id__', '__parent__', '__children__',
+                              '__filered__']
+        var reservedLen = reservedFields.length;
+
+        return function(name) {
+            var i;
+            for (i = 0; i < reservedLen; ++i) {
+                if (reservedFields[i] === name) {
+                    return true;
+                }
+            }
+            return false;
+        };
+    })();
+
     // Returns true if elem can be id, otherwise false.
     var isIdType = function(elem) {
         return elem === null || (elem !== undefined && elem.constructor !== Node);
@@ -1180,6 +1234,12 @@ Form of created tree:
     var assertList = function(list, msg) {
         if (list.constructor !== Array) {
             throw 'assertList(list=' + list + '): ' + msg;
+        }
+    };
+    
+    var assertObject = function(value, msg) {
+        if (value.constructor !== Object) {
+            throw 'assertObject(value=' + value + '): ' + msg;
         }
     };
     
@@ -1239,7 +1299,7 @@ Form of created tree:
             throw 'assertFunction(not function)' + msg;
         }
     };
-    
+
     var assertRemoveType = function(type, msg) {
         if (type !== 'node' && type !== 'subtree') {
             throw 'assertRemoveType(type=' + type + ') ' + msg;

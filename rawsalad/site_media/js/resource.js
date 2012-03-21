@@ -207,7 +207,10 @@ var _resource = (function () {
         // Insert to new tree cleaned nodes(only those that were in old tree)
         cleaned_full_data.forEach( function ( node ) {
             // TODO: add update function to monkey
+            var old_node;
+            var new_node;
             if ( _tree.has_node( old_tree, node['id'] ) ) {
+                old_node = _tree.get_node( old_tree, node['id'] );
                 _tree.insert_node( new_tree, node );
             }
         });
