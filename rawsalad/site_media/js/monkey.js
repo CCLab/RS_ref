@@ -1161,6 +1161,8 @@ Form of created tree:
             if (value.hasOwnProperty(property)) {
                 if (value[property] === undefined) {
                     delete srcObj[property];
+                } else if (value[property] === null) {
+                    srcObj[property] = null;
                 } else if (value[property].constructor === Object) {
                     merge(srcObj[property], value[property], false);
                 } else if (value[property].constructor === Array) {
