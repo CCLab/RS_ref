@@ -101,6 +101,9 @@
       @table-close-sheet-hover-text:            @dark-gray;
       @table-close-sheet-hover-background:      @dark-silver;
       
+      @searched-res-panel-background:           @very-light-silver;
+      @searched-res-box-header-background:      @dark-silver;
+      
       @filtered-head-cell-background:           @silver;
       @filtered-head-cell-border:               @gray;
       @filtered-row-border:                     @gray;
@@ -369,8 +372,14 @@
    
 #app-tb-tl-col-button-wrapper {
   float: right;
+
+  margin-right: -10px;
   padding-left: 10px;
   padding-right: 10px;
+
+  border-bottom-color: gray;
+  border-bottom-style: solid;
+  border-bottom-width: 1px;
 }
 
 #app-tb-tl-columns-button {
@@ -620,20 +629,69 @@
       text-align: right;
     }
 
-    .app-tb-in-con-name{
+    .app-tb-in-con-name {
       padding: 5px;
       width: 510px;
     } 
 
-    td.app-tb-in-con-attr{
+    td.app-tb-in-con-attr {
       width: 150px;
       text-align: right;
     } 
 
-    td.app-tb-in-con-num{
+    td.app-tb-in-con-num {
       padding: 5px;
       text-align: right;
     } 
+    
+  /* SEARCH RESULT */
+  
+  tbody#app-tb-search-result{
+
+    > tr {
+      background-color: @searched-res-panel-background;
+      border-width: 0px;
+      
+      &:hover {
+        background-color: @searched-res-panel-background;      
+      }
+    }    
+    
+    .app-tb-search-sep {
+      height: 25px;
+    }
+
+    .app-tb-search-overrow {
+      background-color: @searched-res-panel-background;
+      
+      vertical-align: baseline;
+      
+      .app-tb-srch-bred {
+        display: inline-block;
+        float: left;
+      }
+
+      button.app-tb-srch-parents-bt{
+        display: inline-block;
+        float: right;
+      }      
+    }
+    
+    .app-tb-search-header {
+      background-color: @searched-res-box-header-background;
+      
+      &:hover {
+        background-color: @searched-res-box-header-background;      
+      }
+      
+      > td {
+        border-left-width: 0px;
+      }
+    }
+  }
+  
+  
+  
  
   
   /* APPLICATION FILTERED */

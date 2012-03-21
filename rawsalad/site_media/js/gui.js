@@ -318,7 +318,9 @@ var _gui = (function () {
         // deactivate menu button and hide the panel
         manage_top_panel( $('#top-menu').find('.active'), function () {
             $('#application').fadeIn( 300, function () {
-                make_zebra();
+                if ( data['type'] !== 2 ) { 
+                    make_zebra();
+                }
                 // arm application ui
                 $('#app-tbs-share').click( function () {
                     if( change_application_tab( $(this) ) ) {

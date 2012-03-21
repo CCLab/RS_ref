@@ -133,7 +133,7 @@ var _table = (function () {
             boxes_html.push( create_search_box( box, i ) );
         });
 
-        tbody_html.push( '<tbody class="app-tb-search-result" >' );
+        tbody_html.push( '<tbody id="app-tb-search-result" >' );
         tbody_html.push( boxes_html );
         tbody_html.push( '</tbody>' );
 

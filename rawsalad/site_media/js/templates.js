@@ -251,7 +251,14 @@ var _tmpl = (function () {
         '<section id="app-tb-tl-srft-forms">' +
         '</section>' +
         '<section>' +
-            '<div id="app-tb-tl-columns-button" class="button right">Dodaj/Usuń kolumny</div>' +
+            '{{#search_result}}' +
+                '<div id="app-tb-tl-col-button-wrapper">' +
+                    '<div id="app-tb-tl-columns-button" class="button right">Dodaj/Usuń kolumny</div>' +
+                '</div>' +
+            '{{/search_result}}' +
+            '{{^search_result}}' +
+                    '<div id="app-tb-tl-columns-button" class="button right">Dodaj/Usuń kolumny</div>' +
+            '{{/search_result}}' +
             '<br class="clear"/>' +
             '<div id="app-tb-tl-columns-list" class="right"></div>' +
         '</section>';
@@ -436,8 +443,11 @@ var _tmpl = (function () {
 
 
     that.search_box =
+        '<tr box_id="{{box_id}}" class="app-tb-search-sep">' +
+            '<td colspan="{{columns_num}}"></td>' +
+        '</tr>' +
         '<tr box_id="{{box_id}}">' +
-            '<td style="padding-top: 15px; background-color: #eee;" colspan="{{columns_num}}">' + 
+            '<td class="app-tb-search-overrow" colspan="{{columns_num}}">' + 
                 '<p class="app-tb-srch-bred">{{breadcrumb}}</p>' +
                 '{{#has_parent}}' +
                     '<button class="app-tb-srch-parents-bt" id="show-breadcrumb-{{box_id}}" type="button" >' +
@@ -446,7 +456,7 @@ var _tmpl = (function () {
                 '{{/has_parent}}' +            
             '</td>' +
         '</tr>' +
-        '<tr class="add-tb-search-header" box_id="{{box_id}}">'+
+        '<tr class="app-tb-search-header" box_id="{{box_id}}">'+
             '{{#columns}}' +
                 '<td>{{label}}</td>' +
             '{{/columns}}' +
@@ -467,10 +477,16 @@ var _tmpl = (function () {
                     '<button id="show-context-{{box_id}}" type="button">{{context_action}}</button>' +
                 '{{/empty_context}}' +
             '</td>' +
+        '</tr>' +
+        '<tr box_id="{{box_id}}" class="app-tb-search-sep">' +
+            '<td colspan="{{columns_num}}"></td>' +
         '</tr>';
 
 
     that.search_box_breadcrumbed =
+        '<tr box_id="{{box_id}}" class="app-tb-search-sep">' +
+            '<td colspan="{{columns_num}}"></td>' +
+        '</tr>' +
         '<tr box_id="{{box_id}}">' +
             '<td colspan="{{columns_num}}">' +
                 '{{#has_parent}}' +
@@ -478,7 +494,7 @@ var _tmpl = (function () {
                 '{{/has_parent}}' +
             '</td>' +
         '</tr>' +
-        '<tr class="add-tb-search-header" box_id="{{box_id}}">'+
+        '<tr class="app-tb-search-header" box_id="{{box_id}}">'+
             '{{#columns}}' +
                 '<td>{{label}}</td>' +
             '{{/columns}}' +
@@ -502,6 +518,11 @@ var _tmpl = (function () {
                 '<button id="show-context-{{box_id}}" type="button">{{context_action}}</button>' +
             '</td>' +
         '</tr>';
+        '<tr box_id="{{box_id}}" class="app-tb-search-sep">' +
+            '<td colspan="{{columns_num}}"></td>' +
+        '</tr>';
+
+
 
     // return public interface
     return that;
