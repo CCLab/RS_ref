@@ -40,12 +40,9 @@ var _resource = (function () {
         // Create_empty_sheets for endpoints
         // with data for sheet tabs(get_sheets_names)
         endpoints.forEach( function ( endpoint ) {
-            var simple_meta = {
-                'label'  : _store.get_collection_name( endpoint ),
-                'columns': []
-            };
+            var label = _store.get_collection_name( endpoint );
             var add_fields = { 'blocked': true };
-            var empty_sheet = create_sheet( endpoint, [], simple_meta,
+            var empty_sheet = create_sheet( endpoint, [], label, [],
                                             _enum['STANDARD'], add_fields );
             add_sheet( empty_sheet );
         });
@@ -179,9 +176,6 @@ var _resource = (function () {
         var sheet;
         var full_collection;
         var cleaned_full_data;
-        var old_tree;
-        var new_tree;
-        var selected_id;
 
         sheet = get_sheet( sheet_id );
 
@@ -200,31 +194,16 @@ var _resource = (function () {
 
         // Get list of all nodes with needed columns only
         full_collection = _store.get_collection_data( sheet['endpoint'] );
-        cleaned_full_data = clean_data( full_collection, sheet['columns'] );
+        cleaned_full_data = clean_data( full_collection, sheet['columns'], true );
 
-        new_tree = _tree.create_tree( [], 'id', 'parent' );
-        old_tree = sheet['data'];
         // Insert to new tree cleaned nodes(only those that were in old tree)
-        cleaned_full_data.forEach( function ( node ) {
-            // TODO: add update function to monkey
-            if ( _tree.has_node( old_tree, node['id'] ) ) {
-                _tree.insert_node( new_tree, node );
+        cleaned_full_data.forEach( function ( cleaned_node ) {
+            if ( _tree.has_node( sheet['data'], cleaned_node['id'] ) ) {
+                _tree.update_node( sheet['data'], cleaned_node['id'], cleaned_node );
             }
         });
 
         // Update tree
-        selected_id = find_selected_row( sheet_id );
-        sheet['data'] = new_tree;
-        if ( !!sheet['sort_query'] ) {
-            sheet['data'] = sort_data( sheet['data'], sheet['sort_query'] );
-        }
-        if ( !!sheet['filter_query'] ) {
-            sheet['data'] = filter_data( sheet['data'], sheet['filter_query'] );
-        }
-        if ( !!sheet['any_selected'] ) {
-            reset_selection( sheet_id );
-        }
-
         that.get_sheet_data( sheet_id, callback );
     };
 
@@ -423,16 +402,13 @@ var _resource = (function () {
         var additional_parameters;
 
         sheet = get_sheet( sheet_id );
-        meta = {
-            'label': sheet['label'],
-            'columns': sheet['columns']
-        };
         additional_parameters = {
             'sort_query'  : sheet['sort_query'],
             'filter_query': criterions
         };
         new_sheet = create_sheet( sheet['endpoint'], _tree.tree_to_list( sheet['data'] ),
-                                  meta, _enum['FILTERED'], additional_parameters );
+                                  sheet['label'], sheet['columns'],
+                                  _enum['FILTERED'], additional_parameters );
         new_sheet_id = add_sheet( new_sheet );
 
         if ( !!callback ) {
@@ -566,8 +542,8 @@ var _resource = (function () {
             };
 
             cleaned_data = clean_data( data, meta['columns'] );
-            sheet = create_sheet( endpoint, cleaned_data, meta,
-                                  _enum['SEARCHED'], other_fields );
+            sheet = create_sheet( endpoint, cleaned_data, meta['label'],
+                                  meta['columns'], _enum['SEARCHED'], other_fields );
             sheet_id = add_sheet( sheet );
             gui_data = prepare_table_data( sheet_id );
 
@@ -622,16 +598,18 @@ var _resource = (function () {
             // For each sheet in group: get data that needs to be inserted into
             // its tree, create and add a new sheet containing that data
             group['sheets'].forEach( function ( permalink_sheet ) {
-                var sheet_data = _permalinks.restore_sheet_data( permalink_sheet, data_tree );
                 var sheet;
                 var sheet_id;
                 var gui_data;
+                var sheet_data = _permalinks.restore_sheet_data( permalink_sheet, data_tree );
                 var additional_fields = _permalinks.get_additional_fields( permalink_sheet );
-                var sheet_meta = $.extend( true, [],  group['meta'] );
-                sheet_meta['label'] = permalink_sheet['label'];
-                    
-                sheet = create_sheet( group['endpoint'], sheet_data, sheet_meta,
-                                      permalink_sheet['type'], additional_fields );
+                var full_columns = _store.get_columns( group['endpoint'] );
+                var columns = get_filtered_columns( permalink_sheet['columns'], full_columns );
+
+                sheet = create_sheet( group['endpoint'], sheet_data, permalink_sheet['label'],
+                                      columns, permalink_sheet['type'], additional_fields );
+
+                sheet['columns'] = columns;
                 sheet_id = add_sheet( sheet );
                 gui_data = prepare_table_data( sheet_id );
                 callback({
@@ -732,21 +710,18 @@ var _resource = (function () {
     }
 
     // Create new sheet from data.
-    function create_sheet( endpoint, data, meta, type, other_fields ) {
+    function create_sheet( endpoint, data, label, columns, type, other_fields ) {
         var new_sheet;
-        var active_columns;
         var cleaned_data;
         var cleaned_tree_data;
         var group_id;
         var type = type || _enum['STANDARD'];
         var other_fields = other_fields || {};
-
-        active_columns = meta['columns'].filter( function ( column ) {
-            return !!column['basic'];
-        });
+        var total_row;
 
         // Remove unnecessary columns and inserts cleaned data into tree.
-        cleaned_data = clean_data( data, active_columns );
+        cleaned_data = clean_data( data, columns );
+        total_row = remove_total_row( cleaned_data );
         cleaned_tree_data = _tree.create_tree( cleaned_data, 'id', 'parent' );
 
         group_id = get_group_id( endpoint );
@@ -754,9 +729,10 @@ var _resource = (function () {
             'group_id': group_id,
             'endpoint': endpoint,
             'data'    : cleaned_tree_data,
-            'label'   : meta['label'],
-            'columns' : active_columns,
-            'type'    : type
+            'label'   : label,
+            'columns' : columns,
+            'type'    : type,
+            'total'   : total_row
         };
 
         additional_operations( new_sheet, other_fields );
@@ -808,6 +784,14 @@ var _resource = (function () {
                 sheet[ field ] = other_fields[ field ];
             }
         }
+    }
+
+    function remove_total_row( rows ) {
+        var len = rows.length;
+        if ( len > 0 && rows[ len - 1 ]['data']['type'] === 'Total' ) {
+            return rows.pop();
+        }
+        return undefined;
     }
 
     function sort_data( data, criterions ) {
@@ -922,9 +906,9 @@ var _resource = (function () {
             var sheet_id;
             var sheet;
             var gui_data;
+            var basic_columns = get_basic_columns( meta['columns'] );
 
-            sheet = create_sheet( endpoint, data, meta );
-            // TODO what is that?!
+            sheet = create_sheet( endpoint, data, meta['label'], basic_columns );
             sheet_id = find_blocked_sheet( endpoint );
             sheet_id = add_sheet( sheet, sheet_id );
             gui_data = prepare_table_data( sheet_id );
@@ -933,9 +917,41 @@ var _resource = (function () {
         });
     }
 
+    // Get full description of columns that have keys in columns_names
+    // from full_columns list.
+    function get_filtered_columns( columns_names, full_columns ) {
+        var needed_columns = {};
+        columns_names.forEach( function ( name ) {
+            needed_columns[ name ] = true;
+        });
+
+        return full_columns.filter( function ( col ) {
+            return !!needed_columns[ col['key'] ];
+        });
+    }
+
+    function get_basic_columns( full_columns ) {
+        return full_columns.filter( function ( col ) {
+            return col['basic'];
+        });
+    }
+
+    // Update columns in sheet.
+    function update_data( data, full_data, columns ) {
+        // Get list of all nodes with needed columns only
+        var cleaned_full_data = clean_data( full_data, columns, true );
+
+        // Insert to new tree cleaned nodes(only those that were in old tree)
+        cleaned_full_data.forEach( function ( cleaned_node ) {
+            if ( _tree.has_node( data, cleaned_node['id'] ) ) {
+                _tree.update_node( data, cleaned_node['id'], cleaned_node );
+            }
+        });
+    };
+
     // Return data that contains columns that are in columns list.
-    function clean_data( data, columns ) {
-        var clean_node = function( node, columns ) {
+    function clean_data( data, columns, omit_state ) {
+        var clean_node = function( node, columns, ignore_state ) {
             var property;
             var new_node = {
                 'aux': {},
@@ -955,21 +971,19 @@ var _resource = (function () {
                 new_node['data'][ column['key'] ] = node['data'][ column['key'] ];
             });
 
-            new_node['state'] = {
-                'selected': node['selected'] || undefined,
-                'is_open' : node['is_open'] || false
-            };
-
-            /*new_node['state'] = {
-                'selected': undefined,
-                'is_open' : false
-            };*/
+            if ( !ignore_state ) {
+                new_node['state'] = {
+                    'selected': undefined,
+                    'is_open' : false
+                };
+            }
 
             return new_node;
         };
+        var omit_state = !!omit_state;
 
         var cleaned_data = data.map( function( node ) {
-            return clean_node( node, columns );
+            return clean_node( node, columns, omit_state );
         });
 
         return cleaned_data;
@@ -996,6 +1010,9 @@ var _resource = (function () {
         var subtree_root;
 
         subtree_root = _tree.get_node( sheet['data'], root_id );
+        if( !subtree_root ) {
+            return;
+        }
         subtree_root['state']['selected'] = selection_type;
     }
 

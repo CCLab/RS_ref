@@ -258,7 +258,7 @@ var _permalinks = (function () {
     // Get nodes for standard sheet using passed functions.
     // sheet_info contains information which nodes are needed.
     // Returns tree with nodes that need to be inserted into a tree.
-    function restore_standard_sheet_data( data_tree, sheet_data, query_to_fun ) {
+    function restore_standard_sheet_data( data_tree, sheet_data ) {
         var get_branch = function( node_id ) {
             var new_rows = [];
             var ancestors = _tree.get_parents( data_tree, node_id );
@@ -299,7 +299,6 @@ var _permalinks = (function () {
         var boxes = sheet_data['boxes'];
         var sheet_nodes = [];
         
-        // TODO: test it, prealpha version
         boxes.forEach( function ( box ) {
             var rows = box['rows'];
             var nodes_in_box = [];

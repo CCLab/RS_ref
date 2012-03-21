@@ -109,25 +109,14 @@ var _ui = (function () {
             return new_rows;
         };
         // Return total row(if there is no total row, returns undefined).
-        var prepare_total_row = function( rows, columns ) {
-            var total_row = [];
-            var last_row = rows.pop();
-
-            if ( last_row['data']['type'] !== 'Total' ) {
-                rows.push( last_row );
-                return undefined;
-            }
-
-            // push values to be showed in total row
-            columns.forEach( function ( column ) {
-                total_row.push( {
-                    'data': format_value( last_row['data'][ column['key'] ], column['type'], column['key'] ),
+        var prepare_total_row = function( total_row, columns ) {
+            return columns.map( function ( column ) {
+                return {
+                    'data': format_value( total_row['data'][ column['key'] ], column['type'], column['key'] ),
                     'column_type': column['type'],
                     'column_key': column['key']
-                });
+                };
             });
-
-            return total_row;
         };
         var columns_for_gui;
         var total_row;
@@ -138,7 +127,7 @@ var _ui = (function () {
 
         // columns description for gui
         columns_for_gui = get_columns_description( sheet['columns'] );
-        total_row = prepare_total_row( data, columns_for_gui );
+        total_row = prepare_total_row( sheet['total'], columns_for_gui );
         id_map = create_level_map( full_data );
         rows_for_gui = prepare_rows( data, columns_for_gui, id_map );
 
