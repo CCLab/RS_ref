@@ -113,18 +113,6 @@ var _ui = (function () {
             var total_row = [];
             var last_row = rows.pop();
 
-            console.log( new Date() );
-            console.log( last_row );
-//            (function ( t ) {
-//                var start = new Date().getMilliseconds();
-//                for( var i = 0; i < 1000000; ++i ) {
-//                    if( new Date().getMilliseconds() > start + t  ) {
-//                        break;
-//                    }
-//                }
-//            })( 3000 );
-            console.log( new Date() );
-
             if ( last_row['data']['type'] !== 'Total' ) {
                 rows.push( last_row );
                 return undefined;
