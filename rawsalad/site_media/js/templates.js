@@ -251,7 +251,14 @@ var _tmpl = (function () {
         '<section id="app-tb-tl-srft-forms">' +
         '</section>' +
         '<section>' +
-            '<div id="app-tb-tl-columns-button" class="button right">Dodaj/Usuń kolumny</div>' +
+            '{{#search_result}}' +
+                '<div id="app-tb-tl-col-button-wrapper">' +
+                    '<div id="app-tb-tl-columns-button" class="button right">Dodaj/Usuń kolumny</div>' +
+                '</div>' +
+            '{{/search_result}}' +
+            '{{^search_result}}' +
+                    '<div id="app-tb-tl-columns-button" class="button right">Dodaj/Usuń kolumny</div>' +
+            '{{/search_result}}' +
             '<br class="clear"/>' +
             '<div id="app-tb-tl-columns-list" class="right"></div>' +
         '</section>';
@@ -437,34 +444,34 @@ var _tmpl = (function () {
 
     that.search_box =
         '<tr box_id="{{box_id}}">' +
-            '<td style="padding-top: 15px; background-color: #eee;" colspan="{{columns_num}}">' + 
-                '<p class="app-tb-srch-bred">{{breadcrumb}}</p>' +
+            '<td class="app-tb-sr-overrow" colspan="{{columns_num}}">' + 
+                '<p class="app-tb-sr-bred">{{breadcrumb}}</p>' +
                 '{{#has_parent}}' +
-                    '<button class="app-tb-srch-parents-bt" id="show-breadcrumb-{{box_id}}" type="button" >' +
+                    '<div id="show-breadcrumb-{{box_id}}" class="app-tb-sr-parents-bt button blue">' +
                         '{{breadcrumb_action}}' +
-                    '</button>' +
-                '{{/has_parent}}' +            
+                    '</div>' +
+                '{{/has_parent}}' + 
             '</td>' +
         '</tr>' +
-        '<tr class="add-tb-search-header" box_id="{{box_id}}">'+
+        '<tr class="app-tb-search-header" box_id="{{box_id}}">'+
             '{{#columns}}' +
                 '<td>{{label}}</td>' +
             '{{/columns}}' +
         '</tr>' +
         '{{#rows}}' +
-            '<tr id="{{id}}" box_id="{{box_id}}">' +
+            '<tr id="{{id}}" box_id="{{box_id}}" class="app-tb-sr-hitrow">' +
                 '{{#data}}' +
                     '<td style="{{#hit}} background-color: #ddddaa;{{/hit}}" class="{{column_type}}">{{content}}</td>' +
                 '{{/data}}' +
             '</tr>' +
         '{{/rows}}' +
         '<tr box_id="{{box_id}}">' +
-            '<td colspan="{{columns_num}}">' +
+            '<td colspan="{{columns_num}}" class="app-tb-sr-lastrow">' +
                 '{{#empty_context}}' +
-                    '<button id="show-context-{{box_id}}" type="button" class="empty-context">{{context_action}}</button>' +
+                    '<div id="show-context-{{box_id}}" class="app-tb-sr-context-bt empty-context button blue">{{context_action}}</div>' +
                 '{{/empty_context}}' +
                 '{{^empty_context}}' +
-                    '<button id="show-context-{{box_id}}" type="button">{{context_action}}</button>' +
+                    '<div id="show-context-{{box_id}}" class="app-tb-sr-context-bt button blue">{{context_action}}</div>' +
                 '{{/empty_context}}' +
             '</td>' +
         '</tr>';
@@ -472,36 +479,37 @@ var _tmpl = (function () {
 
     that.search_box_breadcrumbed =
         '<tr box_id="{{box_id}}">' +
-            '<td colspan="{{columns_num}}">' +
+            '<td class="app-tb-sr-overrow" colspan="{{columns_num}}">' +
                 '{{#has_parent}}' +
-                    '<button id="show-breadcrumb-{{box_id}}" type="button">{{breadcrumb_action}}</button>' +
+                    '<div id="show-breadcrumb-{{box_id}}" class="app-tb-sr-parents-bt button blue">{{breadcrumb_action}}</div>' +
                 '{{/has_parent}}' +
             '</td>' +
         '</tr>' +
-        '<tr class="add-tb-search-header" box_id="{{box_id}}">'+
+        '<tr class="app-tb-search-header" box_id="{{box_id}}">'+
             '{{#columns}}' +
                 '<td>{{label}}</td>' +
             '{{/columns}}' +
         '</tr>' +
         '{{#breadcrumb}}' +
-            '<tr box_id="{{box_id}}">' +
+            '<tr box_id="{{box_id}}" class="app-tb-sr-parentsrow">' +
                 '{{#data}}' +
                     '<td style="{{#hit}} background-color: #ddddaa;{{/hit}}">{{content}}</td>' +
                 '{{/data}}' +
             '</tr>' +
         '{{/breadcrumb}}' +
         '{{#rows}}' +
-            '<tr id="{{id}}" box_id="{{box_id}}">' +
+            '<tr id="{{id}}" box_id="{{box_id}}" class="app-tb-sr-hitrow">' +
                 '{{#data}}' +
                     '<td style="{{#hit}} background-color: #ddddaa;{{/hit}}" class="{{column_type}}">{{content}}</td>' +
                 '{{/data}}' +
             '</tr>' +
         '{{/rows}}' +
         '<tr box_id="{{box_id}}">' +
-            '<td colspan="{{columns_num}}">' +
-                '<button id="show-context-{{box_id}}" type="button">{{context_action}}</button>' +
+            '<td colspan="{{columns_num}}" class="app-tb-sr-lastrow">' +
+                '<div id="show-context-{{box_id}}" class="app-tb-sr-context-bt button blue">{{context_action}}</div>' +
             '</td>' +
         '</tr>';
+
 
     // return public interface
     return that;
