@@ -104,7 +104,7 @@ Form of created tree:
                 var node;
 
                 assertObject(value, 'updateNode');
-                isIdType(elem) ? assertId(elem, 'removeNode') : assertNodeInTree(this, this.nodeId(elem), false, 'removeNode');
+                isIdType(elem) ? assertId(elem, 'updateNode') : assertNodeInTree(this, this.nodeId(elem), false, 'updateNode');
 
                 node = (isIdType(elem)) ? this.getNode(elem) : elem;
 
@@ -262,6 +262,8 @@ Form of created tree:
                 var parentNode;
                 var childNodes;
                 var node;
+                var children;
+                var i;
                 
                 isIdType(elem) ? assertId(elem, 'removeNode') : assertNodeInTree(this, this.nodeId(elem), false, 'removeNode');
                 
@@ -269,8 +271,11 @@ Form of created tree:
                 if (!parentNode) return this;
                 
                 node = isIdType(elem) ? this.getNode(elem) : elem;
+                children = this.children(elem);
+                for (i = children.length - 1; i >= 0; --i) {
+                    this.removeNode(children[i]);
+                }
                 parentNode.__children__.remove(this.nodeId(node));
-                delete idMap[this.nodeId(node)];
                 
                 return this;
             },
@@ -941,11 +946,13 @@ Form of created tree:
 
             innerId = idMap[realId];
             index = positionMap[innerId];
+            delete idMap[realId];
+            delete positionMap[innerId];
             nodes.splice(index, 1);
             
             for (i = index; i < nodes.length; ++i) {
                 innerId = idMap[nodes[i].__id__];
-                --positionMap[innerId];
+                positionMap[innerId] -= 1;
             }
         };
         this.get = function(realId, isInner) {
