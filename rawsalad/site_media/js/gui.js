@@ -28,6 +28,10 @@ var _gui = (function () {
 
 // P U B L I C   I N T E R F A C E
     var that = {};
+    // var select_children_of = _logger.log( select_children_of );
+    // var show_children_of   = _logger.log( show_children_of );
+    //var manage_top_panel = _logger.log( manage_top_panel );
+
 
     that.init_gui = function() {
         // arm top menu buttons
@@ -410,7 +414,7 @@ var _gui = (function () {
         var table_code = $(table);
         $('#app-tb-datatable').empty();
         $('#app-tb-datatable').append( table_code );
-        arm_rows( $('td.click').parent() );
+        arm_rows( $('tbody > tr') );
         make_zebra();
     }
 
@@ -671,7 +675,6 @@ var _gui = (function () {
 
 
     function arm_rows( rows ) {
-        //console.log( rows );
         rows.find('.click').parent().click( function () {
             var clicked = $(this);
             // check state of the clicked node and it's	neighborhood
@@ -683,9 +686,6 @@ var _gui = (function () {
             if( is_open ) {
                 if( is_selected ) {
                     hide_children_of( clicked );
-                }
-                else {
-                    select_children_of( clicked );
                 }
             }
             else {
@@ -699,11 +699,21 @@ var _gui = (function () {
         // TODO debug it
         rows.click( function () {
             var clicked = $(this);
+            var is_top      = clicked.attr('data-parent') === '';
             var is_selected = clicked.hasClass('selected') ||
                               clicked.hasClass('in-selected');
 
             if( !is_selected ) {
                 select_children_of( clicked );
+            }
+            if( is_selected && is_top ) {
+                // clean previous selection
+                $('tr').removeClass('selected')
+                       .removeClass('in-selected')
+                       .removeClass('after-selected')
+                       .removeClass('dim');
+
+                _resource.unselect_all( active_sheet_id() );
             }
         });
 
@@ -715,12 +725,10 @@ var _gui = (function () {
         var clicked_id = get_id( clicked_row );
         var callback   = function ( data ) {
             var new_rows = $( _table.generate_node( data ) );
-
             clicked_row.attr( 'data-open', 'true' )
                        .after( new_rows );
 
             arm_rows( new_rows );
-            select_children_of( clicked_row );
             make_zebra();
         }
 
@@ -769,7 +777,27 @@ var _gui = (function () {
 
             return top_parent_of( $('#'+parent_id) );
         };
-        var top_parent = top_parent_of( clicked_row );
+        var next_top_node = function ( node ) {
+            var next_node = node.next();
+            var next_top = node.next('tr.top');
+
+            // if last row in the table - return
+            if( !next_node.length ) {
+                return;
+            }
+            // if next one is top-level - return it
+            if( !!next_top.length ) {
+                return next_top;
+            }
+
+            return next_top_node( node.next() );
+        };
+        var top_parent    = top_parent_of( clicked_row );
+        var next_top      = next_top_node( top_parent );
+        var prev_selected = get_id( $('tr.selected') );
+
+        // if no previous selection - prev_selected is undefined
+        _resource.row_selected( active_sheet_id(), get_id( top_parent ), prev_selected );
 
         // clean previous selection
         $('tr').removeClass('selected')
@@ -778,17 +806,16 @@ var _gui = (function () {
                .addClass('dim');
 
         // start selecting nodes
-        // TODO debug it
         top_parent.addClass('selected')
                   .nextUntil('.top', 'tr')
-                  .addClass('in-selected')
-                  .end()
-                  .next('.top')
-                  .addClass('after-selected');
+                  .removeClass('dim')
+                  .addClass('in-selected');
 
-        console.log( top_parent.next('tr.top') );
+        // TODO debug it
+        if( !!next_top ) {
+            next_top.addClass('after-selected');
+        }
     }
-
 
     function show_breadcrumb_context_pressed() {
         var id = $(this).attr('id');

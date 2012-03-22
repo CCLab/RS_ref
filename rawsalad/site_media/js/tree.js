@@ -44,6 +44,9 @@ var _tree = (function () {
 
     that.get_parent = function( tree, id ) {
         var node = tree.getNode( id );
+        if ( !node['parent'] ) {
+            return undefined;
+        }
         return that.get_node( tree, node['parent'] );
     };
 
@@ -86,6 +89,10 @@ var _tree = (function () {
     
     that.update_tree = function( tree, data ) {
         return tree.updateTree( data );
+    };
+
+    that.update_node = function( tree, node, new_node ) {
+        return tree.updateNode( node, new_node );
     };
     
     that.remove_node = function( tree, id ) {
