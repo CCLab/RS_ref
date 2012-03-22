@@ -103,6 +103,10 @@
       
       @searched-res-panel-background:           @very-light-silver;
       @searched-res-box-header-background:      @dark-silver;
+      @searched-res-box-hit-background:         @white;
+      @searched-res-box-hit-border:             @gray;
+
+      
       
       @filtered-head-cell-background:           @silver;
       @filtered-head-cell-border:               @gray;
@@ -655,12 +659,12 @@
       &:hover {
         background-color: @searched-res-panel-background;      
       }
+      
+      &:last-child {
+        border-bottom-width: 0px;
+      }
     }    
     
-    .app-tb-search-sep {
-      height: 25px;
-    }
-
     .app-tb-sr-overrow {
       position: relative;    
 
@@ -677,14 +681,75 @@
         width: 85%;
       }
         
-      button.app-tb-sr-parents-bt{
+      div.app-tb-sr-parents-bt{
           position: absolute;
 
           right: 0px;
           bottom: 0px;
+          
+          padding: 5px;
+          
+          .border-radius-custom(2px, 2px, 0px, 0px);    
       }
     }
-  
+    
+    .app-tb-sr-parentsrow {
+      background-color: @searched-res-panel-background;
+      border-style: solid;
+      border-width: 2px;
+      border-color: @searched-res-box-hit-border;
+      border-spacing: 1px;
+
+      &:hover {
+        background-color: @searched-res-panel-background;
+      }    
+
+      td {
+        vertical-align: middle;
+
+        padding: 10px;
+        border-width: 0px; 
+      }
+    }
+    
+    .app-tb-sr-hitrow {
+      background-color: @searched-res-box-hit-background;
+
+      border-style: solid;
+      border-width: 2px;
+      border-color: @searched-res-box-hit-border;
+      border-spacing: 2px;
+      
+      &:hover {
+        background-color: @searched-res-box-hit-background;
+      }
+      
+      td {
+        vertical-align: middle;
+
+        padding: 10px;
+        border-width: 0px; 
+      }
+    }
+
+    .app-tb-sr-lastrow {
+      position: relative;
+      
+      height: 50px;
+      
+      padding: 0px;
+      background-color: @searched-res-panel-background;
+      
+      div.app-tb-sr-context-bt {
+        position: absolute;
+        
+        right: 0px;
+        top: 0px;
+        
+        padding: 5px;
+        .border-radius-custom(0px, 0px, 2px, 2px);    
+      }
+    }  
     
     .app-tb-search-header {
       background-color: @searched-res-box-header-background;
@@ -694,6 +759,8 @@
       }
       
       > td {
+        padding: 10px;
+        
         border-left-width: 0px;
       }
     }
