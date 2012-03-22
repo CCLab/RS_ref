@@ -661,21 +661,30 @@
       height: 25px;
     }
 
-    .app-tb-search-overrow {
-      background-color: @searched-res-panel-background;
-      
-      vertical-align: baseline;
-      
-      .app-tb-srch-bred {
-        display: inline-block;
-        float: left;
-      }
+    .app-tb-sr-overrow {
+      position: relative;    
 
-      button.app-tb-srch-parents-bt{
-        display: inline-block;
-        float: right;
-      }      
+      height: 50px;
+      padding: 0px;
+      background-color: @searched-res-panel-background;
+              
+      .app-tb-sr-bred {
+        position: absolute;
+
+        left: 0px;
+        bottom: 5px;
+          
+        width: 85%;
+      }
+        
+      button.app-tb-sr-parents-bt{
+          position: absolute;
+
+          right: 0px;
+          bottom: 0px;
+      }
     }
+  
     
     .app-tb-search-header {
       background-color: @searched-res-box-header-background;

@@ -443,17 +443,14 @@ var _tmpl = (function () {
 
 
     that.search_box =
-        '<tr box_id="{{box_id}}" class="app-tb-search-sep">' +
-            '<td colspan="{{columns_num}}"></td>' +
-        '</tr>' +
         '<tr box_id="{{box_id}}">' +
-            '<td class="app-tb-search-overrow" colspan="{{columns_num}}">' + 
-                '<p class="app-tb-srch-bred">{{breadcrumb}}</p>' +
+            '<td class="app-tb-sr-overrow" colspan="{{columns_num}}">' + 
+                '<p class="app-tb-sr-bred">{{breadcrumb}}</p>' +
                 '{{#has_parent}}' +
-                    '<button class="app-tb-srch-parents-bt" id="show-breadcrumb-{{box_id}}" type="button" >' +
+                    '<button class="app-tb-sr-parents-bt" id="show-breadcrumb-{{box_id}}" type="button" >' +
                         '{{breadcrumb_action}}' +
                     '</button>' +
-                '{{/has_parent}}' +            
+                '{{/has_parent}}' + 
             '</td>' +
         '</tr>' +
         '<tr class="app-tb-search-header" box_id="{{box_id}}">'+
@@ -484,9 +481,6 @@ var _tmpl = (function () {
 
 
     that.search_box_breadcrumbed =
-        '<tr box_id="{{box_id}}" class="app-tb-search-sep">' +
-            '<td colspan="{{columns_num}}"></td>' +
-        '</tr>' +
         '<tr box_id="{{box_id}}">' +
             '<td colspan="{{columns_num}}">' +
                 '{{#has_parent}}' +
