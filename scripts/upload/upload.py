@@ -223,21 +223,22 @@ class BasicUploader:
         init_endpoint_id = self.db.get_max_endpoint()
         init_dbtree_id = self.db.get_max_dbtree_id()
         init_data_id = self.db.get_max_data_id()
-        endpoint = None
+        endpoint = None # if try is not commented, this makes sense
         print init_endpoint_id, init_dbtree_id, init_data_id
-        #try:
-        endpoint = self.update_dbtree()
-        self.update_hierarchy( endpoint )
-        self.update_columns( endpoint )
-        raise RuntimeError # update columns not ready yet
-        id_tree = self.upload_data()
-        self.update_ptree( id_tree )
-        #except Exception as e:
-        # good last endpoint id = 50009
-        # good last dbtree id = 1016
-        # good last data id = 1000067180
-        #self.remove_uploaded( init_endpoint_id, init_dbtree_id, init_data_id, endpoint );
-        #raise e
+        try:
+            endpoint = self.update_dbtree()
+            self.update_hierarchy( endpoint )
+            self.update_columns( endpoint )
+            id_tree = self.upload_data( endpoint )
+            raise RuntimeError # update data
+            self.update_ptree( id_tree )
+        except Exception as e:
+        #    self.remove_uploaded( init_endpoint_id, init_dbtree_id, init_data_id, endpoint );
+            good_endpoint_id = 50009
+            good_dbtree_id = 1227
+            good_data_id = 1000067180
+            self.remove_uploaded( good_endpoint_id, good_dbtree_id, good_data_id, endpoint );
+            raise e
 
     def update_dbtree( self ):
         parent_nodes = self.meta.get_parents()
@@ -277,22 +278,23 @@ class BasicUploader:
             self.db.insert_hierarchy_column( col, endpoint, i )
 
     def update_columns( self, endpoint ):
-        columns = self.meta.get_columns()
+        non_hierarchy_columns = self.get_non_hierarchy_columns()
 
-        for col in columns:
+        for col in non_hierarchy_columns:
             column_with_same_name = self.db.get_column( col['key'], col['type'] )
             if column_with_same_name is None:
                 col['endpoints'] =  [ endpoint ]
                 self.db.insert_column( col )
             else:
-                old_endpoints = col['endpoints']
-                new_endpoints = old_endpoints + endpoint
-                self.db.update_column_endpoints( old_endpoints, new_endpoints, col['name'], col['type'] )
+                old_endpoints = column_with_same_name['endpoints']
+                new_endpoints = old_endpoints + [ endpoint ]
+                self.db.update_column_endpoints( old_endpoints, new_endpoints, col['key'], col['type'] )
 
-    def upload_data( self, bulk, endpoint ):
+    def upload_data( self, endpoint ):
+        bulk = ['fdsfds']
         self.db.remove_table( endpoint )
 
-        columns = map( lambda t: ( t['label'], t['type'] ), self.meta.get_columns() )
+        columns = map( lambda t: ( t['label'], t['type'] ), self.get_non_hierarchy_columns() )
         self.db.create_table( endpoint, columns )
 
         data = []
@@ -334,6 +336,19 @@ class BasicUploader:
             self.db.remove_ptree_list( id )
 
         self.set_counters( endpoint_id, dbtree_id, data_id )
+
+    def get_non_hierarchy_columns():
+        columns = self.meta.get_columns()
+        hierarchy = self.meta.get_hierarchy()
+        # columns that are in hierarchy will be removed and
+        # 'type' and 'name' will be inserted instead of them
+
+        hierarchy_labels = {}
+        for col in hierarchy:
+            hierarchy_labels[ col['label'] ] = True
+        non_hierarchy_columns = filter( lambda t: t['label'] not in hierarchy_labels, columns )
+
+        return non_hierarchy_columns
 
 
 class DB:
@@ -441,8 +456,6 @@ class DB:
         return self.cursor.fetchall()
 
     def get_child( self, parent_id, name ):
-        #print name
-        name = name.encode('utf-8')
         if parent_id is None:
             query = '''SELECT * FROM dbtree
                        WHERE parent is NULL AND name = '%s'
@@ -451,7 +464,7 @@ class DB:
             query = '''SELECT * FROM dbtree
                        WHERE parent = '%s' AND name = '%s'
                     ''' % ( parent_id, name )
-        self.cursor.execute( query )
+        self.cursor.execute( query.encode('utf-8') )
         return self.cursor.fetchone()
 
     def insert_hierarchy_column( self, column, endpoint, nr ):
@@ -459,42 +472,37 @@ class DB:
         obj['endpoint'] = endpoint
         obj['nr'] = nr
         query = self.modify_insert_query( 'hierarchy', obj.keys(), obj )
-        #print query
-        #query = '''INSERT INTO hierarchy (endpoints, nr, label, aux, aux_label)
-        #           VALUES( '%s', %s, '%s', '%s', '%s' ); COMMIT;
-        #        ''' % ( endpoint, nr, column['label'], column['aux'], column['aux_label'] )
         self.cursor.execute( query.encode('utf-8') )
 
     def remove_hierarchy( self, endpoint ):
         query = '''DELETE FROM hierarchy
-                   WHERE endpoint = %s; COMMIT;
+                   WHERE endpoint = '%s'; COMMIT;
                 ''' % endpoint
-        self.cursor.execute( query )
+        self.cursor.execute( query.encode('utf-8') )
 
     def get_column( self, name, type ):
         query = '''SELECT * FROM columns
                    WHERE key = '%s' AND type = '%s'
                 ''' % ( name, type )
-        self.cursor.execute( query )
-        #TODO: check what is returned if nothing is found
+        self.cursor.execute( query.encode('utf-8') )
         return self.cursor.fetchone()
 
     def insert_column( self, column ):
-        query = '''INSERT INTO columns VALUES (endpoints, key, label, format,
+        query = '''INSERT INTO columns (endpoints, key, label, format,
                                            basic, type, processable, searchable)
-                   VALUES( {%s}, '%s', '%s', '%s', %s, '%s', %s, %s ); COMMIT;
+                   VALUES( '{%s}', '%s', '%s', '%s', %s, '%s', %s, %s ); COMMIT;
                 ''' % ( column['endpoints'][0], column['key'], column['label'],
                         column['format'], column['basic'], column['type'],
                         column['processable'], column['searchable'])
-        print query
-        self.cursor.execute( query )
+        self.cursor.execute( query.encode('utf-8') )
 
     def update_column_endpoints( self, old_endpoints, new_endpoints, name, type ):
-        query = '''UPDATE columns SET endpoints = %s
-                   WHERE endpoints = %s AND name = %s AND type = %s; COMMIT;
-                ''' % ( new_enpoints, old_endpoints, name )
-        print query
-        self.cursor.execute( query )
+        old_endpoints_str = ', '.join( old_endpoints )
+        new_endpoints_str = ', '.join( new_endpoints )
+        query = '''UPDATE columns SET endpoints = '{%s}'
+                   WHERE endpoints = '{%s}' AND key = '%s' AND type = '%s'; COMMIT;
+                ''' % ( new_endpoints_str, old_endpoints_str, name, type )
+        self.cursor.execute( query.encode('utf-8') )
 
     def get_endpoint_columns( self, endpoint ):
         # TODO
@@ -583,7 +591,7 @@ class DB:
 
     def remove_data( self, tablename, min_id=None, max_id=None ):
         if min_id is None and max_id is None:
-            query = '''DROP %s IF EXISTS;''' % tablename
+            query = '''DROP TABLE IF EXISTS %s;''' % tablename
         elif min_id is None:
             query = '''DELETE FROM %s
                        WHERE id <= %s''' % ( tablename, max_id )
@@ -593,19 +601,19 @@ class DB:
         else:
             query = '''DELETE FROM %s
                        WHERE id >= %s AND id <= %s''' % ( tablename, min_id, max_id )
-        self.cursor.execute( query )
+        self.cursor.execute( query.encode('utf-8') )
 
     def insert_ptree_list( self, id, parents ):
         query = '''INSERT INTO p_tree (id, parents)
                    VALUES (%s, {%s}); COMMIT;
                 ''' % (id, parents)
-        self.cursor.execute( query )
+        self.cursor.execute( query.encode('utf-8') )
 
     def remove_ptree_list( self, id ):
         query = '''DELETE FROM p_tree
                    WHERE id = %s
                 ''' % id
-        self.cursor.execute( query )
+        self.cursor.execute( query.encode('utf-8') )
 
 def get_cursor(conf):
     from ConfigParser import ConfigParser
