@@ -1,0 +1,62 @@
+{
+    "name": "BUDŻET",
+    "description": "BUDŻET POLSKI",
+    "columns": [
+        {
+            "key": "gdje",
+            "label": "gdzie",
+            "format": "@",
+            "basic": true,
+            "type": "string",
+            "processable": true,
+            "searchable": true
+        },
+        {
+            "key": "kto",
+            "label": "Podmiot",
+            "format": "@",
+            "basic": true,
+            "type": "string",
+            "processable": true,
+            "searchable": true
+        },
+        {
+            "key": "ile",
+            "label": "Wartość",
+            "format": "# ##0",
+            "basic": true,
+            "type": "number",
+            "processable": true,
+            "searchable": true
+        }
+    ],
+    "hierarchy": [
+        {
+            "label": "Część",
+            "aux": true,
+            "aux_label": "Numer części"
+        },
+        {
+            "label": "Dział",
+            "aux": true,
+            "aux_label": "Numer działu"
+        },
+        {
+            "label": "Rozdział",
+            "aux": true,
+            "aux_label": "Numer rozdziału"
+        }
+    ],
+    "parents": [
+        {
+            "name": "Budżety",
+            "label": null,
+            "descr": "Budżety państw"
+        },
+        {
+            "name": "Budżety Europy",
+            "label": null,
+            "descr": "Budżety państw europejskich"
+        }
+    ]
+}
