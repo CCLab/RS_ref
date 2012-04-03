@@ -225,20 +225,21 @@ class BasicUploader:
         init_data_id = self.db.get_max_data_id()
         endpoint = None # if try is not commented, this makes sense
         print init_endpoint_id, init_dbtree_id, init_data_id
-        try:
-            endpoint = self.update_dbtree()
-            self.update_hierarchy( endpoint )
-            self.update_columns( endpoint )
-            id_tree = self.upload_data( endpoint )
-            raise RuntimeError # update data
-            self.update_ptree( id_tree )
-        except Exception as e:
-        #    self.remove_uploaded( init_endpoint_id, init_dbtree_id, init_data_id, endpoint );
-            good_endpoint_id = 50009
-            good_dbtree_id = 1227
-            good_data_id = 1000067180
-            self.remove_uploaded( good_endpoint_id, good_dbtree_id, good_data_id, endpoint );
-            raise e
+        #try:
+        # TODO: why it does not work \/
+        self.remove_uploaded( 50009, 1016, 1000067180, 'data_50020' )
+        endpoint = self.update_dbtree()
+        self.update_hierarchy( endpoint )
+        self.update_columns( endpoint )
+        id_tree = self.upload_data( endpoint )
+        raise RuntimeError # update data
+        self.update_ptree( id_tree )
+        #except Exception as e:
+        #    self.remove_uploaded( init_endpoint_id, init_dbtree_id, init_data_id, endpoint )
+        #    good_endpoint_id = 50009
+        #    good_dbtree_id = 1016
+        #    good_data_id = 1000067180
+        #    self.remove_uploaded( good_endpoint_id, good_dbtree_id, good_data_id, endpoint )
 
     def update_dbtree( self ):
         parent_nodes = self.meta.get_parents()
@@ -323,6 +324,7 @@ class BasicUploader:
     def remove_uploaded( self, endpoint_id, dbtree_id, data_id, endpoint ):
         # if something bad happens during data insertion, remove inserted data
         act_dbtree_id = self.db.get_max_dbtree_id()
+        #TODO: act_dbtree_id = 1300
         act_data_id = self.db.get_max_data_id()
         for id in range( endpoint_id + 1, act_dbtree_id + 1 ):
             self.db.remove_tree_node( id )
