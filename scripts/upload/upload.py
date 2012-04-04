@@ -219,7 +219,7 @@ class BasicUploader:
         self.meta = meta
         self.db = db
 
-    def upload( self ):
+    def upload( self, lazy=False ):
         init_endpoint_id = self.db.get_max_endpoint()
         init_dbtree_id = self.db.get_max_dbtree_id()
         init_data_id = self.db.get_max_data_id()
@@ -227,11 +227,13 @@ class BasicUploader:
         print init_endpoint_id, init_dbtree_id, init_data_id
         #try:
         # TODO: why it does not work \/
-        self.remove_uploaded( 50009, 1016, 1000067180, 'data_50020' )
         endpoint = self.update_dbtree()
         self.update_hierarchy( endpoint )
         self.update_columns( endpoint )
-        id_tree = self.upload_data( endpoint )
+        if lazy:
+            id_tree = self.upload_data_stream( endpoint )
+        else:
+            id_tree = self.upload_data( endpoint )
         raise RuntimeError # update data
         self.update_ptree( id_tree )
         #except Exception as e:
@@ -272,6 +274,8 @@ class BasicUploader:
         return node['endpoint']
 
     def update_hierarchy( self, endpoint ):
+        # if any error is detected, then check_hierarchy throws an RuntimeError
+        self.check_hierarchy()
         hierarchy = self.meta.get_hierarchy()
         for (i, col) in enumerate( hierarchy ):
             if not col['aux']:
@@ -291,26 +295,48 @@ class BasicUploader:
                 new_endpoints = old_endpoints + [ endpoint ]
                 self.db.update_column_endpoints( old_endpoints, new_endpoints, col['key'], col['type'] )
 
-    def upload_data( self, endpoint ):
-        bulk = ['fdsfds']
+    def upload_data( self, endpoint, has_header=True ):
+        bulk = self.receiver.get_all_rows()
         self.db.remove_table( endpoint )
 
         columns = map( lambda t: ( t['label'], t['type'] ), self.get_non_hierarchy_columns() )
         self.db.create_table( endpoint, columns )
 
         data = []
+        start_id = self.db.get_max_data_id()
+        id_map = IdMap( start_id )
         hierarchy = self.meta.get_hierarchy()
+        if has_header:
+            del bulk[0]
         for row in bulk:
-            parent_id = find_parent( row )
-            if parent_id is None:
-                self.insert_empty_row()
-            new_row = self.insert_hierarchy( hierarchy, row )
-            new_row['id'] = self.db.gen_data_id()
-            new_row['parent'] = find_parent( row )
-            data.append( new_row )
+            hierarchy_in_row = self.get_hierarchy_cols( row )
+            new_rows = self.add_rows( id_map, hierarchy_in_row, row )
+            data += new_rows
 
-        self.db.insert_data( data )
+        import os
+        filename = "upload_data.csv"
+        scriptpath = os.path.realpath(__file__)
+        directory = os.path.dirname( scriptpath )
+        filepath = os.path.join( directory, filename )
+        #filepath = filepath.replace('\\', '\\\\' )
+
+        self.save_data( data, filepath )
+        open(filepath, 'rb' )
+        self.db.insert_data( endpoint, filepath )
+
         return id_tree
+
+    def save_data( self, data, filepath ):
+        import csv
+
+        f = file( filepath, "wb" )
+        writer = csv.writer( f, delimiter=';', quotechar='"' )
+        for row in data:
+            writer.writerow( self.encode_row( row ) )
+        f.close()
+
+    def upload_data_stream( self, endpoints ):
+        pass
         
     def update_ptree( self, id_tree ):
         for t in id_tree:
@@ -326,7 +352,8 @@ class BasicUploader:
         act_dbtree_id = self.db.get_max_dbtree_id()
         #TODO: act_dbtree_id = 1300
         act_data_id = self.db.get_max_data_id()
-        for id in range( endpoint_id + 1, act_dbtree_id + 1 ):
+        print 'range:', dbtree_id + 1, " : ", act_dbtree_id + 1
+        for id in range( act_dbtree_id, dbtree_id, -1 ):
             self.db.remove_tree_node( id )
 
         if endpoint is not None:
@@ -339,7 +366,7 @@ class BasicUploader:
 
         self.set_counters( endpoint_id, dbtree_id, data_id )
 
-    def get_non_hierarchy_columns():
+    def get_non_hierarchy_columns( self ):
         columns = self.meta.get_columns()
         hierarchy = self.meta.get_hierarchy()
         # columns that are in hierarchy will be removed and
@@ -348,9 +375,152 @@ class BasicUploader:
         hierarchy_labels = {}
         for col in hierarchy:
             hierarchy_labels[ col['label'] ] = True
+            if col['aux']:
+                hierarchy_labels[ col['aux_label'] ] = True
         non_hierarchy_columns = filter( lambda t: t['label'] not in hierarchy_labels, columns )
 
         return non_hierarchy_columns
+
+    def check_hierarchy( self ):
+        hierarchy_labels = [ t['label'] for t in self.meta.get_hierarchy() ]
+        hierarchy_labels = []
+        for hier_col in self.meta.get_hierarchy():
+            hierarchy_labels.append( hier_col['label'] )
+            if hier_col['aux']:
+                hierarchy_labels.append( hier_col['aux_label'] )
+
+        columns_labels = {}
+        for col in self.meta.get_columns():
+            columns_labels[ col['label'] ] = True
+
+        for label in hierarchy_labels:
+            if label not in columns_labels:
+                msg = "hierarchy column %s not in column labels." % label
+                raise RuntimeError( msg.encode('utf-8') )
+
+    def get_hierarchy_indexes_pairs( self ):
+        hierarchy = self.meta.get_hierarchy()
+        columns = self.meta.get_columns()
+        
+        ind_obj = {}
+        for (i, col) in enumerate( columns ):
+            ind_obj[ col['label'] ] = i
+
+        indexes_pairs = []
+        for col in hierarchy:
+            if col['aux']:
+                ind = ( ind_obj[ col['label'] ], ind_obj[ col['aux_label'] ] )
+            else:
+                ind = ( ind_obj[ col['label'] ], )
+            indexes_pairs.append( ind )
+
+        return indexes_pairs
+
+    def get_hierarchy_indexes( self ):
+        indexes_pairs = self.get_hierarchy_indexes_pairs()
+        indexes = []
+        for t in indexes_pairs:
+            indexes.append( t[0] )
+            try:
+                indexes.append( t[1] )
+            except:
+                pass
+
+        return indexes
+
+    def get_hierarchy_cols( self, row ):
+        hierarchy_cols = []
+        hierarchy = self.meta.get_hierarchy()
+        hierarchy_indexes = self.get_hierarchy_indexes_pairs()
+        for ind in hierarchy_indexes:
+            if len( ind ) == 1:
+                hierarchy_cols.append( (row[ ind[0] ],) )
+            else:  # if there is an aux column
+                hierarchy_cols.append( (row[ ind[0] ], row[ ind[1] ]) )
+        
+        return hierarchy_cols
+
+    def add_rows( self, id_map, hierarchy_in_row, row ):
+        new_rows = []
+        partial_hierarchy = []
+        for col in hierarchy_in_row:
+            if len( col ) == 2:
+                next_level_hierarchy = col[0] + col[1]
+            else:
+                next_level_hierarchy = col[0]
+            partial_hierarchy.append( next_level_hierarchy )
+            if id_map.get_id( partial_hierarchy ) is None:
+                if len( partial_hierarchy ) == len( hierarchy_in_row ):
+                    new_row = row
+                else:
+                    new_row = self.create_empty_row()
+                row_id = id_map.add_id( partial_hierarchy )
+                par_id = id_map.get_id( partial_hierarchy[:-1] )
+                row_level = len( partial_hierarchy ) - 1
+                db_row = self.insert_hierarchy( col, new_row, row_level, row_id, par_id )
+                new_rows.append( db_row )
+
+        return new_rows
+
+    def create_empty_row( self ):
+        columns = self.meta.get_columns()
+        empty_row = []
+        for col in columns:
+            if col['type'] == 'string':
+                empty_row.append( '' )
+            else:
+                empty_row.append( 0 )
+        
+        return empty_row
+
+    def insert_hierarchy( self, hierarchy_values, row, level, id, par_id ):
+        hierarchy_col = self.meta.get_hierarchy_column( level )
+        if hierarchy_col['aux']:
+            row_type = hierarchy_col['label'] + ' ' + hierarchy_values[1]
+        else:
+            row_type = hierarchy_col['label']
+        row_name = hierarchy_values[0]
+        indexes = self.get_hierarchy_indexes()
+        indexes.sort( reverse=True )
+        for i in indexes:
+            del row[i]
+
+        return  [ id, par_id, row_type, row_name ] + row
+
+    def encode_row( self, row ):
+        encoded_row = []
+        for value in row:
+            if isinstance( value, unicode ):
+                value = value.encode('utf-8')
+            encoded_row.append( value )
+        return encoded_row
+
+
+class IdMap:
+    def __init__( self, start_id ):
+        self.ids = { '__id__': None }
+        self.act_id = start_id
+
+    def add_id( self, hierarchy_list ):
+        parent = self.ids
+        for el in hierarchy_list:
+            if el not in parent:
+                self.act_id += 1
+                new_id = self.act_id
+                parent[ el ] = { '__id__': new_id }
+            else:
+                parent = parent[ el ]
+        return new_id
+
+    def get_id( self, hierarchy_list ):
+        parent = self.ids
+        for el in hierarchy_list:
+            if el not in parent:
+                return None
+            else:
+                parent = parent[ el ]
+
+        return parent['__id__']
 
 
 class DB:
@@ -431,6 +601,7 @@ class DB:
 
     def insert_tree_node( self, node ):
         query = self.modify_insert_query( 'dbtree', node.keys(), node )
+        print query
         self.cursor.execute( query.encode('utf-8') )
 
     def modify_tree_node( self, id, update_dict ):
@@ -490,12 +661,16 @@ class DB:
         return self.cursor.fetchone()
 
     def insert_column( self, column ):
+        is_basic = column.get( 'basic', False )
+        is_processable = column.get( 'processable', False )
+        is_searchable = column.get( 'searchable', False )
+        db_column = ( column['endpoints'][0], column['key'], column['label'],
+                      column['format'], is_basic, column['type'],
+                      is_processable, is_searchable )
         query = '''INSERT INTO columns (endpoints, key, label, format,
                                            basic, type, processable, searchable)
                    VALUES( '{%s}', '%s', '%s', '%s', %s, '%s', %s, %s ); COMMIT;
-                ''' % ( column['endpoints'][0], column['key'], column['label'],
-                        column['format'], column['basic'], column['type'],
-                        column['processable'], column['searchable'])
+                ''' % db_column
         self.cursor.execute( query.encode('utf-8') )
 
     def update_column_endpoints( self, old_endpoints, new_endpoints, name, type ):
@@ -561,7 +736,7 @@ class DB:
         return ( min_depth, max_depth )
 
     def remove_table( self, tablename ):
-        query = '''DROP %s IF EXISTS;''' % tablename
+        query = '''DROP TABLE IF EXISTS %s;''' % tablename
         self.cursor.execute( query )
 
     def create_table( self, tablename, columns ):
@@ -571,24 +746,26 @@ class DB:
         }
 
         create_query = '''CREATE TABLE %s (
-                id              INT UNIQUE NOT NULL,
-                parent          INT REFERENCES %s(id),
-                type            TEXT,
-                name            TEXT
+                id              INT UNIQUE NOT NULL
+                ,parent          INT REFERENCES %s(id)
+                ,type            TEXT
+                ,name            TEXT
+                ,leaf            BOOLEAN
                 ''' % ( tablename, tablename )
 
         for col in columns:
             col_descr = ''',%s       %s
-                        ''' % ( col[0], types_map( col[1] ) )
+                        ''' % ( col[0], types_map[ col[1] ] )
             create_query += col_descr
         create_query += ');'
             
         self.cursor.execute( create_query )
 
-    def insert_data( self, data, tablename ):
+    def insert_data( self, tablename, filename ):
         # TODO:
         insert_query = '''COPY %s
-                          FROM STDIN''' % tablename
+                          FROM '%s' ''' % (tablename, filename)
+        print insert_query
         self.cursor.execute( insert_query )
 
     def remove_data( self, tablename, min_id=None, max_id=None ):

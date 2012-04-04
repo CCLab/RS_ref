@@ -26,8 +26,46 @@
             "format": "# ##0",
             "basic": true,
             "type": "number",
+            "processable": true
+        },
+        {
+            "key": "czesc",
+            "label": "Część",
+            "format": "@",
+            "basic": true,
+            "type": "string",
             "processable": true,
             "searchable": true
+        },
+        {
+            "key": "czesc_nr",
+            "label": "Numer części",
+            "format": "@",
+            "basic": true,
+            "type": "string"
+        },
+        {
+            "key": "dzial",
+            "label": "Dział",
+            "format": "@",
+            "basic": true,
+            "type": "string",
+            "processable": true,
+            "searchable": true
+        },
+        {
+            "key": "dzial_nr",
+            "label": "Numer działu",
+            "format": "@",
+            "basic": true,
+            "type": "string"
+        },
+        {
+            "key": "rozdzial",
+            "label": "Rozdział",
+            "format": "@",
+            "basic": true,
+            "type": "string"
         }
     ],
     "hierarchy": [
@@ -43,8 +81,7 @@
         },
         {
             "label": "Rozdział",
-            "aux": true,
-            "aux_label": "Numer rozdziału"
+            "aux": false
         }
     ],
     "parents": [
