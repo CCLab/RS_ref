@@ -106,7 +106,8 @@ class Meta:
         json_content = json.loads( content )
         self.node = {
             'name': json_content['name'],
-            'description': json_content['description']
+            'description': json_content['description'],
+            'label': json_content['label']
         }
         self.columns = json_content['columns']
         self.hierarchy = json_content['hierarchy']
@@ -220,40 +221,51 @@ class BasicUploader:
         self.db = db
 
     def upload( self, lazy=False ):
+        self.debug_restore()
         init_endpoint_id = self.db.get_max_endpoint()
         init_dbtree_id = self.db.get_max_dbtree_id()
         init_data_id = self.db.get_max_data_id()
         endpoint = None # if try is not commented, this makes sense
         print init_endpoint_id, init_dbtree_id, init_data_id
         #try:
-        # TODO: why it does not work \/
+        self.check_db_counters( init_endpoint_id, init_dbtree_id, init_data_id )
         endpoint = self.update_dbtree()
         self.update_hierarchy( endpoint )
         self.update_columns( endpoint )
         if lazy:
-            id_tree = self.upload_data_stream( endpoint )
+            id_map = self.upload_data_stream( endpoint )
         else:
-            id_tree = self.upload_data( endpoint )
-        raise RuntimeError # update data
-        self.update_ptree( id_tree )
+            id_map = self.upload_data( endpoint )
+        self.update_ptree( id_map )
+
+        self.db.set_max_data_id( id_map.get_last_id() )
+
         #except Exception as e:
         #    self.remove_uploaded( init_endpoint_id, init_dbtree_id, init_data_id, endpoint )
-        #    good_endpoint_id = 50009
-        #    good_dbtree_id = 1016
-        #    good_data_id = 1000067180
-        #    self.remove_uploaded( good_endpoint_id, good_dbtree_id, good_data_id, endpoint )
+
+        #self.debug_restore()
+
+        print 'DONE'
+
+    def debug_restore( self ):
+        safe_endpoint_id = 50009
+        safe_dbtree_id = 1016
+        safe_data_id = 1000067180
+        endpoint = 'data_' + str( safe_endpoint_id )
+        self.remove_uploaded( safe_endpoint_id, safe_dbtree_id, safe_data_id, endpoint )
 
     def update_dbtree( self ):
         parent_nodes = self.meta.get_parents()
 
-        last_parent_id = None
+        parents_ids = []
         for parent in parent_nodes:
+            last_parent_id = None if parents_ids == [] else parents_ids[-1]
             parent_node = self.db.get_child( last_parent_id, parent['name'] )
             if parent_node is None:
                 parent_node = {
-                    'name': None,
+                    'name': parent['name'],
                     'label': None,
-                    'description': None,
+                    'description': parent['description'],
                     'endpoint': None
                 }
                 parent_node['id'] = self.db.gen_dbtree_id()
@@ -262,14 +274,18 @@ class BasicUploader:
                 parent_node['visible'] = True
                 self.db.insert_tree_node( parent_node )
 
-            last_parent_id = parent_node['id']
+            parents_ids.append( parent_node['id'] )
 
         node = deepcopy( self.meta.get_node() )
         endpoint_id = self.db.gen_endpoint_id()
         node['endpoint'] = 'data_' + str( endpoint_id )
         node['id'] = self.db.gen_dbtree_id()
+        parents_ids.append( node['id'] )
+        node['parent'] = None if parents_ids == [] else parents_ids[-1]
+        node['max_depth'] = node['min_depth'] = 0
+        node['visible'] = True
         self.db.insert_tree_node( node )
-        self.db.update_depths( node['id'] )
+        self.db.update_depths( parents_ids[0] )
 
         return node['endpoint']
 
@@ -324,7 +340,7 @@ class BasicUploader:
         open(filepath, 'rb' )
         self.db.insert_data( endpoint, filepath )
 
-        return id_tree
+        return id_map
 
     def save_data( self, data, filepath ):
         import csv
@@ -338,9 +354,19 @@ class BasicUploader:
     def upload_data_stream( self, endpoints ):
         pass
         
-    def update_ptree( self, id_tree ):
-        for t in id_tree:
-            self.db.insert_ptree_list( id, parents_ids )
+    def update_ptree( self, id_map ):
+        root = id_map.get_root()
+        for key, child in root.iteritems():
+            if key != '__id__':
+                self.update_ptree_helper( child, [] )
+
+    def update_ptree_helper( self, act_parent, parents_ids ):
+        act_id = act_parent['__id__']
+        parents_ids_str = None if parents_ids == [] else ','.join( parents_ids )
+        self.db.insert_ptree_list( act_id, parents_ids_str )
+        for key, child in act_parent.iteritems():
+            if key != '__id__':
+                self.update_ptree_helper( child, parents_ids + [ str(act_id) ] )
 
     def set_counters( self, endpoint_id, dbtree_id, data_id ):
         self.db.set_max_endpoint( endpoint_id )
@@ -352,7 +378,6 @@ class BasicUploader:
         act_dbtree_id = self.db.get_max_dbtree_id()
         #TODO: act_dbtree_id = 1300
         act_data_id = self.db.get_max_data_id()
-        print 'range:', dbtree_id + 1, " : ", act_dbtree_id + 1
         for id in range( act_dbtree_id, dbtree_id, -1 ):
             self.db.remove_tree_node( id )
 
@@ -452,12 +477,14 @@ class BasicUploader:
             if id_map.get_id( partial_hierarchy ) is None:
                 if len( partial_hierarchy ) == len( hierarchy_in_row ):
                     new_row = row
+                    is_leaf = True
                 else:
                     new_row = self.create_empty_row()
+                    is_leaf = False
                 row_id = id_map.add_id( partial_hierarchy )
                 par_id = id_map.get_id( partial_hierarchy[:-1] )
                 row_level = len( partial_hierarchy ) - 1
-                db_row = self.insert_hierarchy( col, new_row, row_level, row_id, par_id )
+                db_row = self.insert_hierarchy( col, new_row, row_level, row_id, par_id, is_leaf )
                 new_rows.append( db_row )
 
         return new_rows
@@ -473,7 +500,7 @@ class BasicUploader:
         
         return empty_row
 
-    def insert_hierarchy( self, hierarchy_values, row, level, id, par_id ):
+    def insert_hierarchy( self, hierarchy_values, row, level, id, par_id, is_leaf ):
         hierarchy_col = self.meta.get_hierarchy_column( level )
         if hierarchy_col['aux']:
             row_type = hierarchy_col['label'] + ' ' + hierarchy_values[1]
@@ -485,21 +512,52 @@ class BasicUploader:
         for i in indexes:
             del row[i]
 
-        return  [ id, par_id, row_type, row_name ] + row
+        return  [ id, par_id, row_type, row_name, is_leaf ] + row
 
     def encode_row( self, row ):
         encoded_row = []
         for value in row:
+            if value is None:
+                value = '\N'
             if isinstance( value, unicode ):
                 value = value.encode('utf-8')
             encoded_row.append( value )
         return encoded_row
+
+    def check_db_counters( self, init_endpoint_id, init_dbtree_id, init_data_id ):
+        if self.db.get_higher_dbtree( init_dbtree_id ) != []:
+            print 'Found wrong dbtree nodes, higher than %d' % init_dbtree_id
+            print 'Do you want to remove them? (Y/N)'
+            dec = raw_input('Your decision: ')
+            if dec.lower() == 'y':
+                self.db.remove_higher_dbtree( init_dbtree_id )
+                print 'Removed wrong dbtree nodes'
+
+        endpoint = 'data_' + str( init_endpoint_id )
+        if self.db.get_higher_hierarchy( endpoint ) != []:
+            print 'Found wrong hierarchy columns, higher than %d' % init_endpoint_id
+            print 'Do you want to remove them? (Y/N)'
+            dec = raw_input('Your decision: ')
+            if dec.lower() == 'y':
+                self.db.remove_higher_hierarchy( endpoint )
+                print 'Removed wrong hierarchy columns'
+
+        if self.db.get_higher_ptree( init_data_id ) != []:
+            print 'Found wrong ptree nodes, higher than %d' % init_data_id
+            print 'Do you want to remove them? (Y/N)'
+            dec = raw_input('Your_decision: ')
+            if dec.lower() == 'y':
+                self.db.remove_higher_ptree( init_data_id )
+                print 'Removed wrong ptree nodes'
 
 
 class IdMap:
     def __init__( self, start_id ):
         self.ids = { '__id__': None }
         self.act_id = start_id
+
+    def get_root( self ):
+        return self.ids
 
     def add_id( self, hierarchy_list ):
         parent = self.ids
@@ -521,6 +579,9 @@ class IdMap:
                 parent = parent[ el ]
 
         return parent['__id__']
+
+    def get_last_id( self ):
+        return self.act_id
 
 
 class DB:
@@ -601,7 +662,6 @@ class DB:
 
     def insert_tree_node( self, node ):
         query = self.modify_insert_query( 'dbtree', node.keys(), node )
-        print query
         self.cursor.execute( query.encode('utf-8') )
 
     def modify_tree_node( self, id, update_dict ):
@@ -722,6 +782,7 @@ class DB:
 
     def update_depths( self, subtree_id ):
         '''Update depths in subtree which root has subtree_id'''
+        print subtree_id
         children = self.get_children( subtree_id )
         if children == []:
             return (0, 0)
@@ -759,14 +820,14 @@ class DB:
             create_query += col_descr
         create_query += ');'
             
-        self.cursor.execute( create_query )
+        self.cursor.execute( create_query.encode('utf-8') )
 
     def insert_data( self, tablename, filename ):
-        # TODO:
-        insert_query = '''COPY %s
-                          FROM '%s' ''' % (tablename, filename)
-        print insert_query
-        self.cursor.execute( insert_query )
+        #insert_query = '''COPY %s
+        #                  FROM '%s' ''' % (tablename, filename)
+        f = open( filename, 'rb' )
+        self.cursor.copy_from( f, tablename, sep=';', null='\N' )
+        #self.cursor.execute( insert_query )
 
     def remove_data( self, tablename, min_id=None, max_id=None ):
         if min_id is None and max_id is None:
@@ -783,9 +844,12 @@ class DB:
         self.cursor.execute( query.encode('utf-8') )
 
     def insert_ptree_list( self, id, parents ):
-        query = '''INSERT INTO p_tree (id, parents)
-                   VALUES (%s, {%s}); COMMIT;
-                ''' % (id, parents)
+        parents_str = '{%s}' % parents if parents is not None else None
+        obj = {
+            'id': id,
+            'parents': parents_str
+        }
+        query = self.modify_insert_query( 'p_tree', obj.keys(), obj )
         self.cursor.execute( query.encode('utf-8') )
 
     def remove_ptree_list( self, id ):
@@ -793,6 +857,46 @@ class DB:
                    WHERE id = %s
                 ''' % id
         self.cursor.execute( query.encode('utf-8') )
+
+    def get_higher_dbtree( self, id ):
+        query = '''SELECT id FROM dbtree
+                   WHERE id > %s
+                ''' % id
+        self.cursor.execute( query.encode('utf-8') )
+        return self.cursor.fetchall()
+
+    def get_higher_hierarchy( self, endpoint ):
+        query = '''SELECT endpoint FROM hierarchy
+                   WHERE endpoint > '%s'
+                ''' % endpoint
+        self.cursor.execute( query.encode('utf-8') )
+        return self.cursor.fetchall()
+
+    def get_higher_ptree( self, id ):
+        query = '''SELECT id FROM p_tree
+                   WHERE id > %s
+                ''' % id
+        self.cursor.execute( query.encode('utf-8') )
+        return self.cursor.fetchall()
+
+    def remove_higher_dbtree( self, id ):
+        query = '''DELETE FROM dbtree
+                   WHERE id > %s
+                ''' % id
+        self.cursor.execute( query.encode('utf-8') )
+
+    def remove_higher_hierarchy( self, endpoint ):
+        query = '''DELETE FROM hierarchy
+                   WHERE endpoint > '%s'
+                ''' % endpoint
+        self.cursor.execute( query.encode('utf-8') )
+
+    def remove_higher_ptree( self, id ):
+        query = '''DELETE FROM p_tree
+                   WHERE id > %s
+                ''' % id
+        self.cursor.execute( query.encode('utf-8') )
+
 
 def get_cursor(conf):
     from ConfigParser import ConfigParser

@@ -1,6 +1,7 @@
 {
     "name": "BUDŻET",
     "description": "BUDŻET POLSKI",
+    "label": "Budżet RP",
     "columns": [
         {
             "key": "gdje",
@@ -88,12 +89,12 @@
         {
             "name": "Budżety",
             "label": null,
-            "descr": "Budżety państw"
+            "description": "Budżety państw"
         },
         {
             "name": "Budżety Europy",
             "label": null,
-            "descr": "Budżety państw europejskich"
+            "description": "Budżety państw europejskich"
         }
     ]
 }
