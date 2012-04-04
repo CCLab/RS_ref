@@ -237,14 +237,12 @@ class BasicUploader:
         else:
             id_map = self.upload_data( endpoint )
         self.update_ptree( id_map )
+        self.sum_columns( endpoint )
 
         self.db.set_max_data_id( id_map.get_last_id() )
 
         #except Exception as e:
         #    self.remove_uploaded( init_endpoint_id, init_dbtree_id, init_data_id, endpoint )
-
-        #self.debug_restore()
-
         print 'DONE'
 
     def debug_restore( self ):
@@ -332,7 +330,7 @@ class BasicUploader:
                 top_rows.append( new_rows[0] )
             data += new_rows
         total_row_id = id_map.add_id( ['Total'] )
-        data.append( self.create_total_row( top_rows, total_row_id ) )
+        data.append( self.create_total_row( top_rows[0], total_row_id ) )
 
         import os
         filename = "upload_data.csv"
@@ -372,6 +370,42 @@ class BasicUploader:
         for key, child in act_parent.iteritems():
             if key != '__id__':
                 self.update_ptree_helper( child, parents_ids + [ str(act_id) ] )
+
+    def sum_columns( self, endpoint ):
+        summable_columns = ['id', 'parent'] +\
+                [ col['key'] for col in self.meta.get_columns() if col['type'] == 'number' ]
+
+        nodes = self.db.get_leaves( endpoint )
+        while nodes != []:
+            summed_values = self.sum_values_in_nodes( nodes, summable_columns )
+            for ( id, value ) in summed_values.iteritems():
+                # summable_columns[2:] - remove id and parent keys
+                conds = {'id': id} if id is not None else {'type': 'Total'}
+                self.db.update_node( endpoint, summable_columns[2:], value, conds )
+                
+            if None in summed_values:
+                del summed_values[ None ]
+            parents = summed_values.keys()
+            nodes = self.db.get_nodes( endpoint, parents )
+
+        # sum total row
+        #nodes = self.db.get_top_level( endpoint )
+        #summed_values = sum_values_in_nodes( nodes, summable_columns )
+        #self.db.update_node( endpoint, summed_values, {'name': 'Total'} )
+
+    def sum_values_in_nodes( self, nodes, summable_columns ):
+        summed_values = {}
+        for n in nodes:
+            parent_id = n['parent']
+            if parent_id not in summed_values:
+                summed_values[ parent_id ] = {}
+            for col in summable_columns:
+                try:
+                    summed_values[ parent_id ][ col ] += n[ col ]
+                except:
+                    summed_values[ parent_id ][ col ] = n[ col ]
+
+        return summed_values
 
     def set_counters( self, endpoint_id, dbtree_id, data_id ):
         self.db.set_max_endpoint( endpoint_id )
@@ -584,7 +618,7 @@ class BasicUploader:
         self.db.update_dbtree_depth( subtree_id, min_depth, max_depth )
         return ( min_depth, max_depth )
 
-    def create_total_row( self, top_rows, total_row_id ):
+    def create_total_row( self, top_row, total_row_id ):
         total_row = [
             total_row_id,
             None,
@@ -592,20 +626,13 @@ class BasicUploader:
             'Ogółem',
             True
         ]
-        for value in top_rows[0][5:]:
+        for value in top_row[5:]:
             if value is None:
                 total_row.append( value )
             elif isinstance( value, basestring ):
                 total_row.append( '' )
             else: # number value
                 total_row.append( 0 )
-
-        row_len = len( total_row )
-        for row in top_rows:
-            for i in range(5, row_len):
-                value = row[ i ]
-                if not isinstance( value, basestring ) and value is not None:
-                    total_row[ i ] += value
 
         return total_row
 
@@ -814,6 +841,50 @@ class DB:
 
         return act_node
 
+    def get_top_level( self, endpoint ):
+        query = '''SELECT * FROM %s WHERE parent is NULL''' % endpoint
+        self.cursor.execute( query.encode('utf-8') )
+
+        return self.cursor.fetchall()
+
+    def get_leaves( self, endpoint ):
+        query = '''SELECT * FROM %s WHERE leaf = True''' % endpoint
+        self.cursor.execute( query.encode('utf-8') )
+
+        return self.cursor.fetchall()
+
+    def get_nodes( self, endpoint, parents ):
+        if parents == []:
+            return []
+
+        parents_str = ','.join( [ str(p) for p in parents ] )
+        query = '''SELECT * FROM %s
+                   WHERE id IN (%s)
+                ''' % ( endpoint, parents_str )
+        print query
+        self.cursor.execute( query.encode('utf-8') )
+
+        return self.cursor.fetchall()
+        
+
+    def update_node( self, endpoint, keys, value, where ):
+        query = '''UPDATE %s SET ''' % endpoint
+        for k in keys:
+            query += '%s = (%s + %s), ' % ( k, k, value[k] )
+
+        query = query[:-2] # remove last AND
+
+        query += ' WHERE '
+        for k, where_value in where.iteritems():
+            if isinstance( where_value, basestring ):
+                query += '''%s = '%s' AND ''' % (k, where_value )
+            else:
+                query += '%s = %s AND ' % (k, where_value )
+        query = query[:-4] # remove last AND
+        query += '; COMMIT;'
+
+        self.cursor.execute( query.encode('utf-8') )
+
     def get_or_create_node( self, node, par_id ):
         name = node['name']
         select_query = '''SELECT * FROM dbtree
@@ -875,11 +946,8 @@ class DB:
         self.cursor.execute( create_query.encode('utf-8') )
 
     def insert_data( self, tablename, filename ):
-        #insert_query = '''COPY %s
-        #                  FROM '%s' ''' % (tablename, filename)
         f = open( filename, 'rb' )
         self.cursor.copy_from( f, tablename, sep=';', null='\N' )
-        #self.cursor.execute( insert_query )
 
     def remove_data( self, tablename, min_id=None, max_id=None ):
         if min_id is None and max_id is None:
