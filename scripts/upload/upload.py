@@ -280,12 +280,12 @@ class BasicUploader:
         endpoint_id = self.db.gen_endpoint_id()
         node['endpoint'] = 'data_' + str( endpoint_id )
         node['id'] = self.db.gen_dbtree_id()
-        parents_ids.append( node['id'] )
         node['parent'] = None if parents_ids == [] else parents_ids[-1]
+        parents_ids.append( node['id'] )
         node['max_depth'] = node['min_depth'] = 0
         node['visible'] = True
         self.db.insert_tree_node( node )
-        self.db.update_depths( parents_ids[0] )
+        self.update_depths( parents_ids[0] )
 
         return node['endpoint']
 
@@ -315,19 +315,24 @@ class BasicUploader:
         bulk = self.receiver.get_all_rows()
         self.db.remove_table( endpoint )
 
-        columns = map( lambda t: ( t['label'], t['type'] ), self.get_non_hierarchy_columns() )
+        columns = map( lambda t: ( t['key'], t['type'] ), self.get_non_hierarchy_columns() )
         self.db.create_table( endpoint, columns )
 
         data = []
         start_id = self.db.get_max_data_id()
         id_map = IdMap( start_id )
         hierarchy = self.meta.get_hierarchy()
+        top_rows = []
         if has_header:
             del bulk[0]
         for row in bulk:
             hierarchy_in_row = self.get_hierarchy_cols( row )
             new_rows = self.add_rows( id_map, hierarchy_in_row, row )
+            if new_rows[0][1] is None: # if parent is none == is top row
+                top_rows.append( new_rows[0] )
             data += new_rows
+        total_row_id = id_map.add_id( ['Total'] )
+        data.append( self.create_total_row( top_rows, total_row_id ) )
 
         import os
         filename = "upload_data.csv"
@@ -502,7 +507,9 @@ class BasicUploader:
 
     def insert_hierarchy( self, hierarchy_values, row, level, id, par_id, is_leaf ):
         hierarchy_col = self.meta.get_hierarchy_column( level )
-        if hierarchy_col['aux']:
+        if hierarchy_values[0] == '':
+            row_type = 'Empty'
+        elif hierarchy_col['aux']:
             row_type = hierarchy_col['label'] + ' ' + hierarchy_values[1]
         else:
             row_type = hierarchy_col['label']
@@ -549,6 +556,58 @@ class BasicUploader:
             if dec.lower() == 'y':
                 self.db.remove_higher_ptree( init_data_id )
                 print 'Removed wrong ptree nodes'
+
+        tables_names = self.db.get_higher_datatables( init_endpoint_id )
+        if tables_names != []:
+            print 'Found too many tables, higher than %d' % init_endpoint_id
+            print 'Do you want to remove them? (Y/N)'
+            dec = raw_input('Your decision: ')
+            if dec.lower() == 'y':
+                self.db.drop_higher_datatables( init_endpoint_id )
+                print 'Removed wrong data tables:'
+                for tname in tables_names:
+                    print 'Removed table', tname
+
+    def update_depths( self, subtree_id ):
+        '''Update depths in subtree which root has subtree_id'''
+        children = self.db.get_children( subtree_id )
+        if children == []:
+            return (0, 0)
+
+        min_depth = 1000
+        max_depth = 0
+        for child in children:
+            (child_min, child_max) = self.update_depths( child['id'] )
+            min_depth = min( min_depth, child_min + 1 )
+            max_depth = max( max_depth, child_max + 1 )
+
+        self.db.update_dbtree_depth( subtree_id, min_depth, max_depth )
+        return ( min_depth, max_depth )
+
+    def create_total_row( self, top_rows, total_row_id ):
+        total_row = [
+            total_row_id,
+            None,
+            'Total',
+            'Ogółem',
+            True
+        ]
+        for value in top_rows[0][5:]:
+            if value is None:
+                total_row.append( value )
+            elif isinstance( value, basestring ):
+                total_row.append( '' )
+            else: # number value
+                total_row.append( 0 )
+
+        row_len = len( total_row )
+        for row in top_rows:
+            for i in range(5, row_len):
+                value = row[ i ]
+                if not isinstance( value, basestring ) and value is not None:
+                    total_row[ i ] += value
+
+        return total_row
 
 
 class IdMap:
@@ -742,8 +801,11 @@ class DB:
         self.cursor.execute( query.encode('utf-8') )
 
     def get_endpoint_columns( self, endpoint ):
-        # TODO
-        pass
+        query = '''SELECT * FROM columns
+                   WHERE '%s' = ANY(endpoints)
+                ''' % endpoint
+        self.cursor.execute( query.encode('utf-8') )
+        return self.cursor.fetchall()
 
     def get_top_parent( self, id ):
         act_node = self.get_node( id )
@@ -780,21 +842,11 @@ class DB:
 
         return db_node
 
-    def update_depths( self, subtree_id ):
-        '''Update depths in subtree which root has subtree_id'''
-        print subtree_id
-        children = self.get_children( subtree_id )
-        if children == []:
-            return (0, 0)
-
-        min_depth = 1000
-        max_depth = 0
-        for child in children:
-            (child_min, child_max) = self.update_depths( child['id'] )
-            min_depth = min( min_depth, child_min + 1 )
-            max_depth = max( max_depth, child_max + 1 )
-
-        return ( min_depth, max_depth )
+    def update_dbtree_depth( self, id, min_depth, max_depth ):
+        query = '''UPDATE dbtree SET min_depth = %s, max_depth = %s
+                   WHERE id = %s''' % ( min_depth, max_depth, id )
+        
+        self.cursor.execute( query.encode('utf-8') )
 
     def remove_table( self, tablename ):
         query = '''DROP TABLE IF EXISTS %s;''' % tablename
@@ -896,6 +948,29 @@ class DB:
                    WHERE id > %s
                 ''' % id
         self.cursor.execute( query.encode('utf-8') )
+
+    def get_higher_datatables( self, endpoint_id ):
+        query = '''SELECT table_name FROM information_schema.tables
+                   WHERE table_name ILIKE 'data_%' '''
+        self.cursor.execute( query.encode('utf-8') )
+        names = self.cursor.fetchall()
+        
+        filtered_names = []
+        for name in names:
+            splitted = name['table_name'].split('_')
+            try:
+                if len( splitted ) != 2 and int( splitted[1] ) > endpoint_id:
+                    filtered_names.append( name['table_name'] )
+            except:
+                pass
+
+        return filtered_names
+
+    def drop_higher_datatables( self, endpoint_id ):
+        names = self.get_higher_datatables( endpoint_id )
+        for name in names:
+            query = '''DROP TABLE %s''' % name
+            self.cursor.execute( query.encode('utf-8') )
 
 
 def get_cursor(conf):
