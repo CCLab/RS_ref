@@ -12,6 +12,7 @@ from collections import deque
 from exceptions import StopIteration
 from csv import reader as csvreader
 from copy import deepcopy
+import os
 import simplejson as json
 
 class BasicReader:
@@ -221,32 +222,49 @@ class BasicUploader:
         self.db = db
 
     def upload( self, lazy=False ):
+        # TODO: check why debug restore causes problems
         self.debug_restore()
         init_endpoint_id = self.db.get_max_endpoint()
         init_dbtree_id = self.db.get_max_dbtree_id()
         init_data_id = self.db.get_max_data_id()
-        endpoint = None # if try is not commented, this makes sense
-        print init_endpoint_id, init_dbtree_id, init_data_id
-        #try:
+        print 'Checking db counters...'
         self.check_db_counters( init_endpoint_id, init_dbtree_id, init_data_id )
-        endpoint = self.update_dbtree()
-        self.update_hierarchy( endpoint )
-        self.update_columns( endpoint )
-        if lazy:
-            id_map = self.upload_data_stream( endpoint )
-        else:
-            id_map = self.upload_data( endpoint )
-        self.update_ptree( id_map )
-        self.sum_columns( endpoint )
 
-        self.db.set_max_data_id( id_map.get_last_id() )
+        print 'Checking metadata correctness...',
+        try:
+            self.check_correctness()
+        except UploadDataException as e:
+            print e.get_error()
+            exit( 0 )
+        print 'correct.'
 
-        #except Exception as e:
-        #    self.remove_uploaded( init_endpoint_id, init_dbtree_id, init_data_id, endpoint )
-        print 'DONE'
+        endpoint = None
+        print 'Trying to insert data in db...',
+        try:
+            endpoint = self.update_dbtree()
+            self.update_hierarchy( endpoint )
+            self.update_columns( endpoint )
+            if lazy:
+                id_map = self.upload_data_stream( endpoint )
+            else:
+                id_map = self.upload_data( endpoint )
+                self.sum_columns( endpoint )
+                self.db.set_max_data_id( id_map.get_last_id() )
+
+            self.update_ptree( id_map )
+        except Exception as e:
+            print e
+            self.remove_uploaded( init_endpoint_id, init_dbtree_id, init_data_id, endpoint )
+            exit( 0 )
+        print 'done.'
+
+    def check_correctness( self ):
+        self.check_dbtree()
+        self.check_columns()
+        self.check_hierarchy()
 
     def debug_restore( self ):
-        safe_endpoint_id = 50009
+        safe_endpoint_id = 50010
         safe_dbtree_id = 1016
         safe_data_id = 1000067180
         endpoint = 'data_' + str( safe_endpoint_id )
@@ -256,40 +274,45 @@ class BasicUploader:
         parent_nodes = self.meta.get_parents()
 
         parents_ids = []
+        last_parent_id = None
         for parent in parent_nodes:
-            last_parent_id = None if parents_ids == [] else parents_ids[-1]
             parent_node = self.db.get_child( last_parent_id, parent['name'] )
             if parent_node is None:
                 parent_node = {
+                    'id': self.db.gen_dbtree_id(),
+                    'parent': last_parent_id,
                     'name': parent['name'],
                     'label': None,
                     'description': parent['description'],
-                    'endpoint': None
+                    'endpoint': None,
+                    'max_depth': 0,
+                    'min_depth': 0,
+                    'visible': True
                 }
-                parent_node['id'] = self.db.gen_dbtree_id()
-                parent_node['parent'] = last_parent_id
-                parent_node['max_depth'] = parent_node['min_depth'] = 0
-                parent_node['visible'] = True
                 self.db.insert_tree_node( parent_node )
 
-            parents_ids.append( parent_node['id'] )
+            last_parent_id = parent_node['id']
+            parents_ids.append( last_parent_id )
 
-        node = deepcopy( self.meta.get_node() )
         endpoint_id = self.db.gen_endpoint_id()
-        node['endpoint'] = 'data_' + str( endpoint_id )
-        node['id'] = self.db.gen_dbtree_id()
-        node['parent'] = None if parents_ids == [] else parents_ids[-1]
+        node = {
+            'id': self.db.gen_dbtree_id(),
+            'parent': last_parent_id,
+            'name': self.meta.get_node()['name'],
+            'label': self.meta.get_node()['label'],
+            'description': self.meta.get_node()['description'],
+            'endpoint': 'data_' + str( endpoint_id ),
+            'max_depth': 0,
+            'min_depth': 0,
+            'visible': True
+        }
         parents_ids.append( node['id'] )
-        node['max_depth'] = node['min_depth'] = 0
-        node['visible'] = True
         self.db.insert_tree_node( node )
         self.update_depths( parents_ids[0] )
 
         return node['endpoint']
 
     def update_hierarchy( self, endpoint ):
-        # if any error is detected, then check_hierarchy throws an RuntimeError
-        self.check_hierarchy()
         hierarchy = self.meta.get_hierarchy()
         for (i, col) in enumerate( hierarchy ):
             if not col['aux']:
@@ -311,18 +334,17 @@ class BasicUploader:
 
     def upload_data( self, endpoint, has_header=True ):
         bulk = self.receiver.get_all_rows()
-        self.db.remove_table( endpoint )
+        if has_header:
+            del bulk[0]
 
+        self.db.remove_table( endpoint )
         columns = map( lambda t: ( t['key'], t['type'] ), self.get_non_hierarchy_columns() )
         self.db.create_table( endpoint, columns )
 
         data = []
         start_id = self.db.get_max_data_id()
         id_map = IdMap( start_id )
-        hierarchy = self.meta.get_hierarchy()
         top_rows = []
-        if has_header:
-            del bulk[0]
         for row in bulk:
             hierarchy_in_row = self.get_hierarchy_cols( row )
             new_rows = self.add_rows( id_map, hierarchy_in_row, row )
@@ -332,15 +354,14 @@ class BasicUploader:
         total_row_id = id_map.add_id( ['Total'] )
         data.append( self.create_total_row( top_rows[0], total_row_id ) )
 
-        import os
         filename = "upload_data.csv"
-        scriptpath = os.path.realpath(__file__)
+        scriptpath = os.path.realpath( __file__ )
         directory = os.path.dirname( scriptpath )
         filepath = os.path.join( directory, filename )
+        #TODO: if windows
         #filepath = filepath.replace('\\', '\\\\' )
 
         self.save_data( data, filepath )
-        open(filepath, 'rb' )
         self.db.insert_data( endpoint, filepath )
 
         return id_map
@@ -379,19 +400,14 @@ class BasicUploader:
         while nodes != []:
             summed_values = self.sum_values_in_nodes( nodes, summable_columns )
             for ( id, value ) in summed_values.iteritems():
-                # summable_columns[2:] - remove id and parent keys
                 conds = {'id': id} if id is not None else {'type': 'Total'}
+                # summable_columns[2:] - remove id and parent keys
                 self.db.update_node( endpoint, summable_columns[2:], value, conds )
                 
             if None in summed_values:
                 del summed_values[ None ]
             parents = summed_values.keys()
             nodes = self.db.get_nodes( endpoint, parents )
-
-        # sum total row
-        #nodes = self.db.get_top_level( endpoint )
-        #summed_values = sum_values_in_nodes( nodes, summable_columns )
-        #self.db.update_node( endpoint, summed_values, {'name': 'Total'} )
 
     def sum_values_in_nodes( self, nodes, summable_columns ):
         summed_values = {}
@@ -415,7 +431,6 @@ class BasicUploader:
     def remove_uploaded( self, endpoint_id, dbtree_id, data_id, endpoint ):
         # if something bad happens during data insertion, remove inserted data
         act_dbtree_id = self.db.get_max_dbtree_id()
-        #TODO: act_dbtree_id = 1300
         act_data_id = self.db.get_max_data_id()
         for id in range( act_dbtree_id, dbtree_id, -1 ):
             self.db.remove_tree_node( id )
@@ -445,6 +460,39 @@ class BasicUploader:
 
         return non_hierarchy_columns
 
+    def check_dbtree( self ):
+        node_fields = ['name', 'description', 'label']
+        parent_fields = ['name', 'description']
+        
+        node = self.meta.get_node()
+        for field in node_fields:
+            if field not in node:
+                msg = 'Missing field %s in description file.' % field
+                raise UploadDataException( msg )
+           
+        parents = self.meta.get_parents()
+        for (i, parent) in enumerate( parents ):
+            for field in parent_fields:
+                if field not in parent:
+                    msg = 'Missing field %s in parent nr %d.' % ( field, i )
+                    raise UploadDataException( msg )
+
+    def check_columns( self ):
+        obligatory_fields = ['key', 'label', 'format', 'type']
+        possible_types = ['string', 'number']
+        columns = self.meta.get_columns()
+        for col in columns:
+            for field in obligatory_fields:
+                if field not in col:
+                    msg = 'Missing field %s in column %s.' % ( field, col['key'] )
+                    raise UploadDataException( msg )
+
+            if col['type'] not in possible_types:
+                msg = 'Unknown type %s in column %s.' % ( col['type'], col['key'] )
+                raise UploadDataException( msg )
+
+        # TODO: check also types
+
     def check_hierarchy( self ):
         hierarchy_labels = [ t['label'] for t in self.meta.get_hierarchy() ]
         hierarchy_labels = []
@@ -460,7 +508,7 @@ class BasicUploader:
         for label in hierarchy_labels:
             if label not in columns_labels:
                 msg = "hierarchy column %s not in column labels." % label
-                raise RuntimeError( msg.encode('utf-8') )
+                raise UploadDataException( msg.encode('utf-8') )
 
     def get_hierarchy_indexes_pairs( self ):
         hierarchy = self.meta.get_hierarchy()
@@ -670,6 +718,17 @@ class IdMap:
         return self.act_id
 
 
+class UploadDataException( Exception ):
+    def __init__( self, msg ):
+        self.msg = msg
+
+    def __str__( self ):
+        return 'UploadDataException: ' + self.msg
+
+    def get_error( self ):
+        return self.msg
+
+
 class DB:
     def __init__( self, cursor=None, conf=None):
         self.cursor = cursor if cursor is not None else get_cursor( conf )
@@ -861,7 +920,6 @@ class DB:
         query = '''SELECT * FROM %s
                    WHERE id IN (%s)
                 ''' % ( endpoint, parents_str )
-        print query
         self.cursor.execute( query.encode('utf-8') )
 
         return self.cursor.fetchall()
