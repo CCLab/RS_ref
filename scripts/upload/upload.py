@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#-*- coding: utf-8 -*-
 
 '''
 Modifications:
@@ -264,11 +264,10 @@ class BasicUploader:
         self.check_hierarchy()
 
     def debug_restore( self ):
-        safe_endpoint_id = 50010
+        safe_endpoint_id = 50009
         safe_dbtree_id = 1016
         safe_data_id = 1000067180
-        endpoint = 'data_' + str( safe_endpoint_id )
-        self.remove_uploaded( safe_endpoint_id, safe_dbtree_id, safe_data_id, endpoint )
+        self.remove_uploaded( safe_endpoint_id, safe_dbtree_id, safe_data_id )
 
     def update_dbtree( self ):
         parent_nodes = self.meta.get_parents()
@@ -428,16 +427,18 @@ class BasicUploader:
         self.db.set_max_dbtree_id( dbtree_id )
         self.db.set_max_data_id( data_id )
 
-    def remove_uploaded( self, endpoint_id, dbtree_id, data_id, endpoint ):
+    def remove_uploaded( self, endpoint_id, dbtree_id, data_id ):
         # if something bad happens during data insertion, remove inserted data
         act_dbtree_id = self.db.get_max_dbtree_id()
         act_data_id = self.db.get_max_data_id()
+        act_endpoint_id = self.db.get_max_endpoint()
         for id in range( act_dbtree_id, dbtree_id, -1 ):
             self.db.remove_tree_node( id )
 
-        if endpoint is not None:
+        for id in range( endpoint_id + 1, act_endpoint_id + 1 ):
+            endpoint = 'data_' + str( id )
             self.db.remove_hierarchy( endpoint )
-            #self.db.remove_columns( endpoint )
+            self.db.remove_columns( endpoint )
             self.db.remove_data( endpoint )
 
         for id in range( data_id + 1, act_data_id + 1 ):
@@ -858,6 +859,18 @@ class DB:
                 ''' % endpoint
         self.cursor.execute( query.encode('utf-8') )
 
+    def remove_columns( self, endpoint ):
+        query = '''SELECT endpoints,key,type FROM columns
+                       WHERE '%s' = ANY( endpoints )
+                    ''' % endpoint
+        self.cursor.execute( query.encode('utf-8') )
+        columns = self.cursor.fetchall()
+
+        for col in columns:
+            old_endpoints = col['endpoints']
+            new_endpoints = [end for end in old_endpoints if end != endpoint ]
+            self.update_column_endpoints( old_endpoints, new_endpoints, col['key'], col['type'] )
+
     def get_column( self, name, type ):
         query = '''SELECT * FROM columns
                    WHERE key = '%s' AND type = '%s'
@@ -878,12 +891,17 @@ class DB:
                 ''' % db_column
         self.cursor.execute( query.encode('utf-8') )
 
-    def update_column_endpoints( self, old_endpoints, new_endpoints, name, type ):
+    def update_column_endpoints( self, old_endpoints, new_endpoints, key, type ):
         old_endpoints_str = ', '.join( old_endpoints )
-        new_endpoints_str = ', '.join( new_endpoints )
-        query = '''UPDATE columns SET endpoints = '{%s}'
-                   WHERE endpoints = '{%s}' AND key = '%s' AND type = '%s'; COMMIT;
-                ''' % ( new_endpoints_str, old_endpoints_str, name, type )
+        if new_endpoints != []:
+            new_endpoints_str = ', '.join( new_endpoints )
+            query = '''UPDATE columns SET endpoints = '{%s}'
+                       WHERE endpoints = '{%s}' AND key = '%s' AND type = '%s'; COMMIT;
+                    ''' % ( new_endpoints_str, old_endpoints_str, key, type )
+        else:
+            query = '''DELETE FROM columns
+                       WHERE endpoints = '{%s}' AND key = '%s' AND type = '%s'; COMMIT;
+                    ''' % ( old_endpoints_str, key, type )
         self.cursor.execute( query.encode('utf-8') )
 
     def get_endpoint_columns( self, endpoint ):
