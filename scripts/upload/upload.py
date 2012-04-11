@@ -221,8 +221,8 @@ class BasicUploader:
         self.meta = meta
         self.db = db
 
-    def upload( self, lazy=False ):
-        # TODO: check why debug restore causes problems
+    def upload( self, lazy=False, has_header=True ):
+        # restore db state to a state before a recent data insertion
         self.debug_restore()
         init_endpoint_id = self.db.get_max_endpoint()
         init_dbtree_id = self.db.get_max_dbtree_id()
@@ -254,9 +254,23 @@ class BasicUploader:
             self.update_ptree( id_map )
         except Exception as e:
             print e
-            self.remove_uploaded( init_endpoint_id, init_dbtree_id, init_data_id, endpoint )
+            self.remove_uploaded( init_endpoint_id, init_dbtree_id, init_data_id )
             exit( 0 )
         print 'done.'
+        '''
+        endpoint = self.update_dbtree()
+        self.update_hierarchy( endpoint )
+        self.update_columns( endpoint )
+        if lazy:
+            id_map = self.upload_data_stream( endpoint )
+        else:
+            id_map = self.upload_data( endpoint, has_header=has_header )
+            self.sum_columns( endpoint )
+            self.db.set_max_data_id( id_map.get_last_id() )
+
+        self.update_ptree( id_map )
+        print 'done.'
+        '''
 
     def check_correctness( self ):
         self.check_dbtree()
@@ -346,6 +360,10 @@ class BasicUploader:
         top_rows = []
         for row in bulk:
             hierarchy_in_row = self.get_hierarchy_cols( row )
+            # clear empty fields from hierarchy columns
+            while len( hierarchy_in_row ) > 0 and hierarchy_in_row[-1][0] == '':
+                hierarchy_in_row.pop()
+        
             new_rows = self.add_rows( id_map, hierarchy_in_row, row )
             if new_rows[0][1] is None: # if parent is none == is top row
                 top_rows.append( new_rows[0] )
@@ -517,14 +535,21 @@ class BasicUploader:
         
         ind_obj = {}
         for (i, col) in enumerate( columns ):
-            ind_obj[ col['label'] ] = i
+            try:
+                ind_obj[ col['label'] ].append( i )
+            except KeyError:
+                ind_obj[ col['label'] ] = [ i ]
 
         indexes_pairs = []
         for col in hierarchy:
+            first_ind = ind_obj[ col['label'] ][0]
+            ind_obj[ col['label'] ] = ind_obj[ col['label'] ][1:]
             if col['aux']:
-                ind = ( ind_obj[ col['label'] ], ind_obj[ col['aux_label'] ] )
+                second_ind = ind_obj[ col['aux_label'] ][0]
+                ind_obj[ col['aux_label'] ] = ind_obj[ col['aux_label'] ][1:]
+                ind = ( first_ind, second_ind )
             else:
-                ind = ( ind_obj[ col['label'] ], )
+                ind = ( first_ind, )
             indexes_pairs.append( ind )
 
         return indexes_pairs
@@ -550,7 +575,7 @@ class BasicUploader:
                 hierarchy_cols.append( (row[ ind[0] ],) )
             else:  # if there is an aux column
                 hierarchy_cols.append( (row[ ind[0] ], row[ ind[1] ]) )
-        
+
         return hierarchy_cols
 
     def add_rows( self, id_map, hierarchy_in_row, row ):
@@ -622,6 +647,8 @@ class BasicUploader:
             if dec.lower() == 'y':
                 self.db.remove_higher_dbtree( init_dbtree_id )
                 print 'Removed wrong dbtree nodes'
+        else:
+            print 'Dbtree correct'
 
         endpoint = 'data_' + str( init_endpoint_id )
         if self.db.get_higher_hierarchy( endpoint ) != []:
@@ -631,6 +658,10 @@ class BasicUploader:
             if dec.lower() == 'y':
                 self.db.remove_higher_hierarchy( endpoint )
                 print 'Removed wrong hierarchy columns'
+        else:
+            print 'Hierarchy correct'
+
+        # TODO: check if there are columns for endpoints with too high id
 
         if self.db.get_higher_ptree( init_data_id ) != []:
             print 'Found wrong ptree nodes, higher than %d' % init_data_id
@@ -639,6 +670,8 @@ class BasicUploader:
             if dec.lower() == 'y':
                 self.db.remove_higher_ptree( init_data_id )
                 print 'Removed wrong ptree nodes'
+        else:
+            print 'Ptree correct'
 
         tables_names = self.db.get_higher_datatables( init_endpoint_id )
         if tables_names != []:
@@ -650,6 +683,8 @@ class BasicUploader:
                 print 'Removed wrong data tables:'
                 for tname in tables_names:
                     print 'Removed table', tname
+        else:
+            print 'Data tables correct'
 
     def update_depths( self, subtree_id ):
         '''Update depths in subtree which root has subtree_id'''
@@ -1202,13 +1237,15 @@ def csv_test():
     print creader.get_all_rows()
 
 def full_test():
-    freader = FileReader( 'data.csv' )
+    #freader = FileReader( 'data.csv' )
+    freader = FileReader( 'data_0_0_2011.csv' )
     creader = CSVDataReceiver( freader )
-    meta_freader = FileReader( 'hier.json' )
+    #meta_freader = FileReader( 'hier.json' )
+    meta_freader = FileReader( 'hier_0_0_2011.json' )
     meta = Meta( meta_freader )
     db = DB( conf='db.conf' )
     uploader = BasicUploader( creader, meta, db )
-    uploader.upload()
+    uploader.upload( has_header=False )
 
 if __name__ == '__main__':
     #ureader_test()

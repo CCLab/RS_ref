@@ -1,0 +1,176 @@
+{
+    "name": "2011",
+    "description": null,
+    "label": "Budżet księgowy 2011",
+    "columns": [
+        {
+            "key": null,
+            "label": "Część",
+            "format": null,
+            "type": "string"
+        },
+        {
+            "key": null,
+            "label": "Numer części",
+            "format": null,
+            "type": "string"
+        },
+        {
+            "key": null,
+            "label": "Część",
+            "format": null,
+            "type": "string"
+        },
+        {
+            "key": null,
+            "label": "Numer części",
+            "format": null,
+            "type": "string"
+        },
+        {
+            "key": null,
+            "label": "Dział",
+            "format": null,
+            "type": "string"
+        },
+        {
+            "key": null,
+            "label": "Numer działu",
+            "format": null,
+            "type": "string"
+        },
+        {
+            "key": null,
+            "label": "Rozdział",
+            "format": null,
+            "type": "string"
+        },
+        {
+            "key": null,
+            "label": "Numer rozdziału",
+            "format": null,
+            "type": "string"
+        },
+        {
+            "key": null,
+            "label": "Podrozdział",
+            "format": null,
+            "type": "string"
+        },
+        {
+            "key": null,
+            "label": "Numer podrozdziału",
+            "format": null,
+            "type": "string"
+        },
+        {
+            "key": "dot_sub",
+            "label": "Dotacje i subwencje",
+            "format": "# ##0",
+            "basic": false,
+            "type": "number",
+            "processable": true
+        },
+        {
+            "key": "swiad_fiz",
+            "label": "Świadczenia na rzecz osób fizycznych",
+            "format": "# ##0",
+            "basic": false,
+            "type": "number",
+            "processable": true
+        },
+        {
+            "key": "wyd_jednostek",
+            "label": "Wydatki bieżące jednostek budżetowych",
+            "format": "# ##0",
+            "basic": false,
+            "type": "number",
+            "processable": true
+        },
+        {
+            "key": "wyd_majatk",
+            "label": "Wydatki majątkowe",
+            "format": "# ##0",
+            "basic": false,
+            "type": "number",
+            "processable": true
+        },
+        {
+            "key": "wyd_dlug",
+            "label": "Wydatki na obsługę długu Skarbu Państwa",
+            "format": "# ##0",
+            "basic": false,
+            "type": "number",
+            "processable": true
+        },
+        {
+            "key": "wspolfin_eu",
+            "label": "Współfinansowanie projektów z udziałem środków Unii Europejskiej",
+            "format": "# ##0",
+            "basic": false,
+            "type": "number",
+            "processable": true
+        },
+        {
+            "key": "sw_eu",
+            "label": "Środki własne Unii Europejskiej",
+            "format": "# ##0",
+            "basic": false,
+            "type": "number",
+            "processable": true
+        },
+        {
+            "key": "v_total",
+            "label": "Ogółem (w tys. zł.)",
+            "format": "# ##0",
+            "basic": true,
+            "type": "number",
+            "processable": true
+        }
+    ],
+    "hierarchy": [
+        {
+            "label": "Część",
+            "aux": true,
+            "aux_label": "Numer części"
+        },
+        {
+            "label": "Część",
+            "aux": true,
+            "aux_label": "Numer części"
+        },
+        {
+            "label": "Dział",
+            "aux": true,
+            "aux_label": "Numer działu"
+        },
+        {
+            "label": "Rozdział",
+            "aux": true,
+            "aux_label": "Numer rozdziału"
+        },
+        {
+            "label": "Podrozdział",
+            "aux": true,
+            "aux_label": "Numer podrozdziału"
+        }
+    ],
+    "parents": [
+        {
+            "name": "Budżet centralny",
+            "label": null,
+            "description": "Centralny budżet RP"
+        },
+        {
+            "name": "Budżet księgowy_TEST",
+            "label": null,
+            "description": "Układ tradycyjny (księgowy) budżetu"
+        },
+        {
+            "name": "Ustawa budżetowa_TEST",
+            "label": null,
+            "description": "Treść ustawy budżetowej"
+        }
+    ]
+}
+
