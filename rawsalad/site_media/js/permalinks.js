@@ -311,7 +311,7 @@ var _permalinks = (function () {
             
             if ( box['context'] ) {
                 last_ancestor = ancestors[ancestors.length - 1];
-                children = _tree.get_children_nodes( data_tree, last_ancestor['id'] );
+                children = _tree.get_nonempty_children_nodes( data_tree, last_ancestor['id'] );
                 nodes_in_box = nodes_in_box.concat( children );
             } else {
                 box['rows'].forEach( function ( row ) {
@@ -319,7 +319,12 @@ var _permalinks = (function () {
                     nodes_in_box.push( node );
                 });
             }
+
             sheet_nodes = sheet_nodes.concat( nodes_in_box );
+        });
+
+        sheet_nodes = sheet_nodes.filter( function ( node ) {
+            return node['data']['type'] !== 'Empty';
         });
         
         return _tree.create_tree( sheet_nodes, 'id', 'parent' );

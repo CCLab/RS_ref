@@ -70,11 +70,13 @@ var _ui = (function () {
         };
         var prepare_rows = function( rows, columns, id_level_map ) {
             // Returns row prepared for gui(columns data + state).
-            var prepare_row = function( row, id_level_map ) {
+            var prepare_row = function( row, id_level_map, nonempty_parents ) {
                 // insert standard values
+                var nonempty_parent = nonempty_parents[ row['parent'] ] || row['parent'];
                 var new_row = {
                     'id'      : row['id'],
-                    'parent'  : row['parent'],
+                    //'parent'  : row['parent'],
+                    'parent'  : nonempty_parent,
                     'leaf'    : row['leaf'],
                     'is_open' : row['state']['is_open']
                 };
@@ -99,14 +101,18 @@ var _ui = (function () {
 
                 return new_row;
             };
-            var new_rows = [];
 
-            // create array with prepared rows
-            rows.forEach( function( row ) {
-                new_rows.push( prepare_row( row, id_level_map ) );
-            });
+            var nonempty_parents = {};
 
-            return new_rows;
+            // remove Empty nodes and create array with the rest prepared rows
+            return rows.filter( function( row ) {
+                        if ( row['data']['type'] === 'Empty' ) {
+                            nonempty_parents[ row['id'] ] = nonempty_parents[ row['parent'] ] || row['parent'];
+                        }
+                        return row['data']['type'] !== 'Empty';
+                    }).map( function( row ) {
+                        return prepare_row( row, id_level_map, nonempty_parents );
+                    });
         };
         // Return total row(if there is no total row, returns undefined).
         var prepare_total_row = function( total_row, columns ) {
@@ -181,7 +187,8 @@ var _ui = (function () {
 
         _tree.tree_to_list( sheet['data'] )
              .filter( function ( node ) {
-                 return _tree.is_filtered( sheet['data'], node['id'] );
+                 return _tree.is_filtered( sheet['data'], node['id'] ) &&
+                        node['data']['type'] !== 'Empty';
              }).forEach( function ( node ) {
                  var box;
                  var box_id;
@@ -324,7 +331,7 @@ var _ui = (function () {
 
         if ( box['breadcrumb'] ) {
             gui_breadcrumb = _tree
-                .get_parents( sheet['data'], first_row['id'] )
+                .get_nonempty_parents( sheet['data'], first_row['id'] )
                 .map( function ( node ) {
                     var node_hits = get_parent_hits( sheet['boxes'], node['id'] );
                     return prepare_row( node, columns_for_gui, node_hits );
@@ -334,7 +341,10 @@ var _ui = (function () {
         }
         if ( box['context'] ) {
             gui_rows = _tree
-                .get_children_nodes( sheet['data'], parent_id )
+                .get_nonempty_children_nodes( sheet['data'], parent_id )
+                .filter( function ( node ) {
+                    return node['data']['type'] !== 'Empty';
+                })
                 .map( function ( node ) {
                     var node_hits = hits_for_id[ node['id'] ] || [];
                     return prepare_row( node, columns_for_gui, node_hits );
@@ -396,7 +406,7 @@ var _ui = (function () {
     }
 
     function get_breadcrumb( tree, node_id ) {
-        var parents_descr = _tree.get_parents( tree, node_id )
+        var parents_descr = _tree.get_nonempty_parents( tree, node_id )
                                  .map( function ( node ) {
                                     return {
                                         'type': node['data']['type'],

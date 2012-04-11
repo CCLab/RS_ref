@@ -56,7 +56,9 @@ def get_table_data( collection, ids, columns ):
     header = get_header( collection, hierarchy, cleaned_columns )
     data = [ header ]
     for id in ids:
-        data.append( get_row( collection, id, cleaned_columns, hierarchy ) )
+        row = get_row( collection, id, cleaned_columns, hierarchy )
+        if row != []:
+            data.append( row )
     
     return data
     
@@ -85,6 +87,8 @@ def get_header( collection, hierarchy, keys ):
 # are not in columns list and convert fields to encoded strings.
 def get_row( collection, id, columns, hierarchy ):
     node = collection.get_nodes( id )[0]
+    if node['data']['type'] == 'Empty':
+        return []
     parents = collection.get_unique_parents( id )
     sorted_parents = sorted( parents, key=lambda p: p['id'] )
     path = get_hierarchy_path( node, sorted_parents )
@@ -100,15 +104,18 @@ def get_hierarchy_path( node, parents ):
     path = []
     for p in parents:
         path.append({
-            'type': p['data']['type'],
+            'type': remove_empty( p['data']['type'] ),
             'name': p['data']['name']
         })
     path.append({
-        'type': node['data']['type'],
+        'type': remove_empty( node['data']['type'] ),
         'name': node['data']['name']
     })
     
     return path
+
+def remove_empty( s ):
+    return s if s != 'Empty' else ''
     
 def decode_value( value ):
     if isinstance( value, basestring ):

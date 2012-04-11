@@ -57,7 +57,7 @@ def get_children( req ):
     parent_id = req.GET.get( 'parent_id', None )
 
     collection = sqldb.Collection( endpoint )
-    data = collection.get_children( parent_id )
+    data = collection.get_nonempty_children( parent_id )
 
     return HttpResponse( json.dumps( data ) )
 

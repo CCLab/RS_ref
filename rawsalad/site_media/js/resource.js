@@ -55,7 +55,7 @@ var _resource = (function () {
     that.get_children = function ( sheet_id, parent_id, callback ) {
         var respond = function() {
             var gui_data;
-            var children = _tree.get_children_nodes( sheet['data'], parent_id );
+            var children = _tree.get_nonempty_children_nodes( sheet['data'], parent_id );
             open_row( sheet_id, parent_id );
 
             if ( should_return ) {
@@ -484,7 +484,7 @@ var _resource = (function () {
             box['rows'].forEach( function ( row ) {
                 box_ids[ row['id'] ] = true;
             });
-            _tree.get_children_nodes( sheet['data'], parent_id ).filter( function ( row ) {
+            _tree.get_nonempty_children_nodes( sheet['data'], parent_id ).filter( function ( row ) {
                 return !_tree.get_children_number( sheet['data'], parent_id );
             }).forEach( function ( row ) {
                 that.remove_node( sheet_id, row['id'] );
@@ -612,6 +612,18 @@ var _resource = (function () {
 
                 sheet['columns'] = columns;
                 sheet_id = add_sheet( sheet );
+                if ( sheet['type'] === _enum['STANDARD'] ) {
+                    permalink_sheet['data']['ids'].forEach( function ( id ) {
+                        var branch = _tree.get_parents( sheet['data'], id );
+                        branch.push( _tree.get_node( sheet['data'], id ) );
+                        branch.filter( function ( node_copy ) {
+                            var node = _tree.get_node( sheet['data'], node_copy['id'] );
+                            return node['data']['type'] !== 'Empty';
+                        }).forEach( function ( node ) {
+                            open_row( sheet_id, node['id'] );
+                        });
+                    });
+                }
                 gui_data = prepare_table_data( sheet_id );
                 callback({
                     'tabs': that.get_sheets_labels(),
@@ -1059,7 +1071,7 @@ var _resource = (function () {
     // undefined is returned.
     function find_selected_row( sheet_id ) {
         var sheet = get_sheet( sheet_id );
-        var top_level = _tree.get_children_nodes( sheet['data'] );
+        var top_level = _tree.get_nonempty_children_nodes( sheet['data'] );
 
         var selected_id;
         var selected_nodes = top_level.filter( function ( node ) {

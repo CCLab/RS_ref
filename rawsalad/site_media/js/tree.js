@@ -50,6 +50,14 @@ var _tree = (function () {
         return that.get_node( tree, node['parent'] );
     };
 
+    that.get_nonempty_parent = function( tree, id ) {
+        var node = that.get_parent( tree, id );
+        while ( !!node && node['data']['type'] === 'Empty' ) {
+            node = that.get_parent( tree, node['id'] );
+        }
+        return node;
+    };
+
     that.get_parent_id = function( tree, id ) {
         var parent = that.get_parent( tree, id );
         return (!!parent) ? parent['id'] : undefined;
@@ -77,11 +85,29 @@ var _tree = (function () {
         }
         return tree.children( parent_id, true );
     };
+
+    that.get_nonempty_children_nodes = function( tree, parent_id ) {
+        var nonempty_children = [];
+        var children = that.get_children_nodes( tree, parent_id );
+        children.forEach( function( child ) {
+            nonempty_children.push( child );
+            if ( child['data']['type'] === 'Empty' ) {
+                nonempty_children = nonempty_children.concat( that.get_nonempty_children_nodes( tree, child['id'] ) );
+            }
+        });
+
+        return nonempty_children;
+    };
     
     that.get_parents = function( tree, id ) {
         return tree.parents( id, true );
     };
     
+    that.get_nonempty_parents = function( tree, id ) {
+        return that.get_parents( tree, id ).filter( function ( node ) {
+            return node['data']['type'] !== 'Empty';
+        });
+    };
     
     that.insert_node = function( tree, node ) {
         return tree.insertNode( node );

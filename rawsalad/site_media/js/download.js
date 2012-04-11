@@ -123,8 +123,9 @@ var _download = (function () {
             if ( box['context'] ) {
                 // all nodes on this level are needed
                 node = _tree.get_node( data, box['rows'][0]['id'] );
-                parent = _tree.get_node( data, node['parent'] );
-                nodes = _tree.get_children_nodes( data, parent );
+                //parent = _tree.get_node( data, node['parent'] );
+                parent = _tree.get_nonempty_parent( data, node['id'] );
+                nodes = _tree.get_nonempty_children_nodes( data, parent );
                 nodes.forEach( function ( node ) {
                     needed_ids[ node['id'] ] = true;
                 });
@@ -138,7 +139,7 @@ var _download = (function () {
             if ( box['breadcrumb'] ) {
                 // all ancestors are needed
                 node = _tree.get_node( data, box['rows'][0]['id'] );
-                nodes = _tree.get_parents( data, node );
+                nodes = _tree.get_nonempty_parents( data, node );
                 nodes.forEach( function ( node ) {
                     needed_ids[ node['id'] ] = true;
                 });

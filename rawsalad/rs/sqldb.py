@@ -309,7 +309,8 @@ def restore_group_old( id, endpoint ):
     group['data'] = collection.get_top_level()
     # collect all children of all open nodes in the endpoint
     for parent in unique_parents:
-        group['data'] += collection.get_children( parent )
+        #group['data'] += collection.get_children( parent )
+        group['data'] += collection.get_nonempty_children( parent )
 
     group['data'].sort( key=lambda e: e['id'] )
 
@@ -353,7 +354,8 @@ def restore_group( id, endpoint ):
 
     # collect all children of all open nodes in the endpoint
     for parent in unique_parents:
-        children = collection.get_children( parent )
+        #children = collection.get_children( parent )
+        children = collection.get_nonempty_children( parent )
         children_ids = [ child['id'] for child in children ]
         map( unique_nodes.discard, children_ids )
         group['data'] += children
@@ -529,6 +531,20 @@ class Collection:
                    ORDER BY id
                 ''' % ( self.endpoint, _id )
         return self.get_data( query )
+
+
+    def get_nonempty_children( self, _id ):
+        '''Get children of the specified node, for any empty child
+           get also its children (repeated recursively).'''
+
+        children = self.get_children( _id )
+        nonempty_children = []
+        for child in children:
+            nonempty_children.append( child )
+            if child['data']['type'] == 'Empty':
+                nonempty_children += self.get_nonempty_children( child['id'] )
+
+        return nonempty_children
 
 
     def get_data( self, query={} ):

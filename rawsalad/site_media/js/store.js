@@ -105,9 +105,11 @@ var _store = (function () {
             var children;
             
             if ( parent_id === endpoint ) {
-                children = _tree.get_children_nodes( data_source );
+                //children = _tree.get_children_nodes( data_source );
+                children = _tree.get_nonempty_children_nodes( data_source );
             } else {
-                children = _tree.get_children_nodes( data_source, parent_id );
+                //children = _tree.get_children_nodes( data_source, parent_id );
+                children = _tree.get_nonempty_children_nodes( data_source, parent_id );
             }
             callback( children );
         };
