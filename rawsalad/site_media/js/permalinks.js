@@ -323,10 +323,6 @@ var _permalinks = (function () {
             sheet_nodes = sheet_nodes.concat( nodes_in_box );
         });
 
-        sheet_nodes = sheet_nodes.filter( function ( node ) {
-            return node['data']['type'] !== 'Empty';
-        });
-        
         return _tree.create_tree( sheet_nodes, 'id', 'parent' );
     }
 
