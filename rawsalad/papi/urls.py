@@ -4,8 +4,13 @@ from django.conf.urls.defaults import *
 
 
 urlpatterns = patterns( 'papi.papi',
-    (r'^$', 'get_formats' ),
-    (r'^(?P<serializer>[a-z]+)/$', 'get_datasets' ),
+    (r'^$', 'get_top_api' ),
+    (r'^collections/$', 'get_dbtree' ),
+    (r'^collections/(?P<endpoint>[a-z_0-9]+)/$', 'get_endpoint' ),
+    (r'^collections/(?P<endpoint>[a-z_0-9]+)/meta/$', 'get_meta' ),
+    (r'^collections/(?P<endpoint>[a-z_0-9]+)/(?P<par_id>\d+)/$', 'get_children' ),
+    #(r'^$', 'get_formats' ),
+    #(r'^(?P<serializer>[a-z]+)/$', 'get_datasets' ),
     (r'^(?P<serializer>[a-z]+)/search/$', 'search_data' ), # DK
     (r'^(?P<serializer>[a-z]+)/meta/$', 'get_datasets_meta' ),
     (r'^(?P<serializer>[a-z]+)/dataset/$', 'get_datasets' ),

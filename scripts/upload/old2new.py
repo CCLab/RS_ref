@@ -1,8 +1,9 @@
 #-*- coding: utf-8 -*-
 
+import os
 import csv
 
-def morph( fname, newfname, delfields, hfields, has_total=True ):
+def morph( fname, newfname, delfields, hfields, labels, has_total=True ):
     f = open( fname, 'rb' )
     newf = open( newfname, 'wb' )
 
@@ -13,10 +14,10 @@ def morph( fname, newfname, delfields, hfields, has_total=True ):
     hobject = {}
 
     header = creader.next()
-    rowid_ind = get_ind( header, 'ID' )
-    parid_ind = get_ind( header, 'Rodzic' )
-    typenr_ind = get_ind( header, 'Typ' )
-    name_ind = get_ind( header, 'Treść' )
+    rowid_ind = get_ind( header, labels[0] )
+    parid_ind = get_ind( header, labels[1] )
+    typenr_ind = get_ind( header, labels[2] )
+    name_ind = get_ind( header, labels[3] )
     new_rows = []
 
     last_par_id = None
@@ -82,9 +83,24 @@ def get_ind( header, name ):
     raise RuntimeError("no name in header" + name )
 
 
-if __name__ == '__main__':
-    old_name = '0-0-2011.csv'
-    new_name = 'data_0_0_2011.csv'
+def do_0_0_2011():
+    old_name = os.path.join( 'old', '0-0-2011_cut.csv' )
+    new_name = os.path.join( 'new', 'data_0_0_2011_cut.csv' )
+    #del_fields = [0, 1, 2, 3, 4, 5, 6, 7]
+    del_fields = [0, 1, 2, 3, 4, 6, 7, 8]
+    hierarchy = [
+        {'aux': True},
+        {'aux': True},
+        {'aux': True},
+        {'aux': True},
+        {'aux': True}
+    ]
+    labels = ['ID', 'Rodzic', 'Typ', 'Treść']
+    morph( old_name, new_name, del_fields, hierarchy, labels, has_total=True )
+
+def do_0_1_2011():
+    old_name = os.path.join( 'old', '0-1-2011.csv' )
+    new_name = os.path.join( 'new', 'data_0_1_2011.csv' )
     del_fields = [0, 1, 2, 3, 4, 5, 6, 7]
     hierarchy = [
         {'aux': True},
@@ -93,6 +109,11 @@ if __name__ == '__main__':
         {'aux': True},
         {'aux': True}
     ]
-    morph( old_name, new_name, del_fields, hierarchy, has_total=True )
+    labels = ['ID', 'Rodzic', 'Typ', 'Treść']
+    morph( old_name, new_name, del_fields, hierarchy, labels, has_total=True )
+    
+
+if __name__ == '__main__':
+    do_0_0_2011()
     print 'Done'
 

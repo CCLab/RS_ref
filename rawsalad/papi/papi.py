@@ -7,7 +7,6 @@ requirements: mongod, conf file (see conf_filename)
 
 from django.http import HttpResponse
 from django.utils import simplejson as json
-from django.core import serializers
 
 import xml.etree.cElementTree as ET
 
@@ -16,13 +15,21 @@ import re
 
 import rsdbapi as rsdb
 
+import rs.sqldb as sqldb
+#from xml_serializer import Py2XML as py2xml
+
 
 conf_filename= "/home/cecyf/www/projects/rawsalad/src/rawsalad/site_media/media/rawsdata.conf"
 
-xml_header= "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+xml_header = '<?xml version=\"1.0\" encoding=\"UTF-8\">'
+def_version = '1.0'
+formats = ['json', 'xml']
+def_format = 'json'
 
 level_list= ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k']
 
+def get_header( version ):
+    return "<?xml version=\"%s\" encoding=\"UTF-8\"?>" % version
 
 def dict2et(xml_dict, root_tag='result', list_names=None):
     if not list_names:
@@ -52,6 +59,8 @@ def _convert_dict_to_xml_recurse(parent, dict_item, list_names):
                 elem = ET.Element(tag)
                 parent.append(elem)
                 _convert_dict_to_xml_recurse(elem, child, list_names)
+    elif isinstance( dict_item, basestring ):
+        parent.text = dict_item.decode('utf-8')
     elif not dict_item is None:
         parent.text = unicode(dict_item)
 
@@ -95,12 +104,167 @@ def path2query(path_str):
             out_query['idef']= path_list[len(path_list)-1] # the last elt is current idef
     return out_query
 
-
 def get_formats(request):
     result= {'formats': ['json', 'xml']}
     result['uri']= request.build_absolute_uri()
     return HttpResponse( json.dumps( result ), 'application/json' )
 
+
+def serialize_result( serializer, result, uri ):
+    if serializer == 'json':
+        ser_result = json.dumps( result, ensure_ascii=False, indent=4 )
+    elif serializer == 'xml':
+        header = get_header( def_version )
+        ser_result = header + ET.tostring( dict2et( result, root_tag='result' ) )
+    else:
+        raise RuntimeError( "Bad serializer" )
+
+    return ser_result
+
+def get_mime_type( serializer ):
+    if serializer == 'json':
+        return 'application/json; charset=UTF-8'
+    elif serializer == 'xml':
+        return 'application/xml; charset=UTF-8'
+    else:
+        raise RuntimeError( "Bad serializer" )
+
+def generate_response( no_query_uri, data, serializer ):
+    result = {
+        'uri': no_query_uri,
+        'data': data,
+        'ns': create_ns_uri( no_query_uri )
+    }
+    try:
+        ser_result = serialize_result( serializer, result, no_query_uri )
+        mime_type = get_mime_type( serializer )
+    except:
+        return HttpResponse( status=404 )
+
+    return HttpResponse( ser_result, mimetype=mime_type )
+
+def get_top_api( request ):
+    base_uri = request.build_absolute_uri()
+    result = {
+        'default_version': def_version,
+        'formats': formats,
+        'default_format': def_format,
+        'collections_uri': base_uri + 'collections/',
+        'uri': base_uri
+    }
+
+    return HttpResponse( json.dumps( result ), 'application/json; charset=UTF-8' )
+
+def get_dbtree( request ):
+    serializer = request.GET.get( 'format', 'json' )
+
+    flat_tree = sqldb.get_db_tree()
+    parent_id_tree = get_parent_id_tree( flat_tree )
+
+    base_uri = request.build_absolute_uri()
+    no_query_base_uri = base_uri.rsplit('?', 1)[0]
+    data = get_dbtree_children( parent_id_tree, None, no_query_base_uri ),
+
+    return generate_response( no_query_base_uri, data, serializer )
+
+def get_parent_id_tree( flat_tree ):
+    parent_id_tree = {}
+    for el in flat_tree:
+        try:
+            parent_id_tree[ el['parent'] ].append( el )
+        except KeyError:
+            parent_id_tree[ el['parent'] ] = [ el ]
+
+    return parent_id_tree
+
+def get_dbtree_children( tree, parent_id, base_uri ):
+    act_level = tree[ parent_id ]
+    children = []
+    for el in act_level:
+        if el['max_depth'] > 0:
+            el['children'] = get_dbtree_children( tree, el['id'], base_uri )
+        else:
+            el['data_uri'] = create_endpoint_uri( el['endpoint'], base_uri )
+            el['meta_uri'] = create_meta_uri( el['endpoint'], base_uri )
+        children.append( remove_empty_fields( el ) )
+        
+    return children
+
+def remove_empty_fields( el ):
+    el_copy = {}
+    for f in el:
+        if el[ f ] is not None:
+            el_copy[ f ] = el[ f ]
+
+    return el_copy
+
+def create_endpoint_uri( endpoint, base_uri ):
+    return base_uri + endpoint + '/'
+        
+def create_meta_uri( endpoint, base_uri ):
+    return base_uri + endpoint + '/meta/'
+        
+def create_ns_uri( uri ):
+    if uri[:4] == 'http':
+        return uri[:7] + (uri[7:].split('/')[0])
+    else:
+        return uri.split('/')[0]
+
+def get_endpoint( request, endpoint ):
+    serializer = request.GET.get( 'format', 'json' )
+
+    base_uri = request.build_absolute_uri()
+    no_query_base_uri = base_uri.rsplit('?', 1)[0]
+
+    collection = sqldb.Collection( endpoint )
+    data = get_endpoint_children( collection, None )
+
+    return generate_response( no_query_base_uri, data, serializer )
+
+
+def get_endpoint_children( collection, par_id ):
+    data = []
+    
+    if par_id is None:
+        children = collection.get_top_level()
+    else:
+        children = collection.get_children( par_id )
+
+    for child in children:
+        if child['leaf'] is not None:
+            child['children'] = get_endpoint_children( collection, child['id'] )
+        data.append( child )
+
+    return data
+
+def get_meta( request, endpoint ):
+    serializer = request.GET.get( 'format', 'json' )
+
+    base_uri = request.build_absolute_uri()
+    no_query_base_uri = base_uri.rsplit('?', 1)[0]
+
+    collection = sqldb.Collection( endpoint )
+    meta = {
+        'columns': collection.get_columns(),
+        'hierarchy': collection.get_hierarchy(),
+        'label': collection.get_label(),
+        'count': len( collection.get_all_ids() )
+    }
+
+    return generate_response( no_query_base_uri, meta, serializer )
+
+def get_children( request, endpoint, par_id ):
+    serializer = request.GET.get( 'format', 'json' )
+
+    base_uri = request.build_absolute_uri()
+    no_query_base_uri = base_uri.rsplit('?', 1)[0]
+
+    collection = sqldb.Collection( endpoint )
+    data = collection.get_children( par_id )
+
+    return generate_response( no_query_base_uri, data, serializer )
+
+###################################################################
 
 def get_datasets(request, serializer, db=None):
     if db is None:

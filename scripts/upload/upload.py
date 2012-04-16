@@ -14,6 +14,7 @@ from csv import reader as csvreader
 from copy import deepcopy
 import os
 import simplejson as json
+import string
 
 class BasicReader:
     '''Reads data from a source.'''
@@ -88,13 +89,6 @@ class UrlReader(BasicReader):
 
     def __del__( self ):
         self.src.close()
-
-
-# TODO: can it be defined?
-class APIReader(BasicReader):
-    '''Reads data from API.'''
-    def __init__( self, meta, data ):
-        pass
 
 
 class Meta:
@@ -215,6 +209,68 @@ class CSVDataReceiver(DataReceiver):
             return rows
 
 
+class APIDataReceiver(DataReceiver):
+    '''Receives data from API'''
+    def __init__( self, base_url ):
+        #base_url = 'http://otwartedane.pl/api/json/dataset/0/view/0/issue/2011/'
+        self.rows = deque()
+        self.buffer = ''
+        self.base_url = base_url
+        top_data_url = base_url + 'a/'
+        top_reader = UrlReader( top_data_url, stop_sign=None )
+        top_data = top_reader.read_all()
+        json_data = json.loads( top_data )
+        self.top_data = json_data['data']
+        self.next_ind = 0
+
+    def get_rows( self ):
+        try:
+            rows = self.get_subtree( self.top_ids[ self.next_ind ] )
+            self.next_ind += 1
+            return rows
+        except:
+            return []
+
+    def get_all_rows( self ):
+        rows = []
+        try:
+            while True:
+                rows += self.get_rows()
+        except:
+            return rows
+
+    def get_children( self, prev_url, par_id, level ):
+        url = self.next_level_url( prev_url, par_id, level )
+        ureader = UrlReader( url, stop_sign=None )
+        children_str = ureader.read_all()
+        children = json.loads( children_str )['data']
+        return children
+
+    def get_children_rec( self, prev_url, par_id, level ):
+        data = []
+        children = self.get_children( prev_url, par_id, level )
+        for child in children:
+            data.append( child )
+            if not child['leaf']:
+                url = self.next_level_url( prev_url, par_id, level )
+                data += self.get_children_rec( url, child['idef'], level + 1 )
+
+        return data
+
+    def get_subtree( self, ind ):
+        data = [ self.top_data[ ind ] ]
+        root_id = self.top_data[ ind ]['idef']
+        if not act_root['leaf']:
+            data += self.get_children_rec( self.base_url, root_id, 0 )
+
+        return data
+
+    def next_level_url( self, prev_url, par_id, level ):
+        next_level = level + 1
+        next_letter = string.lowercase[ next_level ]
+        return ( prev_url + '%s/%s/' % ( par_id, next_letter ) )
+
+
 class BasicUploader:
     def __init__( self, receiver, meta, db ):
         self.receiver = receiver
@@ -240,6 +296,7 @@ class BasicUploader:
 
         endpoint = None
         print 'Trying to insert data in db...',
+        '''
         try:
             endpoint = self.update_dbtree()
             self.update_hierarchy( endpoint )
@@ -270,7 +327,7 @@ class BasicUploader:
 
         self.update_ptree( id_map )
         print 'done.'
-        '''
+        
 
     def check_correctness( self ):
         self.check_dbtree()
@@ -347,6 +404,7 @@ class BasicUploader:
 
     def upload_data( self, endpoint, has_header=True ):
         bulk = self.receiver.get_all_rows()
+        bulk = self.dicts_to_lists( bulk )
         if has_header:
             del bulk[0]
 
@@ -382,6 +440,22 @@ class BasicUploader:
         self.db.insert_data( endpoint, filepath )
 
         return id_map
+
+    def dicts_to_lists( self, rows ):
+        if rows == [] or isinstance( rows[0], list ):
+            return rows
+
+        list_rows = []
+        columns = self.meta.get_columns()
+        for dict_row in rows:
+            print columns
+            print dict_row
+            list_row = []
+            for col in columns:
+                list_row.append( dict_row[ col['key'] ] )
+            list_rows.append( list_row )
+
+        return list_rows
 
     def save_data( self, data, filepath ):
         import csv
@@ -1253,5 +1327,14 @@ if __name__ == '__main__':
     #meta_test()
     #rec_test()
     #csv_test()
-    full_test()
+    #full_test()
 
+    old_file = os.path.join( 'new', 'data_0_0_2011.csv' )
+    meta_file = os.path.join( 'hier', 'hier_0_0_2011.json' )
+    freader = FileReader( old_file )
+    creader = CSVDataReceiver( freader )
+    meta_freader = FileReader( meta_file )
+    meta = Meta( meta_freader )
+    db = DB( conf='db.conf' )
+    uploader = BasicUploader( creader, meta, db )
+    uploader.upload( has_header=False )
