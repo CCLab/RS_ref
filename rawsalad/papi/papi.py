@@ -129,7 +129,12 @@ def get_mime_type( serializer ):
     else:
         raise RuntimeError( "Bad serializer" )
 
-def generate_response( no_query_uri, data, serializer ):
+def generate_response( data, request, no_query_uri=None ):
+    serializer = request.GET.get( 'format', 'json' )
+    if no_query_uri is None:
+        base_uri = request.build_absolute_uri()
+        no_query_uri = base_uri.rsplit('?', 1)[0]
+
     result = {
         'uri': no_query_uri,
         'data': data,
@@ -156,8 +161,6 @@ def get_top_api( request ):
     return HttpResponse( json.dumps( result ), 'application/json; charset=UTF-8' )
 
 def get_dbtree( request ):
-    serializer = request.GET.get( 'format', 'json' )
-
     flat_tree = sqldb.get_db_tree()
     parent_id_tree = get_parent_id_tree( flat_tree )
 
@@ -165,7 +168,7 @@ def get_dbtree( request ):
     no_query_base_uri = base_uri.rsplit('?', 1)[0]
     data = get_dbtree_children( parent_id_tree, None, no_query_base_uri ),
 
-    return generate_response( no_query_base_uri, data, serializer )
+    return generate_response( data, request, no_query_base_uri )
 
 def get_parent_id_tree( flat_tree ):
     parent_id_tree = {}
@@ -184,8 +187,9 @@ def get_dbtree_children( tree, parent_id, base_uri ):
         if el['max_depth'] > 0:
             el['children'] = get_dbtree_children( tree, el['id'], base_uri )
         else:
-            el['data_uri'] = create_endpoint_uri( el['endpoint'], base_uri )
-            el['meta_uri'] = create_meta_uri( el['endpoint'], base_uri )
+            #el['data_uri'] = create_endpoint_uri( base_uri, el['endpoint'] )
+            el['meta_uri'] = create_meta_uri( base_uri, el['endpoint'] )
+            el['top_uri'] = create_top_uri( base_uri, el['endpoint'] )
         children.append( remove_empty_fields( el ) )
         
     return children
@@ -198,11 +202,14 @@ def remove_empty_fields( el ):
 
     return el_copy
 
-def create_endpoint_uri( endpoint, base_uri ):
-    return base_uri + endpoint + '/'
+#def create_endpoint_uri( uri, endpoint ):
+#    return uri + endpoint + '/tree/'
         
-def create_meta_uri( endpoint, base_uri ):
-    return base_uri + endpoint + '/meta/'
+def create_meta_uri( uri, endpoint ):
+    return uri + endpoint + '/meta/'
+
+def create_top_uri( uri, endpoint ):
+    return uri + endpoint + '/'
         
 def create_ns_uri( uri ):
     if uri[:4] == 'http':
@@ -210,17 +217,19 @@ def create_ns_uri( uri ):
     else:
         return uri.split('/')[0]
 
+def create_search_uri( uri, endpoint ):
+    return uri.replace( 'count', 'data', 1 ).replace( 'all_endpoints', endpoint, 1 )
+
+def create_data_uri( uri, endpoint, id ):
+    ns_uri = create_ns_uri( uri )
+    return ns_uri + '/api/collections/%s/%s' % ( endpoint, id )
+
+'''
 def get_endpoint( request, endpoint ):
-    serializer = request.GET.get( 'format', 'json' )
-
-    base_uri = request.build_absolute_uri()
-    no_query_base_uri = base_uri.rsplit('?', 1)[0]
-
     collection = sqldb.Collection( endpoint )
     data = get_endpoint_children( collection, None )
 
-    return generate_response( no_query_base_uri, data, serializer )
-
+    return generate_response( data, request )
 
 def get_endpoint_children( collection, par_id ):
     data = []
@@ -236,13 +245,9 @@ def get_endpoint_children( collection, par_id ):
         data.append( child )
 
     return data
+'''
 
 def get_meta( request, endpoint ):
-    serializer = request.GET.get( 'format', 'json' )
-
-    base_uri = request.build_absolute_uri()
-    no_query_base_uri = base_uri.rsplit('?', 1)[0]
-
     collection = sqldb.Collection( endpoint )
     meta = {
         'columns': collection.get_columns(),
@@ -251,429 +256,97 @@ def get_meta( request, endpoint ):
         'count': len( collection.get_all_ids() )
     }
 
-    return generate_response( no_query_base_uri, meta, serializer )
+    return generate_response( meta, request )
+
+def get_data( request, endpoint, id ):
+    fields_str = request.GET.get( 'fields', '' )
+    fields = fields_str.split(',')
+    if fields == ['']:
+        fields = []
+
+    collection = sqldb.Collection( endpoint )
+    row = collection.get_nodes( int(id) )[0]
+    cleaned_row = flatten_row( row, fields )
+    cleaned_row['id'] = row['id']
+
+    return generate_response( cleaned_row, request )
+
+def flatten_row( row, fields=[], flat_row={} ):
+    if fields == []:
+        for k,v in row.iteritems():
+            if isinstance( v, dict ):
+                flat_row = flatten_row( v, fields, flat_row )
+            else:
+                flat_row[ k ] = v
+    else:
+        for k,v in row.iteritems():
+            if isinstance( v, dict ):
+                flatten_row( v, fields, flat_row )
+            elif k in fields:
+                flat_row[ k ] = v
+                    
+    return flat_row
+        
+
+def get_top_level( request, endpoint ):
+    return get_children( request, endpoint, None )
 
 def get_children( request, endpoint, par_id ):
-    serializer = request.GET.get( 'format', 'json' )
+    collection = sqldb.Collection( endpoint )
+    if par_id is None:
+        data = collection.get_top_level()
+    else:
+        data = collection.get_children( par_id )
+
+    return generate_response( data, request )
+
+def get_search_count( request, endpoint, query ):
+    if endpoint == 'all_endpoints':
+        db_tree = sqldb.get_db_tree()
+        endpoints = map( lambda el: el['endpoint'], db_tree )
+        endpoints = filter( lambda end: end is not None, endpoints )
+    else:
+        endpoints = [ endpoint ]
+
+    data = sqldb.search_count( query, endpoints )
+    base_uri = request.build_absolute_uri()
+    no_query_base_uri = base_uri.rsplit('?', 1)[0]
+    for result in data:
+        result['search_data_uri'] = create_search_uri( no_query_base_uri, result['endpoint'] )
+
+    return generate_response( data, request, no_query_base_uri )
+
+def get_search_data( request, endpoint, query ):
+    data = sqldb.search_data( query, endpoint )
+
+    hits_map = {}
+    for box in data['boxes']:
+        for row in box:
+            hits_map[ row['id'] ] = row['hits']
 
     base_uri = request.build_absolute_uri()
     no_query_base_uri = base_uri.rsplit('?', 1)[0]
 
-    collection = sqldb.Collection( endpoint )
-    data = collection.get_children( par_id )
+    cleaned_data = []
+    for el in data['data']:
+        if el['id'] in hits_map:
+            cleaned_data.append({
+                'id': el['id'],
+                'hit_fields': hits_map[ el['id'] ],
+                'uri': create_data_uri( no_query_base_uri, endpoint, el['id'] )
+            })
+    
+    return generate_response( cleaned_data, request )
 
-    return generate_response( no_query_base_uri, data, serializer )
-
-###################################################################
-
-def get_datasets(request, serializer, db=None):
-    if db is None:
-        db= rsdb.DBConnection().connect()
-
-    nav= rsdb.DBNavigator()
-    data= nav.get_dataset(db)
-
-    result= { 'request': nav.request, 'response': nav.response['descr'] }
-    if nav.response['httpresp'] == 200:
-        result['data']= data
-        result['uri']= request.build_absolute_uri()
-
-    out, mime_tp, http_response = format_result(result, serializer, nav.response['httpresp'])
-    return HttpResponse( out, mimetype=mime_tp, status=http_response )
-
-def get_datasets_meta(request, serializer, db=None):
-    if db is None:
-        db= rsdb.DBConnection().connect()
-
-    nav= rsdb.DBNavigator()
-    count= nav.get_count(db)
-
-    result= { 'request': nav.request, 'response': nav.response['descr'] }
-    if nav.response['httpresp'] == 200:
-        result['metadata']= { 'count': count }
-        result['uri']= request.build_absolute_uri()
-
-    out, mime_tp, http_response = format_result(result, serializer, nav.response['httpresp'])
-    return HttpResponse( out, mimetype=mime_tp, status=http_response )
-
-
-def get_views(request, serializer, dataset_idef, db=None):
-    if db is None:
-        db= rsdb.DBConnection().connect()
-
-    nav= rsdb.DBNavigator()
-    data= nav.get_view(db, dataset_idef)
-
-    result= { 'request': nav.request, 'response': nav.response['descr'] }
-    if nav.response['httpresp'] == 200:
-        result['data']= data
-        result['uri']= request.build_absolute_uri()
-
-    out, mime_tp, http_response = format_result(result, serializer, nav.response['httpresp'])
-    return HttpResponse( out, mimetype=mime_tp, status=http_response )
-
-def get_views_meta(request, serializer, dataset_idef, db=None):
-    if db is None:
-        db= rsdb.DBConnection().connect()
-
-    nav= rsdb.DBNavigator()
-    count= nav.get_count(db, dataset_idef)
-
-    result= { 'request': nav.request, 'response': nav.response['descr'] }
-    if nav.response['httpresp'] == 200:
-        result['metadata']= { 'count': count }
-        result['uri']= request.build_absolute_uri()
-
-    out, mime_tp, http_response= format_result(result, serializer, nav.response['httpresp'])
-    return HttpResponse( out, mimetype=mime_tp, status=http_response )
-
-def get_issues(request, serializer, dataset_idef, view_idef, db=None):
-    if db is None:
-        db= rsdb.DBConnection().connect()
-
-    nav= rsdb.DBNavigator()
-    data= nav.get_issue(db, dataset_idef, view_idef)
-
-    result= { 'request': nav.request, 'response': nav.response['descr'] }
-    if nav.response['httpresp'] == 200:
-        result['data']= data
-        result['uri']= request.build_absolute_uri()
-
-    out, mime_tp, http_response = format_result(result, serializer, nav.response['httpresp'])
-    return HttpResponse( out, mimetype=mime_tp, status=http_response )
-
-def get_issues_meta(request, serializer, dataset_idef, view_idef, db=None):
-    if db is None:
-        db= rsdb.DBConnection().connect()
-
-    nav= rsdb.DBNavigator()
-    count= nav.get_count(db, dataset_idef, view_idef)
-
-    result= { 'request': nav.request, 'response': nav.response['descr'] }
-    if nav.response['httpresp'] == 200:
-        result['metadata']= { 'count': count }
-        result['uri']= request.build_absolute_uri()
-
-    out, mime_tp, http_response = format_result(result, serializer, nav.response['httpresp'])
-    return HttpResponse( out, mimetype=mime_tp, status=http_response )
-
-def get_userdef_fields(rq, parm):
-    """
-    user defined list of fields
-    format can be (with or without space):
-      ?fields=[fieldX, fieldY]
-      ?fields=fieldX, fieldY
-    """
-    clm_str= rq.GET.get(parm, '[]')
-    out_tmp, out_list= [], []
-    if clm_str != '[]':
-        clm_str= clm_str.replace(' ', '')
-        if '[' and ']' in clm_str:
-            out_tmp= clm_str[1:-1].split(',')
-        else:
-            out_tmp= clm_str.split(',')
-
-    for elm in out_tmp: # check for empty elements
-        if len(elm) > 0:
-            out_list.append(elm)
-
-    return out_list
-
-def parse_conditions(pth):
-    path_elm_list= []
-    idef_list= []
-
-    test_presence= '[' and ']' in pth
-    test_order= pth.find('[') < pth.find(']')
-    test_count= (pth.count('[') + pth.count(']') == 2)
-
-    if test_presence and test_order and test_count:
-        path_elm_list= pth[pth.index('[')+1 : pth.index(']')].split('+AND+')
-        if len(path_elm_list) > 0:
-            for elm in path_elm_list:
-                scope_list= elm.split('+TO+')
-
-                if len(scope_list) == 1: # no scope, just adding it to the list of idefs
-                    idef_list.append(elm)
-
-                elif len(scope_list) == 2: # there is a correctly defined scope
-                    idef_from, idef_to= scope_list[0], scope_list[1]
-
-                    tmplst_from= idef_from.split('-')
-                    tmplst_to= idef_to.split('-')
-
-                    if len(tmplst_from) != len(tmplst_to): # ERROR!
-                        return { "error": '31' } # 'to' and 'from' are from different levels
-
-                    if len(tmplst_from) > 1: # check one, but do for both (we know alredy that they are on the same level)
-                        try:
-                            last_num_from= int(tmplst_from[-1])
-                            last_num_to= int(tmplst_to[-1])
-
-                            base_from= "-".join(tmplst_from[:-1])
-                            base_to= "-".join(tmplst_to[:-1])
-                        except: # ERROR!
-                            return { "error": '34' } # syntax error like [...+AND] or [+TO+2...]
-                    else:
-                        try:
-                            last_num_from= int(tmplst_from[0])
-                            last_num_to= int(tmplst_to[0])
-                        except:
-                            return { "error": '34' } # syntax error like [...+2+6+AND...]
-
-                    if last_num_to < last_num_from: # ERROR!
-                        return { "error": '32' } # 'to' is less than 'from'
-
-                    last_num_curr= last_num_from
-                    while last_num_curr <= last_num_to:
-                        if len(tmplst_from) > 1:
-                            idef_list.append("-".join([base_from, str(last_num_curr)]))
-                        else:
-                            idef_list.append(str(last_num_curr))
-                        last_num_curr += 1
-
-                elif len(scope_list) > 2: # ERROR!
-                    return { "error": '33' } # incorrectly defined scope!
-
-        if '/branch' in pth: # query based on regexp (brothers and parents of given idefs + all level 'a')
-            lookup, i= "", 0
-            for idef in idef_list:
-                i += 1
-                lookup_idef= build_idef_regexp( idef )
-
-                lookup += "(%s)|" % lookup_idef
-                if i == len(idef_list):
-                    lookup= lookup[:-1] # cutting the last symbol | in case it's the end of list
-
-            if len(idef_list) == 1: # single idef
-                lookup= lookup[1:-1] # cutting ( and )
-
-            qry_fin= re.compile(lookup, re.IGNORECASE)
-
-        else: # plain list of elements
-            qry_fin= { "$in": idef_list }
-
-        return { "idef": qry_fin }
-
-    elif (not test_presence) and (not test_order) and (not test_count): # dealing with single idef
-        if '/branch' in pth: # query based on regexp (brothers and parents of given idef + all level 'a')
-            idef= pth[0:pth.index('/branch')]
-            lookup= build_idef_regexp( path2query( idef )['idef'] )
-            qry_fin= { 'idef' : re.compile(lookup, re.IGNORECASE) }
-        else:
-            qry_fin= path2query(pth)
-        return qry_fin
-
-    else: # ERROR
-        return { "error": '34' } # otherwise it's a syntax error
-
-def get_count(query, collection, db=None):
-    if db is None:
-        db= rsdb.DBConnection().connect()
-
-    return db[collection].find(query).count()
-
-def build_idef_regexp( curr_idef ):
-    """ build regexp quering collection """
-    level_num= curr_idef.count('-')
-    if level_num > 0: # deeper than 'a'
-        idef_srch= curr_idef.rsplit('-', 1)[0]
-        lookup_idef= "^%s\-\d+$" % idef_srch
-        curr_idef= idef_srch
-        level= 1
-        while level < level_num:
-            idef_srch= curr_idef.rsplit('-', 1)[0]
-            lookup_idef += "|^%s\-\d+$" % idef_srch
-            curr_idef= idef_srch
-            level += 1
-        lookup_idef += "|^([A-Z]|\d)+$"
-    else: # just query the highest level
-        lookup_idef= "^([A-Z]|\d)+$"
-
-    return lookup_idef
-
-def get_data(request, serializer, dataset_idef, view_idef, issue, path='', db=None):
-    if db is None:
-        db= rsdb.DBConnection().connect()
-
-    result= {
-        'dataset_id': int(dataset_idef),
-        'view_id': int(view_idef),
-        'issue': issue
+def help( request ):
+    help_info = {
+        'info': 'Wrong uri',
+        'url_patterns': {
+            'api_info': '^/$',
+            'collections_info': '^collections/$'
         }
-
-    httpresp_dict= {}
-    userdef_query= parse_conditions(path)
-    if 'error' in userdef_query: # already an error
-        httpresp_dict= rsdb.Response().get_response(userdef_query['error'])
-        result['response']= httpresp_dict['descr']
-    else:
-        userdef_fields= get_userdef_fields(request, 'fields')
-
-        coll= rsdb.Collection(fields= userdef_fields, query= userdef_query)
-        data= coll.get_data(db, dataset_idef, view_idef, issue)
-        httpresp_dict= coll.response
-
-        if httpresp_dict['httpresp'] == 200:
-            result['data']= data
-            result['count']= coll.count
-            result['uri']= request.build_absolute_uri()
-
-        if coll.warning:
-            result['warning']= coll.warning
-
-        result['response']= httpresp_dict['descr']
-        result['request']= coll.request
-
-        coll= None
-
-    out, mime_tp, http_response = format_result(result, serializer, httpresp_dict['httpresp'])
-    return HttpResponse( out, mimetype=mime_tp, status=http_response )
+    }
+    
+    return generate_response( help_info, request )
 
 
-def get_metadata(request, serializer, dataset_idef, view_idef, issue, path='', db=None):
-    if db is None:
-        db= rsdb.DBConnection().connect()
-
-    result= {
-        'dataset_id': int(dataset_idef),
-        'view_id': int(view_idef),
-        'issue': issue,
-        }
-
-    userdef_fields= get_userdef_fields(request, 'fields')
-    userdef_query= {}
-    if len(path) != 0:
-        userdef_query.update(path2query(path))
-
-    coll= rsdb.Collection(fields= userdef_fields, query= userdef_query)
-    metadata= coll.get_metadata(db, dataset_idef, view_idef, issue)
-    if coll.response['httpresp'] == 200:
-        result['metadata']= metadata
-        result['uri']= request.build_absolute_uri()
-
-    if coll.warning:
-        result['warning']= coll.warning
-
-    result['response']= coll.response['descr']
-    result['request']= coll.request
-
-    out, mime_tp, http_response = format_result(result, serializer, coll.response['httpresp'])
-    return HttpResponse( out, mimetype=mime_tp, status=http_response )
-
-
-def get_tree(request, serializer, dataset_idef, view_idef, issue, path='', db=None):
-    if db is None:
-        db= rsdb.DBConnection().connect()
-
-    result= {
-        'dataset_id': int(dataset_idef),
-        'view_id': int(view_idef),
-        'issue': issue
-        }
-
-    httpresp_dict= {}
-    userdef_query= parse_conditions(path)
-    if 'error' in userdef_query: # already an error
-        httpresp_dict= rsdb.Response().get_response(userdef_query['error'])
-        result['response']= httpresp_dict['descr']
-    else:
-        userdef_fields= get_userdef_fields(request, 'fields')
-
-        coll= rsdb.Collection(fields= userdef_fields, query= userdef_query)
-        tree= coll.get_tree(db, dataset_idef, view_idef, issue)
-        httpresp_dict= coll.response
-        if httpresp_dict['httpresp'] == 200:
-            result['tree']= tree
-            result['uri']= request.build_absolute_uri()
-
-        if coll.warning:
-            result['warning']= coll.warning
-
-        result['response']= httpresp_dict['descr']
-        result['request']= coll.request
-
-    out, mime_tp, http_response = format_result(result, serializer, httpresp_dict['httpresp'])
-    return HttpResponse( out, mimetype=mime_tp, status=http_response )
-
-def build_scope(dbase, dataset, view, issue):
-    out, lst= [], []
-    fieldict= { '_id':0, 'dataset': 1, 'idef': 1, 'issue': 1 }
-    sortlist= [ ('dataset', 1), ('idef', 1), ('issue', 1) ]
-    if dataset:
-        if view:
-            if issue: # dataset-view-issue
-                specdict= { 'dataset': int(dataset), 'idef': int(view), 'issue': issue }
-            else: # dataset-view-  all issues
-                specdict= { 'dataset': int(dataset), 'idef': int(view) }
-        else: # dataset-  all views and issues
-            specdict ={ 'dataset': int(dataset) }
-    else: # all datasets, views and issues
-        specdict= None
-
-    lst= dbase[rsdb.meta_src].find( spec= specdict, fields= fieldict, sort= sortlist )
-
-    if lst.count() > 0: # gather elements into the list
-        for elt in lst:
-            out.append( '-'.join([ str(elt['dataset']), str(elt['idef']), elt['issue'] ]) )
-
-    return out
-
-def search_data(request, serializer, path='', db=None, **kwargs):
-    result= { 'request': 'search for data' }
-
-    query_str= request.GET.get('query', None) # THE search string
-    lookup_fields= get_userdef_fields(request, 'lookup') # what fields to include to search
-
-    strict= request.GET.get('strict', False) # strict?
-    if str(strict).upper() in ['TRUE', 'T', 'YES', 'Y', 'TAK', '1']:
-        strict= True
-    else:
-        strict= False
-
-    if (query_str is None) or (query_str.strip() == ''):
-        result['response']= rsdb.Response().get_response(36)["descr"]
-    else:
-        if db is None:
-            db= rsdb.DBConnection().connect()
-
-        # cleaning user query
-        query_str= query_str.strip()
-        query_str= re.sub('\s+', ' ', query_str) # cleaning multiple spaces
-
-        # optional args specifying what collections to search in
-        dataset= kwargs.get('dataset_idef', None)
-        view= kwargs.get('view_idef', None)
-        issue= kwargs.get('issue', None)
-        scope_list= build_scope(db, dataset, view, issue)
-        if len(scope_list) == 0: # ERROR! wrong conditions for search
-            result['response']= rsdb.Response().get_response(37)["descr"]
-        else:
-            result.update( {
-                'query': query_str,
-                'uri': request.build_absolute_uri()
-                } )
-
-            if query_str is None:
-                result['response']= rsdb.Response().get_response(36)["descr"]
-            else:
-                res= rsdb.Search()
-                # # old search
-                # result.update(
-                #     res.search_data(
-                #         db, qrystr= query_str, scope= scope_list, strict= strict, lookup= lookup_fields
-                #         )
-                #     )
-                # result['response']= rsdb.Response().get_response(0)["descr"]
-
-                # new search
-                display_fields= get_userdef_fields(request, 'fields') # fields to display
-                result.update(
-                    res.search_text(
-                        db, qrystr= query_str, scope= scope_list, strict= strict, display= display_fields
-                        )
-                    )
-                result['response']= rsdb.Response().get_response(0)["descr"]
-
-    out, mime_tp, http_response = format_result(result, serializer, 200)
-    return HttpResponse( out, mimetype=mime_tp, status=http_response )
