@@ -10,26 +10,20 @@ from django.utils import simplejson as json
 
 import xml.etree.cElementTree as ET
 
-from ConfigParser import ConfigParser
-import re
-
-import rsdbapi as rsdb
+import rsdbapi.rsdbapi as api
 
 import rs.sqldb as sqldb
-#from xml_serializer import Py2XML as py2xml
 
 
-conf_filename= "/home/cecyf/www/projects/rawsalad/src/rawsalad/site_media/media/rawsdata.conf"
-
+'''
 xml_header = '<?xml version=\"1.0\" encoding=\"UTF-8\">'
 def_version = '1.0'
 formats = ['json', 'xml']
 def_format = 'json'
 
-level_list= ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k']
-
-def get_header( version ):
+def get_xml_header( version ):
     return "<?xml version=\"%s\" encoding=\"UTF-8\"?>" % version
+
 
 def dict2et(xml_dict, root_tag='result', list_names=None):
     if not list_names:
@@ -64,57 +58,11 @@ def _convert_dict_to_xml_recurse(parent, dict_item, list_names):
     elif not dict_item is None:
         parent.text = unicode(dict_item)
 
-
-def format_result(result, srz, httpresp= None, rt_tag= None):
-    if httpresp is None:
-        httpresp= 200
-    if srz == 'json':
-        res= json.dumps( result, ensure_ascii=False, indent=4 )
-        mime_tp= "application/json"
-    elif srz == 'xml':
-        # if rt_tag is None: # if root tag is not given, use 'request' key as a root tag
-        #     rt_tag= result.pop('request') # ehh.. i liked this idea very much
-        rt_tag= 'result'
-        res_raw= ET.tostring(dict2et(result, root_tag=rt_tag))
-        res= "".join([ xml_header, res_raw ])
-        mime_tp= "application/xml"
-    else: # error: format missing (like ../api/dataset/ instead of /api/<format>/dataset/)
-        format_error= rsdb.Response().get_response(35)
-        res= json.dumps( {
-            "response": format_error["descr"],
-            "request": srz
-            }, ensure_ascii=False, indent=4 )
-        mime_tp= "application/json"
-        httpresp= format_error["httpresp"]
-    return res, mime_tp, httpresp
-
-
-def path2query(path_str):
-    out_query= {}
-
-    if len(path_str) != 0:
-        path_list= path_str.rsplit('/')
-        last_elt= path_list[len(path_list)-1]
-        if last_elt in level_list: # last element is a sign of level
-            if path_list[len(path_list)-1] == 'a': # level 'a' has no parents
-                out_query['level']= path_list[len(path_list)-1]
-            else:
-                out_query['parent']= path_list[len(path_list)-2] # the one before last is a parent
-        else:
-            out_query['idef']= path_list[len(path_list)-1] # the last elt is current idef
-    return out_query
-
-def get_formats(request):
-    result= {'formats': ['json', 'xml']}
-    result['uri']= request.build_absolute_uri()
-    return HttpResponse( json.dumps( result ), 'application/json' )
-
-
 def serialize_result( serializer, result, uri ):
     if serializer == 'json':
         ser_result = json.dumps( result, ensure_ascii=False, indent=4 )
     elif serializer == 'xml':
-        header = get_header( def_version )
+        header = get_xml_header( def_version )
         ser_result = header + ET.tostring( dict2et( result, root_tag='result' ) )
     else:
         raise RuntimeError( "Bad serializer" )
@@ -128,6 +76,7 @@ def get_mime_type( serializer ):
         return 'application/xml; charset=UTF-8'
     else:
         raise RuntimeError( "Bad serializer" )
+'''
 
 def generate_response( data, request, no_query_uri=None ):
     serializer = request.GET.get( 'format', 'json' )
@@ -138,13 +87,13 @@ def generate_response( data, request, no_query_uri=None ):
     result = {
         'uri': no_query_uri,
         'data': data,
-        'ns': create_ns_uri( no_query_uri )
+        'ns': api.create_ns_uri( no_query_uri )
     }
-    try:
-        ser_result = serialize_result( serializer, result, no_query_uri )
-        mime_type = get_mime_type( serializer )
-    except:
-        return HttpResponse( status=404 )
+    #try:
+    ser_result = api.serialize_result( serializer, result, no_query_uri )
+    mime_type = api.get_mime_type( serializer )
+    #except:
+    #    return HttpResponse( status=404 )
 
     return HttpResponse( ser_result, mimetype=mime_type )
 
@@ -162,14 +111,14 @@ def get_top_api( request ):
 
 def get_dbtree( request ):
     flat_tree = sqldb.get_db_tree()
-    parent_id_tree = get_parent_id_tree( flat_tree )
+    parent_id_tree = api.get_parent_id_tree( flat_tree )
 
     base_uri = request.build_absolute_uri()
     no_query_base_uri = base_uri.rsplit('?', 1)[0]
-    data = get_dbtree_children( parent_id_tree, None, no_query_base_uri ),
+    data = api.get_dbtree_children( parent_id_tree, None, no_query_base_uri ),
 
     return generate_response( data, request, no_query_base_uri )
-
+'''
 def get_parent_id_tree( flat_tree ):
     parent_id_tree = {}
     for el in flat_tree:
@@ -179,6 +128,13 @@ def get_parent_id_tree( flat_tree ):
             parent_id_tree[ el['parent'] ] = [ el ]
 
     return parent_id_tree
+
+def get_id_tree( flat_tree ):
+    id_tree = {}
+    for el in flat_tree:
+        id_tree[ el['id'] ] = el
+
+    return id_tree
 
 def get_dbtree_children( tree, parent_id, base_uri ):
     act_level = tree[ parent_id ]
@@ -209,7 +165,8 @@ def create_meta_uri( uri, endpoint ):
     return uri + endpoint + '/meta/'
 
 def create_top_uri( uri, endpoint ):
-    return uri + endpoint + '/'
+    ns_uri = create_ns_uri( uri )
+    return ns_uri + '/api/collections/' + endpoint + '/'
         
 def create_ns_uri( uri ):
     if uri[:4] == 'http':
@@ -223,6 +180,11 @@ def create_search_uri( uri, endpoint ):
 def create_data_uri( uri, endpoint, id ):
     ns_uri = create_ns_uri( uri )
     return ns_uri + '/api/collections/%s/%s' % ( endpoint, id )
+
+def create_children_uri( uri, endpoint, id ):
+    ns_uri = create_ns_uri( uri )
+    return ns_uri + '/api/collections/%s/%s/children' % ( endpoint, id )
+'''
 
 '''
 def get_endpoint( request, endpoint ):
@@ -248,28 +210,68 @@ def get_endpoint_children( collection, par_id ):
 '''
 
 def get_meta( request, endpoint ):
+    base_uri = request.build_absolute_uri()
+    no_query_base_uri = base_uri.rsplit('?', 1)[0]
+
     collection = sqldb.Collection( endpoint )
     meta = {
         'columns': collection.get_columns(),
         'hierarchy': collection.get_hierarchy(),
         'label': collection.get_label(),
+        'name': collection.get_name(),
+        'parents': api.get_endpoint_parents( endpoint ), 
+        'top_level': api.create_top_uri( no_query_base_uri, endpoint ),
         'count': len( collection.get_all_ids() )
     }
 
     return generate_response( meta, request )
+'''
+def get_endpoint_parents( endpoint ):
+    flat_tree = sqldb.get_db_tree()
+    id_tree = get_id_tree( flat_tree )
 
-def get_data( request, endpoint, id ):
+    endpoint_id = filter( lambda el: el['endpoint'] == endpoint, flat_tree )[0]['id']
+    parents = []
+    act_node = id_tree[ endpoint_id ]
+    while act_node['parent'] is not None:
+        act_node = id_tree[ act_node['parent'] ]
+        parents.append({
+            'name': act_node['name'],
+            'descripition': act_node['description']
+        })
+
+    parents.reverse()
+    return parents
+'''
+
+def get_data( request, endpoint, ids=[], par_id=None ):
     fields_str = request.GET.get( 'fields', '' )
     fields = fields_str.split(',')
     if fields == ['']:
         fields = []
 
     collection = sqldb.Collection( endpoint )
-    row = collection.get_nodes( int(id) )[0]
-    cleaned_row = flatten_row( row, fields )
-    cleaned_row['id'] = row['id']
+    if ids != []:
+        str_ids = [str(e) for e in ids]
+        rows = collection.get_nodes( str_ids )
+    elif par_id is None:
+        rows = collection.get_top_level()
+    else:
+        #rows = collection.get_nonempty_children( par_id )
+        rows = collection.get_children( par_id )
+    flatten_rows = [ flatten_row( row, fields, flat_row={} ) for row in rows ]
 
-    return generate_response( cleaned_row, request )
+    base_uri = request.build_absolute_uri()
+    no_query_base_uri = base_uri.rsplit('?', 1)[0]
+
+    for (i, new_row) in enumerate( flatten_rows ):
+        new_row['id'] = rows[i]['id']
+        if not new_row['leaf']:
+            new_row['children_uri'] = api.create_children_uri( no_query_base_uri, endpoint, new_row['id'] )
+        if new_row['parent']:
+            new_row['parent_uri'] = api.create_data_uri( no_query_base_uri, endpoint, new_row['parent'] )
+
+    return generate_response( flatten_rows, request )
 
 def flatten_row( row, fields=[], flat_row={} ):
     if fields == []:
@@ -287,18 +289,14 @@ def flatten_row( row, fields=[], flat_row={} ):
                     
     return flat_row
         
+def get_data_row( request, endpoint, id ):
+    return get_data( request, endpoint, ids=[id] )
 
 def get_top_level( request, endpoint ):
-    return get_children( request, endpoint, None )
+    return get_data( request, endpoint )
 
 def get_children( request, endpoint, par_id ):
-    collection = sqldb.Collection( endpoint )
-    if par_id is None:
-        data = collection.get_top_level()
-    else:
-        data = collection.get_children( par_id )
-
-    return generate_response( data, request )
+    return get_data( request, endpoint, par_id=par_id )
 
 def get_search_count( request, endpoint, query ):
     if endpoint == 'all_endpoints':
@@ -343,10 +341,16 @@ def help( request ):
         'info': 'Wrong uri',
         'url_patterns': {
             'api_info': '^/$',
-            'collections_info': '^collections/$'
+            'collections_info': '^collections/$',
+            'collection_meta': '^collections/[a-z_0-9]+/$',
+            'data_row': '^collections/[a-z_0-9]+/\d+/$',
+            'top_level': '^collections/[a-z_0-9]+/$',
+            'children': '^collections/[a-z_0-9]+/\d+/children/$',
+            'search_count': '^collections/[a-z_0-9]+/\w+/$',
+            'search_data': '^collections/[a-z_0-9]+/\w+/$',
+            'help': '^.*/$'
         }
     }
     
     return generate_response( help_info, request )
-
 

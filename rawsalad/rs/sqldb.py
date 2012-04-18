@@ -453,11 +453,13 @@ class Collection:
         self.columns = self.cursor.fetchall()
 
         # get label of the endpoint
-        query = '''SELECT label FROM dbtree
+        query = '''SELECT label,name FROM dbtree
                    WHERE endpoint = '%s'
                 ''' % ( self.endpoint, )
         self.cursor.execute( query )
-        self.label = self.cursor.fetchone()['label']
+        result = self.cursor.fetchone()
+        self.label = result['label']
+        self.name = result['name']
 
         # get list describing hierarchy
         query = '''SELECT * FROM hierarchy
@@ -495,6 +497,11 @@ class Collection:
     def get_label( self ):
         '''Get the label of the collection'''
         return self.label
+
+
+    def get_name( self ):
+        '''Get the name of the collection'''
+        return self.name
 
 
     def get_top_level( self ):
