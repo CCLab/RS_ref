@@ -4,9 +4,8 @@ from django.conf.urls.defaults import *
 
 
 urlpatterns = patterns( 'papi.papi',
-    (r'^$', 'get_top_api' ),
+    (r'^$', 'get_top_info' ),
     (r'^collections/$', 'get_dbtree' ),
-    #(r'^collections/(?P<endpoint>[a-z_0-9]+)/tree/$', 'get_endpoint' ),
     (r'^collections/(?P<endpoint>[a-z_0-9]+)/meta/$', 'get_meta' ),
 
     (r'^collections/(?P<endpoint>[a-z_0-9]+)/(?P<id>\d+)/$', 'get_data_row' ),
@@ -16,5 +15,5 @@ urlpatterns = patterns( 'papi.papi',
     (r'^search/count/(?P<endpoint>\w+)/(?P<query>\w+)/$', 'get_search_count'),
     (r'^search/data/(?P<endpoint>\w+)/(?P<query>\w+)/$', 'get_search_data'),
 
-    (r'^.*/$', 'help' ),
+    (r'^.*/$', 'get_help' ),
 )
