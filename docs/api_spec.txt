@@ -1,192 +1,178 @@
 DATA COLLECTIONS 
 ----------------
-All data in Raw Salad DB are organized in data collections. Each data collection
-consists of a hierarchical triple: dataset, view and issue. 
-
-EXAMPLES:
-
-   DATASET                       VIEW                      ISSUE
-   National budget             > Performance budget      > 2011
-                                                         > 2012
-                               > Institutional budget    > 2011
-                                                         > 2012
-   National agencies budgets   > Traditional structure   > 2011
-                               > Performance structure   > 2011
-                               
-As shown in the example, some datasets contain a few distinct views and some of 
-the views have multiple issues. The issues don't have to be a year date and 
-should be treated as an arbitrary (though self-descriptive) identifier. 
-
-A specified triple of dataset-view-issue is called "Data collection" and with 
-data format creates a basic URL structure.
-
+All data in Raw Salad DB are organized in a treelike structure. Each leaf in
+the tree is connected with data collection (endpoint), higher level nodes are
+used to group those collections.
 
 DATA FORMATS
 ------------
 Public API of Raw Salad provides users with two optional data formats: XML and 
-JSON both encoded in UTF-8. In future YAML is to be implemented as well. 
+JSON both encoded in UTF-8.
 
 
 RESPONSE STRUCTURE
 ------------------
-To be written
+Every response has the following structure:
+{
+    "ns":     application domain, e.g. http://otwartedane.pl
+    "data":   returned data for sent request
+    "uri":    request url
+}
+
+Information in "data" contains URLs which may be used for further navigation.
+
+HELP URL
+--------
+Help URL returns information about:
+* default api version
+* available data formats
+* default data format
+* URL structure
+
+1) http://otwartedane.pl/api/
+
+COLLECTIONS INFO URL STRUCTURE
+------------------------------
+There are two forms of urls that provide information about data collections
+and hierarchy between them:
+
+1) http://otwartedane.pl/api/collections/
+
+Information about data collections in a treelike form.
+
+2) http://otwartedane.pl/api/collections/<endpoint>/meta/
+
+Meta data about data in the endpoint provided in a URL.
+<endpoint> - name of endpoint, e.g. data_50001
+Names of endpoints are returned in response to the 1) request.
+
+    EXAMPLES:
+    * http://otwartedane.pl/api/collections/
+      Get information about data collections organised in a treelike structure.
+
+    * http://otwartedane.pl/api/collections/data_50001/meta/
+      Get meta information about 'data_50001' collection.
 
 
-BASIC URL STRUCTURE
--------------------
-The basic part of API URL consists of three parts: host, format, collection:
+DATA URL STRUCTURE
+------------------
+There three types of urls to retrieve information about data in data collections.
+It is possible to specify which fields of data nodes should be returned, what is
+described in  part 'QUERY PARAMETERS', when no information about needed fields
+is passed, then all fields are returned.
 
-              HOST              FORMAT               COLLECTION
-   |--------------------------|--------|---------------------------------------|
-   http://cecyf.megivps.pl/api/<format>/dataset/<idef>/view/<idef>/issue/<idef>/
+1) http://otwartedane.pl/api/collections/<endpoint>/
 
+Top level data in the endpoint provided in a URL.
 
-EXAMPLES:
+2) http://otwartedane.pl/api/collections/<endpoint>/<id>/
 
-   National budget > Institutional structure > 2012 in XML format
-   http://cecyf.megivps.pl/api/xml/dataset/0/view/2/issue/2012/
-   
-   National agencies budget > Performance structure > 2011 in JSON format
-   http://cecyf.megivps.pl/api/json/dataset/2/view/3/issue/2011/
-   
+Data of node identified by passed in a URL id. Node must be part of collection
+connected with provided endpoint.
 
-All URLs in the API have to contain a trailing slash!
+3) http://otwartedane.pl/api/collections/<endpoint>/<id>/children/
+
+Data of children of node which is identified the same as in the previous point.
+
+    EXAMPLES:
+    * http://otwartedane.pl/api/collections/data_50001/
+      Get top level data nodes from 'data_50001' endpoint.
+
+    * http://otwartedane.pl/api/collections/data_50001/10000/
+      Get data of node with id '10000' from 'data_50001' endpoint.
+
+    * http://otwartedane.pl/api/collections/data_50001/10000/children/
+      Get children of node with id '10000' from 'data_50001' endpoint.
+
+SEARCH URL STRUCTURE
+--------------------
+There are two ways of searching data in data collections:
+*   searching number of data nodes satisfying search criterion in one
+    selected/all collections
+*   retrieving data nodes satisfying search criterion in one collection,
+    returned information does not contain node data, but their ids and
+    uri that return their data
+
+1) http://otwartedane.pl/api/search/count/<endpoint>/<query>/
+
+The first way described above. To get all endpoints, 'all_endpoints' phrase
+must be passed as endpoint name.
+
+2) http://otwartedane.pl/api/search/data/<endpoint>/<query>/
+
+The second way described above. Note that it is unable to get data from
+all endpoints with one query, 'all_endpoints' will not work here.
+
+    EXAMPLES:
+    * http://otwartedane.pl/api/search/count/all_endpoints/school/
+      Count data nodes that have 'school' phrase in any of their fields
+      in all endpoints.
+
+    * http://otwartedane.pl/api/search/data/data_50001/school/
+      Get information about nodes that satisfy 'school' search criterion
+      in endpoint 'data_50001'.
+
+QUERY PARAMETERS
+----------------
+Query parameters specify:
+1)  Data format in which response should be sent back. It can be used with
+    all given types of URLs except for the HELP URL.
+    field: 'format'
+    available values: 'json', 'xml'
+
+2)  Returned fields in data nodes. This field should be passed only in DATA URLs.
+    field: 'fields'
+    available values: combination of field keys separated by commas, e.g.
+                      'name,value1,total_value'
+    
+    EXAMPLES:
+    * http://otwartedane.pl/api/collections/?format=xml
+      Information about collections in XML format.
+
+    * http://otwartedane.pl/api/collections/data_50001/?fields=type,parent,value
+      Top level data nodes from endpoint 'data_50001' and fields: 'type'
+      'parent', 'value' and 'id'('id' field is always returned).
 
 All API URLs are self descriptive and reflective. It means that all information 
 necessary to browse Raw Salad DB and build software (or language wrappers) on 
 top of Raw Salad API is included in API responses. 
 
 
-STEP BY STEP THROUGH BASIC URL
+STEP BY STEP THROUGH URL
 ------------------------------
+This simple diagram shows how to use information in responses
+to compose new requests, it does not show all connections.
 
-   List of available formats
-   http://cecyf.megivps.pl/api/
-
-   List of available datasets (response in <format>)
-   http://cecyf.megivps.pl/api/<format>/
-   http://cecyf.megivps.pl/api/<format>/dataset/
-
-   List of available views of specified dataset (response in <format>)
-   http://cecyf.megivps.pl/api/<format>/dataset/<idef>/
-   http://cecyf.megivps.pl/api/<format>/dataset/<idef>/view/
-
-   List of available issues of specified dataset-view (response in <format>)
-   http://cecyf.megivps.pl/api/<format>/dataset/<idef>/view/<idef>/
-   http://cecyf.megivps.pl/api/<format>/dataset/<idef>/view/<idef>/issue/
-
-   List of all data in specified collection (response in <format>)
-   http://cecyf.megivps.pl/api/<format>/dataset/<idef>/view/<idef>/issue/<idef>/
-
-The last URL is the first API call that responses with raw data from a specified
-collection in a specified format. The futher specification is provided below.
-
-
-RAW DATA API
-------------
-Throughout this part "<col>" is used to indicate URL for a specific collection 
-in a specific format (see section above). 
-
-
-The structure of the raw data urls is as follows:
-    
-   the whole collection:
-
-      <col>/           - a flat list of all entities in a whole collection
-      <col>/meta       - metadata for the collection including 'max_level' and
-                         children 'count'
-      <col>/tree       - the whole collection as a tree
-        
-
-   EXAMPLES:
-
-      A flat list of all entities in the national performance budget 2012
-      http://cecyf.megivps.pl/api/json/dataset/0/view/1/issue/2012/  
-      
-      A tree of all entities in the national traditional budget 2011
-      http://cecyf.megivps.pl/api/xml/dataset/0/view/0/issue/2011/tree  
-      
-
-   a single level:
-
-      <col>/a/(<idef>/<level>/)*   - a flat list of all <level> children
-                                     of the last specified node
-
-
-   EXAMPLE:
-
-      A flat list of all tasks in function 1 in the performance budget 2011
-      http://cecyf.megivps.pl/api/json/dataset/0/view/1/issue/2012/a/1/b/
-
-
-   a specified entity:
-      
-      <col>/(<level>/<idef>/)+         - a specified <idef> entity
-      <col>/(<level>/<idef>/)+meta/    - a specified <idef> entity metadata
-                                         including children 'count'
-      <col>/(<level>/<idef>/)+tree/    - a subtree of the collection with 
-                                         a specified <idef> entity as a root
-
-
-   <level> is represented by a single letter reflecting tree level (a, b, c...)
-   <idef> is a unique (in scope of the single collection) id of the entity
-    
-   EXAMPLES:
-
-      National agencies budget 2011 in JSON
-      <col> = http://cecyf.megivps.pl/api/json/dataset/2/view/3/issue/2011/  
-
-      Constant costs of National Film Institute
-      <col>/a/21/b/21-1/
-      
-      All Polish Turistic Organization data as a JSON tree
-      <col>/a/13/tree/
-      
-      Metadata (including children count) for National Film Institute
-      <col>/a/21/meta/
-      
-
-   In all URLs <idef> can be represented by a single entity idef or as a group 
-   expresion. Following keywords are allowed:
-
-      +TO+ - sets a range from one ifed to another
-      +AND+ - appends another idef to the list of specified idefs
-
-   To use a scope expresions one follow the syntax:
-
-      <col>/(<level>/<idef>/)*<level>/\[<idef>(\+(AND|TO)\+<idef>)+\]/(<level>)*
-
-   The group expression can be used only to the deepest level requested and only
-   for the flat list view - users can't use grouping with tree results.
-
-   EXAMPLES:
-
-      National performance budget 2012 in JSON
-      <col> = http://cecyf.megivps.pl/api/json/dataset/0/view/1/issue/2012/  
-
-      A list of functions 1, 2, 3 and 6
-      <col>/a/[1+TO+3+AND+6]/
-
-      A list of lists of tasks of functions 1 and 4
-      <col>/a/[1+AND+4]/b/
-
-      A list of lists of subtasks of tasks 1-2, 1-3, 1-4 and 1-7 of function 1
-      <col>/a/1/b/[1-2+TO+1-4+AND+1-7]/c/
-
-
-2. Additional GET attribute "fields" can be used to narrow the result's size:
-
-   fields=<field_name>(, <field_name>)+ - list of fields of specified entities
-
-   EXAMPLES:
-      
-      National Health Fund budget 2011 in XML
-      <col> = http://cecyf.megivps.pl/api/json/dataset/3/view/1/issue/2012/  
-
-      A list of all entities with only name and total value as a result:
-      <col>/a/?fields=name,val
-
-      A list of two regions with idef and total value as a result
-      <col>/a/[280000+AND+320000]/?fields=idef,val
+    API information.
+    http://otwartedane.pl/api/
+    ||
+    || 
+    ||
+    ||
+    ==> <collections_uri>
+        Data collections.
+        http://otwartedane.pl/api/collections/
+        ||
+        ||
+        ==> <meta_uri>
+        ||  Meta data about collection 'data_50001'.
+        ||  http://otwartedane.pl/api/collections/data_50001/meta/
+        ||      ||
+        ||      ||
+        ||      ||
+        ||      || <top_uri>
+        ||      \/
+        ==> <top_uri>
+            Top level nodes of 'data_50001' collection.
+            http://otwartedane.pl/api/collections/data_50001/
+            ||
+            ||
+            ||
+            ||
+            ||
+            ==> <children_uri>
+                Children nodes of node with id = 1000000001
+                from 'data_50001' collection.
+                http://localhost:8000/api/collections/data_50001/1000000001/children
 
 

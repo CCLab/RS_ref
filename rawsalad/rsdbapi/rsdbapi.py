@@ -83,7 +83,7 @@ def get_meta( base_uri, endpoint ):
         'label': collection.get_label(),
         'name': collection.get_name(),
         'parents': get_endpoint_parents( endpoint ), 
-        'top_level': create_top_uri( base_uri, endpoint ),
+        'top_uri': create_top_uri( base_uri, endpoint ),
         'count': len( collection.get_all_ids() )
     }
 
