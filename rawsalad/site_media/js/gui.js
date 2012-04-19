@@ -672,18 +672,6 @@ var _gui = (function () {
         });
     }
 
-    function arm_boxes( rows ) {
-        rows.each( function() {
-            var this_row = $(this);
-            var id = this_row.attr('box_id');
-            this_row.find('#show-breadcrumb-' + id).click( function () {
-                toggle_breadcrumb( id );
-            });
-            this_row.find('#show-context-' + id).click( function () {
-                toggle_context( id );
-            });
-        });
-    }
 
     function arm_rows( rows ) {
         if ( $('#show-breadcrumb-0').length === 0 ) {
@@ -736,6 +724,19 @@ var _gui = (function () {
             }
         });
 
+    }
+
+    function arm_boxes( rows ) {
+        rows.each( function() {
+            var this_row = $(this);
+            var id = this_row.attr('box_id');
+            this_row.find('#show-breadcrumb-' + id).click( function () {
+                toggle_breadcrumb( id );
+            });
+            this_row.find('#show-context-' + id).click( function () {
+                toggle_context( id );
+            });
+        });
     }
 
 
