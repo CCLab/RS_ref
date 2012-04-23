@@ -196,6 +196,7 @@ var _resource = (function () {
         // Get list of all nodes with needed columns only
         full_collection = _store.get_collection_data( sheet['endpoint'] );
         cleaned_full_data = clean_data( full_collection, sheet['columns'], true );
+        sheet['total'] = remove_total_row( cleaned_full_data );
 
         // Insert to new tree cleaned nodes(only those that were in old tree)
         cleaned_full_data.forEach( function ( cleaned_node ) {
@@ -215,8 +216,10 @@ var _resource = (function () {
 
         _store.get_top_level( sheet['endpoint'], function ( data ) {
             var cleaned_data = clean_data( data, sheet['columns'] );
+            remove_total_row( cleaned_data );
 
             sheet['data'] = _tree.create_tree( cleaned_data, 'id', 'parent' );
+            sheet['sort_query'] = [];
             sheet['any_selected'] = false;
 
             that.get_sheet_data( sheet_id, callback );
