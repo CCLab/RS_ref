@@ -340,8 +340,9 @@ var _gui = (function () {
 
 
     function draw_sheet( sheet_id ){
+        var sheet_data = _resource.get_sheet_data( sheet_id );
         draw_table( _resource.get_sheet_data( sheet_id ) );
-        draw_tools( _resource.get_sheet_name( sheet_id ) );
+        draw_tools( _resource.get_sheet_name( sheet_id ), sheet_data['type'] );
         draw_tabs ( _resource.get_sheets_labels() );
     }
 
@@ -352,10 +353,13 @@ var _gui = (function () {
     }
 
 
-    function draw_tools( names ) {
+    function draw_tools( names, sheet_type ) {
+        if ( sheet_type !== 0 && !sheet_type ) {
+            sheet_type = names['type'];
+        }
         names['changed_label'] = !( names['label'] === names['old_label'] );
-        if ( names['type'] === 2 ) {
-            names['search_result'] = true;
+        if ( sheet_type === _enum['FILTERED'] || sheet_type === _enum['SEARCHED'] ) {
+            names['non_standard_result'] = true;
         }
 
         display_tools( M.to_html( _tmpl.app_table_tools, names ) );
