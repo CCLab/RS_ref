@@ -357,7 +357,9 @@ var _gui = (function () {
         if ( sheet_type !== 0 && !sheet_type ) {
             sheet_type = names['type'];
         }
-        names['changed_label'] = !( names['label'] === names['old_label'] );
+        if ( !!names['old_label'] ) {
+            names['changed_label'] = !( names['label'] === names['old_label'] );
+        }
         if ( sheet_type === _enum['FILTERED'] || sheet_type === _enum['SEARCHED'] ) {
             names['non_standard_result'] = true;
         }
@@ -466,10 +468,10 @@ var _gui = (function () {
             .click( clear_table );
 
         sort_bt
-            .click( display_sort_panel );
+            .click( toggle_sort_panel );
 
         filter_bt
-            .click( display_filter_panel );
+            .click( toggle_filter_panel );
 
         columns_bt
             .click( display_add_columns );
@@ -589,37 +591,70 @@ var _gui = (function () {
 
     function clear_table() {
         var sheet_id = active_sheet_id();
-        // TODO make draw_sheet a direct callback
-        var callback = function() {
-            // TODO give me this id _resource
-            draw_sheet( sheet_id );
-        }
-        _resource.clean_table( sheet_id, callback )
+        _resource.clean_table( sheet_id, function() {
+            var forms = $('#app-tb-tools').find('form:visible');
+            if ( forms.length !== 0 ) {
+                forms.slideUp( 200, function () {
+                    draw_sheet( sheet_id );
+                });
+            } else {
+                draw_sheet( sheet_id );
+            }
+        });
     }
 
 
-    // Shows sort panel with event handlers defined and the first sort key.
-    function display_sort_panel() {
+    // Shows/hides sort panel with event handlers defined and the first sort key.
+    function toggle_sort_panel( event ) {
         var sort_form_code = $( _tmpl.sort_form );
-        prepare_sort_interface( sort_form_code );
-        add_sort_key( sort_form_code );
+        var other_forms = $('#app-tb-tools').find('form:visible');
 
-        // TODO - add show and hide animations
-        $('#app-tb-tl-srft-forms').children().remove();
-        $('#app-tb-tl-srft-forms').append( sort_form_code );
+        if ( $('#app-tb-tl-sort-form').length === 0 ) {
+            prepare_sort_interface( sort_form_code );
+            add_sort_key( sort_form_code );
+            
+            if ( other_forms.length === 0 ) {
+                $('#app-tb-tl-srft-forms').append( sort_form_code );
+                $('#app-tb-tl-sort-form').slideDown( 200 );
+            } else {
+                other_forms.slideUp( 200, function () {
+                    $('#app-tb-tl-srft-forms').children().remove();
+                    $('#app-tb-tl-srft-forms').append( sort_form_code );
+                    $('#app-tb-tl-sort-form').slideDown( 200 );
+                });
+            }
+        } else {
+            $('#app-tb-tl-sort-form').slideUp( 200, function() {
+                $('#app-tb-tl-srft-forms').empty();
+            });
+        }
     }
 
-    // Shows filter panel with event handlers defined and the first filter key.
-    function display_filter_panel() {
+    // Shows/hides filter panel with event handlers defined and the first filter key.
+    function toggle_filter_panel( event ) {
         var filter_form_code = $( _tmpl.filter_form );
-        prepare_filter_interface( filter_form_code );
-        add_filter_key( filter_form_code );
+        var other_forms = $('#app-tb-tools').find('form:visible');
 
-        // TODO - add show and hide animations
-        $('#app-tb-tl-srft-forms').children().remove();
-        $('#app-tb-tl-srft-forms').append( filter_form_code );
+        if ( $('#app-tb-tl-filter-form').length === 0 ) {
+            prepare_filter_interface( filter_form_code );
+            add_filter_key( filter_form_code );
+            
+            if ( other_forms.length === 0 ) {
+                $('#app-tb-tl-srft-forms').append( filter_form_code );
+                $('#app-tb-tl-filter-form').slideDown( 200 );
+            } else {
+                other_forms.slideUp( 200, function () {
+                    $('#app-tb-tl-srft-forms').children().remove();
+                    $('#app-tb-tl-srft-forms').append( filter_form_code );
+                    $('#app-tb-tl-filter-form').slideDown( 200 );
+                });
+            }
+        } else {
+            $('#app-tb-tl-filter-form').slideUp( 200, function() {
+                $('#app-tb-tl-srft-forms').empty();
+            });
+        }
     }
-
 
     function display_add_columns( event ) {
         var sheet_id = active_sheet_id();
@@ -627,6 +662,12 @@ var _gui = (function () {
         var callback = function( columns ){
             var columns_object =  { 'columns': columns };
             var columns_form = M.to_html( _tmpl.columns_form, columns_object );
+
+            $('#app-tb-tools')
+                .find('form:visible')
+                .slideUp( 200, function () {
+                    $('#app-tb-tl-srft-forms').empty();
+                });
 
             $('#app-tb-tl-columns-list').append( $(columns_form) );
             $('#app-tb-tl-columns-form').slideDown( 200 );
@@ -650,7 +691,6 @@ var _gui = (function () {
 
 
     function hide_add_columns( event ) {
-
         $('#app-tb-tl-columns-form').slideUp( 200, function() {
             $('#app-tb-tl-columns-list').empty();
         } );

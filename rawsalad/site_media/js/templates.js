@@ -235,7 +235,9 @@ var _tmpl = (function () {
             '{{#changed_label}}' +
                 '<div id="app-tb-tl-old-title" class="left">{{old_label}}</div>' +
             '{{/changed_label}}' +
+            '{{^changed_label}}' +
             '<div id="app-tb-tl-old-title" class="left" style="display: none;"> </div>' +
+            '{{/changed_label}}' +
             '<div id="app-tb-tl-rename-button" class="button left">Zmień nazwę</div>' +
             '<div id="app-tb-tl-bt-container" class="right"' +
             '{{#non_standard_result}}' +
@@ -292,7 +294,7 @@ var _tmpl = (function () {
         '</form>';
 
     that.sort_form =
-        '<form id="app-tb-tl-sort-form" class="sort-filter-form left">' +
+        '<form id="app-tb-tl-sort-form" class="sort-filter-form left" style="display: none;">' +
             '<table>' +
                 '<thead>' +
                     '<tr>' +
@@ -327,7 +329,7 @@ var _tmpl = (function () {
          '</tr>';
 
     that.filter_form =
-        '<form id="app-tb-tl-filter-form" class="sort-filter-form left">' +
+        '<form id="app-tb-tl-filter-form" class="sort-filter-form left" style="display: none;">' +
             '<table>' +
                 '<thead>' +
                     '<tr>' +
