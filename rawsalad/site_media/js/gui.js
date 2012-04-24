@@ -946,7 +946,10 @@ var _gui = (function () {
         $('#app-sh-panel').empty().append( M.to_html( _tmpl.panel_sheets, open_sheets ) );
 
         $('#app-sh-permalink').hide();
-        $('#app-sh-submit').show().click( function () {
+        $('#app-sh-submit')
+            .show()
+            .unbind( 'click' )
+            .click( function () {
             var checked = $('#app-sh-panel')
                                 .find('input:checked')
                                 .map( function () {
@@ -959,6 +962,7 @@ var _gui = (function () {
             }
 
             _resource.create_permalink( $.makeArray( checked ), function ( permalink_id ) {
+                console.log(10);
                 $('#app-sh-submit').hide();
                 $('#app-sh-permalink').slideDown( 150 )
                                       .find('input')
