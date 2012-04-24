@@ -390,6 +390,7 @@ var _resource = (function () {
         sorted_tree = _tree.sort( sheet['data'], sort_fun );
         sheet['data'] = sorted_tree;
         sheet['sort_query'] = sort_criterion;
+        reset_selection( sheet_id );
 
         if ( !!callback ) {
             that.get_sheet_data( sheet_id, callback );
