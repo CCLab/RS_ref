@@ -33,7 +33,7 @@ var _gui = (function () {
     //var manage_top_panel = _logger.log( manage_top_panel );
 
 
-    that.init_gui = function() {
+    that.init_gui = function( permalink_start ) {
         // arm top menu buttons
         $('#top-menu li').click( function () {
             // register callbacks for all top-menu buttons

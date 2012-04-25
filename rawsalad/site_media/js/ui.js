@@ -320,6 +320,7 @@ var _ui = (function () {
         var first_row;
         var has_parent;
         var has_context;
+        var context_visible;
         var siblings_length;
         var hit_length;
 
@@ -358,11 +359,11 @@ var _ui = (function () {
         }
 
         has_parent = !!_tree.get_parent( sheet['data'], first_row['id'] );
-        // has_context not used yet
         hit_length = box['rows'].length;
         siblings_length = _tree.get_children_number( sheet['data'], parent_id );
         has_context = siblings_length > hit_length;
         empty_context = box['context'] && !has_context;
+        context_visible = has_parent;
 
         return {
             'columns'          : columns_for_gui,
@@ -372,7 +373,8 @@ var _ui = (function () {
             'context_showed'   : box['context'],
             'has_parent'       : has_parent,
             'has_context'      : has_context,
-            'empty_context'    : empty_context
+            'empty_context'    : empty_context,
+            'context_visible'  : context_visible
         };
     }
 

@@ -469,12 +469,14 @@ var _tmpl = (function () {
         '{{/rows}}' +
         '<tr box_id="{{box_id}}">' +
             '<td colspan="{{columns_num}}" class="app-tb-sr-lastrow">' +
-                '{{#empty_context}}' +
-                    '<div id="show-context-{{box_id}}" class="app-tb-sr-context-bt empty-context button blue">{{context_action}}</div>' +
-                '{{/empty_context}}' +
-                '{{^empty_context}}' +
-                    '<div id="show-context-{{box_id}}" class="app-tb-sr-context-bt button blue">{{context_action}}</div>' +
-                '{{/empty_context}}' +
+                '{{#context_visible}}' +
+                    '{{#empty_context}}' +
+                        '<div id="show-context-{{box_id}}" class="app-tb-sr-context-bt empty-context button blue">{{context_action}}</div>' +
+                    '{{/empty_context}}' +
+                    '{{^empty_context}}' +
+                        '<div id="show-context-{{box_id}}" class="app-tb-sr-context-bt button blue">{{context_action}}</div>' +
+                    '{{/empty_context}}' +
+                '{{/context_visible}}' +
             '</td>' +
         '</tr>';
 

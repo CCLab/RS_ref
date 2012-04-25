@@ -56,7 +56,9 @@ var _resource = (function () {
         var respond = function() {
             var gui_data;
             var children = _tree.get_nonempty_children_nodes( sheet['data'], parent_id );
-            open_row( sheet_id, parent_id );
+            if ( sheet['type'] === _enum['STANDARD'] ) {
+                open_row( sheet_id, parent_id );
+            }
 
             if ( should_return ) {
                 gui_data = prepare_table_data( sheet_id, children );
@@ -73,10 +75,15 @@ var _resource = (function () {
         if ( should_ask_store ) {
             _store.get_children( sheet['endpoint'], parent_id, function( data ) {
                 var cleaned_data;
+                var sort_fun;
 
                 // Remove unnecessary fields(not present in columns list) from children
                 // and update tree.
                 cleaned_data = clean_data( data, sheet['columns'] )
+                if ( !!sheet['sort_query'] && sheet['sort_query'].length > 0 ) {
+                    sort_fun = sort_criterion_to_function( sheet['sort_query'] );
+                    cleaned_data.sort( sort_fun );
+                }
                 _tree.update_tree( sheet['data'], cleaned_data );
                 if ( !!sheet['any_selected'] ) {
                     reset_selection( sheet_id );
@@ -480,6 +487,7 @@ var _resource = (function () {
         var box_ids = {};
 
         if ( !box['context'] ) {
+            parent_id = parent_id || sheet['endpoint'];
             that.get_children( sheet_id, parent_id, function ( children ) {
                 response( sheet_id, box );
             });
@@ -758,33 +766,18 @@ var _resource = (function () {
     }
 
     function additional_operations( sheet, other_fields ) {
-        var sort_fun;
-        var filter_fun;
         var field;
-        var filter_criterion_to_function = function( filter_criterion ) {
-            return function( node ) {
-                return filter_node( node, filter_criterion );
-            };
-        };
-        var sort_criterion_to_function = function( sort_criterion ) {
-            return function( node1, node2 ) {
-                return compare_nodes( node1, node2, sort_criterion );
-            };
-        };
 
         // copy additional, expected fields
         switch ( sheet['type'] ) {
             case _enum['STANDARD']:
                 sheet['sort_query'] = other_fields['sort_query'] || [];
-                sort_fun = sort_criterion_to_function( sheet['sort_query'] );
                 sheet['data'] = sort_data( sheet['data'], sheet['sort_query'] );
                 sheet['any_selected'] = false;
                 break;
             case _enum['FILTERED']:
                 sheet['sort_query'] = other_fields['sort_query'] || [];
                 sheet['filter_query'] = other_fields['filter_query'];
-                sort_fun = sort_criterion_to_function( sheet['sort_query'] );
-                filter_fun = filter_criterion_to_function( sheet['filter_query'] );
                 sheet['data'] = sort_data( sheet['data'], sheet['sort_query'] );
                 sheet['data'] = filter_data( sheet['data'], sheet['filter_query'] );
                 break;
@@ -812,21 +805,12 @@ var _resource = (function () {
     }
 
     function sort_data( data, criterions ) {
-        var sort_fun = (function( sort_criterion ) {
-            return function( node1, node2 ) {
-                return compare_nodes( node1, node2, sort_criterion );
-            };
-        })(criterions);
-
+        var sort_fun = sort_criterion_to_function( criterions );
         return _tree.sort( data, sort_fun );
     }
 
     function filter_data( data, criterions ) {
-        var filter_fun = (function( filter_criterion ) {
-            return function( node ) {
-                return filter_node( node, filter_criterion );
-            };
-        })(criterions);
+        var filter_fun = filter_criterion_to_function( criterions );
 
         return _tree.filter( data, filter_fun );
     }
@@ -1105,6 +1089,18 @@ var _resource = (function () {
                 'context': false
             };
         });
+    }
+
+    function sort_criterion_to_function ( sort_criterion ) {
+        return function( node1, node2 ) {
+            return compare_nodes( node1, node2, sort_criterion );
+        };
+    }
+
+    function filter_criterion_to_function ( filter_criterion ) {
+        return function( node ) {
+            return filter_node( node, filter_criterion );
+        };
     }
 
     function compare_nodes( node1, node2, criterions ) {
