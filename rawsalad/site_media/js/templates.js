@@ -306,6 +306,7 @@ var _tmpl = (function () {
                 '</tbody>' +
             '</table>' +
             '<div id="app-tb-tl-sort-add" class="grey button">Dodaj kolejny klucz</div>' +
+            '<div id="app-tb-tl-sort-del" class="grey button" style="display: none;" >Usuń ostatni klucz</div>' +
             '<div id="app-tb-tl-sort-submit" class="blue button">Sortuj</div>' +
         '</form>';
 
@@ -315,7 +316,7 @@ var _tmpl = (function () {
                 '<select name="app-tb-tl-sort-form-columns" class="input-text key-{{keys_num}}">' +
                     '<option value="null" class="column-key-{{keys_num}}" ></option>' +
                     '{{#columns}}' +
-                        '<option value="{{key}}" class="column-key-{{keys_num}}"> {{label}} </option>' +
+                        '<option value="{{key}}" class="column-key-{{keys_num}}" {{#hidden}} style="display: none;"{{/hidden}}> {{label}} </option>' +
                     '{{/columns}}' +
                 '</select>' +
             '</td>' +
@@ -342,6 +343,7 @@ var _tmpl = (function () {
                 '</tbody>' +
             '</table>' +
             '<div id="app-tb-tl-filter-add" class="grey button">Dodaj kolejny klucz</div>' +
+            '<div id="app-tb-tl-filter-del" class="grey button">Usuń ostatni klucz</div>' +
             '<div id="app-tb-tl-filter-submit" class="blue button">Filtruj</div>' +
         '</form>';
 
@@ -361,7 +363,7 @@ var _tmpl = (function () {
                 '</select>' +
             '</td>' +
             '<td>' +
-                '<input type="text" name="query" id="filter-{{keys_num}}-query" class="input_text">'
+                '<input type="text" name="query" id="filter-{{keys_num}}-query" class="input_text" disabled>'
             '</td>' +
          '</tr>';
 
