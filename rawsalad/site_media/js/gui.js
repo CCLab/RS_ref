@@ -58,8 +58,11 @@ var _gui = (function () {
         var endpoints = permalinks.map( function ( e ) {
             return e['endpoint'];
         });
-        // TODO where the init_callback has gone?
         var callbacks = callbacks_for( endpoints )['callbacks'];
+        // change first callback, because choose panel is not visible
+        callbacks[0] = function ( data ) {
+            draw_permalink_endpoint( data['data'] );  
+        };
 
         _resource.restore_permalink( id, endpoints, callbacks );
     };
@@ -324,19 +327,7 @@ var _gui = (function () {
 
         // deactivate menu button and hide the panel
         manage_top_panel( $('#top-menu').find('.active'), function () {
-            $('#application').fadeIn( 300, function () {
-                if ( data['type'] !== 2 ) { 
-                    make_zebra();
-                }
-                // arm application ui
-                $('#app-tbs-share').click( function () {
-                    if( change_application_tab( $(this) ) ) {
-                        update_share_tab(); // TODO
-                        $('#app-share').show();
-                    }
-                });
-                $('#app-tbs-table').click( display_table_panel );
-            });
+            hide_panel( data['type'] );
         });
     }
 
@@ -344,6 +335,25 @@ var _gui = (function () {
         draw_tools( data );
         draw_table( data );
         _resource.get_sheets_labels( draw_tabs );
+
+        hide_panel( data['type'] );
+        show_browse();
+    }
+
+    function hide_panel( data_type ) {
+        $('#application').fadeIn( 300, function () {
+            if ( data_type !== 2 ) { 
+                make_zebra();
+            }
+            // arm application ui
+            $('#app-tbs-share').click( function () {
+                if( change_application_tab( $(this) ) ) {
+                    update_share_tab(); // TODO
+                    $('#app-share').show();
+                }
+            });
+            $('#app-tbs-table').click( display_table_panel );
+        });
     }
 
 
