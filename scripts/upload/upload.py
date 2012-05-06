@@ -17,7 +17,7 @@ import simplejson as json
 import string
 
 class BasicReader:
-    '''Reads data from a source.'''
+    '''Reads data from a source. Can be used as iterator.'''
     def __init__( self, src, std_size=10000, stop_sign='\n', enc='utf-8' ):
         self.src = src
         self.size = std_size
@@ -44,8 +44,10 @@ class BasicReader:
         return (''.join( row ))
                 
     def read_bulk( self, size=None ):
+        '''Read size bytes of data, if bytes is not specified, then default
+        value will be used.'''
         read_size = size if size is not None else self.size
-        bulk = self.src.read( read_size )
+        bulk = self.src.read( read_size - len( self.buffer ) )
         self.buffer += bulk
         buffer_copy = ''.join( self.buffer )
         self.buffer.clear()
@@ -56,7 +58,7 @@ class BasicReader:
         self.buffer += bulk
         buffer_copy = ''.join( self.buffer )
         self.buffer.clear()
-        return buffer_copy.decode(self.enc)
+        return buffer_copy
 
     def is_all_read( self ):
         data_part = self.src.read(1)
@@ -194,7 +196,6 @@ class CSVDataReceiver(DataReceiver):
         self.buffer = ''
 
     def get_rows( self ):
-        print self.reader.next()
         try:
             return self.reader.next()
         except:
@@ -209,10 +210,10 @@ class CSVDataReceiver(DataReceiver):
             return rows
 
 
+# TODO: Not working yet
 class APIDataReceiver(DataReceiver):
     '''Receives data from API'''
     def __init__( self, base_url ):
-        #base_url = 'http://otwartedane.pl/api/json/dataset/0/view/0/issue/2011/'
         self.rows = deque()
         self.buffer = ''
         self.base_url = base_url
@@ -277,7 +278,7 @@ class BasicUploader:
         self.meta = meta
         self.db = db
 
-    def upload( self, lazy=False, has_header=True ):
+    def upload( self, lazy=False, has_header=True, output=None ):
         # restore db state to a state before a recent data insertion
         self.debug_restore()
         init_endpoint_id = self.db.get_max_endpoint()
@@ -296,7 +297,7 @@ class BasicUploader:
 
         endpoint = None
         print 'Trying to insert data in db...',
-        '''
+
         try:
             endpoint = self.update_dbtree()
             self.update_hierarchy( endpoint )
@@ -321,12 +322,13 @@ class BasicUploader:
         if lazy:
             id_map = self.upload_data_stream( endpoint )
         else:
-            id_map = self.upload_data( endpoint, has_header=has_header )
+            id_map = self.upload_data( endpoint, has_header=has_header, output=output )
             self.sum_columns( endpoint )
             self.db.set_max_data_id( id_map.get_last_id() )
 
         self.update_ptree( id_map )
         print 'done.'
+        '''
         
 
     def check_correctness( self ):
@@ -402,7 +404,7 @@ class BasicUploader:
                 new_endpoints = old_endpoints + [ endpoint ]
                 self.db.update_column_endpoints( old_endpoints, new_endpoints, col['key'], col['type'] )
 
-    def upload_data( self, endpoint, has_header=True ):
+    def upload_data( self, endpoint, has_header=True, output=None ):
         bulk = self.receiver.get_all_rows()
         bulk = self.dicts_to_lists( bulk )
         if has_header:
@@ -429,12 +431,15 @@ class BasicUploader:
         total_row_id = id_map.add_id( ['Total'] )
         data.append( self.create_total_row( top_rows[0], total_row_id ) )
 
-        filename = "upload_data.csv"
-        scriptpath = os.path.realpath( __file__ )
-        directory = os.path.dirname( scriptpath )
-        filepath = os.path.join( directory, filename )
-        #TODO: if windows
-        #filepath = filepath.replace('\\', '\\\\' )
+        if output is None:
+            filename = "upload_data.csv"
+            scriptpath = os.path.realpath( __file__ )
+            directory = os.path.dirname( scriptpath )
+            filepath = os.path.join( directory, filename )
+            if os.name == 'nt':
+                filepath = filepath.replace('\\', '\\\\')
+        else:
+            filepath = output_file
 
         self.save_data( data, filepath )
         self.db.insert_data( endpoint, filepath )
@@ -448,8 +453,6 @@ class BasicUploader:
         list_rows = []
         columns = self.meta.get_columns()
         for dict_row in rows:
-            print columns
-            print dict_row
             list_row = []
             for col in columns:
                 list_row.append( dict_row[ col['key'] ] )
@@ -583,8 +586,6 @@ class BasicUploader:
             if col['type'] not in possible_types:
                 msg = 'Unknown type %s in column %s.' % ( col['type'], col['key'] )
                 raise UploadDataException( msg )
-
-        # TODO: check also types
 
     def check_hierarchy( self ):
         hierarchy_labels = [ t['label'] for t in self.meta.get_hierarchy() ]
@@ -1251,6 +1252,9 @@ def get_cursor(conf):
 
     return cursor
 
+
+# Simple functions to test classes reading data
+
 def upload_file(db, src):
     dsrc = data_source(src)
     hier = get_hierarchy(hier_src)
@@ -1311,30 +1315,41 @@ def csv_test():
     print creader.get_all_rows()
 
 def full_test():
-    #freader = FileReader( 'data.csv' )
     freader = FileReader( 'data_0_0_2011.csv' )
     creader = CSVDataReceiver( freader )
-    #meta_freader = FileReader( 'hier.json' )
     meta_freader = FileReader( 'hier_0_0_2011.json' )
     meta = Meta( meta_freader )
     db = DB( conf='db.conf' )
     uploader = BasicUploader( creader, meta, db )
     uploader.upload( has_header=False )
 
-if __name__ == '__main__':
-    #ureader_test()
-    #freader_test()
-    #meta_test()
-    #rec_test()
-    #csv_test()
-    #full_test()
 
-    old_file = os.path.join( 'new', 'data_0_0_2011.csv' )
-    meta_file = os.path.join( 'hier', 'hier_0_0_2011.json' )
-    freader = FileReader( old_file )
+# Function to upload data.
+def upload_collection( data_file, meta_file, output_file, has_header ):
+    freader = FileReader( data_file )
     creader = CSVDataReceiver( freader )
     meta_freader = FileReader( meta_file )
     meta = Meta( meta_freader )
     db = DB( conf='db.conf' )
     uploader = BasicUploader( creader, meta, db )
-    uploader.upload( has_header=False )
+    uploader.upload( has_header=has_header, output=output_file )
+
+if __name__ == '__main__':
+    '''
+    There should be 3 passed arguments:
+    - name of file with data
+    - name of file with collection decription
+    - name of output file ready to upload data to Postgres
+    '''
+    import sys
+    args = sys.argv
+    if len( args ) != 4:
+        print "Wrong number of arguments. Should be 3 instead of ", len( args ) - 1
+        exit()
+
+    data_file = args[1]   
+    meta_file = args[2]   
+    output_file = args[3]   
+
+    upload_collection( data_file, meta_file, output_file, True )
+

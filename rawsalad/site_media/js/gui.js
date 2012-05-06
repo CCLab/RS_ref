@@ -48,7 +48,9 @@ var _gui = (function () {
         });
 
         // show browse panel at the beginning
-        $('#tm-choose').trigger('click');
+        if ( !permalink_start ) {
+            $('#tm-choose').trigger('click');
+        }
     };
 
 
@@ -336,6 +338,12 @@ var _gui = (function () {
                 $('#app-tbs-table').click( display_table_panel );
             });
         });
+    }
+
+    function draw_permalink_endpoint( data ) {
+        draw_tools( data );
+        draw_table( data );
+        _resource.get_sheets_labels( draw_tabs );
     }
 
 
@@ -1365,7 +1373,7 @@ var _gui = (function () {
     function prepare_filter_interface( filter_form ){
         var add_key_button = get_filter_add_button( filter_form );
         var del_key_button = get_filter_del_button( filter_form );
-        var submit_button = filter_form.find('#app-tb-tl-filter-submit');
+        var submit_button = get_filter_submit_button( filter_form );
 
         add_key_button.click( function () {
             add_filter_key();
@@ -1440,6 +1448,11 @@ var _gui = (function () {
         return filter_form.find('#app-tb-tl-filter-del');
     }
 
+    function get_filter_submit_button( filter_form ) {
+        var filter_form = filter_form || $('#app-tb-tl-filter-form');
+        return filter_form.find('#app-tb-tl-filter-submit');
+    }
+
     function get_filter_keys( filter_form ) {
         var filter_form = filter_form || $('#app-tb-tl-filter-form');
         return filter_form.find('tbody').children();
@@ -1465,6 +1478,34 @@ var _gui = (function () {
                    .find('#filter-' + i + '-query');
     }
 
+    function activate_filter( filter_form ) {
+        var filter_form = filter_form || $('#app-tb-tl-filter-form');
+        var submit_button = get_filter_submit_button( filter_form );
+
+        submit_button.click( function () {
+            filter_form.submit();
+        });
+    }
+
+    function deactivate_filter( filter_form ) {
+        var submit_button = get_filter_submit_button( filter_form );
+
+        submit_button.unbind('click');
+    }
+
+    function all_filter_keys_filled( filter_form ) {
+        var filter_form = filter_form || $('#app-tb-tl-filter-form');
+        var keys_num = get_filter_keys( filter_form ).length;
+        var i;
+
+        for ( i = 0; i < keys_num; ++i ) {
+            if ( get_filter_query( i, filter_form ).val() === '' ) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     function handle_filter_key_name_change( key, i, columns ) {
         var selected_column = key.val();
         var operations_html = get_operations( columns, selected_column, i );
@@ -1479,6 +1520,8 @@ var _gui = (function () {
         get_filter_op( i ).change( function () {
             handle_filter_op_change( $(this), i );
         });
+
+        deactivate_filter();
     }
 
 
@@ -1495,6 +1538,11 @@ var _gui = (function () {
             add_key_button.click( function () {
                 add_filter_key();
             });
+            if ( all_filter_keys_filled() ) {
+                activate_filter();
+            }
+        } else {
+            deactivate_filter();
         }
     }
 
@@ -1525,6 +1573,8 @@ var _gui = (function () {
             }
 
             add_key_button.unbind('click');
+            deactivate_filter( filter_form );
+
             new_key_name_field = get_filter_key_name( keys_num, filter_form );
             new_query_field = get_filter_query( keys_num, filter_form );
 
@@ -1560,6 +1610,9 @@ var _gui = (function () {
             del_key_button.hide();
         }
 
+        if ( all_filter_keys_filled() ) {
+            activate_filter();
+        }
     }
 
     function remove_null_filter_key( i, filter_form ) {
