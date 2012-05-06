@@ -588,7 +588,6 @@ class BasicUploader:
                 raise UploadDataException( msg )
 
     def check_hierarchy( self ):
-        hierarchy_labels = [ t['label'] for t in self.meta.get_hierarchy() ]
         hierarchy_labels = []
         for hier_col in self.meta.get_hierarchy():
             hierarchy_labels.append( hier_col['label'] )
