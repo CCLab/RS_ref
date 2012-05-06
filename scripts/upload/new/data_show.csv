@@ -1,0 +1,18 @@
+Część;Numer części;Część;Numer części;Funkcja;Oddział;Numer oddziału;Dotacje;Świadczenia;Wydatki;Ogółem (w tys. zł.)
+Kancelaria;1;Północ;001;Rządzenie;Warszawski;16;1000;2000;3000;6000
+Kancelaria;1;Północ;001;Dyplomacja;Warszawski;16;100;150;200;450
+Kancelaria;1;Południe;002;Rządzenie;Krakowski;20;200;100;500;800
+Kancelaria;1;Południe;002;Rządzenie;Wrocławski;21;201;100;500;801
+Kancelaria;1;Centrum;003;Zarządzanie;;;10000;10000;10000;30000
+Sejm;2;Prawica;010;;Białostocki;1;100;100;200;400
+Sejm;2;Prawica;010;;Olsztyński;2;50;50;100;200
+Sejm;2;Prawica;010;;Gdański;3;200;100;150;450
+Sejm;2;Lewica;011;;Białostocki;1;50;50;100;200
+Sejm;2;Lewica;011;;Olsztyński;2;25;25;50;100
+Sejm;2;Centrum;012;;Białostocki;1;200;200;400;800
+Sejm;2;Centrum;012;;Olsztyński;2;100;100;200;400
+Sejm;2;Centrum;012;;Gdański;3;400;200;300;900
+Senat;3;Prawica;010;Gospodarowanie;;;100;100;100;300
+Senat;3;Prawica;010;Głosowanie;;;200;200;200;600
+Senat;3;Lewica;011;Głosowanie;;;10;10;10;30
+Senat;3;Centrum;012;Głosowanie;;;200;200;300;700
