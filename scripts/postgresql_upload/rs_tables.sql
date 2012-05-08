@@ -45,6 +45,12 @@ CREATE TABLE permalinks(
     data     text
 );
 
+DROP TABLE users;
+CREATE TABLE users(
+    login varchar(50),
+    hash  varchar(50)
+);
+
 ---------- D A T A   T A B L E S -----------
 
 -- Budżet tradycyjny 2011

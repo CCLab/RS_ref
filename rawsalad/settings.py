@@ -65,4 +65,5 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'rawsalad.databrowser',
     'rawsalad.papi',
+    'rawsalad.uploader',
 )

@@ -433,6 +433,17 @@ def get_snapshot( id, endpoint ):
         'sheets': json.loads( sheets )
     }
 
+def is_user_valid( login, pass_hash ):
+    '''Check if there is a user with specified login and password hash'''
+    cursor = db_cursor()
+    query = '''SELECT login, hash FROM users
+               WHERE login = '%s' AND hash = '%s'
+            ''' % ( login, pass_hash )
+
+    cursor.execute( query )
+
+    return len( cursor.fetchall() ) > 0
+
 
 class Collection:
     '''Class for extracting data from acenrtain endpoint in the db'''
