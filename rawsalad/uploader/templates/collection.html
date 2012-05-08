@@ -1,0 +1,98 @@
+<!DOCTYPE HTML>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+	<title>Otwarte dane</title>
+  <link rel="stylesheet" type="text/css" href="/site_media/css/reset.css" />
+  <link rel="stylesheet/less" type="text/css" href="/site_media/css/style.less" />
+  <link rel="stylesheet/less" type="text/css" href="/site_media/css/classes.less" />
+  <link rel="stylesheet/less" type="text/css" href="/site_media/css/table_style.less" />
+</head>
+<body>
+ 
+  <h1>Point parent collection</h1>
+  <input id="type-0" type="radio" name="type" value="old">
+    Add child collection to existing collection.
+  <br>
+  <input id="type-1" type="radio" name="type" value="new">
+    Add new collection with parents.
+  <br>
+
+  <div id="collections-tree">
+    CT
+  </div>
+
+  <div id="parent-panel">
+    <table id="parent_collections">
+      <tbody>
+        <tr>
+          <th>
+            <label for="name-0">Nazwa:</label>
+          </th>
+          <td>
+            <input type="text" name="name-0" id="name-0">
+          </td>
+        </tr>
+        <tr>
+          <th>
+            <label for="desc-0">Opis:</label>
+          </th>
+          <td>
+            <input type="text" name="desc-0" id="desc-0">
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <button id="add-parent" type="button">Add new parent</button>
+    <button id="del-parent" type="button">Delete last parent</button>
+  </div>
+
+  <div id="collection-panel">
+    <table id="new_collection">
+      <tbody>
+        <tr>
+          <th>
+            <label for="coll-name">Nazwa:</label>
+          </th>
+          <td>
+            <input type="text" name="name" id="coll-name">
+          </td>
+        </tr>
+        <tr>
+          <th>
+            <label for="coll-desc">Opis:</label>
+          </th>
+          <td>
+            <input type="text" name="desc" id="coll-desc">
+          </td>
+        </tr>
+        <tr>
+          <th>
+            <label for="coll-vis">Widoczna:</label>
+          </th>
+          <td>
+            <select name="vis" id="coll-vis">
+              <option value="No">Nie</option>
+              <option value="Yes">Tak</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <th>
+            <label for="coll-file">Plik:</label>
+          </th>
+          <td>
+            <input type="file" name="file" id="coll-file">
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <input type="checkbox" name="coll-vis" value="visible" id="coll-vis"/>Widoczna
+  </div>
+
+  <script src="/site_media/js/jquery-1.7.1.min.js"></script>
+
+</body>
+</html>
+
+
