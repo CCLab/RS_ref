@@ -10,16 +10,19 @@
 </head>
 <body>
 
-  <form action="/upload/hierarchy/validate/" id="hier-form" method="post" enctype="multipart/form-data">
-    <table id="hier-panel">
-      <tbody>
-      </tbody>
-    </table>
-    <button id="add-hier" type="button">Add new hierarchy level</button>
-    <button id="del-hier" type="button">Delete last hierarchy level</button>
-    <br>
-    <input type="submit" value="Next">
+  <table id="hier-panel">
+    <tbody>
+    </tbody>
+  </table>
+  <button id="add-hier" type="button">Add new hierarchy level</button>
+  <button id="del-hier" type="button">Delete last hierarchy level</button>
+  <br>
+
+  <form action="/upload/columns/" method="post" id="hier-form">
+    <input name="hierarchy" type="text" />
   </form>
+  <button id="submit" type="button">Next</button>
+
   <script src="/site_media/js/jquery-1.7.1.min.js"></script>
   <script src="/site_media/js/mustache.js"></script>
   <script src="/site_media/js/upload/hierarchy.js"></script>

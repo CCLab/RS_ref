@@ -10,7 +10,6 @@ import simplejson as json
 import hashlib
 
 import upload_helper as uh
-import csv
 
 def upload( request ):
     return redirect( login )
@@ -62,39 +61,37 @@ def define_hierarchy( request ):
     if not uh.collection_data_validated( request.POST, request.FILES ):
         return redirect( choose_collection )
 
-    request.session.data = request.POST
-    request.session.files = request.FILES
-    print request.FILES
     upl_file = request.FILES.get( 'file', '' )
-    request.session.tmp_file = save_upl_file( upl_file )
-    labels = ['nazwa', 'powiat']
-    labels = get_header_labels( upl_file )
+    request.session['tmp_file'] = uh.save_upl_file( upl_file )
+
+    labels = uh.get_header_labels( upl_file )
+    request.session['labels'] = labels
     json_labels = json.dumps( labels )
     return render_to_response('hierarchy.html', {'labels': json_labels} )
 
-def save_upl_file( upl_file ):
-    i = 0
-    done = False
-    while not done and i < 10:
-        tmp_name = 'tmp%d.csv' % i
-        try:
-            tmp_file = open( tmp_name, 'w' )
-            done = True
-        except:
-            i += 1
+# url: /upload/columns/
+@csrf_exempt
+def define_columns( request ):
+    hierarchy_json = request.POST.get( 'hierarchy', [] )
+    hierarchy = json.loads( hierarchy_json )
+    labels = request.session.get( 'labels', [] )
+    if not uh.hierarchy_validated( hierarchy, labels ):
+        json_labels = json.dumps( request.POST.get('labels', []) )
+        return render_to_response('hierarchy.html', {'labels': json_labels} )
 
-    if done:
-        for chunk in upl_file.chunks():
-            tmp_file.write( chunk )
-        tmp_file.close()
-        upl_file.seek( 0 )
-        return tmp_name
-    else:
-        return None
+    rest_labels = uh.get_remaining_labels( hierarchy, labels )
+    columns = []
+    for label in rest_labels:
+        columns.append({
+            'label'      : label,
+            'key'        : label,
+            'type'       : 'string',
+            'format'     : '@',
+            'basic'      : True,
+            'processable': True,
+            'checkable'  : True
+        })
 
+    request.session['hierarchy'] = hierarchy
+    return render_to_response('columns.html', {'data': columns} )
 
-def get_header_labels( upl_file ):
-    reader = csv.reader( upl_file, quotechar='"', delimiter=';' )
-    header = reader.next()
-    upl_file.seek( 0 )
-    return header

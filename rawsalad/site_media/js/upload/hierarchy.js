@@ -151,6 +151,24 @@ var hierarchy = (function () {
         $('#del-hier').click( function () {
             del_level();
         });
+        $('#hier-form').hide();
+
+        $('#submit').click( function () {
+            var hierarchy = [];
+            var last_level = get_max_level();
+            var i;
+            for ( i = 0; i <= last_level; ++i ) {
+                hierarchy.push({
+                    'column': labels.indexOf( get_column( i ).val() ),
+                    'aux': labels.indexOf( get_aux_column( i ).val() )
+                });
+            }
+            $('#hier-form')
+                .find('input')
+                .val( JSON.stringify( hierarchy ) )
+                .end()
+                .submit();
+        });
     }
 
     function get_column( i ) {

@@ -1,0 +1,123 @@
+<!DOCTYPE HTML>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+	<title>Otwarte dane</title>
+  <link rel="stylesheet" type="text/css" href="/site_media/css/reset.css" />
+  <link rel="stylesheet/less" type="text/css" href="/site_media/css/style.less" />
+  <link rel="stylesheet/less" type="text/css" href="/site_media/css/classes.less" />
+  <link rel="stylesheet/less" type="text/css" href="/site_media/css/table_style.less" />
+</head>
+<body>
+  COLUMNS
+ 
+  {% for d in data %}
+  <table>
+  <tr>
+    <th>
+      <label for="_label{{ forloop.counter0 }}">Label</label>
+    </th>
+    <td>
+      <input class="metadata" id="_label{{ forloop.counter0 }}" type="text" value="{{ d.label }}"/>
+    </td>
+  </tr>
+  <tr>
+    <th>
+      <label for="_key{{ forloop.counter0 }}">Key</label>
+    </th>
+    <td>
+      <input class="metadata" id="_key{{ forloop.counter0 }}" type="text" value="{{ d.key }}"/>
+    </td>
+  </tr>
+  <tr>
+    <th>
+      <label for="_type{{ forloop.counter0 }}">Type</label>
+    </th>
+    <td>
+      <input class="metadata" id="_type{{ forloop.counter0 }}" type="text" value="{{ d.type }}"/>
+    </td>
+  </tr>
+  <tr>
+    <th>
+      <label for="_format{{ forloop.counter0 }}">Format</label>
+    </th>
+    <td>
+      <input class="metadata" id="_format{{ forloop.counter0 }}" type="text" value="{{ d.format }}"/>
+    </td>
+  </tr>
+  <tr>
+    <th>
+      <label for="_basic{{ forloop.counter0 }}">Basic</label>
+    </th>
+    <td>
+      <select class="metadata" id="_basic{{ forloop.counter0 }}" name="_basic{{ forloop.counter0 }}">
+        {% if d.basic %}
+        <option selected>True</option>
+        <option>False</option>
+        {% else %}
+        <option>True</option>
+        <option selected>False</option>
+        {% endif %}
+      </select>
+    </td>
+  </tr>
+  <tr>
+    <th>
+      <label for="_processable{{ forloop.counter0 }}">Processable</label>
+    </th>
+    <td>
+      <select class="metadata" id="_processable{{ forloop.counter0 }}" name="_processable{{ forloop.counter0 }}">
+        {% if d.processable %}
+        <option selected>True</option>
+        <option>False</option>
+        {% else %}
+        <option>True</option>
+        <option selected>False</option>
+        {% endif %}
+      </select>
+    </td>
+  </tr>
+  <tr>
+    <th>
+      <label for="_checkable{{ forloop.counter0 }}">Checkable</label>
+    </th>
+    <td>
+      <select class="metadata" id="_checkable{{ forloop.counter0 }}" name="_checkable{{ forloop.counter0 }}">
+        {% if d.checkable %}
+        <option selected>True</option>
+        <option>False</option>
+        {% else %}
+        <option>True</option>
+        <option selected>False</option>
+        {% endif %}
+      </select>
+    </td>
+  </tr>
+  </table> 
+  {% endfor %}
+  <br>
+
+  <form action="/upload/data/" method="post" id="col-form">
+    <input name="columns" type="text" />
+  </form>
+  <button id="submit" type="button">Next</button>
+
+  <script src="/site_media/js/jquery-1.7.1.min.js"></script>
+  <script src="/site_media/js/mustache.js"></script>
+  <script src="/site_media/js/upload/columns.js"></script>
+
+  <script type="text/javascript" language="javascript">
+  // <![CDATA[
+      (function () {
+        //columns.init( {{ data|safe }} );
+        columns.init();
+      })();
+  // ]]>
+  </script>
+
+</body>
+</html>
+
+
+
+
