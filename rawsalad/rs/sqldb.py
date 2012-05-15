@@ -8,8 +8,9 @@ from time import time
 
 import simplejson as json
 
+from django.conf import settings
 
-def db_cursor( cfile=None ):
+def db_cursor( cfile=None, readonly=True ):
     '''Define a connection object for a selected database'''
     if cfile is None:
         from django.conf import settings
@@ -22,7 +23,7 @@ def db_cursor( cfile=None ):
 
     host   = cfg.get( 'postgres', 'host' )
     dbname = cfg.get( 'postgres', 'dbname' )
-    user   = cfg.get( 'postgres', 'user' )
+    user   = 'readonly' if readonly else cfg.get( 'postgres', 'user' )
     try:
         password = cfg.get( 'postgres', 'pass' )
     except:
@@ -39,10 +40,9 @@ def db_cursor( cfile=None ):
     return cursor
 
 
-def get_db_tree():
+def get_db_tree( debug_mode=settings.DEBUG ):
     '''Get the navigation tree for all database collections'''
-    from django.conf import settings
-    if settings.DEBUG:
+    if debug_mode:
         query = '''SELECT * FROM dbtree
                    ORDER BY id
                 '''
@@ -442,7 +442,27 @@ def is_user_valid( login, pass_hash ):
 
     cursor.execute( query )
 
-    return len( cursor.fetchall() ) > 0
+    return len( cursor.fetchall() ) == 1
+
+def get_user_uploaded_collections( login ):
+    '''Get collections and add information about which of them were
+    uploaded by the user.'''
+    db_tree = get_db_tree( True )
+    if login == 'admin':
+        for el in db_tree:
+            el['user_uploaded'] = True
+    else:
+        cursor = db_cursor()
+        query = '''SELECT collections FROM users
+                   WHERE login = '%s'
+                ''' % ( login )
+        cursor.execute( query )
+        user_collections_ids = cursor.fetchone()
+        for el in db_tree:
+            el['user_uploaded'] = el['id'] in user_collections_ids['collections']
+                
+    return db_tree
+    
 
 
 class Collection:

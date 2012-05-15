@@ -1,0 +1,39 @@
+<!DOCTYPE HTML>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+	<title>Otwarte dane</title>
+  <link rel="stylesheet" type="text/css" href="/site_media/css/reset.css" />
+  <link rel="stylesheet/less" type="text/css" href="/site_media/css/style.less" />
+  <link rel="stylesheet/less" type="text/css" href="/site_media/css/classes.less" />
+  <link rel="stylesheet/less" type="text/css" href="/site_media/css/table_style.less" />
+</head>
+<body>
+
+  <form action="/upload/hierarchy/validate/" id="hier-form" method="post" enctype="multipart/form-data">
+    <table id="hier-panel">
+      <tbody>
+      </tbody>
+    </table>
+    <button id="add-hier" type="button">Add new hierarchy level</button>
+    <button id="del-hier" type="button">Delete last hierarchy level</button>
+    <br>
+    <input type="submit" value="Next">
+  </form>
+  <script src="/site_media/js/jquery-1.7.1.min.js"></script>
+  <script src="/site_media/js/mustache.js"></script>
+  <script src="/site_media/js/upload/hierarchy.js"></script>
+
+  <script type="text/javascript" language="javascript">
+  // <![CDATA[
+      (function () {
+        hierarchy.init( {{ labels|safe }} );
+      })();
+  // ]]>
+  </script>
+
+</body>
+</html>
+
+
+

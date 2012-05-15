@@ -647,17 +647,12 @@ var _resource = (function () {
 
     // DOWNLOAD FUNCTIONS
     // Download data from selected sheets and endpoints.
-    that.download_data = function( sheet_ids, endpoints ) {
+    that.download_data = function( sheet_ids, endpoints, callback ) {
         var sheets = sheet_ids.map( function ( id ) {
             return get_sheet( id );
         });
         var data = _download.prepare_download_data( sheets, endpoints );
-
-        $('#pl-dl-hidden-form')
-            .find('input')
-            .val( data )
-            .end()
-            .submit();
+        callback( data );
     }
 
 // P R I V A T E   I N T E R F A C E

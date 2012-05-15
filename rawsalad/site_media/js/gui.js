@@ -172,7 +172,7 @@ var _gui = (function () {
             $('#pl-ch-datasets')
                 .empty()
                 .append( dbtree )
-                .append( M.to_html( _tmpl.panel_submit, {'label': 'Pobież dane'} ));
+                .append( M.to_html( _tmpl.panel_submit, {'label': 'Pobierz dane'} ));
 
             _dbtree.arm( collections );
 
@@ -188,7 +188,13 @@ var _gui = (function () {
                 var checked_endpoints = _dbtree.selected_endpoints();
                 var checked_sheets    = $.makeArray( sheets );
 
-                _resource.download_data( checked_sheets, checked_endpoints );
+                _resource.download_data( checked_sheets, checked_endpoints, function ( data ) {
+                    $('#pl-dl-hidden-form')
+                        .find('input')
+                        .val( data )
+                        .end()
+                        .submit();
+                });
             });
         });
     }

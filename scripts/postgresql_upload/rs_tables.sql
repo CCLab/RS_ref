@@ -1,3 +1,9 @@
+---------- C R E A T E   U S E R -----------
+
+DROP USER readonly;
+CREATE USER readonly;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO readonly;
+
 ---------- M E T A   T A B L E S -----------
 
 DROP TABLE dbtree CASCADE;
@@ -47,8 +53,9 @@ CREATE TABLE permalinks(
 
 DROP TABLE users;
 CREATE TABLE users(
-    login varchar(50),
-    hash  varchar(50)
+    login       varchar(50),
+    hash        varchar(50),
+    collections int[]
 );
 
 ---------- D A T A   T A B L E S -----------

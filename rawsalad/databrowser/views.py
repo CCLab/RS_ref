@@ -114,7 +114,6 @@ def download_data( request ):
 
     response = HttpResponse()
     # TODO check if this is the only way to create a sheets download!
-    json_data = request.POST.get( 'csv_string', '' )
     files = json.loads( request.POST.get( 'csv_string', '' ) )
 
     # CSV for a single file and ZIP for multiple files
