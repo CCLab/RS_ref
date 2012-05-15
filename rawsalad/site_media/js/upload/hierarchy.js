@@ -77,34 +77,56 @@ var hierarchy = (function () {
     function add_level( labels ) {
         var new_level = 1 + get_max_level();
         var html = M.to_html( hier_el, { 'id': new_level, 'labels': labels } );
+        var activate_add_button;
 
         $('#hier-panel').append( html );
         get_aux_column( new_level ).attr('disabled', 'disabled');
 
         get_aux_checkbox( new_level ).click( function() {
+            var aux_value;
             if ( $(this).attr('checked') === 'checked' ) {
                 get_aux_column( new_level ).removeAttr('disabled');
             } else {
+                aux_value = get_aux_column( new_level ).val();
+                if ( aux_value !== '' ) {
+                    get_aux_column( new_level )
+                        .attr('prev_name', '')
+                        .val('')
+                        .find('option[name=""]')
+                        .show();
+                    show_option( aux_value );
+                }
                 get_aux_column( new_level ).attr('disabled', 'disabled');
             }
         });
 
-        if ( new_level == 1 ) {
-            $('#del-hier').removeAttr('disabled');
-        }
         get_selected_options().forEach( function ( opt ) {
             hide_option( opt );
         });
+
+        get_column( new_level ).change( function () {
+            var activate_add_button = get_selected_options().length < labels.length;
+            column_changed( $(this), activate_add_button );
+        });
+        get_aux_column( new_level ).change( function () {
+            column_changed( $(this) );
+        });
+        if ( new_level == 1 ) {
+            $('#del-hier').removeAttr('disabled');
+        }
+        $('#add-hier').attr('disabled', 'disabled');
     }
 
     function del_level() {
         var last_level = get_max_level();
+        var column_name = get_column( last_level ).val();
+        var aux_column_name = get_aux_column( last_level ).val();
 
-        if ( $('#level-col-' + last_level).val() !== '' ) {
-            show_option( $('#level-col-' + last_level).val() );
+        if ( column_name !== '' ) {
+            show_option( column_name );
         }
-        if ( $('#level-col-aux-' + last_level).val() !== '' ) {
-            show_option( $('#level-col-aux-' + last_level).val() );
+        if ( aux_column_name !== '' ) {
+            show_option( aux_column_name );
         }
 
         $('#level-col-' + last_level).remove();
@@ -114,6 +136,7 @@ var hierarchy = (function () {
         if ( last_level == 1 ) {
             $('#del-hier').attr('disabled', 'disabled');
         }
+        $('#add-hier').removeAttr('disabled');
     }
 
     function get_max_level() {
@@ -131,51 +154,44 @@ var hierarchy = (function () {
     }
 
     function get_column( i ) {
-        return $('#level-col-' + i);
+        return $('#col-' + i);
     }
 
     function get_aux_checkbox( i ) {
-        return $('#level-aux-' + i);
+        return $('#aux-' + i);
     }
 
     function get_aux_column( i ) {
-        return $('#level-col-aux-' + i);
+        return $('#col-aux-' + i);
     }
 
-    function remove_from_sort_keys( col_key, good_key ) {
-        var keys = sort_form.find('select').children();
+    function column_changed( select, activate_button ) {
+        var prev_option = select.attr('prev_name');
+        var new_option = select.val();
 
-        keys.each( function ( i ) {
-            if ( i !== good_key ) {
-                get_sort_key_name( i, sort_form )
-                    .find('[value=' + col_key + ']')
-                    .hide()
-            }
-        });
-    }
-
-    function add_to_sort_keys( col_key, sort_form ) {
-        var sort_form = sort_form || $('#app-tb-tl-sort-form');
-        var keys = sort_form.find( 'tbody' ).children();
-
-        keys.each( function ( i ) {
-            get_sort_key_name( i, sort_form )
-                .find('[value=' + col_key + ']')
-                .show()
-        });
+        if ( prev_option === '' ) {
+            select.find('option[name=""]').hide();
+        } else {
+            show_option( prev_option );
+        }
+        hide_option( new_option );
+        select.attr( 'prev_name', new_option );
+        if ( activate_button ) {
+            $('#add-hier').removeAttr('disabled');
+        }
     }
 
     function hide_option( name ) {
         $('select').each( function () {
             if ( $(this).val() !== name ) {
-                $(this).find('option[name=' + name + ']').hide();
+                $(this).find('option[name="' + name + '"]').hide();
             }
         });
     }
 
     function show_option( name ) {
         $('select').each( function () {
-            $(this).find('option[name=' + name + ']').show();
+            $(this).find('option[name="' + name + '"]').show();
         });
     }
 
