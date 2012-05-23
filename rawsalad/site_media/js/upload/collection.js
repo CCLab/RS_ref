@@ -104,7 +104,9 @@ var collection = (function () {
             del_parent();
         });
         $('#coll-form').submit( function () {
+            clear_error();
             if ( !is_data_correct() ) {
+                show_error( find_error() );
                 return false;
             }
         });
@@ -160,6 +162,32 @@ var collection = (function () {
                 all_filled = all_filled && $(this).val() !== '';
             })
             return all_filled;
+        }
+    }
+
+    function show_error( error ) {
+        $('#error').text( error );
+    }
+
+    function clear_error() {
+        $('#error').text('');
+    }
+
+    function find_error() {
+        if ( !coll_fields_correct() ) {
+            if ( $('#coll-name').val() == '' ) {
+                return 'Fill collection name';
+            } else if ( $('#coll-label').val() == '' ) {
+                return 'Fill collection label';
+            } else if ( $('#coll-file').val() == '' ) {
+                return 'Choose file with data';
+            }
+        } else if ( !parent_fields_correct() ) {
+            if ( $('#add-exist').attr('checked') ) {
+                return 'Check one of parents';
+            } else {
+                return 'Fill all information about parents';
+            }
         }
     }
 

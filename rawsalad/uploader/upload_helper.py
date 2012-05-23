@@ -4,6 +4,9 @@ import rs.sqldb as sqldb
 import csv
 import slughifi
 import simplejson as json
+import os
+from os.path import join as osjoin
+import shutil
 
 def get_collection_data( post_data ):
     collection_data = {
@@ -274,4 +277,16 @@ def add_columns_indexes( columns, hierarchy ):
         columns_copy[i]['index'] = ind
 
     return columns_copy
+
+def move_src_file(filename, new_name):
+    new_filename = new_name + '.csv'
+
+    curr_path = os.getcwd()
+    new_path = osjoin( osjoin( osjoin(curr_path, 'site_media'), 'csv' ), new_filename )
+    print 'Copy file %s to %s' % (new_filename, new_path)
+    shutil.move( filename, new_path )
+
+def remove_files(hier_file_name, output_file_name):
+    os.remove( hier_file_name )
+    os.remove( output_file_name )
 

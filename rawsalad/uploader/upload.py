@@ -301,16 +301,17 @@ class BasicUploader:
 
         if not self.debug:
             try:
-                self.insert_data_into_db( has_header, output, visible )
+                endpoint = self.insert_data_into_db( has_header, output, visible )
             except Exception as e:
                 print 'failed.'
                 print e
                 self.remove_uploaded( init_endpoint_id, init_dbtree_id, init_data_id )
                 exit( 0 )
         else:
-            self.insert_data_into_db( has_header, output, visible )
+            endpoint = self.insert_data_into_db( has_header, output, visible )
 
         print 'done.'
+        return (True, endpoint)
         
     def insert_data_into_db( self, has_header, output, visible ):
         endpoint = self.update_dbtree( visible )
@@ -324,6 +325,8 @@ class BasicUploader:
         self.db.set_max_data_id( id_map.get_last_id() )
 
         self.update_ptree( id_map )
+
+        return endpoint
 
 
     def check_correctness( self ):
@@ -1307,7 +1310,9 @@ def upload_collection( data_file, meta_file, output_file, has_header, visible ):
     meta = Meta( meta_freader )
     db = DB( conf='db.conf' )
     uploader = BasicUploader( creader, meta, db )
-    uploader.upload( has_header=has_header, output=output_file, visible=visible )
+    success, endpoint = uploader.upload( has_header=has_header, output=output_file, visible=visible )
+
+    return (success, endpoint)
 
 if __name__ == '__main__':
     '''

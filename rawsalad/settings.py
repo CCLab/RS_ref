@@ -7,7 +7,7 @@ TEMPLATE_DEBUG = DEBUG
 DBCONF = os.path.join( ROOT_PATH, 'rs', 'rawsdata.conf' )
 
 ADMINS = (
-    ('Bartosz Stalewski', 'bartekstalewski@gmail.com'),
+    ('Bartosz Stalewski', 'bstalewski@centrumcyfrowe.pl'),
     ('Krzysztof Trzewiczek', 'ktrzewiczek@centrumcyfrowe.pl'),
 )
 MANAGERS = ADMINS

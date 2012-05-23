@@ -24,7 +24,7 @@ def login( request ):
 def bad_login( request ):
     login_form = LoginForm()
     info = {
-        'forms': login_form,
+        'form': login_form,
         'ok': False,
         'warning': 'Bad login and/or password. Try again.'
     }
@@ -109,7 +109,7 @@ def upload_data( request ):
     labels = request.session.get( 'labels', [] )
 
     if not uh.columns_validated( columns, hierarchy, labels ):
-        info = 'Nie ma walidacji'
+        info = 'Kolumny niepoprawne'
         return render_to_response('results.html', {'info': info})
 
     coll_data = request.session['collection_data']
@@ -117,10 +117,12 @@ def upload_data( request ):
     hier_file_name = data_file_name.rstrip('.csv') + '.json'
 
     visible = coll_data[ 'visible' ]
-    print 'VIS', visible
     uh.create_desc_file( coll_data, hierarchy, columns, hier_file_name )
     output_file_name = 'sql_' + data_file_name
-    upload_collection( data_file_name, hier_file_name, output_file_name, True, visible )
+    done, endpoint = upload_collection( data_file_name, hier_file_name, output_file_name, True, visible )
+
+    uh.move_src_file(data_file_name, endpoint)
+    uh.remove_files(hier_file_name, output_file_name)
 
     info = 'Sukces'
     return render_to_response('results.html', {'info': info})
