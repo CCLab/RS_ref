@@ -8,5 +8,6 @@ urlpatterns = patterns( 'uploader.views',
     ( r'^collection/$', 'choose_collection' ),
     ( r'^hierarchy/$',  'define_hierarchy' ),
     ( r'^columns/$',    'define_columns' ),
+    ( r'^data/$',       'upload_data' ),
 )
 

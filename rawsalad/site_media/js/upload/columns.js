@@ -33,8 +33,26 @@ var columns = (function () {
 
     function add_handlers( data ) {
         $('#col-form').hide();
-
         var result = [];
+
+        $('table').each( function () {
+            var tmp = {};
+
+            $(this).find('.metadata').each( function() {
+                var k = $(this).attr('id').replace('_', '').replace(/[0-9]/g, '');
+                var v = $(this).val();
+                if ( v === 'True' ) {
+                    v = true;
+                }
+                if ( v === 'False' ) {
+                    v = false;
+                }
+
+                tmp[k] = v;
+            });
+            result.push( tmp );
+        });
+
         $('#submit').click( function () {
             var data = {};
             $('#col-form')

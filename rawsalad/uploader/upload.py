@@ -273,14 +273,15 @@ class APIDataReceiver(DataReceiver):
 
 
 class BasicUploader:
-    def __init__( self, receiver, meta, db ):
+    def __init__( self, receiver, meta, db, debug=True ):
         self.receiver = receiver
         self.meta = meta
         self.db = db
+        self.debug = debug
 
-    def upload( self, lazy=False, has_header=True, output=None ):
+    def upload( self, has_header=True, output=None, visible=True ):
         # restore db state to a state before a recent data insertion
-        self.debug_restore()
+        #self.debug_restore()
         init_endpoint_id = self.db.get_max_endpoint()
         init_dbtree_id = self.db.get_max_dbtree_id()
         init_data_id = self.db.get_max_data_id()
@@ -296,40 +297,34 @@ class BasicUploader:
         print 'correct.'
 
         endpoint = None
-        print 'Trying to insert data in db...',
+        print 'Trying to insert data into db...',
 
-        try:
-            endpoint = self.update_dbtree()
-            self.update_hierarchy( endpoint )
-            self.update_columns( endpoint )
-            if lazy:
-                id_map = self.upload_data_stream( endpoint )
-            else:
-                id_map = self.upload_data( endpoint )
-                self.sum_columns( endpoint )
-                self.db.set_max_data_id( id_map.get_last_id() )
+        if not self.debug:
+            try:
+                self.insert_data_into_db( has_header, output, visible )
+            except Exception as e:
+                print 'failed.'
+                print e
+                self.remove_uploaded( init_endpoint_id, init_dbtree_id, init_data_id )
+                exit( 0 )
+        else:
+            self.insert_data_into_db( has_header, output, visible )
 
-            self.update_ptree( id_map )
-        except Exception as e:
-            print e
-            self.remove_uploaded( init_endpoint_id, init_dbtree_id, init_data_id )
-            exit( 0 )
         print 'done.'
-        '''
-        endpoint = self.update_dbtree()
+        
+    def insert_data_into_db( self, has_header, output, visible ):
+        endpoint = self.update_dbtree( visible )
+
         self.update_hierarchy( endpoint )
         self.update_columns( endpoint )
-        if lazy:
-            id_map = self.upload_data_stream( endpoint )
-        else:
-            id_map = self.upload_data( endpoint, has_header=has_header, output=output )
-            self.sum_columns( endpoint )
-            self.db.set_max_data_id( id_map.get_last_id() )
+
+        id_map = self.upload_data( endpoint, has_header=has_header, output=output )
+
+        self.sum_columns( endpoint )
+        self.db.set_max_data_id( id_map.get_last_id() )
 
         self.update_ptree( id_map )
-        print 'done.'
-        '''
-        
+
 
     def check_correctness( self ):
         self.check_dbtree()
@@ -342,7 +337,7 @@ class BasicUploader:
         safe_data_id = 1000067180
         self.remove_uploaded( safe_endpoint_id, safe_dbtree_id, safe_data_id )
 
-    def update_dbtree( self ):
+    def update_dbtree( self, visible ):
         parent_nodes = self.meta.get_parents()
 
         parents_ids = []
@@ -359,7 +354,7 @@ class BasicUploader:
                     'endpoint': None,
                     'max_depth': 0,
                     'min_depth': 0,
-                    'visible': True
+                    'visible': visible
                 }
                 self.db.insert_tree_node( parent_node )
 
@@ -376,7 +371,7 @@ class BasicUploader:
             'endpoint': 'data_' + str( endpoint_id ),
             'max_depth': 0,
             'min_depth': 0,
-            'visible': True
+            'visible': visible
         }
         parents_ids.append( node['id'] )
         self.db.insert_tree_node( node )
@@ -387,9 +382,12 @@ class BasicUploader:
     def update_hierarchy( self, endpoint ):
         hierarchy = self.meta.get_hierarchy()
         for (i, col) in enumerate( hierarchy ):
-            if not col['aux']:
-                col['aux_label'] = None
-            self.db.insert_hierarchy_column( col, endpoint, i )
+            col_copy = deepcopy( col )
+            if not col_copy['aux']:
+                col_copy['aux_label'] = None
+            del col_copy['index']
+            del col_copy['aux_index']
+            self.db.insert_hierarchy_column( col_copy, endpoint, i )
 
     def update_columns( self, endpoint ):
         non_hierarchy_columns = self.get_non_hierarchy_columns()
@@ -439,7 +437,7 @@ class BasicUploader:
             if os.name == 'nt':
                 filepath = filepath.replace('\\', '\\\\')
         else:
-            filepath = output_file
+            filepath = output
 
         self.save_data( data, filepath )
         self.db.insert_data( endpoint, filepath )
@@ -469,9 +467,6 @@ class BasicUploader:
             writer.writerow( self.encode_row( row ) )
         f.close()
 
-    def upload_data_stream( self, endpoints ):
-        pass
-        
     def update_ptree( self, id_map ):
         root = id_map.get_root()
         for key, child in root.iteritems():
@@ -543,18 +538,7 @@ class BasicUploader:
 
     def get_non_hierarchy_columns( self ):
         columns = self.meta.get_columns()
-        hierarchy = self.meta.get_hierarchy()
-        # columns that are in hierarchy will be removed and
-        # 'type' and 'name' will be inserted instead of them
-
-        hierarchy_labels = {}
-        for col in hierarchy:
-            hierarchy_labels[ col['label'] ] = True
-            if col['aux']:
-                hierarchy_labels[ col['aux_label'] ] = True
-        non_hierarchy_columns = filter( lambda t: t['label'] not in hierarchy_labels, columns )
-
-        return non_hierarchy_columns
+        return columns[:]
 
     def check_dbtree( self ):
         node_fields = ['name', 'description', 'label']
@@ -598,32 +582,13 @@ class BasicUploader:
         for col in self.meta.get_columns():
             columns_labels[ col['label'] ] = True
 
-        for label in hierarchy_labels:
-            if label not in columns_labels:
-                msg = "hierarchy column %s not in column labels." % label
-                raise UploadDataException( msg.encode('utf-8') )
-
     def get_hierarchy_indexes_pairs( self ):
-        hierarchy = self.meta.get_hierarchy()
-        columns = self.meta.get_columns()
-        
-        ind_obj = {}
-        for (i, col) in enumerate( columns ):
-            try:
-                ind_obj[ col['label'] ].append( i )
-            except KeyError:
-                ind_obj[ col['label'] ] = [ i ]
-
         indexes_pairs = []
-        for col in hierarchy:
-            first_ind = ind_obj[ col['label'] ][0]
-            ind_obj[ col['label'] ] = ind_obj[ col['label'] ][1:]
-            if col['aux']:
-                second_ind = ind_obj[ col['aux_label'] ][0]
-                ind_obj[ col['aux_label'] ] = ind_obj[ col['aux_label'] ][1:]
-                ind = ( first_ind, second_ind )
+        for level in self.meta.get_hierarchy():
+            if level['aux_index'] != -1:
+                ind = ( level['index'], level['aux_index'] )
             else:
-                ind = ( first_ind, )
+                ind = ( level['index'], )
             indexes_pairs.append( ind )
 
         return indexes_pairs
@@ -680,10 +645,16 @@ class BasicUploader:
         columns = self.meta.get_columns()
         empty_row = []
         for col in columns:
-            if col['type'] == 'string':
-                empty_row.append( '' )
-            else:
+            if col['type'] == 'number':
                 empty_row.append( 0 )
+            else:
+                empty_row.append( '' )
+
+        indexes = self.get_hierarchy_indexes()
+        indexes.sort()
+        for ind in indexes:
+            empty_row.insert( ind, '' )
+
         
         return empty_row
 
@@ -1329,14 +1300,14 @@ def full_test():
 
 
 # Function to upload data.
-def upload_collection( data_file, meta_file, output_file, has_header ):
+def upload_collection( data_file, meta_file, output_file, has_header, visible ):
     freader = FileReader( data_file )
     creader = CSVDataReceiver( freader )
     meta_freader = FileReader( meta_file )
     meta = Meta( meta_freader )
     db = DB( conf='db.conf' )
     uploader = BasicUploader( creader, meta, db )
-    uploader.upload( has_header=has_header, output=output_file )
+    uploader.upload( has_header=has_header, output=output_file, visible=visible )
 
 if __name__ == '__main__':
     '''

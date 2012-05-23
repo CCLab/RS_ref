@@ -10,6 +10,7 @@ import simplejson as json
 import hashlib
 
 import upload_helper as uh
+from upload import upload_collection
 
 def upload( request ):
     return redirect( login )
@@ -58,13 +59,16 @@ def choose_collection( request ):
 # url: /upload/hierarchy/
 @csrf_exempt
 def define_hierarchy( request ):
-    if not uh.collection_data_validated( request.POST, request.FILES ):
+    collection_data = uh.get_collection_data( request.POST )
+    if not uh.collection_data_validated( collection_data ):
         return redirect( choose_collection )
 
+    request.session['collection_data'] = collection_data
     upl_file = request.FILES.get( 'file', '' )
     request.session['tmp_file'] = uh.save_upl_file( upl_file )
-
     labels = uh.get_header_labels( upl_file )
+    upl_file.close()
+
     request.session['labels'] = labels
     json_labels = json.dumps( labels )
     return render_to_response('hierarchy.html', {'labels': json_labels} )
@@ -79,19 +83,45 @@ def define_columns( request ):
         json_labels = json.dumps( request.POST.get('labels', []) )
         return render_to_response('hierarchy.html', {'labels': json_labels} )
 
-    rest_labels = uh.get_remaining_labels( hierarchy, labels )
+    full_hierarchy = uh.add_labels( hierarchy, labels )
+    request.session['hierarchy'] = full_hierarchy
+    types = uh.guess_types( request.session['tmp_file'], full_hierarchy )
+
+    columns_descr = uh.get_columns_descr( full_hierarchy, labels, types )
     columns = []
-    for label in rest_labels:
+    for col_descr in columns_descr:
         columns.append({
-            'label'      : label,
-            'key'        : label,
-            'type'       : 'string',
-            'format'     : '@',
-            'basic'      : True,
-            'processable': True,
-            'checkable'  : True
+            'label'      : col_descr['label'],
+            'type'       : col_descr['type'],
+            'format'     : col_descr['format'],
+            'basic'      : False,
+            'processable': True
         })
 
-    request.session['hierarchy'] = hierarchy
     return render_to_response('columns.html', {'data': columns} )
+
+# url: /upload/data/
+@csrf_exempt
+def upload_data( request ):
+    columns_json = request.POST.get( 'columns', [] )
+    columns = json.loads( columns_json )
+    hierarchy = request.session.get( 'hierarchy', [] )
+    labels = request.session.get( 'labels', [] )
+
+    if not uh.columns_validated( columns, hierarchy, labels ):
+        info = 'Nie ma walidacji'
+        return render_to_response('results.html', {'info': info})
+
+    coll_data = request.session['collection_data']
+    data_file_name = request.session['tmp_file']
+    hier_file_name = data_file_name.rstrip('.csv') + '.json'
+
+    visible = coll_data[ 'visible' ]
+    print 'VIS', visible
+    uh.create_desc_file( coll_data, hierarchy, columns, hier_file_name )
+    output_file_name = 'sql_' + data_file_name
+    upload_collection( data_file_name, hier_file_name, output_file_name, True, visible )
+
+    info = 'Sukces'
+    return render_to_response('results.html', {'info': info})
 

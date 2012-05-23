@@ -28,8 +28,6 @@ var hierarchy = (function () {
     var that = {};
 
     that.init = function( labels ) {
-        /*collections = prepare_collections( collections );
-        show_user_collections( collections );*/
         labels = prepare_labels( labels );
         add_handlers( labels );
         add_level( labels );
@@ -159,8 +157,8 @@ var hierarchy = (function () {
             var i;
             for ( i = 0; i <= last_level; ++i ) {
                 hierarchy.push({
-                    'column': labels.indexOf( get_column( i ).val() ),
-                    'aux': labels.indexOf( get_aux_column( i ).val() )
+                    'index'    : labels.indexOf( get_column( i ).val() ),
+                    'aux_index': labels.indexOf( get_aux_column( i ).val() )
                 });
             }
             $('#hier-form')
