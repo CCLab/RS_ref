@@ -293,7 +293,7 @@ class BasicUploader:
             self.check_correctness()
         except UploadDataException as e:
             print e.get_error()
-            exit( 0 )
+            return ( False, e.get_error() )
         print 'correct.'
 
         endpoint = None
@@ -302,7 +302,7 @@ class BasicUploader:
         if not self.debug:
             try:
                 endpoint = self.insert_data_into_db( has_header, output, visible )
-            except Exception as e:
+            except UploadDataException as e:
                 print 'failed.'
                 print e
                 self.remove_uploaded( init_endpoint_id, init_dbtree_id, init_data_id )
@@ -363,6 +363,13 @@ class BasicUploader:
 
             last_parent_id = parent_node['id']
             parents_ids.append( last_parent_id )
+
+        if self.db.get_child( last_parent_id, parent['name'] ) is not None:
+            parent_id = "None" if last_parent_id is None else str( last_parent_id )
+            msg = '''Trying to insert dbtree node with name %s and parent id = %s, but
+                     there already exists such a node.
+                  ''' % ( self.meta.get_node()['name'], parent_id )
+            raise UploadDataException( msg )
 
         endpoint_id = self.db.gen_endpoint_id()
         node = {
