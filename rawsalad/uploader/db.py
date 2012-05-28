@@ -2,7 +2,9 @@ from copy import deepcopy
 
 
 class DB:
+    '''Class used as an interface to db during data upload.'''
     def __init__( self, cursor=None, conf=None):
+        # cursor or conf should not be empty
         self.cursor = cursor if cursor is not None else get_cursor( conf )
 
     def get_counter( self, key ):
@@ -18,6 +20,7 @@ class DB:
                 ''' % (new_value, key)
 
         self.cursor.execute( query )
+
 
     def get_max_endpoint( self ):
         return self.get_counter( 'endpoints' )
@@ -37,6 +40,7 @@ class DB:
     def set_max_data_id( self, value ):
         self.update_counter( 'data', value )
 
+
     def gen_endpoint_id( self ):
         new_max = self.get_max_endpoint() + 1
         self.set_max_endpoint( new_max )
@@ -47,22 +51,14 @@ class DB:
         self.set_max_dbtree_id( new_max )
         return new_max
 
-    def gen_data_id( self ):
-        new_max = self.get_max_data_id() + 1
-        self.set_max_dbtree_id( new_max )
-        return new_max
 
-    def get_tree_node( self, id ):
-        query = '''SELECT * FROM dbtree
-                   WHERE id = %s
-                ''' % id
-        self.cursor.execute( query )
-        return query.fetchone()
-
-    def modify_insert_query( self, table, names, value ):
+    def generate_insert_query( self, table, names, value ):
+        '''Create insert query to table for any number of values. Names are
+            keys in value object, which has values to insert.'''
         keys = []
         values = []
         vcopy = deepcopy( value )
+
         for name in names:
             if name in vcopy and vcopy[ name ] is not None:
                 keys.append( name )
@@ -71,28 +67,23 @@ class DB:
                 else:
                     vcopy[name] = '\'' + vcopy[name] + '\''
                 values.append( vcopy[name] )
+
         keys_str = ', '.join( keys )
         values_str = ', '.join( values )
         query = '''INSERT INTO %s ( %s ) VALUES ( %s ); COMMIT;
                 ''' % ( table, keys_str, values_str )
+
         return query
 
     def insert_tree_node( self, node ):
-        query = self.modify_insert_query( 'dbtree', node.keys(), node )
+        query = self.generate_insert_query( 'dbtree', node.keys(), node )
         self.cursor.execute( query.encode('utf-8') )
-
-    def modify_tree_node( self, id, update_dict ):
-        query = '''UPDATE dbtree SET '''
-        for k, v in update_dict.iteritems():
-            query += ( k + '=' + str(v) )
-        query += '''WHERE id = %s; COMMIT;''' % id
-
-        self.cursor.execute( query )
 
     def remove_tree_node( self, id ):
         query = '''DELETE FROM dbtree
-                   WHERE id = %s; COMMIT;
+                   WHERE id = %d; COMMIT;
                 ''' % id
+
         self.cursor.execute( query )
 
     def get_children( self, id ):
@@ -101,7 +92,8 @@ class DB:
                        WHERE parent is NULL'''
         else:
             query = '''SELECT * FROM dbtree
-                       WHERE parent = %s''' % id
+                       WHERE parent = %d''' % id
+
         self.cursor.execute( query )
         return self.cursor.fetchall()
 
@@ -114,6 +106,7 @@ class DB:
             query = '''SELECT * FROM dbtree
                        WHERE parent = '%s' AND name = '%s'
                     ''' % ( parent_id, name )
+
         self.cursor.execute( query.encode('utf-8') )
         return self.cursor.fetchone()
 
@@ -121,19 +114,22 @@ class DB:
         obj = deepcopy( column )
         obj['endpoint'] = endpoint
         obj['nr'] = nr
-        query = self.modify_insert_query( 'hierarchy', obj.keys(), obj )
+
+        query = self.generate_insert_query( 'hierarchy', obj.keys(), obj )
         self.cursor.execute( query.encode('utf-8') )
 
     def remove_hierarchy( self, endpoint ):
         query = '''DELETE FROM hierarchy
                    WHERE endpoint = '%s'; COMMIT;
                 ''' % endpoint
+
         self.cursor.execute( query.encode('utf-8') )
 
     def remove_columns( self, endpoint ):
         query = '''SELECT endpoints,key,type FROM columns
                        WHERE '%s' = ANY( endpoints )
                     ''' % endpoint
+
         self.cursor.execute( query.encode('utf-8') )
         columns = self.cursor.fetchall()
 
@@ -146,6 +142,7 @@ class DB:
         query = '''SELECT * FROM columns
                    WHERE key = '%s' AND type = '%s'
                 ''' % ( name, type )
+
         self.cursor.execute( query.encode('utf-8') )
         return self.cursor.fetchone()
 
@@ -153,17 +150,24 @@ class DB:
         is_basic = column.get( 'basic', False )
         is_processable = column.get( 'processable', False )
         is_searchable = column.get( 'searchable', False )
+
         db_column = ( column['endpoints'][0], column['key'], column['label'],
                       column['format'], is_basic, column['type'],
                       is_processable, is_searchable )
+
         query = '''INSERT INTO columns (endpoints, key, label, format,
                                            basic, type, processable, searchable)
                    VALUES( '{%s}', '%s', '%s', '%s', %s, '%s', %s, %s ); COMMIT;
                 ''' % db_column
+
         self.cursor.execute( query.encode('utf-8') )
 
     def update_column_endpoints( self, old_endpoints, new_endpoints, key, type ):
+        '''Update or delete column that has endpoints = old_endpoints, key and type
+            the same as passed in arguments. If new_endpoints is not empty, then it should
+            become value for endpoints field, otherwise column should be deleted.'''
         old_endpoints_str = ', '.join( old_endpoints )
+
         if new_endpoints != []:
             new_endpoints_str = ', '.join( new_endpoints )
             query = '''UPDATE columns SET endpoints = '{%s}'
@@ -173,32 +177,13 @@ class DB:
             query = '''DELETE FROM columns
                        WHERE endpoints = '{%s}' AND key = '%s' AND type = '%s'; COMMIT;
                     ''' % ( old_endpoints_str, key, type )
+
         self.cursor.execute( query.encode('utf-8') )
-
-    def get_endpoint_columns( self, endpoint ):
-        query = '''SELECT * FROM columns
-                   WHERE '%s' = ANY(endpoints)
-                ''' % endpoint
-        self.cursor.execute( query.encode('utf-8') )
-        return self.cursor.fetchall()
-
-    def get_top_parent( self, id ):
-        act_node = self.get_node( id )
-        while act_node['parent'] is not None:
-            act_node = self.get_node( act_node['parent'] )
-
-        return act_node
-
-    def get_top_level( self, endpoint ):
-        query = '''SELECT * FROM %s WHERE parent is NULL''' % endpoint
-        self.cursor.execute( query.encode('utf-8') )
-
-        return self.cursor.fetchall()
 
     def get_leaves( self, endpoint ):
         query = '''SELECT * FROM %s WHERE leaf = True''' % endpoint
-        self.cursor.execute( query.encode('utf-8') )
 
+        self.cursor.execute( query.encode('utf-8') )
         return self.cursor.fetchall()
 
     def get_nodes( self, endpoint, parents ):
@@ -209,17 +194,20 @@ class DB:
         query = '''SELECT * FROM %s
                    WHERE id IN (%s)
                 ''' % ( endpoint, parents_str )
-        self.cursor.execute( query.encode('utf-8') )
 
+        self.cursor.execute( query.encode('utf-8') )
         return self.cursor.fetchall()
         
 
     def update_node( self, endpoint, keys, value, where ):
+        '''Update data node from endpoint. Update its keys using values,
+            find node using where dict, which keys are fields to search
+            and values are values of node.'''
         query = '''UPDATE %s SET ''' % endpoint
         for k in keys:
             query += '%s = (%s + %s), ' % ( k, k, value[k] )
 
-        query = query[:-2] # remove last AND
+        query = query[:-2] # remove last ", "
 
         query += ' WHERE '
         for k, where_value in where.iteritems():
@@ -227,42 +215,15 @@ class DB:
                 query += '''%s = '%s' AND ''' % (k, where_value )
             else:
                 query += '%s = %s AND ' % (k, where_value )
-        query = query[:-4] # remove last AND
+
+        query = query[:-4] # remove last " AND"
         query += '; COMMIT;'
 
         self.cursor.execute( query.encode('utf-8') )
 
-    def get_or_create_node( self, node, par_id ):
-        name = node['name']
-        select_query = '''SELECT * FROM dbtree
-                          WHERE parent = %s
-                       ''' % par_id
-
-        self.cursor.execute( select_query )
-        children = self.cursor.fetchall()
-
-        for child in children:
-            if child['name'] == name:
-                return child
-
-        new_id = self.gen_dbtree_id()
-        endpoint = node.get( 'endpoint', None )
-        db_node = (
-            new_id, par_id,
-            node['name'], node['label'], node['description'],
-            0, 0, # max_level, min_level
-            endpoint, True
-        )
-        insert_query = '''INSERT INTO dbtree (id, parent, name, label,
-                          description, max_depth, min_depth, endpoint, visible)
-                          VALUES( %s, %s, %s, %s, %s, %s, %s, %s, %s ); COMMIT;
-                       ''' % db_node
-
-        return db_node
-
     def update_dbtree_depth( self, id, min_depth, max_depth ):
         query = '''UPDATE dbtree SET min_depth = %s, max_depth = %s
-                   WHERE id = %s''' % ( min_depth, max_depth, id )
+                   WHERE id = %d''' % ( min_depth, max_depth, id )
         
         self.cursor.execute( query.encode('utf-8') )
 
@@ -313,6 +274,7 @@ class DB:
         else:
             query = '''DELETE FROM %s
                        WHERE id >= %s AND id <= %s''' % ( tablename, min_id, max_id )
+
         self.cursor.execute( query.encode('utf-8') )
 
     def insert_ptree_list( self, id, parents ):
@@ -321,19 +283,22 @@ class DB:
             'id': id,
             'parents': parents_str
         }
-        query = self.modify_insert_query( 'p_tree', obj.keys(), obj )
+
+        query = self.generate_insert_query( 'p_tree', obj.keys(), obj )
         self.cursor.execute( query.encode('utf-8') )
 
     def remove_ptree_list( self, id ):
         query = '''DELETE FROM p_tree
-                   WHERE id = %s
+                   WHERE id = %d
                 ''' % id
+
         self.cursor.execute( query.encode('utf-8') )
 
     def get_higher_dbtree( self, id ):
         query = '''SELECT id FROM dbtree
                    WHERE id > %s
                 ''' % id
+
         self.cursor.execute( query.encode('utf-8') )
         return self.cursor.fetchall()
 
@@ -341,6 +306,7 @@ class DB:
         query = '''SELECT endpoint FROM hierarchy
                    WHERE endpoint > '%s'
                 ''' % endpoint
+
         self.cursor.execute( query.encode('utf-8') )
         return self.cursor.fetchall()
 
@@ -348,6 +314,7 @@ class DB:
         query = '''SELECT id FROM p_tree
                    WHERE id > %s
                 ''' % id
+
         self.cursor.execute( query.encode('utf-8') )
         return self.cursor.fetchall()
 
@@ -355,18 +322,21 @@ class DB:
         query = '''DELETE FROM dbtree
                    WHERE id > %s
                 ''' % id
+
         self.cursor.execute( query.encode('utf-8') )
 
     def remove_higher_hierarchy( self, endpoint ):
         query = '''DELETE FROM hierarchy
                    WHERE endpoint > '%s'
                 ''' % endpoint
+
         self.cursor.execute( query.encode('utf-8') )
 
     def remove_higher_ptree( self, id ):
         query = '''DELETE FROM p_tree
                    WHERE id > %s
                 ''' % id
+
         self.cursor.execute( query.encode('utf-8') )
 
     def get_higher_datatables( self, endpoint_id ):
@@ -404,6 +374,7 @@ def get_cursor(conf):
     host   = cfg.get( 'postgres', 'host' )
     dbname = cfg.get( 'postgres', 'dbname' )
     user   = cfg.get( 'postgres', 'user' )
+
     try:
         password = cfg.get( 'postgres', 'pass' )
     except:
@@ -417,3 +388,4 @@ def get_cursor(conf):
     cursor = connection.cursor( cursor_factory=psqlextras.RealDictCursor )
 
     return cursor
+
