@@ -250,6 +250,7 @@ class Uploader:
         return id_map
 
     def dicts_to_lists( self, rows ):
+        '''List -> Dict: l[0] -> l'''
         if rows == [] or isinstance( rows[0], list ):
             return rows
 
@@ -580,6 +581,15 @@ class Uploader:
             print 'Hierarchy correct'
 
         # TODO: check if there are columns for endpoints with too high id
+        if self.db.get_higher_columns( endpoint ):
+            print 'Found wrong columns, higher than %d' % init_endpoint_id
+            print 'Do you want to remove them? (Y/N)'
+            dec = raw_input('Your decision: ')
+            if dec.lower() == 'y':
+                self.db.remove_higher_columns( endpoint )
+                print 'Removed wrong columns'
+        else:
+            print 'Columns correct'
 
         # Check relations in ptree
         if self.db.get_higher_ptree( init_data_id ) != []:

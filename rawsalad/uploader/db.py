@@ -310,6 +310,14 @@ class DB:
         self.cursor.execute( query.encode('utf-8') )
         return self.cursor.fetchall()
 
+    def get_higher_columns( self, endpoint ):
+        query = '''SELECT DISTINCT endpoints FROM columns''';
+        
+        self.cursor.execute( query.encode('utf-8') )
+        all_endpoints = self.cursor.fetchall()
+
+        return [e for e in all_endpoints if e > endpoint]
+
     def get_higher_ptree( self, id ):
         query = '''SELECT id FROM p_tree
                    WHERE id > %s
@@ -338,6 +346,13 @@ class DB:
                 ''' % id
 
         self.cursor.execute( query.encode('utf-8') )
+
+    def remove_higher_columns( self, endpoint ):
+        higher = self.get_higher_columns( endpoint )
+        
+        for end in higher:
+            self.remove_columns( endpoint )
+
 
     def get_higher_datatables( self, endpoint_id ):
         query = '''SELECT table_name FROM information_schema.tables

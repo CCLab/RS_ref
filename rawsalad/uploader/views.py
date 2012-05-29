@@ -122,6 +122,7 @@ def upload_data( request ):
     columns = json.loads( columns_json )
     hierarchy = request.session.get( 'hierarchy', [] )
     labels = request.session.get( 'labels', [] )
+    print 'JSON', columns_json
 
     if not uh.columns_validated( columns, hierarchy, labels ):
         info = 'Kolumny niepoprawne'
