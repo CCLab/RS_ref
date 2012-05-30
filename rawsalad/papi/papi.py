@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from django.http import HttpResponse
-import rsdbapi.rsdbapi as api
+import rsdbapi as api
 
 def generate_response( data, request, no_query_uri=None ):
     serializer = request.GET.get( 'format', 'json' )
