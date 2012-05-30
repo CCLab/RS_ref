@@ -1,0 +1,52 @@
+###############################################################################
+#                 Installation procedure for RawSalad.                        #
+###############################################################################
+
+I. Prerequirements.
+There is so many Linux distributions that automizing full installation procedure
+seems senseless. Moreover, you may have organized directories in non standard
+way so it seems the best way that we do not provide automized procedure for
+installing things like python or PostgreSQL.
+
+To attempt to install RawSalad you should met prerequirements:
+- python 2.7 or higher 2.x
+- PostgreSQL 9.1.3 or higher
+- django 1.3 or higher
+- simplejson 2.3.2 or higher
+- psycopg2 2.4.4 or higer
+- PostgreSQL user with write privileges
+
+II. Installation procedure
+
+Installation is done by running install.py. The procedure consists of the following steps:
+
+1. Creating and initializing tables in PostgreSQL database.
+
+2. Changing files with application specific settings: settings.py, db.conf and rawsdata.conf.
+    db.conf and rawsdata.conf: should have form:
+
+You can also avoid running the script and do the operations on your own.
+    1) psql --user <db_user> --file init_db.sql
+        db_user is the user that should be able to create datatables
+        (the one created in prerequirements)
+
+    2) create files rawsalad/db.conf and rawsalad/rs/rawsdata.conf, both with content:
+       [postgres]
+       host: <host>
+       dbname: <dbname>
+       user: <username>
+       pass: <password>
+       
+       where host - ip address of host with database (can be also localhost)
+             dbname - name of PostgreSQL database
+             username - name of user with table creation privileges
+             password - password for that user
+
+    3) replace values $admins, $time_zone, $language_code, $media_dir, $host_addr and $secret_key
+       config_templates/settings_template.py with application specific values and
+       replace rawsalad/settings.py with the file
+
+
+
+3. Start server with:
+    python manage.py runserver
