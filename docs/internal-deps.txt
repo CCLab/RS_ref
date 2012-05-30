@@ -1,3 +1,0 @@
-1. views.py, gui.js, store.js
-   Serwer wysyła dane z polem perspective, co należy zmienić teraz na 'views', 
-   a w kolejnym kroku na nowe wielopoziomowe drzewko. (więcej niebawem)

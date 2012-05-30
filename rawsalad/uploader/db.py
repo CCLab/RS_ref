@@ -138,10 +138,10 @@ class DB:
             new_endpoints = [end for end in old_endpoints if end != endpoint ]
             self.update_column_endpoints( old_endpoints, new_endpoints, col['key'], col['type'] )
 
-    def get_column( self, name, type ):
+    def get_column( self, name, type, is_basic ):
         query = '''SELECT * FROM columns
-                   WHERE key = '%s' AND type = '%s'
-                ''' % ( name, type )
+                   WHERE key = '%s' AND type = '%s' AND basic = '%s'
+                ''' % ( name, type, is_basic )
 
         self.cursor.execute( query.encode('utf-8') )
         return self.cursor.fetchone()

@@ -1,9 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-project: Raw Salad
-function: public API to data and meta-data
-requirements: mongod, conf file (see conf_filename)
-"""
 
 from django.http import HttpResponse
 import rsdbapi.rsdbapi as api

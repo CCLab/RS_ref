@@ -182,7 +182,7 @@ class Uploader:
         non_hierarchy_columns = self.meta.get_columns()[:]
 
         for col in non_hierarchy_columns:
-            column_with_same_name = self.db.get_column( col['key'], col['type'] )
+            column_with_same_name = self.db.get_column( col['key'], col['type'], col['basic'] )
             # New column
             if column_with_same_name is None:
                 col['endpoints'] =  [ endpoint ]
