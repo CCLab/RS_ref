@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-	<title>Otwarte dane</title>
+	<title>$app_title</title>
   <link rel="stylesheet" type="text/css" href="/site_media/css/reset.css" />
   <link rel="stylesheet/less" type="text/css" href="/site_media/css/style.less" />
   <link rel="stylesheet/less" type="text/css" href="/site_media/css/classes.less" />
@@ -15,7 +15,7 @@
   <table>
   <tr>
     <th>
-      <label for="_label{{ forloop.counter0 }}">Etykieta</label>
+      <label for="_label{{ forloop.counter0 }}">$up_col_label</label>
     </th>
     <td>
       <input class="metadata" id="_label{{ forloop.counter0 }}" type="text" value="{{ d.label }}"/>
@@ -23,7 +23,7 @@
   </tr>
   <tr>
     <th>
-      <label for="_type{{ forloop.counter0 }}">Typ</label>
+      <label for="_type{{ forloop.counter0 }}">$up_type</label>
     </th>
     <td>
       <select class="metadata" id="_type{{ forloop.counter0 }}" name="_type{{ forloop.counter0 }}">
@@ -39,7 +39,7 @@
   </tr>
   <tr>
     <th>
-      <label for="_format{{ forloop.counter0 }}">Format</label>
+      <label for="_format{{ forloop.counter0 }}">$up_format</label>
     </th>
     <td>
       <input class="metadata" id="_format{{ forloop.counter0 }}" type="text" value="{{ d.format }}"/>
@@ -47,7 +47,7 @@
   </tr>
   <tr>
     <th>
-      <label for="_basic{{ forloop.counter0 }}">Podstawowa</label>
+      <label for="_basic{{ forloop.counter0 }}">$up_basic</label>
     </th>
     <td>
       <select class="metadata" id="_basic{{ forloop.counter0 }}" name="_basic{{ forloop.counter0 }}">
@@ -63,7 +63,7 @@
   </tr>
   <tr>
     <th>
-      <label for="_processable{{ forloop.counter0 }}">Przetwarzalna</label>
+      <label for="_processable{{ forloop.counter0 }}">$up_processable</label>
     </th>
     <td>
       <select class="metadata" id="_processable{{ forloop.counter0 }}" name="_processable{{ forloop.counter0 }}">
@@ -84,7 +84,7 @@
   <form action="/upload/data/" method="post" id="col-form">
     <input name="columns" type="text" />
   </form>
-  <button id="submit" type="button">Dalej</button>
+  <button id="submit" type="button">$up_next</button>
 
   <script src="/site_media/js/jquery-1.7.1.min.js"></script>
   <script src="/site_media/js/mustache.js"></script>

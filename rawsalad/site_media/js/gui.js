@@ -83,7 +83,7 @@ var _gui = (function () {
             $('#pl-ch-datasets')
                 .empty()
                 .append( dbtree )
-                .append( M.to_html( _tmpl.panel_submit, {'label': 'Pokaż dane'} ));
+                .append( M.to_html( _tmpl.panel_submit, {'label': translation['js_show_data']} ));
 
             _dbtree.arm( collections );
 
@@ -116,7 +116,7 @@ var _gui = (function () {
                 .append( _tmpl.datasets );
 
             $('#query-container')
-                .append( M.to_html( _tmpl.panel_submit, {'label': 'Szukaj'} ));
+                .append( M.to_html( _tmpl.panel_submit, {'label': translation['js_search']} ));
 
             $('#pl-ch-datasets')
                 .empty()
@@ -172,7 +172,7 @@ var _gui = (function () {
             $('#pl-ch-datasets')
                 .empty()
                 .append( dbtree )
-                .append( M.to_html( _tmpl.panel_submit, {'label': 'Pobierz dane'} ));
+                .append( M.to_html( _tmpl.panel_submit, {'label': translation['js_download']} ));
 
             _dbtree.arm( collections );
 
@@ -202,7 +202,7 @@ var _gui = (function () {
     // P A N E L   B U T T O N S   C A L L B A C K S
     function callbacks_for( endpoints ) {
         var init_callback = function () {
-            console.log( "Wczytuję dane" );
+            console.log( "Getting data" );
         };
         var callbacks = [];
         callbacks = endpoints.map( function ( e ) {
@@ -987,11 +987,10 @@ var _gui = (function () {
             }
 
             _resource.create_permalink( $.makeArray( checked ), function ( permalink_id ) {
-                console.log(10);
                 $('#app-sh-submit').hide();
                 $('#app-sh-permalink').slideDown( 150 )
                                       .find('input')
-                                      .val( 'http://localhost:8000/' + permalink_id )
+                                      .val( document.URL + permalink_id )
                                       .focus()
                                       .select();
             });

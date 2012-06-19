@@ -22,8 +22,8 @@ DATABASES = {
     }
 }
 
-TIME_ZONE = $time_zoe
-LANGUAGE_CODE = $language_code
+TIME_ZONE = '$time_zone'
+LANGUAGE_CODE = '$language_code'
 
 SITE_ID = 1
 

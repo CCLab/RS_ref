@@ -108,11 +108,11 @@ var _table = (function () {
         box['box_id'] = i;
         box['columns_num'] = box['columns'].length;
 
-        box['breadcrumb_action'] = (box['breadcrumb_showed']) ? 'Schowaj rodziców' : 'Pokaż rodziców';
+        box['breadcrumb_action'] = (box['breadcrumb_showed']) ? translation['js_hide_parents'] : translation['js_show_parents'];
         if ( box['empty_context'] ) {
-            box['context_action'] = 'Pusty kontekst';
+            box['context_action'] = translation['empty_context'];
         } else {
-            box['context_action'] = (box['context_showed']) ? 'Schowaj kontekst' : 'Pokaż kontekst';
+            box['context_action'] = (box['context_showed']) ? translation['js_hide_context'] : translation['js_show_context'];
         }
 
         if ( box['breadcrumb_showed'] ) {

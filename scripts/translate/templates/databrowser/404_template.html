@@ -8,7 +8,7 @@
     <link rel="stylesheet" type="text/css" href="/site_media/css/classes.css" />
     <link rel="stylesheet" type="text/css" href="/site_media/css/table_style.css" />
     
-    <title>Raw Salad: surowe dane w różnych smakach</title>
+    <title>$rest_title</title>
   </head>
   <body style="background-color: rgb(255, 255, 255); " >
   <header id="most-top">  
@@ -30,7 +30,7 @@
      <!--  M A I N  --> 
     <article id="ms-main" class="main-site clear" style="padding-bottom: 10px; overflow: auto; height: 300px; "> 
       <h2 style="padding: 120px; text-align: center; " >
-        Ups... nastąpił błąd. <a href="http://otwartedane.pl" >Wróć do strony głównej</a> 
+        $error_info <a href="http://otwartedane.pl" >$error_info_link</a> 
       </h2>
     </article> 
     </div>  
@@ -39,8 +39,8 @@
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
   <script>
   (function () {
-    var x = $(window).width() / 2 - $('table').width() / 2;
-    $('table').css({ 'padding': '0px 5px', 'margin-left': x });
+    var x = $$(window).width() / 2 - $$('table').width() / 2;
+    $$('table').css({ 'padding': '0px 5px', 'margin-left': x });
   })();
   </script>
 </html>

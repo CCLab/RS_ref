@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
 	<meta charset="UTF-8">
-	<title>Otwarte dane</title>  	
+	<title>$app_title</title>  	
   <link rel="stylesheet" type="text/css" href="/site_media/css/reset.css" />	
   <link rel="stylesheet/less" type="text/css" href="/site_media/css/style.less" />
   <link rel="stylesheet/less" type="text/css" href="/site_media/css/classes.less" />
@@ -13,14 +13,14 @@
   {% if not ok %}
     <h1> {{ warning }} </h1>
   {% endif %}
-  <h1>Zaloguj się, aby dodać nową kolekcję danych</h1>
+  <h1>$up_login_header</h1>
 
   <table>
     <tbody>
       <tr>
         <th>
           <label for="id_login">
-            Nazwa użytkownika
+            $up_user
           </label>
         </th>
         <td>
@@ -30,7 +30,7 @@
       <tr>
         <th>
           <label for="id_password">
-            Hasło
+            $up_pass
           </label>
         </th>
         <td>
@@ -43,7 +43,7 @@
   <form action="/upload/try_login/" method="post" id="login-form">
     <input name="login_data" type="text" />
   </form>
-  <button id="submit" type="button">Zaloguj</button>
+  <button id="submit" type="button">$up_login</button>
 
   <script src="/site_media/js/jquery-1.7.1.min.js"></script>
   <script src="/site_media/js/translation.js"></script>

@@ -2,8 +2,6 @@
 from django.shortcuts import render_to_response, redirect
 from django.views.decorators.csrf import csrf_exempt
 
-from app_forms import LoginForm
-
 import simplejson as json
 import hashlib
 
@@ -16,14 +14,11 @@ def upload( request ):
 
 # url: /upload/login/
 def login( request ):
-    login_form = LoginForm()
-    return render_to_response( 'login.html', { 'form': login_form } )
+    return render_to_response( 'login.html' )
 
 # url: /upload/bad_login/
 def bad_login( request ):
-    login_form = LoginForm()
     info = {
-        'form': login_form,
         'ok': False,
         'warning': 'Bad login and/or password. Try again.'
     }
@@ -32,8 +27,10 @@ def bad_login( request ):
 # url: /upload/try_login/
 @csrf_exempt
 def try_login( request ):
-    login = request.POST.get( 'login', '' )
-    password = request.POST.get( 'password', '' )
+    login_data_json = request.POST.get( 'login_data', [] )
+    login_data = json.loads( login_data_json )
+    login = login_data['user']
+    password = login_data['password']
 
     hash_pass = hashlib.md5( password ).hexdigest()
 
@@ -44,6 +41,16 @@ def try_login( request ):
     else:
         request.session['logged'] = False
         return redirect( bad_login )
+
+# url: /upload/create_user/
+@csrf_exempt
+def create_user( request ):
+    if request.session.get( 'logged', False ) == False or \
+       request.session.get( 'user', '' ) != 'admin':
+        return redirect( login )
+
+    return render_to_response( 'create.html' )
+
 
 # url: /upload/collection/
 def choose_collection( request ):

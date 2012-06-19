@@ -136,7 +136,7 @@ var _dbtree = (function () {
         var even_level = {
             'even'        : false,
             'button'      : true,
-            'button_name' : submit_name || 'Wyświetl',
+            'button_name' : submit_name || translation['js_show'],
         };
 
         // prepare place for dbtree list elements
@@ -464,7 +464,6 @@ var _dbtree = (function () {
 
                 // in case nothing was selected
                 if( !endpoints.length ) {
-                    console.log( "Proszę wybrać choć jedną kolekcję danych" );
                     return;
                 }
 

@@ -34,7 +34,7 @@ var hierarchy = (function () {
     };
 
     var hier_el = '<tr id="level-col-{{id}}">' +
-                    '<th> <label for="col-{{id}}">Column:</label> </th>' +
+                    '<th> <label for="col-{{id}}">' + translation['js_column'] + ':</label> </th>' +
                     '<td> <select name="col-name-{{id}}" prev_name="" id="col-{{id}}">' +
                       '<option name=""></option>' +
                       '{{#labels}}' +
@@ -44,10 +44,10 @@ var hierarchy = (function () {
                   '</tr>' +
                   '<tr id="level-aux-{{id}}">' +
                     '<th> </th>' +
-                    '<td> <input type="checkbox" name="aux-{{id}}" id="aux-{{id}}">use auxiliary column</td>' +
+                    '<td> <input type="checkbox" name="aux-{{id}}" id="aux-{{id}}">' + translation['js_use_aux'] + '</td>' +
                   '</tr>'+
                   '<tr id="level-col-aux-{{id}}">' +
-                    '<th> <label for="col-aux-{{id}}">Auxiliary column:</label> </th>' +
+                    '<th> <label for="col-aux-{{id}}">' + translation['js_aux_column'] + '</label> </th>' +
                     '<td> <select name="col-aux-name-{{id}}" prev_name="" id="col-aux-{{id}}">' +
                       '<option name=""></option>' +
                       '{{#labels}}' +

@@ -17,10 +17,10 @@ def create_db_configuration():
     user_values = {}
 
     print 'DB configuration file creation'
-    user_values['host'] = raw_input('Host:')
-    user_values['dbname'] = raw_input('Database name:')
-    user_values['user'] = raw_input('User name:')
-    user_values['password'] = raw_input('Password:')
+    user_values['host'] = raw_input('Host: ')
+    user_values['dbname'] = raw_input('Database name: ')
+    user_values['user'] = raw_input('User name: ')
+    user_values['pass'] = raw_input('Password: ')
 
     print 'Creating the new file from template'
     temp_file_path = os.path.join( 'config_templates', 'db_template.conf' )
@@ -31,8 +31,8 @@ def create_db_configuration():
     content = template.substitute( user_values )
 
     root_dir_path = os.path.dirname( os.path.dirname( os.getcwd() ) )
-    db_file_paths = [ os.join( root_dir_path, 'rawsalad', 'db.conf' ),
-                      os.join( root_dir_path, 'rawsalad', 'rs', 'rawsdata.conf' ) ]
+    db_file_paths = [ os.path.join( root_dir_path, 'rawsalad', 'db.conf' ),
+                      os.path.join( root_dir_path, 'rawsalad', 'rs', 'rawsdata.conf' ) ]
 
     for file_name in db_file_paths:
         with open( file_name, 'wb' ) as db_file:
@@ -46,24 +46,29 @@ def create_settings_configuration():
     user_values = {}
 
     print 'Settings configuration file creation'
-    admins_count = int( raw_input('How many admins do you want to have?') )
+    admins_count = int( raw_input('How many admins do you want to have?' ) )
     admins = []
+    admins_str = ''
     for i in range( admins_count ):
-        name = raw_input("Admin's name:")
-        email = raw_input("Admin's email address:")
-        admins.append( (name, email) )
+        name = raw_input("Admin's name: ")
+        email = raw_input("Admin's email address: ")
+        if i != 0:
+            admins_str += '\n    '
+        #admins.append( (name, email) )
+        admins_str += str( (name, email) ) + ','
 
-    user_values['admins'] = str(admins)[1:-1] # without '[' and ']'
+    #user_values['admins'] = str(admins)[1:-1] # without '[' and ']'
+    user_values['admins'] = admins_str # without '[' and ']'
 
-    user_values['time_zone'] = raw_input('Time zone:')
-    user_values['language_code'] = raw_input('Language code:')
-    user_values['media_dir'] = raw_input('Directory with media files (e.g. site_media ):')
-    user_values['host_addr'] = raw_input('Host address and port for RawSalad on your machine(ip:port)')
+    user_values['time_zone'] = raw_input('Time zone: ')
+    user_values['language_code'] = raw_input('Language code: ')
+    user_values['media_dir'] = raw_input('Directory with media files (e.g. site_media ): ')
+    user_values['host_addr'] = raw_input('Host address and port for RawSalad on your machine(ip:port) : ')
     user_values['secret_key'] = generate_secret_key()
                                             
 
     print 'Creating the new file from template'
-    temp_file_path = os.path.join( 'config_templates', 'settings_templte' )
+    temp_file_path = os.path.join( 'config_templates', 'settings_template.py' )
     with open( temp_file_path, 'r' ) as temp_file:
         temp_content = temp_file.read()
 
@@ -71,7 +76,7 @@ def create_settings_configuration():
     content = template.substitute( user_values )
 
     root_dir_path = os.path.dirname( os.path.dirname( os.getcwd() ) )
-    settings_file_path = os.join( root_dir_path, 'rawsalad', 'settings.py' )
+    settings_file_path = os.path.join( root_dir_path, 'rawsalad', 'settings.py' )
 
     with open( settings_file_path, 'wb' ) as settings_file:
         settings_file.write( content )
@@ -103,7 +108,7 @@ def generate_secret_key():
     rand_string = str( randint(0, 10000000) )
     encoded_string = b64encode( hashlib.md5( rand_string ).digest() )
 
-    return encoded_string[:40]
+    return encoded_string[:50]
 
 
 def db_cursor(conf_values):
@@ -111,7 +116,7 @@ def db_cursor(conf_values):
     host     = conf_values['host']
     dbname   = conf_values['dbname']
     user     = conf_values['user']
-    password = conf_values['password']
+    password = conf_values['pass']
 
     config = "host='"+ host +"' dbname='"+ dbname +"' user='"+ user +"'"
     if password:

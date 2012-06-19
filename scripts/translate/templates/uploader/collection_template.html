@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-	<title>Otwarte dane</title>
+	<title>$app_title</title>
   <link rel="stylesheet" type="text/css" href="/site_media/css/reset.css" />
   <link rel="stylesheet/less" type="text/css" href="/site_media/css/style.less" />
   <link rel="stylesheet/less" type="text/css" href="/site_media/css/classes.less" />
@@ -11,13 +11,13 @@
 <body>
  
   <form action="/upload/hierarchy/" id="coll-form" method="post" enctype="multipart/form-data">
-  <h1>Wypełnij dane</h1>
+  <h1>$up_fill_info</h1>
     <div id="collection-panel">
       <table id="new_collection">
         <tbody>
           <tr>
             <th>
-              <label for="coll-name">Nazwa:</label>
+              <label for="coll-name">$up_name:</label>
             </th>
             <td>
               <input type="text" name="name" id="coll-name">
@@ -25,7 +25,7 @@
           </tr>
           <tr>
             <th>
-              <label for="coll-label">Pełna nazwa:</label>
+              <label for="coll-label">$up_label:</label>
             </th>
             <td>
               <input type="text" name="label" id="coll-label">
@@ -33,18 +33,18 @@
           </tr>
           <tr>
             <th>
-              <label for="coll-vis">Kolekcja widoczna:</label>
+              <label for="coll-vis">$up_visible:</label>
             </th>
             <td>
               <select name="vis" id="coll-vis">
-                <option value="No">Nie</option>
-                <option value="Yes">Tak</option>
+                <option value="No">$up_no</option>
+                <option value="Yes">$up_yes</option>
               </select>
             </td>
           </tr>
           <tr>
             <th>
-              <label for="coll-file">Plik:</label>
+              <label for="coll-file">$up_file:</label>
             </th>
             <td>
               <input type="file" name="file" id="coll-file">
@@ -56,12 +56,12 @@
 
     <hr>
 
-    <h1>Wskaż kolekcję-rodzica</h1>
+    <h1>$up_parent_col</h1>
     <input id="add-exist" type="radio" name="type" value="old" checked>
-      Dodaj kolekcję-dziecko do istniejącej kolekcji
+      $up_add_child
     <br>
     <input id="add-new" type="radio" name="type" value="new">
-      Dodaj nową kolekcję razem z kolekcjami-rodzicami
+      $up_add_new
     <br>
 
     <hr>
@@ -74,7 +74,7 @@
         <tbody>
           <tr>
             <th>
-              <label for="name-0">Nazwa:</label>
+              <label for="name-0">$up_name:</label>
             </th>
             <td>
               <input type="text" name="ancestor-name-0" id="name-0" field="ancestor">
@@ -82,7 +82,7 @@
           </tr>
           <tr>
             <th>
-              <label for="desc-0">Opis:</label>
+              <label for="desc-0">$up_descr:</label>
             </th>
             <td>
               <input type="text" name="ancestor-desc-0" id="desc-0" field="ancestor">
@@ -90,10 +90,10 @@
           </tr>
         </tbody>
       </table>
-      <button id="add-parent" type="button">Dodaj nowego rodzica</button>
-      <button id="del-parent" type="button" disabled>Usuń ostatniego rodzica</button>
+      <button id="add-parent" type="button">$up_add_parent</button>
+      <button id="del-parent" type="button" disabled>$up_del_parent</button>
     </div>
-    <input type="submit" value="Dalej">
+    <input type="submit" value="$up_next">
   </form>
 
   <div id="error">

@@ -39,11 +39,11 @@ var collection = (function () {
                         '{{/nodes}}';
     
     var parent_panel = '<tr>' +
-                       '<th> <label for="name-{{id}}">Name:</label> </th>' +
+                       '<th> <label for="name-{{id}}">' + translation['js_name'] + ':</label> </th>' +
                        '<td> <input type="text" name="ancestor-name-{{id}}" id="name-{{id}}" field="ancestor"> </td>' +
                        '</tr>' +
                        '<tr>' +
-                       '<th> <label for="desc-{{id}}">Description:</label> </th>' +
+                       '<th> <label for="desc-{{id}}">' + translation['js_descr'] + ':</label> </th>' +
                        '<td> <input type="text" name="ancestor-desc-{{id}}" id="desc-{{id}}" field="ancestor"> </td>' +
                        '</tr>';
 
@@ -176,17 +176,17 @@ var collection = (function () {
     function find_error() {
         if ( !coll_fields_correct() ) {
             if ( $('#coll-name').val() == '' ) {
-                return 'Fill collection name';
+                return translation['js_fill_name'];
             } else if ( $('#coll-label').val() == '' ) {
-                return 'Fill collection label';
+                return translation['js_fill_label'];
             } else if ( $('#coll-file').val() == '' ) {
-                return 'Choose file with data';
+                return translation['js_choose_file'];
             }
         } else if ( !parent_fields_correct() ) {
             if ( $('#add-exist').attr('checked') ) {
-                return 'Check one of parents';
+                return translation['js_check_parent'];
             } else {
-                return 'Fill all information about parents';
+                return translation['js_fill_info'];
             }
         }
     }

@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-	<title>Otwarte dane</title>
+	<title>$app_title</title>
   <link rel="stylesheet" type="text/css" href="/site_media/css/reset.css" />
   <link rel="stylesheet/less" type="text/css" href="/site_media/css/style.less" />
   <link rel="stylesheet/less" type="text/css" href="/site_media/css/classes.less" />
@@ -14,14 +14,14 @@
     <tbody>
     </tbody>
   </table>
-  <button id="add-hier" type="button">Dodaj nowy poziom hierarchii</button>
-  <button id="del-hier" type="button">Usuń ostatni poziom hierarchii</button>
+  <button id="add-hier" type="button">$up_new_hier_level</button>
+  <button id="del-hier" type="button">$up_del_hier_level</button>
   <br>
 
   <form action="/upload/columns/" method="post" id="hier-form">
     <input name="hierarchy" type="text" />
   </form>
-  <button id="submit" type="button">Dalej</button>
+  <button id="submit" type="button">$up_next</button>
 
   <script src="/site_media/js/jquery-1.7.1.min.js"></script>
   <script src="/site_media/js/mustache.js"></script>
