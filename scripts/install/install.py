@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import os
 from string import Template
 
@@ -5,6 +7,7 @@ from getpass import getpass
 import hashlib
 import psycopg2 as psql
 import subprocess
+import minify
 
 def create_and_init_tables():
     print 'Tables initialization'
@@ -54,10 +57,9 @@ def create_settings_configuration():
         email = raw_input("Admin's email address: ")
         if i != 0:
             admins_str += '\n    '
-        #admins.append( (name, email) )
+
         admins_str += str( (name, email) ) + ','
 
-    #user_values['admins'] = str(admins)[1:-1] # without '[' and ']'
     user_values['admins'] = admins_str # without '[' and ']'
 
     user_values['time_zone'] = raw_input('Time zone: ')
@@ -128,12 +130,33 @@ def db_cursor(conf_values):
     return cursor
 
 
+def syncdb():
+    '''Create SQLite file with tables to make session work.'''
+    current_path = os.getcwd()
+
+    top_path = os.path.dirname( os.path.dirname( current_path ) )
+    manage_path = os.path.join( top_path, 'rawsalad' )
+
+    os.chdir( manage_path )
+    command = 'python manage.py syncdb'
+    subprocess.call( command )
+
+    os.chdir( current_path )
+
+
+def minify():
+    '''Minify js and css for databrowser app'''
+    minify.minify_files()
+
+
 if __name__ == '__main__':
     try:
-        create_and_init_tables():
+        create_and_init_tables()
         user_values = create_db_configuration()
         create_settings_configuration()
         create_admin_user( user_values )
+        syncdb()
+        minify()
     except Exception as e:
         print 'Something bad happened'
         print e
