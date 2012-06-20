@@ -6,7 +6,7 @@ var _logger = (function () {
         return function ( a, b, c, d, e, f ) {
             logger( fn, debug, arguments );
             if( !!debug ) {
-                debugger;
+                eval('debugger');
             }
             fn( a, b, c, d, e, f );
         };

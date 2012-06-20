@@ -4,24 +4,32 @@ import os
 import shutil
 import yuicompressor as yui
 import re
+import subprocess
 
 
 def minify( min_file_name, files, end, dst_path ):
     min_file = open( min_file_name, 'wb' )
+
     for name in files:
         if name.endswith( end ):
+            print 'Compressing file', name
             f = open( name, 'rb' )
             content = f.read()
 
-            minfied_content = yui.run( content )
-            min_js_file.write( content )
-            min_js_file.write( '\n' )
+            cmd = 'yuicompressor ' + name
+            minified_content = subprocess.Popen( cmd, shell=True, stdout=subprocess.PIPE ).stdout.read()
+            min_file.write( minified_content )
+            min_file.write( '\n' )
 
             f.close()
 
     min_file.close()
 
-    shutil.copy_file( min_file, dst_path )
+    # Copy min.js to directory with js files
+    shutil.copyfile( min_file_name, dst_path )
+
+    # Remove temporary min.js
+    os.remove( min_file_name )
 
 def get_js_minify_file_names( html_file ):
     ''' Get js names from minification area. '''
@@ -82,9 +90,17 @@ def minify_files():
 
     css_files = os.listdir( css_dir )
 
-    minify( 'min.js', js_files, '.js', min_js_path )
+    js_paths = [ os.path.join( js_dir, name ) for name in js_files ]
+    css_paths = [ os.path.join( css_dir, name ) for name in css_files ]
+
+    minify( 'min.js', js_paths, '.js', min_js_path )
     # maybe not
-    #minify( 'min.css', css_files, '.css', min_css_path )
+    #minify( 'min.css', css_paths, '.css', min_css_path )
 
     update_html( html_file, js_files )
+
+
+
+if __name__ == '__main__':
+    minify_files()
 
