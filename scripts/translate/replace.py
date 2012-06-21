@@ -78,7 +78,7 @@ def translate_file(input_path, output_dir, translation_file_name, lang):
 
 def get_template_files( path ):
     all_files = os.listdir( path )
-    return [ n for n in all_files if n.endswith('js') or n.endswith('html') ]
+    return [ n for n in all_files if '_template.' in n ]
 
 
 highest_level_dir = os.path.dirname( os.path.dirname(os.getcwd()) )
@@ -86,10 +86,12 @@ highest_level_dir = os.path.dirname( os.path.dirname(os.getcwd()) )
 databrowser_translated_dir = os.path.join( highest_level_dir, 'rawsalad', 'databrowser', 'templates' )
 js_translated_dir = os.path.join( highest_level_dir, 'rawsalad', 'site_media', 'js' )
 uploader_translated_dir = os.path.join( highest_level_dir, 'rawsalad', 'uploader', 'templates' )
+py_translated_dir = os.path.join( highest_level_dir, 'rawsalad', 'uploader' )
 
 databrowser_tmp_dir = os.path.join( os.getcwd(), 'tmp', 'databrowser' )
 js_tmp_dir = os.path.join( os.getcwd(), 'tmp', 'js' )
 uploader_tmp_dir = os.path.join( os.getcwd(), 'tmp', 'uploader' )
+py_tmp_dir = os.path.join( os.getcwd(), 'tmp', 'py' )
 
 databrowser_dir = os.path.join( os.getcwd(), 'templates', 'databrowser' )
 databrowser_file_names = get_template_files( databrowser_dir )
@@ -97,9 +99,12 @@ databrowser_file_names = get_template_files( databrowser_dir )
 uploader_dir = os.path.join( os.getcwd(), 'templates', 'uploader' )
 uploader_file_names = get_template_files( uploader_dir )
 
+py_dir = os.path.join( os.getcwd(), 'templates', 'py' )
+py_file_names = get_template_files( py_dir )
+
 translation_file = 'translation.csv'
 lang = 'polish'
-tmp_dirs = [ databrowser_tmp_dir, js_tmp_dir, uploader_tmp_dir ]
+tmp_dirs = [ databrowser_tmp_dir, js_tmp_dir, uploader_tmp_dir, py_tmp_dir ]
 check = False
 
 languages = get_possible_languages( translation_file )
@@ -150,6 +155,15 @@ for name in uploader_file_names:
     
     print 'done'
 
+for name in py_file_names:
+    print 'Translating file', name, '...',
+
+    full_path = os.path.join( py_dir, name )
+    translate_file( full_path, py_tmp_dir, translation_file, lang )
+    
+    print 'done'
+
+
 if not check:
     print '*** Copying files ***'
     databrowser_files = os.listdir( databrowser_tmp_dir )
@@ -173,5 +187,12 @@ if not check:
         print 'copy file', src_file, '-->', dst_file
         shutil.copyfile( src_file, dst_file )
 
+    py_files = os.listdir( py_tmp_dir )
+    for f in py_files:
+        src_file = os.path.join( py_tmp_dir, f )
+        dst_file = os.path.join( py_translated_dir, f )
+        print 'copy file', src_file, '-->', dst_file
+        shutil.copyfile( src_file, dst_file )
 
 print '*** All files are done ***'
+
