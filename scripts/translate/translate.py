@@ -86,7 +86,7 @@ highest_level_dir = os.path.dirname( os.path.dirname(os.getcwd()) )
 databrowser_translated_dir = os.path.join( highest_level_dir, 'rawsalad', 'databrowser', 'templates' )
 js_translated_dir = os.path.join( highest_level_dir, 'rawsalad', 'site_media', 'js' )
 uploader_translated_dir = os.path.join( highest_level_dir, 'rawsalad', 'uploader', 'templates' )
-py_translated_dir = os.path.join( highest_level_dir, 'rawsalad', 'uploader' )
+py_translated_dir = os.path.join( highest_level_dir, 'rawsalad' )
 
 databrowser_tmp_dir = os.path.join( os.getcwd(), 'tmp', 'databrowser' )
 js_tmp_dir = os.path.join( os.getcwd(), 'tmp', 'js' )

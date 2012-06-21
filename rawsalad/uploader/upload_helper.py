@@ -14,7 +14,7 @@ with open( 'trans.json', 'rb' ) as trans_file:
     translation = json.loads( content )
 
 def trans( key ):
-    if key not in trans:
+    if key not in translation:
         print 'WARNING: key %s not in translation' % key
     return translation.get( key, '???' )
 
@@ -83,7 +83,7 @@ def hierarchy_validated( hierarchy, labels ):
 
 def save_upl_file( upl_file ):
     '''Save content of upl_file in a temporary file and return its name.'''
-    tmp_name = 'tmp0.csv'
+    tmp_name = 'tmp.csv'
     tmp_file = open( tmp_name, 'w' )
 
     for chunk in upl_file.chunks():
@@ -180,17 +180,17 @@ def get_columns_errors( columns ):
     for (i, col) in enumerate( columns, 1 ):
         error = []
         if col['type'] not in ['string', 'number']:
-            error.append( '%s: %s' % (trans['py_wrong_type'], col['type']) )
+            error.append( '%s: %s' % (trans('py_wrong_type'), col['type']) )
 
         if col['basic'] not in [True, False]:
-            error.append( '%s: %s' % (trans['py_wrong_basic'], col['basic']) )
+            error.append( '%s: %s' % (trans('py_wrong_basic'), col['basic']) )
 
         if col['processable'] not in [True, False]:
-            error.append( '%s: %s' % (trans['py_wrong_proc'], col['processable ']) )
+            error.append( '%s: %s' % (trans('py_wrong_proc'), col['processable ']) )
 
         if error != []:
             error_msg = ', '.join( error )
-            errors.append( '%s %d: %s' % (trans['py_column'], i, error_msg) )
+            errors.append( '%s %d: %s' % (trans('py_column'), i, error_msg) )
 
     return errors
 
@@ -335,8 +335,8 @@ def move_src_file(filename, new_name):
     print 'Copy file %s to %s' % (new_filename, new_path)
     shutil.move( filename, new_path )
 
-def remove_files(hier_file_name, output_file_name):
+def remove_files( files ):
     '''Remove temporary files used to upload data into db.'''
-    os.remove( hier_file_name )
-    os.remove( output_file_name )
+    for f in files:
+        os.remove( f )
 

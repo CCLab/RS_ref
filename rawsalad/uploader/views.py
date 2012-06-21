@@ -15,7 +15,7 @@ with open( 'trans.json', 'rb' ) as trans_file:
     translation = json.loads( content )
 
 def trans( key ):
-    if key not in trans:
+    if key not in translation:
         print 'WARNING: key %s not in translation' % key
     return translation.get( key, '???' )
 
@@ -32,7 +32,7 @@ def login( request ):
 def bad_login( request ):
     info = {
         'ok': False,
-        'warning': trans['py_bad_login']
+        'warning': trans('py_bad_login')
     }
     return render_to_response( 'login.html', info )
 
@@ -40,6 +40,8 @@ def bad_login( request ):
 @csrf_exempt
 def try_login( request ):
     login_data_json = request.POST.get( 'login_data', [] )
+    print login_data_json
+    print repr(login_data_json)
     login_data = json.loads( login_data_json )
     login = login_data['user']
     password = login_data['password']
@@ -145,7 +147,7 @@ def upload_data( request ):
     if not uh.columns_validated( columns, hierarchy, labels ):
         errors = uh.get_columns_errors( columns )
         msg = {
-            'header': trans['py_col_errors'],
+            'header': trans('py_col_errors'),
             'errors': errors
         }
         errors_json = json.dumps( errors )
@@ -165,7 +167,7 @@ def upload_data( request ):
 
     # remove temporary files
     try:
-        uh.remove_files( hier_file_name, output_file_name )
+        uh.remove_files( [hier_file_name, output_file_name] )
     except OSError:
         # there were errors in data -> not all files were created
         pass
@@ -174,11 +176,12 @@ def upload_data( request ):
         # move file with data to special directory
         uh.move_src_file( data_file_name, result )
         info = {
-            'header': trans['py_success']
+            'header': trans('py_success')
         }
     else:
+        uh.remove_files( [data_file_name] )
         info = {
-            'header': trans['py_errors'],
+            'header': trans('py_errors'),
             'errors': result
         }
 

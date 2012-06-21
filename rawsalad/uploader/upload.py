@@ -9,13 +9,15 @@ from readers import Meta as Meta
 from db import DB as DB
 from verification import verify_data
 
+import simplejson as json
+
 
 with open( 'trans.json', 'rb' ) as trans_file:
     content = trans_file.read()
     translation = json.loads( content )
 
 def trans( key ):
-    if key not in trans:
+    if key not in translation:
         print 'WARNING: key %s not in translation' % key
     return translation.get( key, '???' )
 
@@ -282,7 +284,7 @@ class Uploader:
             data += new_rows
 
         # Add total row
-        total_row_id = id_map.add_id( [ trans['py_total'] ] )
+        total_row_id = id_map.add_id( [ trans('py_total') ] )
         data.append( self.create_total_row( top_rows[0], total_row_id ) )
 
         if output is None:
@@ -358,7 +360,7 @@ class Uploader:
             summed_values = self.sum_values_in_nodes( nodes, summable_columns )
             # Update nodes
             for ( id, value ) in summed_values.iteritems():
-                conds = {'id': id} if id is not None else {'type': trans['py_total']}
+                conds = {'id': id} if id is not None else {'type': trans('py_total')}
                 # summable_columns[2:] - remove id and parent keys
                 self.db.update_node( endpoint, summable_columns[2:], value, conds )
                 
@@ -690,8 +692,8 @@ class Uploader:
         total_row = [
             total_row_id,
             None,
-            trans['py_total'],
-            trans['py_total_name'],
+            trans('py_total'),
+            trans('py_total_name'),
             True
         ]
 

@@ -5,13 +5,14 @@ from readers import CSVDataReceiver as CSVDataReceiver
 from readers import Meta as Meta
 from db import DB as DB
 
+import simplejson as json
 
 with open( 'trans.json', 'rb' ) as trans_file:
     content = trans_file.read()
     translation = json.loads( content )
 
 def trans( key ):
-    if key not in trans:
+    if key not in translation:
         print 'WARNING: key %s not in translation' % key
     return translation.get( key, '???' )
 
@@ -86,6 +87,7 @@ def get_type( value ):
 
 
 def find_bad_fields( row, types ):
+    ''' Return list with fields that have unexpected type. '''
     incorrect_fields = []
 
     for (i, field) in enumerate( row, 1 ):
@@ -119,7 +121,7 @@ def get_row_hierarchy( row, hierarchy_indexes ):
     while row_hierarchy[-1] == '':
         row_hierarchy.pop()
 
-    return '-'.join( row_hierarchy )
+    return '-'.join( row_hierarchy ).decode('utf-8')
 
 
 def is_hierarchy_repeated( hierarchies, row_hierarchy ):
@@ -140,34 +142,34 @@ def add_hierarchy( row_nr, hierarchies, row_hierarchy ):
 
 def bad_len( row_nr, row_len, expected_len ):
     return '%s: %s %d, %s = %d, %s = %d' %\
-            ( trans['py_bad_len'], trans['py_row_nr'], row_nr, 
-              trans['py_len'], row_len,
-              trans['py_exp_len'], expected_len )
+            ( trans('py_bad_len'), trans('py_row_nr'), row_nr, 
+              trans('py_len'), row_len,
+              trans('py_exp_len'), expected_len )
 
 
 def bad_fields( row_nr, row_types, row ):
     fields = find_bad_fields( row, row_types )
 
     first_part = '%s: %s %d:' %\
-                (translation['py_bad_fields'], translation['py_row_nr'],row_nr)
+                (translation['py_bad_fields'], translation['py_row_nr'], row_nr)
     msg = [ first_part ]
     for (nr, ftype, expected_type) in fields:
         msg_part = '* %s: %d, %s: %s, %s: %s' %\
-            (trans['py_field_nr'], nr,
-             trans['py_found_type'], ftype,
-             trans['py_exp_type'], expected_type)
+            (trans('py_field_nr'), nr,
+             trans('py_found_type'), ftype,
+             trans('py_exp_type'), expected_type)
         msg.append( msg_part )
 
     return '\n'.join( msg )
 
 
 def empty_hierarchy( row_nr ):
-    return '%s: %s: %d' % (trans['py_empty_hier'], trans['py_row_nr'], row_nr )
+    return '%s: %s: %d' % (trans('py_empty_hier'), trans('py_row_nr'), row_nr )
     
 
 def repeated_hierarchy( row_nr, prev_nr, row_hierarchy ):
     return '%s: %s: %d, %s: %d, %s: %s' %\
-            (trans['py_rep_hier'], trans['py_row_nr'], row_nr,
-             trans['py_prev_row_nr'], prev_nr,
-             trans['py_hier'], row_hierarchy)
+            (trans('py_rep_hier'), trans('py_row_nr'), row_nr,
+             trans('py_prev_row_nr'), prev_nr,
+             trans('py_hier'), row_hierarchy)
 
