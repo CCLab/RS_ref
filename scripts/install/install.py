@@ -140,7 +140,21 @@ def syncdb():
     os.chdir( manage_path )
     command = 'python manage.py syncdb'
     subprocess.call( command )
+    os.chdir( current_path )
 
+
+def translate():
+    '''Translate application'''
+    lang = raw_input("Language of application: ")
+    
+    current_path = os.getcwd()
+
+    top_path = os.path.dirname( current_path )
+    translate_path = os.path.join( top_path, 'translate' )
+
+    os.chdir( translate_path )
+    command = 'python translate.py %s' % lang
+    subprocess.call( command )
     os.chdir( current_path )
 
 
@@ -156,6 +170,7 @@ if __name__ == '__main__':
         create_settings_configuration()
         create_admin_user( user_values )
         syncdb()
+        translate()
         minify()
     except Exception as e:
         print 'Something bad happened'
