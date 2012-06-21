@@ -9,6 +9,18 @@ import rs.sqldb as sqldb
 import upload_helper as uh
 from upload import upload_collection
 
+
+with open( 'trans.json', 'rb' ) as trans_file:
+    content = trans_file.read()
+    translation = json.loads( content )
+
+def trans( key ):
+    if key not in trans:
+        print 'WARNING: key %s not in translation' % key
+    return translation.get( key, '???' )
+
+
+
 def upload( request ):
     return redirect( login )
 
@@ -20,7 +32,7 @@ def login( request ):
 def bad_login( request ):
     info = {
         'ok': False,
-        'warning': 'Bad login and/or password. Try again.'
+        'warning': trans['py_bad_login']
     }
     return render_to_response( 'login.html', info )
 
@@ -129,16 +141,19 @@ def upload_data( request ):
     columns = json.loads( columns_json )
     hierarchy = request.session.get( 'hierarchy', [] )
     labels = request.session.get( 'labels', [] )
-    print 'JSON', columns_json
 
     if not uh.columns_validated( columns, hierarchy, labels ):
-        info = 'Kolumny niepoprawne'
-        return render_to_response('results.html', {'info': info})
+        errors = uh.get_columns_errors( columns )
+        msg = {
+            'header': trans['py_col_errors'],
+            'errors': errors
+        }
+        errors_json = json.dumps( errors )
+        return render_to_response( 'results.html', {'info': errors_json} )
 
     coll_data = request.session['collection_data']
     data_file_name = request.session['tmp_file']
     hier_file_name = data_file_name.rstrip('.csv') + '.json'
-
 
     # create meta file describing data
     uh.create_desc_file( coll_data, hierarchy, columns, hier_file_name )
@@ -146,15 +161,27 @@ def upload_data( request ):
     # upload data into db
     visible = coll_data[ 'visible' ]
     output_file_name = 'sql_' + data_file_name
-    done, endpoint = upload_collection( data_file_name, hier_file_name, output_file_name, True, visible )
+    done, result = upload_collection( data_file_name, hier_file_name, output_file_name, True, visible )
 
-    # remove temporary files and move file with data to special directory
-    uh.remove_files(hier_file_name, output_file_name)
+    # remove temporary files
+    try:
+        uh.remove_files( hier_file_name, output_file_name )
+    except OSError:
+        # there were errors in data -> not all files were created
+        pass
+
     if done:
-        uh.move_src_file(data_file_name, endpoint)
-        info = 'Sukces'
+        # move file with data to special directory
+        uh.move_src_file( data_file_name, result )
+        info = {
+            'header': trans['py_success']
+        }
     else:
-        info = 'Porażka'
+        info = {
+            'header': trans['py_errors'],
+            'errors': result
+        }
 
-    return render_to_response('results.html', {'info': info})
+    info_json = json.dumps( info )
+    return render_to_response('results.html', {'info': info_json})
 

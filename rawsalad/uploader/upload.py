@@ -7,6 +7,19 @@ from readers import FileReader as FileReader
 from readers import CSVDataReceiver as CSVDataReceiver
 from readers import Meta as Meta
 from db import DB as DB
+from verification import verify_data
+
+
+with open( 'trans.json', 'rb' ) as trans_file:
+    content = trans_file.read()
+    translation = json.loads( content )
+
+def trans( key ):
+    if key not in trans:
+        print 'WARNING: key %s not in translation' % key
+    return translation.get( key, '???' )
+
+
 
 class Uploader:
     '''Upload data into db. Uses receiver to get data to upload, meta to
@@ -52,6 +65,16 @@ class Uploader:
 
         print 'correct.'
 
+        # Check data, if any error is in data, stop processing and return list with errors
+        print 'Looking for errors in data...',
+        errors = self.find_errors( has_header )
+        if errors != []:
+            print '%d error(s) found' % len( errors )
+            return (False, errors)
+
+        print 'no errors found'
+        
+
         endpoint = None
         print 'Trying to insert data into db...',
         if not self.debug:
@@ -67,6 +90,36 @@ class Uploader:
 
         print 'done.'
         return (True, endpoint)
+
+    def get_data( self, has_header=False ):
+        '''Gets data, if data was previously read, then gets data
+            from the object, otherwise reads the file.
+            If has_header is True, then first line in data file is header.'''
+        bulk = self.receiver.get_all_rows()
+        if bulk == []:
+            return self.data
+        else:
+            bulk = self.dicts_to_lists( bulk )
+            if has_header:
+                self.header = bulk[0]
+                self.data = bulk[1:]
+            else:
+                self.data = bulk
+
+            return self.data
+
+    def find_errors( self, has_header ):
+        '''Looks for errors in data from the file, returns list of found
+            errors, if no errors were found, returns an empty list.
+            If has_header is True, then first line in data file is header.'''
+        data = self.get_data( has_header )
+        hierarchy = self.meta.get_hierarchy()
+        columns = self.meta.get_columns()
+        hierarchy_indexes = self.get_hierarchy_indexes()
+
+        start_ind = 2 if has_header else 1
+        return verify_data( data, columns, hierarchy_indexes, start_ind )
+            
         
     def insert_data_into_db( self, has_header, output, visible ):
         '''Inserts node (or nodes if new parents) into dbtree, uploads new hierarchy
@@ -202,10 +255,7 @@ class Uploader:
             which will be used to COPY data into db. Save it and perform COPY.
             Return IDMap object.
         '''
-        bulk = self.receiver.get_all_rows()
-        bulk = self.dicts_to_lists( bulk )
-        if has_header:
-            del bulk[0]
+        bulk = self.get_data( has_header )
 
         # Create and remove table
         self.db.remove_table( endpoint )
@@ -232,7 +282,7 @@ class Uploader:
             data += new_rows
 
         # Add total row
-        total_row_id = id_map.add_id( ['Total'] )
+        total_row_id = id_map.add_id( [ trans['py_total'] ] )
         data.append( self.create_total_row( top_rows[0], total_row_id ) )
 
         if output is None:
@@ -308,7 +358,7 @@ class Uploader:
             summed_values = self.sum_values_in_nodes( nodes, summable_columns )
             # Update nodes
             for ( id, value ) in summed_values.iteritems():
-                conds = {'id': id} if id is not None else {'type': 'Total'}
+                conds = {'id': id} if id is not None else {'type': trans['py_total']}
                 # summable_columns[2:] - remove id and parent keys
                 self.db.update_node( endpoint, summable_columns[2:], value, conds )
                 
@@ -640,14 +690,16 @@ class Uploader:
         total_row = [
             total_row_id,
             None,
-            'Total',
-            'Ogółem',
+            trans['py_total'],
+            trans['py_total_name'],
             True
         ]
+
+        print top_row
         # Copy types from top row.
         for value in top_row[5:]:
             if value is None:
-                total_row.append( value )
+                total_row.append( None )
             elif isinstance( value, basestring ):
                 total_row.append( '' )
             else: # number value

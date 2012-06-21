@@ -9,13 +9,36 @@
   <link rel="stylesheet/less" type="text/css" href="/site_media/css/table_style.less" />
 </head>
 <body>
-  <h1> {{ info }} </h1>
+
+  <h1 id="header"></h1>
+
+  <ul id="errors">
+  </ul>
 
   <form action="/upload/collection/" method="get">
     <input type="submit" value="Wybierz nową kolekcję do dodania"/>
   </form>
 
+  <script src="/site_media/js/jquery-1.7.1.min.js"></script>
   <script src="/site_media/js/translation.js"></script>
+
+  <script type="text/javascript" language="javascript">
+    // <![CDATA[
+        (function () {
+          var data = {{ info|safe }};
+          
+          $('#header').html( data['header'] )
+
+          if ( !!data['errors'] ) {
+            data['errors'].forEach( function ( err, i ) {
+              var error_msg = '<li id="err-' + i + '">' + err + '</li>';
+              $('#errors').append( error_msg );
+            });
+          }
+          
+        })();
+    // ]]>
+  </script>
 
 </body>
 </html>

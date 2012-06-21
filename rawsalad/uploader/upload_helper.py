@@ -8,6 +8,18 @@ import os
 from os.path import join as osjoin
 import shutil
 
+
+with open( 'trans.json', 'rb' ) as trans_file:
+    content = trans_file.read()
+    translation = json.loads( content )
+
+def trans( key ):
+    if key not in trans:
+        print 'WARNING: key %s not in translation' % key
+    return translation.get( key, '???' )
+
+
+
 def get_collection_data( post_data ):
     '''Get collection data from POST and return it in a dict.'''
     collection_data = {
@@ -162,6 +174,25 @@ def columns_validated( columns, hierarchy, labels ):
             return False
 
     return True
+
+def get_columns_errors( columns ):
+    errors = []
+    for (i, col) in enumerate( columns, 1 ):
+        error = []
+        if col['type'] not in ['string', 'number']:
+            error.append( '%s: %s' % (trans['py_wrong_type'], col['type']) )
+
+        if col['basic'] not in [True, False]:
+            error.append( '%s: %s' % (trans['py_wrong_basic'], col['basic']) )
+
+        if col['processable'] not in [True, False]:
+            error.append( '%s: %s' % (trans['py_wrong_proc'], col['processable ']) )
+
+        if error != []:
+            error_msg = ', '.join( error )
+            errors.append( '%s %d: %s' % (trans['py_column'], i, error_msg) )
+
+    return errors
 
 def label_to_key( label ):
     return slughifi.slughifi(label, True).replace('-', '_')
