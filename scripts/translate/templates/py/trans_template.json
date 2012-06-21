@@ -1,0 +1,23 @@
+{
+    'py_bad_login': '$py_bad_login',
+    'py_col_errors': '$py_col_errors',
+    'py_success': '$py_success',
+    'py_errors': '$py_errors',
+    'py_total': '$py_total',
+    'py_total_name': '$py_total_name',
+    'py_wrong_type': '$py_wrong_type',
+    'py_wrong_basic': '$py_wrong_basic',
+    'py_wrong_proc': '$py_wrong_proc',
+    'py_bad_len': '$py_bad_len',
+    'py_row_nr': '$py_row_nr',
+    'py_len': '$py_len',
+    'py_exp_len': '$py_exp_len',
+    'py_bad_fields': '$py_bad_fields',
+    'py_field_nr': '$py_field_nr',
+    'py_found_type': '$py_found_type',
+    'py_exp_type': '$py_exp_type',
+    'py_empty_hier': '$py_empty_hier',
+    'py_rep_hier': '$py_rep_hier',
+    'py_prev_row_nr': '$py_prev_row_nr',
+    'py_hier': '$py_hier'
+}
