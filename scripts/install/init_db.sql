@@ -10,7 +10,7 @@ obligatory values:
 In the end, readonly user is created.
 */
 
-DROP TABLE dbtree CASCADE;
+DROP TABLE IF EXISTS dbtree CASCADE;
 CREATE TABLE dbtree (
     id              integer PRIMARY KEY, -- same as UNIQUE NOT NULL
     parent          integer REFERENCES dbtree ( id ), 
@@ -23,7 +23,7 @@ CREATE TABLE dbtree (
     visible         boolean DEFAULT FALSE
 );
 
-DROP TABLE columns;
+DROP TABLE IF EXISTS columns;
 CREATE TABLE columns (
     endpoints       text ARRAY,
     key             TEXT,
@@ -35,7 +35,7 @@ CREATE TABLE columns (
     searchable      boolean
 );
 
-DROP TABLE hierarchy CASCADE;
+DROP TABLE IF EXISTS hierarchy CASCADE;
 CREATE TABLE hierarchy (
     endpoint        varchar(20),
     nr              integer,
@@ -45,19 +45,19 @@ CREATE TABLE hierarchy (
     PRIMARY KEY (endpoint, nr)
 );
 
-DROP TABLE counters;
+DROP TABLE IF EXISTS counters;
 CREATE TABLE counters (
     key             varchar(50),
     value           integer CHECK ( value >= 0 )
 );
 
-DROP TABLE p_tree;
+DROP TABLE IF EXISTS p_tree;
 CREATE TABLE p_tree(
     id      int unique not null,
     parents int[]
 );
 
-DROP TABLE permalinks;
+DROP TABLE IF EXISTS permalinks;
 CREATE TABLE permalinks(
     id       int not null,
     endpoint varchar(10),
@@ -65,7 +65,7 @@ CREATE TABLE permalinks(
     data     text
 );
 
-DROP TABLE users;
+DROP TABLE IF EXISTS users;
 CREATE TABLE users(
     login       varchar(50),
     hash        varchar(50),
@@ -87,11 +87,7 @@ INSERT INTO counters VALUES( 'data', 1000000000 );
 INSERT INTO counters VALUES( 'permalinks', 75000 );
 COMMIT;
 
-BEGIN;
-INSERT INTO users VALUES( 'admin', '21232f297a57a5a743894a0e4a801fc3', NULL )
-COMMIT;
-
-DROP USER readonly;
-CREATE USER readonly;
+DROP USER IF EXISTS readonly;
+CREATE USER readonly WITH PASSWORD 'readonly';
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO readonly;
 

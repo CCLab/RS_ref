@@ -2,7 +2,6 @@
 
 import os
 import shutil
-import yuicompressor as yui
 import re
 import subprocess
 
@@ -16,7 +15,7 @@ def minify( min_file_name, files, end, dst_path ):
             f = open( name, 'rb' )
             content = f.read()
 
-            cmd = 'yuicompressor ' + name
+            cmd = 'yui-compressor ' + name
             minified_content = subprocess.Popen( cmd, shell=True, stdout=subprocess.PIPE ).stdout.read()
             min_file.write( minified_content )
             min_file.write( '\n' )

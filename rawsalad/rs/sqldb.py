@@ -23,12 +23,19 @@ def db_cursor( cfile=None, readonly=True ):
 
     host   = cfg.get( 'postgres', 'host' )
     dbname = cfg.get( 'postgres', 'dbname' )
-    user   = 'readonly' if readonly else cfg.get( 'postgres', 'user' )
+    if readonly:
+        user = 'readonly'
+        password = 'readonly'
+    else:
+        user = cfg.get( 'postgres', 'user' )
+        password = cfg.get( 'postgres', 'pass' )
+
+    '''user   = 'readonly' if readonly else cfg.get( 'postgres', 'user' )
     try:
         password = cfg.get( 'postgres', 'pass' )
     except:
         password = None
-
+    '''
 
     config = "host='"+ host +"' dbname='"+ dbname +"' user='"+ user +"'"
     if password:

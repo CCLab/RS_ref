@@ -6,24 +6,50 @@ from string import Template
 from getpass import getpass
 import hashlib
 import psycopg2 as psql
+import psycopg2.extras as psqlextras
 import subprocess
 import minify
 
-def create_and_init_tables():
-    print 'Tables initialization'
-    user_name = raw_input('Database user name:')
 
-    command = 'psql --user %s --file init_db.sql' % user_name
-    subprocess.call( command )
+def print_header( title, step_nr ):
+    star_header = '*' * 80
+    title_start = ( len(star_header) - len(title) ) / 2
+    title_end = title_start + len( title )
+    title_part = title + ': STEP ' + str( step_nr )
+    header = star_header[:title_start] + title_part  + star_header[title_end:]
 
-def create_db_configuration():
+    print ''
+    print header
+    print ''
+
+
+def create_and_init_tables( step_nr ):
+    print_header( 'Tables initialization', step_nr )
+    user_name = raw_input('Database user name: ')
+    db_name = raw_input('Database name: ')
+    password = getpass('Password: ')
+
+    command = 'psql --user %s --dbname %s --file init_db.sql' % (user_name, db_name)
+    subprocess.call( command, shell=True )
+
+    return {
+        'user_name': user_name,
+        'db_name'  : db_name,
+        'password' : password
+    }
+
+
+def create_db_configuration( db_info, step_nr ):
+    print_header( 'DB configuration file creation', step_nr )
+
     user_values = {}
-
-    print 'DB configuration file creation'
-    user_values['host'] = raw_input('Host: ')
-    user_values['dbname'] = raw_input('Database name: ')
-    user_values['user'] = raw_input('User name: ')
-    user_values['pass'] = raw_input('Password: ')
+    user_values['host'] = raw_input('Host with database: ')
+    user_values['dbname'] = db_info['db_name']
+    #user_values['dbname'] = raw_input('Database name: ')
+    user_values['user'] = db_info['user_name']
+    #user_values['user'] = raw_input('User name: ')
+    user_values['pass'] = db_info['password']
+    #user_values['pass'] = getpass('Password: ')
 
     print 'Creating the new file from template'
     temp_file_path = os.path.join( 'config_templates', 'db_template.conf' )
@@ -45,11 +71,11 @@ def create_db_configuration():
 
     return user_values
 
-def create_settings_configuration():
-    user_values = {}
+def create_settings_configuration( step_nr ):
+    print_header( 'Settings configuration file creation', step_nr )
 
-    print 'Settings configuration file creation'
-    admins_count = int( raw_input('How many admins do you want to have?' ) )
+    user_values = {}
+    admins_count = int( raw_input('How many admins do you want to have? ' ) )
     admins = []
     admins_str = ''
     for i in range( admins_count ):
@@ -62,10 +88,11 @@ def create_settings_configuration():
 
     user_values['admins'] = admins_str # without '[' and ']'
 
-    user_values['time_zone'] = raw_input('Time zone: ')
-    user_values['language_code'] = raw_input('Language code: ')
-    user_values['media_dir'] = raw_input('Directory with media files (e.g. site_media ): ')
-    user_values['host_addr'] = raw_input('Host address and port for RawSalad on your machine(ip:port) : ')
+    def_time_zone = 'Europe/Warsaw'
+    user_values['time_zone'] = raw_input('Time zone (default: ' + def_time_zone + Europe/Warsaw): ')
+    user_values['language_code'] = raw_input('Language code (default: pl): ')
+    user_values['media_dir'] = raw_input('Directory with media files (defualt: site_media ): ')
+    user_values['host_addr'] = raw_input('Host address and port for RawSalad(ip:port) : ')
     user_values['secret_key'] = generate_secret_key()
                                             
 
@@ -85,16 +112,18 @@ def create_settings_configuration():
 
     print 'Success'
 
-def create_admin_user( conf_values ):
+def create_admin_user( conf_values, step_nr ):
+    print_header('Creating admin user', step_nr )
+
     cursor = db_cursor( conf_values )
 
-    admin_pass = get_pass('Admin password:')
-    admin_pass_repeat = get_pass('Repeat admin password:')
+    admin_pass = getpass('Admin password: ')
+    admin_pass_repeat = getpass('Repeat admin password: ')
 
     while admin_pass != admin_pass_repeat:
         print 'Passwords are not the same! Repeat'
-        admin_pass = get_pass('Admin password:')
-        admin_pass_repeat = get_pass('Repeat admin password:')
+        admin_pass = getpass('Admin password: ')
+        admin_pass_repeat = getpass('Repeat admin password: ')
 
     hash_pass = hashlib.md5( admin_pass ).hexdigest()
     query = '''INSERT INTO users VALUES( 'admin', '%s', NULL )''' % hash_pass
@@ -113,16 +142,16 @@ def generate_secret_key():
     return encoded_string[:50]
 
 
-def db_cursor(conf_values):
+def db_cursor( conf_values ):
     '''Define a connection object for a selected database'''
     host     = conf_values['host']
     dbname   = conf_values['dbname']
     user     = conf_values['user']
     password = conf_values['pass']
 
-    config = "host='"+ host +"' dbname='"+ dbname +"' user='"+ user +"'"
+    config = "host='" + host + "' dbname='" + dbname + "' user='" + user + "'"
     if password:
-        config += " password='"+ password +"'"
+        config += " password='" + password + "'"
 
     connection  = psql.connect( config )
     cursor = connection.cursor( cursor_factory=psqlextras.RealDictCursor )
@@ -130,21 +159,23 @@ def db_cursor(conf_values):
     return cursor
 
 
-def syncdb():
+def syncdb( step_nr ):
     '''Create SQLite file with tables to make session work.'''
-    current_path = os.getcwd()
+    print_header( 'Creating session database', step_nr )
 
+    current_path = os.getcwd()
     top_path = os.path.dirname( os.path.dirname( current_path ) )
     manage_path = os.path.join( top_path, 'rawsalad' )
 
     os.chdir( manage_path )
     command = 'python manage.py syncdb'
-    subprocess.call( command )
+    subprocess.call( command, shell=True )
     os.chdir( current_path )
 
 
-def translate():
+def translate( step_nr ):
     '''Translate application'''
+    print_header( 'Translating application', step_nr )
     lang = raw_input("Language of application: ")
     
     current_path = os.getcwd()
@@ -154,25 +185,34 @@ def translate():
 
     os.chdir( translate_path )
     command = 'python translate.py %s' % lang
-    subprocess.call( command )
+    subprocess.call( command, shell=True )
     os.chdir( current_path )
 
 
-def minify():
+def minify_js( step_nr ):
     '''Minify js and css for databrowser app'''
+    print_header( 'Minifying javascript and css', step_nr )
     minify.minify_files()
 
 
 if __name__ == '__main__':
+    db_info = create_and_init_tables( 1 )
+    user_values = create_db_configuration( db_info, 2 )
+    create_settings_configuration( 3 )
+    create_admin_user( user_values, 4 )
+    syncdb( 5 )
+    translate( 6 )
+    minify_js( 7 )
+    '''
     try:
-        create_and_init_tables()
-        user_values = create_db_configuration()
-        create_settings_configuration()
-        create_admin_user( user_values )
-        syncdb()
-        translate()
-        minify()
+        #db_info = create_and_init_tables( 1 )
+        #user_values = create_db_configuration( db_info, 2 )
+        #create_settings_configuration( 3 )
+        create_admin_user( user_values, 4 )
+        syncdb( 5 )
+        translate( 6 )
+        minify( 7 )
     except Exception as e:
         print 'Something bad happened'
         print e
-
+    '''
