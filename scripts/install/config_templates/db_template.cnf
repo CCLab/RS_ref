@@ -1,0 +1,6 @@
+[postgres]
+host: $host
+dbname: $dbname
+user: $user
+pass: $pass
+
