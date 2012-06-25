@@ -28,7 +28,11 @@ def get_collection_data( post_data ):
         'visible': post_data.get( 'vis', '' ),
         'parents': []
     }
-    collection_data['parents'] = [ int( post_data.get( 'all_colls' ) ) ]
+    if post_data.get( 'all_colls' ):
+        direct_parent_id = int( post_data.get( 'all_colls' ) )
+    else:
+        direct_parent_id = None
+    collection_data['parents'].append( direct_parent_id )
 
     if post_data.get('type') == 'new':
         i = 0
@@ -46,7 +50,7 @@ def collection_data_validated( data ):
     '''Check if collection with such a name and parent does not collide with
         the other potential siblings.'''
     db_tree = sqldb.get_db_tree()
-    parent_id = int( data['parents'][0] )
+    parent_id = data['parents'][0]
     siblings = filter( lambda e: e['parent'] == parent_id, db_tree )
 
     name = data['name'] if len( data['parents'] ) == 1 else data['parents'][1]['name']

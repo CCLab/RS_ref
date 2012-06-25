@@ -52,7 +52,7 @@ def create_db_configuration( db_info, step_nr ):
     #user_values['pass'] = getpass('Password: ')
 
     print 'Creating the new file from template'
-    temp_file_path = os.path.join( 'config_templates', 'db_template.conf' )
+    temp_file_path = os.path.join( 'config_templates', 'db_template.cnf' )
     with open( temp_file_path, 'r' ) as temp_file:
         temp_content = temp_file.read()
 
@@ -89,9 +89,17 @@ def create_settings_configuration( step_nr ):
     user_values['admins'] = admins_str # without '[' and ']'
 
     def_time_zone = 'Europe/Warsaw'
-    user_values['time_zone'] = raw_input('Time zone (default: ' + def_time_zone + Europe/Warsaw): ')
-    user_values['language_code'] = raw_input('Language code (default: pl): ')
-    user_values['media_dir'] = raw_input('Directory with media files (defualt: site_media ): ')
+    time_zone_msg = 'Time zone (default ' + def_time_zone + '): '
+    user_values['time_zone'] = raw_input( time_zone_msg ) or def_time_zone
+
+    def_lang_code = 'pl'
+    lang_code_msg = 'Language code (default ' + def_lang_code + '): '
+    user_values['language_code'] = raw_input( lang_code_msg ) or def_lang_code
+
+    def_media_dir = 'site_media'
+    media_dir_msg = 'Directory with media files (defualt ' + def_media_dir + '): '
+    user_values['media_dir'] = raw_input( media_dir_msg ) or def_media_dir
+
     user_values['host_addr'] = raw_input('Host address and port for RawSalad(ip:port) : ')
     user_values['secret_key'] = generate_secret_key()
                                             
@@ -126,7 +134,7 @@ def create_admin_user( conf_values, step_nr ):
         admin_pass_repeat = getpass('Repeat admin password: ')
 
     hash_pass = hashlib.md5( admin_pass ).hexdigest()
-    query = '''INSERT INTO users VALUES( 'admin', '%s', NULL )''' % hash_pass
+    query = '''INSERT INTO users VALUES( 'admin', '%s', NULL ); COMMIT;''' % hash_pass
     
     cursor.execute( query.encode('utf-8') )
 
