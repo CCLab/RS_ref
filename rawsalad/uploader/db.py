@@ -260,7 +260,7 @@ class DB:
 
     def insert_data( self, tablename, filename ):
         f = open( filename, 'rb' )
-        self.cursor.copy_from( f, tablename, sep=';', null='\N' )
+        self.cursor.copy_from( f, tablename, sep=';', null='\\\N' )
 
     def remove_data( self, tablename, min_id=None, max_id=None ):
         if min_id is None and max_id is None:

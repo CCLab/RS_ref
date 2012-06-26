@@ -80,7 +80,7 @@ def choose_collection( request ):
 def define_hierarchy( request ):
     '''Save info about collection (if valid) and return columns' names so
         that the user is able to choose hierarchy columns.'''
-    print 'Bin in'
+
     collection_data = uh.get_collection_data( request.POST )
     if not uh.collection_data_validated( collection_data ):
         return redirect( choose_collection )

@@ -29,7 +29,10 @@ def verify_data( data, columns, hierarchy_indexes, start_ind ):
     errors = []
     hierarchies = {}
 
+    print 'BEFORE'
     for (i, row) in enumerate( data, start_ind ):
+        if i % 1000 == 0:
+            print i
         if len( row ) != expected_len:
             errors.append( bad_len( i, len(row), expected_len ) )
 
@@ -45,6 +48,9 @@ def verify_data( data, columns, hierarchy_indexes, start_ind ):
             errors.append( repeated_hierarchy( i, prev_i, row_hierarchy ) )
         else:
             add_hierarchy( i, hierarchies, row_hierarchy )
+
+    print 'AFTER'
+    print len(errors)
 
     return errors
 

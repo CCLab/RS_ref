@@ -2,6 +2,7 @@
 
 from copy import deepcopy
 import os
+import csv
 
 from readers import FileReader as FileReader
 from readers import CSVDataReceiver as CSVDataReceiver
@@ -24,11 +25,12 @@ def trans( key ):
 
 
 class Uploader:
-    '''Upload data into db. Uses receiver to get data to upload, meta to
+    '''Upload data into db. Uses file with fname name to get data to upload, meta to
         meta data and db as an interface to db. If debug mode is set on,
         errors are caught and exit is called, otherwise django gets errors.'''
-    def __init__( self, receiver, meta, db, debug=True ):
-        self.receiver = receiver
+    def __init__( self, fname, meta, db, debug=True ):
+        self.fname = fname
+        self.reader = csv.reader( open(fname, 'rb'), quotechar='"', delimiter=';' )
         self.meta = meta
         self.db = db
         self.debug = debug
@@ -47,6 +49,8 @@ class Uploader:
                   method. Use with CAUTION!
         '''
         # restore db state to a state before a recent data insertion
+        # TODO: remove after testing
+        restore = True
         if restore:
             self.debug_restore()
 
@@ -97,7 +101,19 @@ class Uploader:
         '''Gets data, if data was previously read, then gets data
             from the object, otherwise reads the file.
             If has_header is True, then first line in data file is header.'''
-        bulk = self.receiver.get_all_rows()
+        self.reader = csv.reader( open(self.fname, 'rb'), quotechar='"', delimiter=';' )
+        if has_header:
+            self.reader.next()
+        return self.reader
+        '''
+        if count is None:
+            bulk = self.receiver.get_all_rows()
+        else:
+            i = 0
+            new_row = None
+            bulk = []
+            while i < count or new_row == []:
+                bulk += self.receiver.get_rows()
         if bulk == []:
             return self.data
         else:
@@ -109,15 +125,16 @@ class Uploader:
                 self.data = bulk
 
             return self.data
+        '''
 
     def find_errors( self, has_header ):
         '''Looks for errors in data from the file, returns list of found
             errors, if no errors were found, returns an empty list.
             If has_header is True, then first line in data file is header.'''
-        data = self.get_data( has_header )
         hierarchy = self.meta.get_hierarchy()
         columns = self.meta.get_columns()
         hierarchy_indexes = self.get_hierarchy_indexes()
+        data = self.get_data( has_header )
 
         start_ind = 2 if has_header else 1
         return verify_data( data, columns, hierarchy_indexes, start_ind )
@@ -127,19 +144,29 @@ class Uploader:
         '''Inserts node (or nodes if new parents) into dbtree, uploads new hierarchy
             and columns, then uploads data, sums columns of higher level nodes and
             updates db data counter. Updates ptree. Returns new endpoint's name.'''
+        print 'Uploading...'
+
         endpoint = self.update_dbtree( visible )
+        print 'Dbtree uploaded'
 
         self.update_hierarchy( endpoint )
+        print 'Hierarchy uploaded'
+
         self.update_columns( endpoint )
+        print 'Columns uploaded'
 
         # Return object describing hierarchy between rows in uploaded data, what
         # will be used during updating ptree.
         id_map = self.upload_data( endpoint, has_header=has_header, output=output )
+        print 'Data uploaded'
 
         self.sum_columns( endpoint )
+        print 'Columns summed up'
+
         self.db.set_max_data_id( id_map.get_last_id() )
 
         self.update_ptree( id_map )
+        print 'Ptree uploaded'
 
         return endpoint
 
@@ -269,8 +296,22 @@ class Uploader:
         id_map = IdMap( start_id )
         top_rows = []
 
+        if output is None:
+            filename = "upload_data.csv"
+            scriptpath = os.path.realpath( __file__ )
+            directory = os.path.dirname( scriptpath )
+            filepath = os.path.join( directory, filename )
+        else:
+            filepath = output
+
+        output_file = open( filepath, 'wb' )
+        writer = csv.writer( output_file, delimiter=';', quotechar='"' )
+
         # Process all rows
-        for row in bulk:
+        glob = 1
+        for (i, row) in enumerate( bulk ):
+            if i % 1000 == 0:
+                print i
             # Retrieve hierarchy from the row
             hierarchy_in_row = self.get_hierarchy_cols( row )
             # Remove empty fields from hierarchy columns
@@ -281,22 +322,22 @@ class Uploader:
             new_rows = self.add_rows( id_map, hierarchy_in_row, row )
             if new_rows[0][1] is None: # if parent is none == is top row
                 top_rows.append( new_rows[0] )
-            data += new_rows
+            if glob < 217471 and glob + len( new_rows ) >= 217471:
+                print repr(new_rows)
+            if glob < 217477 and glob + len( new_rows ) >= 217477:
+                print repr(new_rows)
+            glob += len( new_rows )
+            self.save_data( new_rows, writer )
+            #data += new_rows
 
         # Add total row
         total_row_id = id_map.add_id( [ trans('py_total') ] )
-        data.append( self.create_total_row( top_rows[0], total_row_id ) )
-
-        if output is None:
-            filename = "upload_data.csv"
-            scriptpath = os.path.realpath( __file__ )
-            directory = os.path.dirname( scriptpath )
-            filepath = os.path.join( directory, filename )
-        else:
-            filepath = output
+        #data.append( self.create_total_row( top_rows[0], total_row_id ) )
+        total_row = self.create_total_row( top_rows[0], total_row_id )
 
         # Save data in CSV file, use it to upload data
-        self.save_data( data, filepath )
+        #self.save_data( data, writer )
+        self.save_data( [ total_row ], writer )
         self.db.insert_data( endpoint, filepath )
 
         return id_map
@@ -316,14 +357,10 @@ class Uploader:
 
         return list_rows
 
-    def save_data( self, data, filepath ):
+    def save_data( self, data, writer ):
         '''Save data in CSV file.'''
-        import csv
-
-        with file( filepath, 'wb' ) as f:
-            writer = csv.writer( f, delimiter=';', quotechar='"' )
-            for row in data:
-                writer.writerow( self.encode_row( row ) )
+        for row in data:
+            writer.writerow( self.encode_row( row ) )
 
     def update_ptree( self, id_map ):
         '''Update ptree table using ID map object.'''
@@ -598,7 +635,7 @@ class Uploader:
         encoded_row = []
         for value in row:
             if value is None:
-                value = '\N'
+                value = '\\\N'
             if isinstance( value, unicode ):
                 value = value.encode('utf-8')
             encoded_row.append( value )
@@ -768,15 +805,15 @@ def upload_collection( data_file, meta_file, output_file, has_header, visible ):
         CSV data file used to COPY into db will be created as output_file.
         has_header if the first row in data_file is header, visible means that collections
         should be visible in the frontend.'''
-    freader = FileReader( data_file )
-    creader = CSVDataReceiver( freader )
+    #freader = FileReader( data_file )
+    #creader = CSVDataReceiver( freader )
 
     meta_freader = FileReader( meta_file )
     meta = Meta( meta_freader )
 
     db = DB( conf='db.conf' )
 
-    uploader = Uploader( creader, meta, db )
+    uploader = Uploader( data_file, meta, db )
     success, endpoint = uploader.upload( has_header=has_header, output=output_file, visible=visible )
 
     return (success, endpoint)
