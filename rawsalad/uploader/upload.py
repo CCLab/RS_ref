@@ -30,7 +30,7 @@ class Uploader:
         errors are caught and exit is called, otherwise django gets errors.'''
     def __init__( self, fname, meta, db, debug=True ):
         self.fname = fname
-        self.reader = csv.reader( open(fname, 'rb'), quotechar='"', delimiter=';' )
+        #self.reader = csv.reader( open(fname, 'rb'), quotechar='"', delimiter=';' )
         self.meta = meta
         self.db = db
         self.debug = debug
@@ -101,10 +101,20 @@ class Uploader:
         '''Gets data, if data was previously read, then gets data
             from the object, otherwise reads the file.
             If has_header is True, then first line in data file is header.'''
+        #import codecs
+        #f = codecs.open( self.fname, 'rb', 'utf-8' )
+        f = open( self.fname, 'rb' )
+        self.reader = UnicodeReader( f, quotechar='"', delimiter=';' )
+        #self.reader = csv.reader( f, quotechar='"', delimiter=';' )
+        if has_header:
+            self.reader.next()
+        return self.reader
+        '''
         self.reader = csv.reader( open(self.fname, 'rb'), quotechar='"', delimiter=';' )
         if has_header:
             self.reader.next()
         return self.reader
+        '''
         '''
         if count is None:
             bulk = self.receiver.get_all_rows()
@@ -307,9 +317,18 @@ class Uploader:
         output_file = open( filepath, 'wb' )
         writer = csv.writer( output_file, delimiter=';', quotechar='"' )
 
+        batch_size = self.count_batch_size()
+        print 'BATCH_SIZE = ', batch_size
         # Process all rows
-        glob = 1
+        current_rows = []
         for (i, row) in enumerate( bulk ):
+            '''
+            print repr(row)
+            print repr(row[3])
+            urow = [e.decode('utf-8')  if isinstance( e, basestring) else e for e in row]
+            print repr(urow)
+            print repr(urow[3])
+            '''
             if i % 1000 == 0:
                 print i
             # Retrieve hierarchy from the row
@@ -317,30 +336,34 @@ class Uploader:
             # Remove empty fields from hierarchy columns
             while len( hierarchy_in_row ) > 0 and hierarchy_in_row[-1][0] == '':
                 hierarchy_in_row.pop()
-        
+            
             # Transform rows to non hierarchical form
             new_rows = self.add_rows( id_map, hierarchy_in_row, row )
+            #for x in new_rows:
+            #    print repr(new_rows)
+            current_rows += new_rows
             if new_rows[0][1] is None: # if parent is none == is top row
                 top_rows.append( new_rows[0] )
-            if glob < 217471 and glob + len( new_rows ) >= 217471:
-                print repr(new_rows)
-            if glob < 217477 and glob + len( new_rows ) >= 217477:
-                print repr(new_rows)
-            glob += len( new_rows )
-            self.save_data( new_rows, writer )
-            #data += new_rows
+
+            if len( current_rows ) > batch_size:
+                self.db.insert_data( current_rows, endpoint )
+                current_rows = []
 
         # Add total row
         total_row_id = id_map.add_id( [ trans('py_total') ] )
         #data.append( self.create_total_row( top_rows[0], total_row_id ) )
         total_row = self.create_total_row( top_rows[0], total_row_id )
+        current_rows.append( total_row )
 
         # Save data in CSV file, use it to upload data
         #self.save_data( data, writer )
-        self.save_data( [ total_row ], writer )
-        self.db.insert_data( endpoint, filepath )
+        self.db.insert_data( current_rows, endpoint )
 
         return id_map
+
+    def count_batch_size( self ):
+        row_len = 5 + len( self.meta.get_columns() )
+        return 100000 / row_len
 
     def dicts_to_lists( self, rows ):
         '''List -> Dict: l[0] -> l'''
@@ -388,9 +411,50 @@ class Uploader:
     def sum_columns( self, endpoint ):
         '''Update non leaves from endpoint: sum values in their number-type columns.'''
         # Get summable columns keys, id and parent will not be summed but are needed
-        summable_columns = ['id', 'parent'] +\
-                [ col['key'] for col in self.meta.get_columns() if col['type'] == 'number' ]
+        summable_columns = [ col['key'] for col in self.meta.get_columns()\
+                                            if col['type'] == 'number' ]
+        #summable_columns = ['id', 'parent'] +\
+        #        [ col['key'] for col in self.meta.get_columns() if col['type'] == 'number' ]
 
+        #Get values from leaves and update their parents, then their parents' parents, ...
+        to_update = self.db.count_nodes( endpoint, is_leaf=False )
+        print to_update
+        updated = 0
+
+        nodes = self.db.get_summed_values( summable_columns, endpoint )
+        a = 0
+        while nodes != []:
+            print 'new_iter'
+            self.db.update_nodes( endpoint, summable_columns, nodes )
+            '''
+            for (i, node) in enumerate( nodes, 1 ):
+                if i % 100 == 0:
+                    print i
+                conds = {'id': node['parent']} if node['parent'] is not None\
+                                               else {'type': trans('py_total')}
+                commit = len( nodes ) == i
+                self.db.update_node( endpoint, summable_columns, node, conds, commit )
+            '''
+
+            ids = [ n['parent'] for n in nodes if n['parent'] is not None ]
+            nodes = self.db.get_summed_values( summable_columns, endpoint, ids )
+            updated += len( ids )
+            print len(nodes)
+            if len( nodes ) == 1:
+                print nodes
+            
+            '''
+            if updated == 11728:
+                print nodes
+                if a == 1:
+                    raise RuntimeError("")
+                a += 1
+            '''
+
+            print 'Summed in %d / %d' % (updated, to_update)
+
+        self.db.update_total( endpoint, summable_columns )
+        '''
         #Get values from leaves and update their parents, then their parents' parents, ...
         nodes = self.db.get_leaves( endpoint )
         while nodes != []:
@@ -408,6 +472,8 @@ class Uploader:
             # Get parent IDs and repeat procedure for them.
             parents = summed_values.keys()
             nodes = self.db.get_nodes( endpoint, parents )
+        '''
+
 
     def sum_values_in_nodes( self, nodes, summable_columns ):
         '''Return dict with parent nodes with summed number values from their children.'''
@@ -612,7 +678,7 @@ class Uploader:
 
         # Choose row type: Empty if empty hierarchy column
         if hierarchy_values[0] == '':
-            row_type = 'Empty'
+            row_type = u'Empty'
         # with auxiliary column -> column name + value (e.g. function 1)
         elif hierarchy_col['aux']:
             row_type = hierarchy_col['label'] + ' ' + hierarchy_values[1]
@@ -734,7 +800,6 @@ class Uploader:
             True
         ]
 
-        print top_row
         # Copy types from top row.
         for value in top_row[5:]:
             if value is None:
@@ -817,6 +882,41 @@ def upload_collection( data_file, meta_file, output_file, has_header, visible ):
     success, endpoint = uploader.upload( has_header=has_header, output=output_file, visible=visible )
 
     return (success, endpoint)
+
+# Taken from csv module documentation
+
+import csv, codecs, cStringIO
+
+class UTF8Recoder:
+    """
+    Iterator that reads an encoded stream and reencodes the input to UTF-8
+    """
+    def __init__(self, f, encoding):
+        self.reader = codecs.getreader(encoding)(f)
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        return self.reader.next().encode("utf-8")
+
+class UnicodeReader:
+    """
+    A CSV reader which will iterate over lines in the CSV file "f",
+    which is encoded in the given encoding.
+    """
+
+    def __init__(self, f, dialect=csv.excel, encoding="utf-8", **kwds):
+        f = UTF8Recoder(f, encoding)
+        self.reader = csv.reader(f, dialect=dialect, **kwds)
+
+    def next(self):
+        row = self.reader.next()
+        return [unicode(s, "utf-8") for s in row]
+
+    def __iter__(self):
+        return self
+
 
 if __name__ == '__main__':
     '''

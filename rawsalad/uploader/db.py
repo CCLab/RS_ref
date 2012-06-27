@@ -1,11 +1,23 @@
 from copy import deepcopy
 
+import simplejson as json
+
+
+with open( 'trans.json', 'rb' ) as trans_file:
+    content = trans_file.read()
+    translation = json.loads( content )
+
+def trans( key ):
+    if key not in translation:
+        print 'WARNING: key %s not in translation' % key
+    return translation.get( key, '???' )
 
 class DB:
     '''Class used as an interface to db during data upload.'''
     def __init__( self, cursor=None, conf=None):
         # cursor or conf should not be empty
-        self.cursor = cursor if cursor is not None else get_cursor( conf )
+        # TODO singleton this code
+        self.connection, self.cursor = get_cursor( conf )
 
     def get_counter( self, key ):
         query = '''SELECT value FROM counters
@@ -180,6 +192,36 @@ class DB:
 
         self.cursor.execute( query.encode('utf-8') )
 
+    def get_summed_values( self, cols, endpoint, ids=None ):
+        if ids == []:
+            return []
+
+        cols_part = ', '.join( map( lambda e: 'SUM(%s) AS %s' % (e,e), cols ) )
+        if ids:
+            ids_str = ','.join( [ str(e) for e in ids ] )
+            query = '''SELECT parent, %s
+                       FROM %s
+                       WHERE id IN (%s)
+                       GROUP BY parent;
+                    ''' % (cols_part, endpoint, ids_str)
+        else:
+            query = '''SELECT parent, %s
+                       FROM %s
+                       WHERE leaf = True AND type != '%s'
+                       GROUP BY parent;
+                    ''' % (cols_part, endpoint, trans('py_total'))
+
+        self.cursor.execute( query.encode('utf-8') )
+        return self.cursor.fetchall()
+
+
+    def count_nodes( self, endpoint, is_leaf=False ):
+        query = '''SELECT COUNT(*) FROM %s WHERE leaf = %s''' % (endpoint, is_leaf)
+
+        self.cursor.execute( query.encode('utf-8') )
+        return self.cursor.fetchone()['count']
+
+
     def get_leaves( self, endpoint ):
         query = '''SELECT * FROM %s WHERE leaf = True''' % endpoint
 
@@ -199,27 +241,53 @@ class DB:
         return self.cursor.fetchall()
         
 
-    def update_node( self, endpoint, keys, value, where ):
+    def update_node( self, endpoint, keys, value, where, commit ):
         '''Update data node from endpoint. Update its keys using values,
             find node using where dict, which keys are fields to search
             and values are values of node.'''
-        query = '''UPDATE %s SET ''' % endpoint
-        for k in keys:
-            query += '%s = (%s + %s), ' % ( k, k, value[k] )
-
-        query = query[:-2] # remove last ", "
-
-        query += ' WHERE '
-        for k, where_value in where.iteritems():
-            if isinstance( where_value, basestring ):
-                query += '''%s = '%s' AND ''' % (k, where_value )
+        def where_eq( key, value ):
+            if isinstance( value, basestring ):
+                return "%s = '%s'" % (k, value )
             else:
-                query += '%s = %s AND ' % (k, where_value )
+                return '%s = %s' % (k, value )
 
-        query = query[:-4] # remove last " AND"
-        query += '; COMMIT;'
+        cols_part = ', '.join( map( lambda k: '%s = (%s + %%s)' % (k, k), keys ) )
+        where_part = ' AND '.join( map( where_eq, where.iteritems() ) )
+        query = '''UPDATE %s SET %s WHERE %s''' % (endpoint, cols_part, where_part)
+        if commit:
+            query += '; COMMIT;'
 
         self.cursor.execute( query.encode('utf-8') )
+
+    def update_nodes( self, endpoint, keys, values ):
+        '''Update data nodes from endpoint. Update its keys using values,
+            find node using where dict, which keys are fields to search
+            and values are values of node.'''
+        def make_query_tuple( val ):
+            return tuple( map(lambda k: val[k], keys) + [val['parent']] )
+
+        cols_part = ', '.join( map( lambda k: '%s = (%s + %%s)' % (k, k), keys ) )
+        query = '''UPDATE %s SET %s WHERE id = %%s''' % (endpoint, cols_part)
+
+        tuple_values = map( make_query_tuple, values )
+        
+        self.cursor.executemany( query, tuple_values )
+        self.connection.commit()
+
+    def update_total( self, endpoint, keys ):
+        '''Update total node from endpoint for number type keys.'''
+        cols_part = ', '.join( map( lambda e: 'SUM(%s) AS %s' % (e,e), keys ) )
+        sel_query = '''SELECT %s FROM %s WHERE parent IS NULL
+                    ''' % (cols_part, endpoint)
+        self.cursor.execute( sel_query.encode('utf-8') )
+        total = self.cursor.fetchone()
+
+        col_upd_part = ', '.join( map(lambda k: '%s = (%s + %s)' % (k, k, total[k]), keys) )
+        upd_query = '''UPDATE %s SET %s
+                       WHERE type = '%s';COMMIT;
+                    ''' % (endpoint, col_upd_part, trans('py_total'))
+
+        self.cursor.execute( upd_query.encode('utf-8') )
 
     def update_dbtree_depth( self, id, min_depth, max_depth ):
         query = '''UPDATE dbtree SET min_depth = %s, max_depth = %s
@@ -258,9 +326,17 @@ class DB:
         grant_query = 'GRANT SELECT ON %s TO readonly;' % tablename
         self.cursor.execute( grant_query.encode('utf-8') )
 
-    def insert_data( self, tablename, filename ):
-        f = open( filename, 'rb' )
-        self.cursor.copy_from( f, tablename, sep=';', null='\\\N' )
+
+    def insert_data( self, rows, endpoint ):
+        q_marks = u','.join(map(lambda e: u'%s', rows[0]))
+        query = u'INSERT INTO %s VALUES(%s)' % (endpoint, q_marks)
+
+        con, cursor = get_cursor('db.conf', True)
+        #enc_rows = [map(lambda e: None if not e else unicode(e), row) for row in rows]
+        enc_rows = [map(lambda e: unicode(e) if isinstance(e, basestring) else e, row) for row in rows]
+        cursor.executemany(query, enc_rows)
+        con.commit()
+
 
     def remove_data( self, tablename, min_id=None, max_id=None ):
         if min_id is None and max_id is None:
@@ -378,10 +454,14 @@ class DB:
             self.cursor.execute( query.encode('utf-8') )
 
 
-def get_cursor(conf):
+def get_cursor(conf, _unicode=False):
     from ConfigParser import ConfigParser
     import psycopg2 as psql
     import psycopg2.extras as psqlextras
+    #if _unicode:
+    #   import psycopg2.extensions
+    #   psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
+    #   psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
 
     cfg = ConfigParser()
     cfg.read( conf )
@@ -402,5 +482,8 @@ def get_cursor(conf):
     connection  = psql.connect( config )
     cursor = connection.cursor( cursor_factory=psqlextras.RealDictCursor )
 
-    return cursor
+    if _unicode:
+        connection.set_client_encoding( 'utf-8' )
+
+    return (connection, cursor)
 

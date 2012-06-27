@@ -127,7 +127,8 @@ def get_row_hierarchy( row, hierarchy_indexes ):
     while row_hierarchy[-1] == '':
         row_hierarchy.pop()
 
-    return '-'.join( row_hierarchy ).decode('utf-8')
+    return '-'.join( row_hierarchy )
+    #return '-'.join( row_hierarchy ).decode('utf-8')
 
 
 def is_hierarchy_repeated( hierarchies, row_hierarchy ):
