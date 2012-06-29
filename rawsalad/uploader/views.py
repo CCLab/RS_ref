@@ -118,6 +118,7 @@ def define_columns( request ):
     types = uh.guess_types( request.session['tmp_file'], full_hierarchy )
 
     # get description of columns not chosen in hierarchy
+    # TODO: use form that will be added in the future to parse numbers
     columns_descr = uh.get_columns_descr( full_hierarchy, labels, types )
     columns = []
     for col_descr in columns_descr:
@@ -138,10 +139,15 @@ def upload_data( request ):
         file describing collection, columns and hierarchy and upload data into
         the db using that file and file with data. After that, move file with
         data to separate directory and remove temporary files.'''
+    print 'PRINT1'
     columns_json = request.POST.get( 'columns', [] )
+    print 'PRINT2'
     columns = json.loads( columns_json )
+    print 'PRINT3'
     hierarchy = request.session.get( 'hierarchy', [] )
+    print 'PRINT4'
     labels = request.session.get( 'labels', [] )
+    print 'PRINT5'
 
     if not uh.columns_validated( columns, hierarchy, labels ):
         errors = uh.get_columns_errors( columns )
@@ -153,15 +159,18 @@ def upload_data( request ):
         return render_to_response( 'results.html', {'info': errors_json} )
 
     coll_data = request.session['collection_data']
+    print 'PRINT6'
     data_file_name = request.session['tmp_file']
     hier_file_name = data_file_name.rstrip('.csv') + '.json'
 
     # create meta file describing data
     uh.create_desc_file( coll_data, hierarchy, columns, hier_file_name )
 
+    print 'PRINT7'
     # upload data into db
     visible = coll_data[ 'visible' ]
     output_file_name = 'sql_' + data_file_name
+    print 'PRINT8'
     done, result = upload_collection( data_file_name, hier_file_name, output_file_name, True, visible )
 
     # remove temporary files

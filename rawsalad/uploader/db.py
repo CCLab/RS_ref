@@ -196,16 +196,16 @@ class DB:
         if ids == []:
             return []
 
-        cols_part = ', '.join( map( lambda e: 'SUM(%s) AS %s' % (e,e), cols ) )
+        cols_part = ''.join( map( lambda e: ', SUM(%s) AS %s' % (e,e), cols ) )
         if ids:
             ids_str = ','.join( [ str(e) for e in ids ] )
-            query = '''SELECT parent, %s
+            query = '''SELECT parent %s
                        FROM %s
                        WHERE id IN (%s)
                        GROUP BY parent;
                     ''' % (cols_part, endpoint, ids_str)
         else:
-            query = '''SELECT parent, %s
+            query = '''SELECT parent %s
                        FROM %s
                        WHERE leaf = True AND type != '%s'
                        GROUP BY parent;
@@ -219,8 +219,7 @@ class DB:
         query = '''SELECT COUNT(*) FROM %s WHERE leaf = %s''' % (endpoint, is_leaf)
 
         self.cursor.execute( query.encode('utf-8') )
-        return self.cursor.fetchone()['count']
-
+        return self.cursor.fetchone()['count'] 
 
     def get_leaves( self, endpoint ):
         query = '''SELECT * FROM %s WHERE leaf = True''' % endpoint
@@ -251,6 +250,9 @@ class DB:
             else:
                 return '%s = %s' % (k, value )
 
+        if keys == []:
+            return
+
         cols_part = ', '.join( map( lambda k: '%s = (%s + %%s)' % (k, k), keys ) )
         where_part = ' AND '.join( map( where_eq, where.iteritems() ) )
         query = '''UPDATE %s SET %s WHERE %s''' % (endpoint, cols_part, where_part)
@@ -266,6 +268,9 @@ class DB:
         def make_query_tuple( val ):
             return tuple( map(lambda k: val[k], keys) + [val['parent']] )
 
+        if keys == []:
+            return
+
         cols_part = ', '.join( map( lambda k: '%s = (%s + %%s)' % (k, k), keys ) )
         query = '''UPDATE %s SET %s WHERE id = %%s''' % (endpoint, cols_part)
 
@@ -276,6 +281,9 @@ class DB:
 
     def update_total( self, endpoint, keys ):
         '''Update total node from endpoint for number type keys.'''
+        if keys == []:
+            return
+
         cols_part = ', '.join( map( lambda e: 'SUM(%s) AS %s' % (e,e), keys ) )
         sel_query = '''SELECT %s FROM %s WHERE parent IS NULL
                     ''' % (cols_part, endpoint)
@@ -337,6 +345,18 @@ class DB:
         cursor.executemany(query, enc_rows)
         con.commit()
 
+    def insert_ptree_data( self, ptree_rows ):
+        def change_form( ptree_data ):
+            row_id, parents = ptree_data
+            parent_str = ','.join( [str(p) for p in parents] )
+            #parent_str = None if parents == [] else ','.join( [str(p) for p in parents] )
+            return ( row_id, '{%s}' % parent_str )
+
+        query = '''INSERT INTO p_tree VALUES( %s, %s );'''
+        formatted_rows = map( change_form, ptree_rows )
+        self.cursor.executemany( query, formatted_rows )
+        self.connection.commit()
+        print '****'
 
     def remove_data( self, tablename, min_id=None, max_id=None ):
         if min_id is None and max_id is None:

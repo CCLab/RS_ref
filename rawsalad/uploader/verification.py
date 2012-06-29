@@ -5,6 +5,8 @@ from readers import CSVDataReceiver as CSVDataReceiver
 from readers import Meta as Meta
 from db import DB as DB
 
+import re
+
 import simplejson as json
 
 with open( 'trans.json', 'rb' ) as trans_file:
@@ -43,11 +45,13 @@ def verify_data( data, columns, hierarchy_indexes, start_ind ):
         if row_hierarchy == '':
             errors.append( empty_hierarchy( i ) )
 
+        '''
         if is_hierarchy_repeated( hierarchies, row_hierarchy ):
             prev_i = hierarchies[ row_hierarchy ]
             errors.append( repeated_hierarchy( i, prev_i, row_hierarchy ) )
         else:
             add_hierarchy( i, hierarchies, row_hierarchy )
+        '''
 
     print 'AFTER'
     print len(errors)
@@ -86,9 +90,10 @@ def are_fields_correct( types, row ):
 
 def get_type( value ):
     try:
-        float( value )
+        parsed_value = re.sub( '\s', '', value )
+        float( parsed_value )
         return 'number'
-    except:
+    except ValueError:
         return 'string'
 
 

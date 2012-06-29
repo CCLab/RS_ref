@@ -106,6 +106,7 @@ d) Nie mogą występować jednocześnie wiersze mające identyczne wartości w k
    3) A1 - B3 - (Pusty) - (Pusty)
    4) A1 - B1 - C2 - (Pusty)
 e) Plik z danymi musi mieć na początku 1 linię nagłówku.
+f) Liczby w kolumnach liczbowych w danych muszą mieć postać: <cyfry>[.<cyfry>]
 
 7. Przykładowe pliki.
 

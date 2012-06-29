@@ -50,9 +50,11 @@ class Uploader:
         '''
         # restore db state to a state before a recent data insertion
         # TODO: remove after testing
+        print 'PRINT 10'
         restore = True
         if restore:
             self.debug_restore()
+        print 'PRINT 11'
 
         # Check db counters
         init_endpoint_id = self.db.get_max_endpoint()
@@ -73,7 +75,9 @@ class Uploader:
 
         # Check data, if any error is in data, stop processing and return list with errors
         print 'Looking for errors in data...',
-        errors = self.find_errors( has_header )
+        # TODO: UNCOMMENT !!!!!
+        errors = []
+        #errors = self.find_errors( has_header )
         if errors != []:
             print '%d error(s) found' % len( errors )
             return (False, errors)
@@ -109,33 +113,6 @@ class Uploader:
         if has_header:
             self.reader.next()
         return self.reader
-        '''
-        self.reader = csv.reader( open(self.fname, 'rb'), quotechar='"', delimiter=';' )
-        if has_header:
-            self.reader.next()
-        return self.reader
-        '''
-        '''
-        if count is None:
-            bulk = self.receiver.get_all_rows()
-        else:
-            i = 0
-            new_row = None
-            bulk = []
-            while i < count or new_row == []:
-                bulk += self.receiver.get_rows()
-        if bulk == []:
-            return self.data
-        else:
-            bulk = self.dicts_to_lists( bulk )
-            if has_header:
-                self.header = bulk[0]
-                self.data = bulk[1:]
-            else:
-                self.data = bulk
-
-            return self.data
-        '''
 
     def find_errors( self, has_header ):
         '''Looks for errors in data from the file, returns list of found
@@ -167,15 +144,17 @@ class Uploader:
 
         # Return object describing hierarchy between rows in uploaded data, what
         # will be used during updating ptree.
-        id_map = self.upload_data( endpoint, has_header=has_header, output=output )
+        last_id = self.upload_data( endpoint, has_header=has_header, output=output )
+        #id_map = self.upload_data( endpoint, has_header=has_header, output=output )
         print 'Data uploaded'
 
         self.sum_columns( endpoint )
-        print 'Columns summed up'
+        print 'Columns summed up, ptree uploaded'
 
-        self.db.set_max_data_id( id_map.get_last_id() )
+        self.db.set_max_data_id( last_id )
+        #self.db.set_max_data_id( id_map.get_last_id() )
 
-        self.update_ptree( id_map )
+        #self.update_ptree( id_map )
         print 'Ptree uploaded'
 
         return endpoint
@@ -318,17 +297,12 @@ class Uploader:
         writer = csv.writer( output_file, delimiter=';', quotechar='"' )
 
         batch_size = self.count_batch_size()
-        print 'BATCH_SIZE = ', batch_size
-        # Process all rows
+        print 'BATCH_SIZE = ', batch_size # Process all rows
         current_rows = []
+        ptree_hier = []
+        ptree_rows = []
+        old_hierarchy_in_row = []
         for (i, row) in enumerate( bulk ):
-            '''
-            print repr(row)
-            print repr(row[3])
-            urow = [e.decode('utf-8')  if isinstance( e, basestring) else e for e in row]
-            print repr(urow)
-            print repr(urow[3])
-            '''
             if i % 1000 == 0:
                 print i
             # Retrieve hierarchy from the row
@@ -337,29 +311,55 @@ class Uploader:
             while len( hierarchy_in_row ) > 0 and hierarchy_in_row[-1][0] == '':
                 hierarchy_in_row.pop()
             
+            common_level = 0
+            for (i, field) in enumerate( hierarchy_in_row ):
+                if i >= len( old_hierarchy_in_row ) or field == old_hierarchy_in_row[i]:
+                    break
+
+                common_level += 1
+
+            print 'BEFORE ADD'
+            print json.dumps( id_map.get_root(), indent=4 )
             # Transform rows to non hierarchical form
-            new_rows = self.add_rows( id_map, hierarchy_in_row, row )
-            #for x in new_rows:
-            #    print repr(new_rows)
+            new_rows = self.add_rows( id_map, common_level, old_hierarchy_in_row,
+                                      hierarchy_in_row, row )
+            
+            ptree_hier, new_ptree_rows = self.create_ptree_rows( common_level,
+                                            new_rows, ptree_hier )
+            old_hierarchy_in_row = hierarchy_in_row
+
             current_rows += new_rows
             if new_rows[0][1] is None: # if parent is none == is top row
                 top_rows.append( new_rows[0] )
 
             if len( current_rows ) > batch_size:
                 self.db.insert_data( current_rows, endpoint )
+                self.db.insert_ptree_data( ptree_rows )
                 current_rows = []
+                ptree_rows = []
 
         # Add total row
+        #total_row_id = id_map.add_id()
         total_row_id = id_map.add_id( [ trans('py_total') ] )
-        #data.append( self.create_total_row( top_rows[0], total_row_id ) )
         total_row = self.create_total_row( top_rows[0], total_row_id )
         current_rows.append( total_row )
+        ptree_rows.append( (total_row_id, []) )
 
-        # Save data in CSV file, use it to upload data
-        #self.save_data( data, writer )
         self.db.insert_data( current_rows, endpoint )
+        self.db.insert_ptree_data( ptree_rows )
 
-        return id_map
+        #return id_map
+        return id_map.get_last_id()
+
+    def create_ptree_rows( self, common_level, rows, ptree_hier ):
+        base_hier = ptree_hier[:common_level]
+        new_hier = [ row[0] for row in rows ]
+
+        new_ptree_rows = []
+        for (i, rowid) in enumerate( new_hier ):
+            new_ptree_rows.append( (rowid, base_hier + new_hier[:i]) )
+        
+        return ( base_hier + new_hier, new_ptree_rows )
 
     def count_batch_size( self ):
         row_len = 5 + len( self.meta.get_columns() )
@@ -390,6 +390,8 @@ class Uploader:
         root = id_map.get_root()
         for key, child in root.iteritems():
             # For the key holding a child
+            if child is not None:
+                print child['__id__'], '/', id_map.get_last_id()
             if key != '__id__':
                 self.update_ptree_helper( child, [] )
 
@@ -413,8 +415,6 @@ class Uploader:
         # Get summable columns keys, id and parent will not be summed but are needed
         summable_columns = [ col['key'] for col in self.meta.get_columns()\
                                             if col['type'] == 'number' ]
-        #summable_columns = ['id', 'parent'] +\
-        #        [ col['key'] for col in self.meta.get_columns() if col['type'] == 'number' ]
 
         #Get values from leaves and update their parents, then their parents' parents, ...
         to_update = self.db.count_nodes( endpoint, is_leaf=False )
@@ -422,73 +422,16 @@ class Uploader:
         updated = 0
 
         nodes = self.db.get_summed_values( summable_columns, endpoint )
-        a = 0
         while nodes != []:
-            print 'new_iter'
             self.db.update_nodes( endpoint, summable_columns, nodes )
-            '''
-            for (i, node) in enumerate( nodes, 1 ):
-                if i % 100 == 0:
-                    print i
-                conds = {'id': node['parent']} if node['parent'] is not None\
-                                               else {'type': trans('py_total')}
-                commit = len( nodes ) == i
-                self.db.update_node( endpoint, summable_columns, node, conds, commit )
-            '''
 
             ids = [ n['parent'] for n in nodes if n['parent'] is not None ]
             nodes = self.db.get_summed_values( summable_columns, endpoint, ids )
             updated += len( ids )
-            print len(nodes)
-            if len( nodes ) == 1:
-                print nodes
-            
-            '''
-            if updated == 11728:
-                print nodes
-                if a == 1:
-                    raise RuntimeError("")
-                a += 1
-            '''
 
             print 'Summed in %d / %d' % (updated, to_update)
 
         self.db.update_total( endpoint, summable_columns )
-        '''
-        #Get values from leaves and update their parents, then their parents' parents, ...
-        nodes = self.db.get_leaves( endpoint )
-        while nodes != []:
-            summed_values = self.sum_values_in_nodes( nodes, summable_columns )
-            # Update nodes
-            for ( id, value ) in summed_values.iteritems():
-                conds = {'id': id} if id is not None else {'type': trans('py_total')}
-                # summable_columns[2:] - remove id and parent keys
-                self.db.update_node( endpoint, summable_columns[2:], value, conds )
-                
-            # Remove None - top level nodes have not parent
-            if None in summed_values:
-                del summed_values[ None ]
-
-            # Get parent IDs and repeat procedure for them.
-            parents = summed_values.keys()
-            nodes = self.db.get_nodes( endpoint, parents )
-        '''
-
-
-    def sum_values_in_nodes( self, nodes, summable_columns ):
-        '''Return dict with parent nodes with summed number values from their children.'''
-        summed_values = {}
-        for n in nodes:
-            parent_id = n['parent']
-            if parent_id not in summed_values:
-                summed_values[ parent_id ] = {}
-            for col in summable_columns:
-                try:
-                    summed_values[ parent_id ][ col ] += n[ col ]
-                except:
-                    summed_values[ parent_id ][ col ] = n[ col ]
-
-        return summed_values
 
     def set_counters( self, endpoint_id, dbtree_id, data_id ):
         self.db.set_max_endpoint( endpoint_id )
@@ -614,14 +557,14 @@ class Uploader:
 
         return hierarchy_cols
 
-    def add_rows( self, id_map, hierarchy_in_row, row ):
+    def add_rows( self, id_map, common_level, old_hierarchy_in_row, hierarchy_in_row, row ):
         '''Return hierarchy rows for the given row (those that were not added
             to id map) and row without hierarchy. Update id_map object with new
             hierarchy.'''
         new_rows = []
         partial_hierarchy = []
 
-        for col in hierarchy_in_row:
+        for (level, col) in enumerate( hierarchy_in_row ):
             # If column has auxiliary field
             if len( col ) == 2:
                 next_level_hierarchy = col[0] + col[1]
@@ -629,28 +572,46 @@ class Uploader:
                 next_level_hierarchy = col[0]
 
             partial_hierarchy.append( next_level_hierarchy )
+            
+            if common_level == level:
+                id_map.del_id( partial_hierarchy )
+                print '>>> delete hierarchy =', json.dumps(id_map.get_root(), indent=4)
+            if common_level > level:
+                print 'level =', level
+                continue
 
-            # If this hierarchy is new, add it to id map
-            if id_map.get_id( partial_hierarchy ) is None:
-                # If it is leaf, it will be inserted into db, otherwise
-                # new empty row should be created
-                if len( partial_hierarchy ) == len( hierarchy_in_row ):
-                    new_row = row
-                    is_leaf = True
-                else:
-                    new_row = self.create_empty_row()
-                    is_leaf = False
+            # If it is leaf, it will be inserted into db, otherwise
+            # new empty row should be created
+            if len( partial_hierarchy ) == len( hierarchy_in_row ):
+                new_row = row
+                is_leaf = True
+            else:
+                new_row = self.create_empty_row()
+                is_leaf = False
 
-                # Obligatory row fields
-                row_id = id_map.add_id( partial_hierarchy )
-                par_id = id_map.get_id( partial_hierarchy[:-1] )
-                row_level = len( partial_hierarchy ) - 1
+            # Obligatory row fields
+            print 'need:', partial_hierarchy, partial_hierarchy[:-1]
+            row_id = id_map.add_id( partial_hierarchy )
+            par_id = id_map.get_id( partial_hierarchy[:-1] )
+            row_level = len( partial_hierarchy ) - 1
 
-                # Remove hierarchy from the new row, so that it is ready to upload
-                db_row = self.remove_hierarchy( col, new_row, row_level, row_id, par_id, is_leaf )
-                new_rows.append( db_row )
+            # Remove hierarchy from the new row, so that it is ready to upload
+            db_row = self.remove_hierarchy( col, new_row, row_level, row_id, par_id, is_leaf )
+            parsed_row = self.parse_row( db_row )
+            new_rows.append( parsed_row )
 
         return new_rows
+
+    def parse_row( self, row ):
+        columns = self.meta.get_columns()
+        parsed_row = row[:]
+        
+        for (i, value) in enumerate( parsed_row[:5], 5 ):
+            if columns[ i ]['type'] == 'number':
+                parsed_value = re.sub( '\s', '', value ).replace(',', '.')
+                parsed_row[ i ] = parsed_value
+
+        return parsed_row
 
     def create_empty_row( self ):
         '''Create empty row with fields: 0 for numbers and '' for strings.'''
@@ -852,6 +813,35 @@ class IdMap:
     def get_last_id( self ):
         return self.act_id
 
+    def del_id( self, hierarchy_list ):
+        full_branch = self.ids
+
+        print ('*' * 40) + ' START ' + ('*' * 40)
+        print json.dumps(hierarchy_list, indent=4)
+        print '*' * 80
+        print json.dumps(full_branch, indent=4)
+        print ('*' * 40) + ' END ' + ('*' * 40)
+
+        for el in hierarchy_list:
+            if el in full_branch:
+                full_branch = full_branch[el]
+            else:
+                return
+
+        del parent
+
+        if hierarchy_list == []:
+            return
+
+        for el in hierarchy_list[:-1]:
+            if el in full_branch:
+                full_branch = full_branch[el]
+            else:
+                return
+
+        del full_branch[ hierarchy_list[-1] ]
+        
+
 
 class UploadDataException( Exception ):
     '''Simple exception class'''
@@ -879,6 +869,7 @@ def upload_collection( data_file, meta_file, output_file, has_header, visible ):
     db = DB( conf='db.conf' )
 
     uploader = Uploader( data_file, meta, db )
+    print 'PRINT9'
     success, endpoint = uploader.upload( has_header=has_header, output=output_file, visible=visible )
 
     return (success, endpoint)

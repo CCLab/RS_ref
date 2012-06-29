@@ -8,6 +8,7 @@ import os
 from os.path import join as osjoin
 import shutil
 
+import re
 
 with open( 'trans.json', 'rb' ) as trans_file:
     content = trans_file.read()
@@ -199,7 +200,8 @@ def get_columns_errors( columns ):
     return errors
 
 def label_to_key( label ):
-    return slughifi.slughifi(label, True).replace('-', '_')
+    # need to cut because of POSTRGES max column name length
+    return slughifi.slughifi(label, True).replace('-', '_')[:63]
 
 def get_int_type_info( value ):
     return {
@@ -222,21 +224,22 @@ def get_string_type_info( value ):
 def is_int( value ):
     try:
         int( value )
-    except:
+    except ValueError:
         return False
     return True
 
 def is_float( value ):
     try:
-        float( value )
-    except:
+        parsed_value = re.sub( '\s', '', value )
+        float( parsed_value )
+    except ValueError:
         return False
     return True
 
 def is_string( value ):
     try:
         str( value )
-    except:
+    except ValueError:
         return False
     return True
 
