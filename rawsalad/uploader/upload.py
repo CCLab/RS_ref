@@ -3,6 +3,7 @@
 from copy import deepcopy
 import os
 import csv
+import re
 
 from readers import FileReader as FileReader
 from readers import CSVDataReceiver as CSVDataReceiver
@@ -75,9 +76,8 @@ class Uploader:
 
         # Check data, if any error is in data, stop processing and return list with errors
         print 'Looking for errors in data...',
-        # TODO: UNCOMMENT !!!!!
         errors = []
-        #errors = self.find_errors( has_header )
+        errors = self.find_errors( has_header )
         if errors != []:
             print '%d error(s) found' % len( errors )
             return (False, errors)
@@ -168,9 +168,19 @@ class Uploader:
     def debug_restore( self ):
         '''Restore state of database to the state pointed by counters.
         Use with caution.'''
-        safe_endpoint_id = 50009
-        safe_dbtree_id = 1016
-        safe_data_id = 1000067180
+        # safe without bestia
+        #safe_endpoint_id = 50009
+        #safe_dbtree_id = 1016
+        #safe_data_id = 1000067180
+
+        # safe after bestia
+        safe_endpoint_id = 50010
+        safe_dbtree_id = 1017
+        safe_data_id = 1001332635
+        # safe after effr
+        safe_endpoint_id = 50011
+        safe_dbtree_id = 1020
+        safe_data_id = 1001341207
         self.remove_uploaded( safe_endpoint_id, safe_dbtree_id, safe_data_id )
 
     def update_dbtree( self, visible ):
@@ -273,11 +283,18 @@ class Uploader:
             which will be used to COPY data into db. Save it and perform COPY.
             Return IDMap object.
         '''
+        def db_type( col_type, col_format ):
+            if col_type == 'number':
+                return 'int' if col_format.endswith('##0') else 'float'
+            else:
+                return col_type
+
         bulk = self.get_data( has_header )
 
         # Create and remove table
         self.db.remove_table( endpoint )
-        columns = map( lambda t: ( t['key'], t['type'] ), self.meta.get_columns() )
+        columns = map( lambda t: ( t['key'], db_type(t['type'], t['format']) ),
+                       self.meta.get_columns() )
         self.db.create_table( endpoint, columns )
 
         data = []
@@ -312,14 +329,11 @@ class Uploader:
                 hierarchy_in_row.pop()
             
             common_level = 0
-            for (i, field) in enumerate( hierarchy_in_row ):
-                if i >= len( old_hierarchy_in_row ) or field == old_hierarchy_in_row[i]:
+            for new, old in zip( hierarchy_in_row, old_hierarchy_in_row ):
+                if new != old:
                     break
-
                 common_level += 1
 
-            print 'BEFORE ADD'
-            print json.dumps( id_map.get_root(), indent=4 )
             # Transform rows to non hierarchical form
             new_rows = self.add_rows( id_map, common_level, old_hierarchy_in_row,
                                       hierarchy_in_row, row )
@@ -329,6 +343,7 @@ class Uploader:
             old_hierarchy_in_row = hierarchy_in_row
 
             current_rows += new_rows
+            # TODO get rid of magic numbers
             if new_rows[0][1] is None: # if parent is none == is top row
                 top_rows.append( new_rows[0] )
 
@@ -340,8 +355,12 @@ class Uploader:
 
         # Add total row
         #total_row_id = id_map.add_id()
-        total_row_id = id_map.add_id( [ trans('py_total') ] )
-        total_row = self.create_total_row( top_rows[0], total_row_id )
+        # TODO: changed
+        # TODO: get rid of magic numbers
+        total_row_id = id_map.add_id( 0, 1 )[0]
+        #total_row_id = id_map.add_id( [ trans('py_total') ] )
+        total_row = self.create_total_row( total_row_id )
+        #total_row = self.create_total_row( top_rows[0], total_row_id )
         current_rows.append( total_row )
         ptree_rows.append( (total_row_id, []) )
 
@@ -562,8 +581,31 @@ class Uploader:
             to id map) and row without hierarchy. Update id_map object with new
             hierarchy.'''
         new_rows = []
-        partial_hierarchy = []
+        branch_ids = id_map.add_id( common_level, len(hierarchy_in_row) )
 
+        if common_level == len( hierarchy_in_row ):
+            hierarchy_to_add = hierarchy_in_row[-1:]
+            common_level -= 1
+        else:
+            hierarchy_to_add = hierarchy_in_row[common_level:]
+
+        # TODO clear the 0/1 starting point in common_level
+        for (level, col) in enumerate( hierarchy_to_add, common_level ):
+            if level == len( hierarchy_in_row ) - 1:
+                new_row = row
+                is_leaf = True
+            else:
+                new_row = self.create_empty_row()
+                is_leaf = False
+
+            row_id = branch_ids[ level ]
+            par_id = branch_ids[ level-1 ] if level != 0 else None
+            
+            db_row = self.remove_hierarchy( col, new_row, level, row_id, par_id, is_leaf )
+            parsed_row = self.parse_row( db_row )
+            new_rows.append( parsed_row )
+
+        '''
         for (level, col) in enumerate( hierarchy_in_row ):
             # If column has auxiliary field
             if len( col ) == 2:
@@ -599,6 +641,7 @@ class Uploader:
             db_row = self.remove_hierarchy( col, new_row, row_level, row_id, par_id, is_leaf )
             parsed_row = self.parse_row( db_row )
             new_rows.append( parsed_row )
+        '''
 
         return new_rows
 
@@ -606,10 +649,11 @@ class Uploader:
         columns = self.meta.get_columns()
         parsed_row = row[:]
         
-        for (i, value) in enumerate( parsed_row[:5], 5 ):
+        for (i, value) in enumerate( parsed_row[5:] ):
             if columns[ i ]['type'] == 'number':
-                parsed_value = re.sub( '\s', '', value ).replace(',', '.')
-                parsed_row[ i ] = parsed_value
+                if isinstance( value, basestring ):
+                    parsed_value = re.sub( '\s', '', value )
+                    parsed_row[ i + 5 ] = parsed_value
 
         return parsed_row
 
@@ -751,9 +795,16 @@ class Uploader:
         self.db.update_dbtree_depth( subtree_id, min_depth, max_depth )
         return ( min_depth, max_depth )
 
-    def create_total_row( self, top_row, total_row_id ):
-        '''Create total row, use top row to find types in further columns.'''
-        total_row = [
+    def create_total_row( self, total_row_id ):
+        '''Create total row.'''
+        '''total_row = [
+            total_row_id,
+            None,
+            trans('py_total'),
+            trans('py_total_name'),
+            True
+        ]'''
+        id_part = [
             total_row_id,
             None,
             trans('py_total'),
@@ -761,7 +812,14 @@ class Uploader:
             True
         ]
 
+        columns = self.meta.get_columns()
+        data_part = [ '0' if col['type'] == 'number' else '' for col in columns ]
+        return id_part + data_part
+        '''
         # Copy types from top row.
+        for col in self.meta.columns():
+            if col['type'] == 'number':
+                total_row.append(
         for value in top_row[5:]:
             if value is None:
                 total_row.append( None )
@@ -771,78 +829,45 @@ class Uploader:
                 total_row.append( 0 )
 
         return total_row
+        '''
 
 
 class IdMap:
     '''Simple class to save information about hierarchy in data in a tree-like
         structure and create IDs for data rows.'''
     def __init__( self, start_id ):
-        self.ids = { '__id__': None }
+        self.ids = []
         self.act_id = start_id
 
     def get_root( self ):
+        # TODO: change name to get_ids
         return self.ids
 
-    def add_id( self, hierarchy_list ):
+    def add_id( self, common_level, new_size ):
         '''Get to element which hierarchy is = hierarchy_list, if new hierarchy
             levels should be created, create for them also ID. Return id of the
             new element.'''
-        parent = self.ids
+        self.ids = self.ids[:common_level]
+        missing_size = new_size - common_level
 
-        for el in hierarchy_list:
-            # New element in hierarchy
-            if el not in parent:
+        if missing_size == 0:
+            # leaf with the same hierarchy
+            self.act_id += 1
+            self.ids[-1] = self.act_id
+        else:
+            for i in range( missing_size ):
                 self.act_id += 1
-                new_id = self.act_id
-                parent[ el ] = { '__id__': new_id }
-            else:
-                parent = parent[ el ]
-        return new_id
+                self.ids.append( self.act_id )
 
-    def get_id( self, hierarchy_list ):
-        parent = self.ids
+        return self.ids
 
-        for el in hierarchy_list:
-            if el not in parent:
-                return None
-            else:
-                parent = parent[ el ]
-
-        return parent['__id__']
+    def get_id( self, level ):
+        return self.ids[level]
 
     def get_last_id( self ):
         return self.act_id
 
-    def del_id( self, hierarchy_list ):
-        full_branch = self.ids
-
-        print ('*' * 40) + ' START ' + ('*' * 40)
-        print json.dumps(hierarchy_list, indent=4)
-        print '*' * 80
-        print json.dumps(full_branch, indent=4)
-        print ('*' * 40) + ' END ' + ('*' * 40)
-
-        for el in hierarchy_list:
-            if el in full_branch:
-                full_branch = full_branch[el]
-            else:
-                return
-
-        del parent
-
-        if hierarchy_list == []:
-            return
-
-        for el in hierarchy_list[:-1]:
-            if el in full_branch:
-                full_branch = full_branch[el]
-            else:
-                return
-
-        del full_branch[ hierarchy_list[-1] ]
         
-
-
 class UploadDataException( Exception ):
     '''Simple exception class'''
     def __init__( self, msg ):

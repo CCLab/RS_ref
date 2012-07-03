@@ -276,7 +276,9 @@ class DB:
 
         tuple_values = map( make_query_tuple, values )
         
-        self.cursor.executemany( query, tuple_values )
+        #self.cursor.executemany( query, tuple_values )
+        for t in tuple_values:
+            self.cursor.execute( query, t )
         self.connection.commit()
 
     def update_total( self, endpoint, keys ):
@@ -310,7 +312,8 @@ class DB:
     def create_table( self, tablename, columns ):
         types_map = {
             'string': 'TEXT',
-            'number': 'INT'
+            'int'   : 'BIGINT',
+            'float' : 'NUMERIC(15, 3)'
         }
 
         create_query = '''CREATE TABLE %s (
@@ -354,7 +357,9 @@ class DB:
 
         query = '''INSERT INTO p_tree VALUES( %s, %s );'''
         formatted_rows = map( change_form, ptree_rows )
-        self.cursor.executemany( query, formatted_rows )
+        for row in formatted_rows:
+            self.cursor.execute( query, row )
+        #self.cursor.executemany( query, formatted_rows )
         self.connection.commit()
         print '****'
 

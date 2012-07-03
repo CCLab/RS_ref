@@ -212,7 +212,7 @@ def get_int_type_info( value ):
 def get_float_type_info( value ):
     return {
         'type': 'number',
-        'format': '# ##0'
+        'format': '# ##0.00'
     }
 
 def get_string_type_info( value ):
