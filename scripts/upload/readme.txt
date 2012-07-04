@@ -7,7 +7,6 @@ Potrzebny jest plik z danymi oraz plik opisujący te dane(metadane + hierarchia)
 Format pliku z danymi:
 - plik CSV
 - separatory są średnikami
-- brak cytowania napisów
 - kodowanie UTF-8
 
 3. W jakim formacie musi być opis kolekcji?
@@ -93,18 +92,7 @@ a) Przede wszystkim muszą być zgodne z opisem w pliku:
 b) Możliwe są puste poziomy w hierarchii, tzn. mogą być wiersze posiadające
    hierarchię A - B - C (przy hierarchii trójpoziomowej), ale także A - B - (Pusty), A - (Pusty) - C.
 c) Nie mogą występować jednocześnie wiersze mające identyczne wartości w kolumnach hierarchicznych.
-d) Nie mogą występować jednocześnie wiersze mające identyczne wartości w kolumnach
-   hierarchicznych na wyższych poziomach z takimi, które mają identyczną hierarchię do
-   pewnego poziomu, a potem puste poziomy, np.
-   takie kombinacje są zbronione (1 i 2 ma wspólne A1 - B1 - C1, 1 i 3: A1 - B1)
-   1) A1 - B1 - C1 - D1
-   2) A1 - B1 - C1 - (Pusty)
-   3) A1 - B1 - (Pusty) - (Pusty)
-   ale takie są poprawne:
-   1) A1 - B1 - C1 - D1
-   2) A1 - B2 - C1 - (Pusty)
-   3) A1 - B3 - (Pusty) - (Pusty)
-   4) A1 - B1 - C2 - (Pusty)
+d) Dane muszą być posortowane
 e) Plik z danymi musi mieć na początku 1 linię nagłówku.
 f) Liczby w kolumnach liczbowych w danych muszą mieć postać: <cyfry>[.<cyfry>]
 

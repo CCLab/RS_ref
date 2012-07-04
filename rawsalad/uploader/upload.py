@@ -51,7 +51,7 @@ class Uploader:
         '''
         # restore db state to a state before a recent data insertion
         # TODO: remove after testing
-        restore = False
+        restore = True
         if restore:
             self.debug_restore()
 
@@ -75,8 +75,7 @@ class Uploader:
         # Check data, if any error is in data, stop processing and return list with errors
         print 'Looking for errors in data...',
         errors = []
-        # TODO: uncomment
-        #errors = self.find_errors( has_header )
+        errors = self.find_errors( has_header )
         if errors != []:
             print '%d error(s) found' % len( errors )
             return (False, errors)
@@ -145,7 +144,7 @@ class Uploader:
         last_id = self.upload_data( endpoint, has_header=has_header )
         print 'Data uploaded'
 
-        self.sum_columns( endpoint )
+        #self.sum_columns( endpoint )
         print 'Columns summed up, ptree uploaded'
 
         self.db.set_max_data_id( last_id )
@@ -281,6 +280,8 @@ class Uploader:
                 return 'int' if col_format.endswith('##0') else 'float'
             else:
                 return col_type
+        def type_fun( col_type, col_format ):
+            return int if db_type( col_type, col_format ) == 'int' else float
 
         bulk = self.get_data( has_header )
 
@@ -290,21 +291,35 @@ class Uploader:
                        self.meta.get_columns() )
         self.db.create_table( endpoint, columns )
 
+        summable_cols = []
+        for (i, col) in enumerate( self.meta.get_columns() ):
+            if col['type'] == 'number':
+                summable_cols.append( (i+5, type_fun(col['type'], col['format'])) )
+
         start_id = self.db.get_max_data_id()
         id_map = IdMap( start_id )
 
         batch_size = self.count_batch_size()
         print 'BATCH_SIZE = ', batch_size # Process all rows
-        current_rows = []
+        # rows to be uploaded in one batch
+        batch_rows = []
+        # rows that are actually processed, they need to be remembered,
+        # because numeric fields should be summed from many leaves
+        proc_rows = []
+        # hierarchy
         ptree_hier = []
-        ptree_rows = []
+        # ptree rows to be uploaded in one batch
+        batch_ptree_rows = []
+        # list representing values in hierarchy fields
         old_hierarchy_in_row = []
+        total_row = self.create_total_row( None )
+
         for (i, row) in enumerate( bulk ):
             if i % 1000 == 0:
                 print i
-            # Retrieve hierarchy from the row
+            # retrieve hierarchy from the row
             hierarchy_in_row = self.get_hierarchy_cols( row )
-            # Remove empty fields from hierarchy columns
+            # remove empty fields from hierarchy columns
             while len( hierarchy_in_row ) > 0 and hierarchy_in_row[-1][0] == '':
                 hierarchy_in_row.pop()
             
@@ -316,27 +331,115 @@ class Uploader:
                                             len( hierarchy_in_row ),
                                             new_rows, ptree_hier )
 
-            old_hierarchy_in_row = hierarchy_in_row
-            current_rows += new_rows
-            ptree_rows += new_ptree_rows
+            leaf_row = new_rows[-1]
+            # remove rows that are not needed to sum values anymore
+            # (all their children were added) and if there is top level
+            # row in them, then add values from it to total row
+            if i > 0:
+                if common_level == 0:
+                    self.sum_values( total_row, proc_rows[0], summable_cols )
+                batch_rows += proc_rows[common_level:]
+                proc_rows = proc_rows[:common_level]
 
-            if len( current_rows ) > batch_size:
-                self.db.insert_data( current_rows, endpoint )
-                current_rows = []
-                self.db.insert_ptree_data( ptree_rows )
-                ptree_rows = []
+            proc_rows += new_rows
+            # sum from last but one row using values from leaf row
+            for i in range( len(proc_rows) - 2, -1, -1):
+                self.sum_values( proc_rows[i], leaf_row, summable_cols )
+
+            old_hierarchy_in_row = hierarchy_in_row
+            batch_ptree_rows += new_ptree_rows
+
+            if len( batch_rows ) > batch_size:
+                self.db.insert_data( batch_rows, endpoint )
+                batch_rows = []
+                self.db.insert_ptree_data( batch_ptree_rows )
+                batch_ptree_rows = []
+
+        batch_rows += proc_rows
+        # add values from the last top row to total row
+        self.sum_values( total_row, proc_rows[-1], summable_cols )
 
         # TODO: changed
         # TODO: get rid of magic numbers
         total_row_id = id_map.add_id( 0, 1 )[0]
-        total_row = self.create_total_row( total_row_id )
-        current_rows.append( total_row )
-        ptree_rows.append( (total_row_id, []) )
+        total_row[0] = total_row_id
+        #total_row = self.create_total_row( total_row_id )
+        batch_rows.append( total_row )
+        batch_ptree_rows.append( (total_row_id, []) )
 
-        self.db.insert_data( current_rows, endpoint )
-        self.db.insert_ptree_data( ptree_rows )
+        self.db.insert_data( batch_rows, endpoint )
+        self.db.insert_ptree_data( batch_ptree_rows )
 
         return id_map.get_last_id()
+
+#    def upload_data( self, endpoint, has_header=True ):
+#        '''Remove table for endpoint = given endpoint(if exists) and create a new
+#            one for new data. Create IdMap to track parent-child relations between
+#            nodes. If has_header = True, then omit the first line. Transform rows
+#            from original data to rows without hierarchy, and create hierarchy
+#            rows. Return max id of nodes from the collection.
+#        '''
+#        def db_type( col_type, col_format ):
+#            if col_type == 'number':
+#                return 'int' if col_format.endswith('##0') else 'float'
+#            else:
+#                return col_type
+#
+#        bulk = self.get_data( has_header )
+#
+#        # Create and remove table
+#        self.db.remove_table( endpoint )
+#        columns = map( lambda t: ( t['key'], db_type(t['type'], t['format']) ),
+#                       self.meta.get_columns() )
+#        self.db.create_table( endpoint, columns )
+#
+#        start_id = self.db.get_max_data_id()
+#        id_map = IdMap( start_id )
+#
+#        batch_size = self.count_batch_size()
+#        print 'BATCH_SIZE = ', batch_size # Process all rows
+#        current_rows = []
+#        ptree_hier = []
+#        ptree_rows = []
+#        old_hierarchy_in_row = []
+#        for (i, row) in enumerate( bulk ):
+#            if i % 1000 == 0:
+#                print i
+#            # Retrieve hierarchy from the row
+#            hierarchy_in_row = self.get_hierarchy_cols( row )
+#            # Remove empty fields from hierarchy columns
+#            while len( hierarchy_in_row ) > 0 and hierarchy_in_row[-1][0] == '':
+#                hierarchy_in_row.pop()
+#            
+#            common_level = self.hierarchy_common_level( hierarchy_in_row,
+#                                                        old_hierarchy_in_row )
+#            # Transform rows to non hierarchical form
+#            new_rows = self.add_rows( id_map, common_level, hierarchy_in_row, row )
+#            ptree_hier, new_ptree_rows = self.create_ptree_rows( common_level,
+#                                            len( hierarchy_in_row ),
+#                                            new_rows, ptree_hier )
+#
+#            old_hierarchy_in_row = hierarchy_in_row
+#            current_rows += new_rows
+#            ptree_rows += new_ptree_rows
+#
+#            if len( current_rows ) > batch_size:
+#                self.db.insert_data( current_rows, endpoint )
+#                current_rows = []
+#                self.db.insert_ptree_data( ptree_rows )
+#                ptree_rows = []
+#
+#        # TODO: changed
+#        # TODO: get rid of magic numbers
+#        total_row_id = id_map.add_id( 0, 1 )[0]
+#        total_row = self.create_total_row( total_row_id )
+#        current_rows.append( total_row )
+#        ptree_rows.append( (total_row_id, []) )
+#
+#        self.db.insert_data( current_rows, endpoint )
+#        self.db.insert_ptree_data( ptree_rows )
+#
+#        return id_map.get_last_id()
 
     def hierarchy_common_level( self, hierarchy_in_row, old_hierarchy_in_row ):
         common_level = 0
@@ -400,6 +503,10 @@ class Uploader:
         for key, child in act_parent.iteritems():
             if key != '__id__':
                 self.update_ptree_helper( child, parents_ids + [ str(act_id) ] )
+
+    def sum_values( self, base_row, leaf_row, indexes ):
+        for (i, fun) in indexes:
+            base_row[i] = unicode( fun(base_row[i]) + fun(leaf_row[i]) )
 
     def sum_columns( self, endpoint ):
         '''Update non leaves from endpoint: sum values in their number-type columns.'''

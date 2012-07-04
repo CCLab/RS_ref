@@ -41,17 +41,11 @@ def verify_data( data, columns, hierarchy_indexes, start_ind ):
         if not are_fields_correct( row_types, row ):
             errors.append( bad_fields( i, row_types, row ) )
 
-        row_hierarchy = get_row_hierarchy( row, hierarchy_indexes )
-        if row_hierarchy == '':
+        if is_row_hierarchy_empty( row, hierarchy_indexes ):
             errors.append( empty_hierarchy( i ) )
-
-        '''
-        if is_hierarchy_repeated( hierarchies, row_hierarchy ):
-            prev_i = hierarchies[ row_hierarchy ]
-            errors.append( repeated_hierarchy( i, prev_i, row_hierarchy ) )
-        else:
-            add_hierarchy( i, hierarchies, row_hierarchy )
-        '''
+        #row_hierarchy = get_row_hierarchy( row, hierarchy_indexes )
+        #if row_hierarchy == '':
+        #    errors.append( empty_hierarchy( i ) )
 
     print 'AFTER'
     print len(errors)
@@ -124,17 +118,12 @@ def is_field_type_sufficient( field_type, expected_type ):
         return field_type == expected_type
     
 
-def get_row_hierarchy( row, hierarchy_indexes ):
-    row_hierarchy = []
+def is_row_hierarchy_empty( row, hierarchy_indexes ):
     for ind in hierarchy_indexes:
-        row_hierarchy.append( row[ ind ] )
+        if row[ ind ] != '':
+            return False
 
-    while row_hierarchy[-1] == '':
-        row_hierarchy.pop()
-
-    return '-'.join( row_hierarchy )
-    #return '-'.join( row_hierarchy ).decode('utf-8')
-
+    return True
 
 def is_hierarchy_repeated( hierarchies, row_hierarchy ):
     return row_hierarchy in hierarchies

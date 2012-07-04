@@ -318,11 +318,18 @@ class DB:
 
         create_query = '''CREATE TABLE %s (
                 id              INT UNIQUE NOT NULL
-                ,parent          INT REFERENCES %s(id)
+                ,parent          INT
                 ,type            TEXT
                 ,name            TEXT
                 ,leaf            BOOLEAN
-                ''' % ( tablename, tablename )
+                ''' % ( tablename, )
+#        create_query = '''CREATE TABLE %s (
+#                id              INT UNIQUE NOT NULL
+#                ,parent          INT REFERENCES %s(id)
+#                ,type            TEXT
+#                ,name            TEXT
+#                ,leaf            BOOLEAN
+#                ''' % ( tablename, tablename )
 
         for col in columns:
             col_descr = ''',%s       %s
