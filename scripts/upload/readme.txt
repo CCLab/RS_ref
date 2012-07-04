@@ -62,7 +62,7 @@ Wymagane pola:
 4. Jak uploadować dane?
 
 - należy wywołać skrypt poleceniem:
-upload.py <plik_z_danymi> <plik_z_opisem_danych> <plik_uploadujący_do_PSQL>
+upload.py <plik_z_danymi> <plik_z_opisem_danych>
 
 Plik z danymi oraz plik z opisem danych to są pliki dostarczane przez użytkownika.
 Plik uploadujący dane do PSQL jest tworzony przez skrypt, trzeba podać gdzie ma
@@ -92,7 +92,13 @@ a) Przede wszystkim muszą być zgodne z opisem w pliku:
 b) Możliwe są puste poziomy w hierarchii, tzn. mogą być wiersze posiadające
    hierarchię A - B - C (przy hierarchii trójpoziomowej), ale także A - B - (Pusty), A - (Pusty) - C.
 c) Nie mogą występować jednocześnie wiersze mające identyczne wartości w kolumnach hierarchicznych.
-d) Dane muszą być posortowane
+d) Dane muszą być posortowane zgodnie z kolumnami hierarchicznymi, tzn:
+    A1 - B1
+    A1 - B2
+    A1 - B3
+    A2 - B1
+    ...
+    Kolejność danych w drzewie jest określona przez kolejność danych w pliku!
 e) Plik z danymi musi mieć na początku 1 linię nagłówku.
 f) Liczby w kolumnach liczbowych w danych muszą mieć postać: <cyfry>[.<cyfry>]
 

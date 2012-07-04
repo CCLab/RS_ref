@@ -31,12 +31,11 @@ class Uploader:
         errors are caught and exit is called, otherwise django gets errors.'''
     def __init__( self, fname, meta, db, debug=True ):
         self.fname = fname
-        #self.reader = csv.reader( open(fname, 'rb'), quotechar='"', delimiter=';' )
         self.meta = meta
         self.db = db
         self.debug = debug
 
-    def upload( self, has_header=True, output=None, visible=True, restore=False ):
+    def upload( self, has_header=True, visible=True, restore=False ):
         '''Main method of Uploader. Checks db counters, if any inconsistency
         is found, then ask if it should be removed. After that, checks data
         that is about to be uploaded. After this attempts to upload data.
@@ -44,14 +43,12 @@ class Uploader:
         that moment. Returns tuple containg boolean value that tells if it
         succeeded and name of the new endpoint.
         There are 4 optional parameters: has_header - if data file comes with header,
-        output - name of CSV file that will be used to COPY into db,
         visible - if endpoint should be visible after upload,
         restore - if state of db should be restored to the state pointed in debug_restore()
                   method. Use with CAUTION!
         '''
         # restore db state to a state before a recent data insertion
-        # TODO: remove after testing
-        restore = True
+        restore = False
         if restore:
             self.debug_restore()
 
@@ -86,14 +83,14 @@ class Uploader:
         print 'Trying to insert data into db...',
         if not self.debug:
             try:
-                endpoint = self.insert_data_into_db( has_header, output, visible )
+                endpoint = self.insert_data_into_db( has_header, visible )
             except UploadDataException as e:
                 print 'failed.'
                 print e
                 self.remove_uploaded( init_endpoint_id, init_dbtree_id, init_data_id )
                 exit( 0 )
         else:
-            endpoint = self.insert_data_into_db( has_header, output, visible )
+            endpoint = self.insert_data_into_db( has_header, visible )
 
         print 'done.'
         return (True, endpoint)
@@ -102,11 +99,8 @@ class Uploader:
         '''Gets data, if data was previously read, then gets data
             from the object, otherwise reads the file.
             If has_header is True, then first line in data file is header.'''
-        #import codecs
-        #f = codecs.open( self.fname, 'rb', 'utf-8' )
         f = open( self.fname, 'rb' )
         self.reader = UnicodeReader( f, quotechar='"', delimiter=';' )
-        #self.reader = csv.reader( f, quotechar='"', delimiter=';' )
         if has_header:
             self.reader.next()
         return self.reader
@@ -124,7 +118,7 @@ class Uploader:
         return verify_data( data, columns, hierarchy_indexes, start_ind )
             
         
-    def insert_data_into_db( self, has_header, output, visible ):
+    def insert_data_into_db( self, has_header, visible ):
         '''Inserts node (or nodes if new parents) into dbtree, uploads new hierarchy
             and columns, then uploads data, sums columns of higher level nodes and
             updates db data counter. Updates ptree. Returns new endpoint's name.'''
@@ -139,12 +133,9 @@ class Uploader:
         self.update_columns( endpoint )
         print 'Columns uploaded'
 
-        # Return object describing hierarchy between rows in uploaded data, what
-        # will be used during updating ptree.
+        # Return id of the last uploaded row
         last_id = self.upload_data( endpoint, has_header=has_header )
         print 'Data uploaded'
-
-        #self.sum_columns( endpoint )
         print 'Columns summed up, ptree uploaded'
 
         self.db.set_max_data_id( last_id )
@@ -163,18 +154,10 @@ class Uploader:
         '''Restore state of database to the state pointed by counters.
         Use with caution.'''
         # safe without bestia
-        #safe_endpoint_id = 50009
-        #safe_dbtree_id = 1016
-        #safe_data_id = 1000067180
+        safe_endpoint_id = 50009
+        safe_dbtree_id = 1016
+        safe_data_id = 1000067180
 
-        # safe after bestia
-        safe_endpoint_id = 50010
-        safe_dbtree_id = 1017
-        safe_data_id = 1001332635
-        # safe after effr
-        safe_endpoint_id = 50011
-        safe_dbtree_id = 1020
-        safe_data_id = 1001341207
         self.remove_uploaded( safe_endpoint_id, safe_dbtree_id, safe_data_id )
 
     def update_dbtree( self, visible ):
@@ -355,6 +338,7 @@ class Uploader:
                 self.db.insert_ptree_data( batch_ptree_rows )
                 batch_ptree_rows = []
 
+
         batch_rows += proc_rows
         # add values from the last top row to total row
         self.sum_values( total_row, proc_rows[-1], summable_cols )
@@ -371,75 +355,6 @@ class Uploader:
         self.db.insert_ptree_data( batch_ptree_rows )
 
         return id_map.get_last_id()
-
-#    def upload_data( self, endpoint, has_header=True ):
-#        '''Remove table for endpoint = given endpoint(if exists) and create a new
-#            one for new data. Create IdMap to track parent-child relations between
-#            nodes. If has_header = True, then omit the first line. Transform rows
-#            from original data to rows without hierarchy, and create hierarchy
-#            rows. Return max id of nodes from the collection.
-#        '''
-#        def db_type( col_type, col_format ):
-#            if col_type == 'number':
-#                return 'int' if col_format.endswith('##0') else 'float'
-#            else:
-#                return col_type
-#
-#        bulk = self.get_data( has_header )
-#
-#        # Create and remove table
-#        self.db.remove_table( endpoint )
-#        columns = map( lambda t: ( t['key'], db_type(t['type'], t['format']) ),
-#                       self.meta.get_columns() )
-#        self.db.create_table( endpoint, columns )
-#
-#        start_id = self.db.get_max_data_id()
-#        id_map = IdMap( start_id )
-#
-#        batch_size = self.count_batch_size()
-#        print 'BATCH_SIZE = ', batch_size # Process all rows
-#        current_rows = []
-#        ptree_hier = []
-#        ptree_rows = []
-#        old_hierarchy_in_row = []
-#        for (i, row) in enumerate( bulk ):
-#            if i % 1000 == 0:
-#                print i
-#            # Retrieve hierarchy from the row
-#            hierarchy_in_row = self.get_hierarchy_cols( row )
-#            # Remove empty fields from hierarchy columns
-#            while len( hierarchy_in_row ) > 0 and hierarchy_in_row[-1][0] == '':
-#                hierarchy_in_row.pop()
-#            
-#            common_level = self.hierarchy_common_level( hierarchy_in_row,
-#                                                        old_hierarchy_in_row )
-#            # Transform rows to non hierarchical form
-#            new_rows = self.add_rows( id_map, common_level, hierarchy_in_row, row )
-#            ptree_hier, new_ptree_rows = self.create_ptree_rows( common_level,
-#                                            len( hierarchy_in_row ),
-#                                            new_rows, ptree_hier )
-#
-#            old_hierarchy_in_row = hierarchy_in_row
-#            current_rows += new_rows
-#            ptree_rows += new_ptree_rows
-#
-#            if len( current_rows ) > batch_size:
-#                self.db.insert_data( current_rows, endpoint )
-#                current_rows = []
-#                self.db.insert_ptree_data( ptree_rows )
-#                ptree_rows = []
-#
-#        # TODO: changed
-#        # TODO: get rid of magic numbers
-#        total_row_id = id_map.add_id( 0, 1 )[0]
-#        total_row = self.create_total_row( total_row_id )
-#        current_rows.append( total_row )
-#        ptree_rows.append( (total_row_id, []) )
-#
-#        self.db.insert_data( current_rows, endpoint )
-#        self.db.insert_ptree_data( ptree_rows )
-#
-#        return id_map.get_last_id()
 
     def hierarchy_common_level( self, hierarchy_in_row, old_hierarchy_in_row ):
         common_level = 0
@@ -776,7 +691,6 @@ class Uploader:
         else:
             print 'Hierarchy correct'
 
-        # TODO: check if there are columns for endpoints with too high id
         if self.db.get_higher_columns( endpoint ):
             print 'Found wrong columns, higher than %d' % init_endpoint_id
             print 'Do you want to remove them? (Y/N)'
@@ -851,21 +765,6 @@ class Uploader:
         columns = self.meta.get_columns()
         data_part = [ '0' if col['type'] == 'number' else '' for col in columns ]
         return id_part + data_part
-        '''
-        # Copy types from top row.
-        for col in self.meta.columns():
-            if col['type'] == 'number':
-                total_row.append(
-        for value in top_row[5:]:
-            if value is None:
-                total_row.append( None )
-            elif isinstance( value, basestring ):
-                total_row.append( '' )
-            else: # number value
-                total_row.append( 0 )
-
-        return total_row
-        '''
 
 
 class IdMap:
@@ -876,7 +775,6 @@ class IdMap:
         self.act_id = start_id
 
     def get_root( self ):
-        # TODO: change name to get_ids
         return self.ids
 
     def add_id( self, common_level, new_size ):
@@ -887,7 +785,6 @@ class IdMap:
         missing_size = new_size - common_level
 
         if missing_size == 0:
-            # leaf with the same hierarchy
             self.act_id += 1
             self.ids[-1] = self.act_id
         else:
@@ -916,21 +813,17 @@ class UploadDataException( Exception ):
         return self.msg
 
 
-def upload_collection( data_file, meta_file, output_file, has_header, visible ):
+def upload_collection( data_file, meta_file, has_header, visible ):
     '''Upload collection into db. Data should be in data_file, meta dat in meta_file.
-        CSV data file used to COPY into db will be created as output_file.
-        has_header if the first row in data_file is header, visible means that collections
-        should be visible in the frontend.'''
-    #freader = FileReader( data_file )
-    #creader = CSVDataReceiver( freader )
-
+        has_header is True if the first row in data_file is header, visible means
+        that collections should be visible in the frontend.'''
     meta_freader = FileReader( meta_file )
     meta = Meta( meta_freader )
 
     db = DB( conf='db.conf' )
 
     uploader = Uploader( data_file, meta, db )
-    success, endpoint = uploader.upload( has_header=has_header, output=output_file, visible=visible )
+    success, endpoint = uploader.upload( has_header=has_header, visible=visible )
 
     return (success, endpoint)
 
@@ -974,17 +867,26 @@ if __name__ == '__main__':
     There should be 3 passed arguments:
     - name of file with data
     - name of file with collection decription
-    - name of output file ready to upload data to Postgres
+    - (optional) if data file has header
+    - (optional) if collection should be visible
     '''
     import sys
     args = sys.argv
     if len( args ) != 4:
-        print "Wrong number of arguments. Should be 3 instead of ", len( args ) - 1
+        print "Wrong number of arguments. Should be at least 2 instead of ", len( args ) - 1
         exit()
 
-    data_file = args[1]   
-    meta_file = args[2]   
-    output_file = args[3]   
+    data_file = args[1]
+    meta_file = args[2]
+    try:
+        has_header = 't' == args[3].lower()
+    except IndexError:
+        has_header = True
+    try:
+        is_visible = 't' == args[4].lower()
+    except IndexError:
+        is_visible = True
 
-    upload_collection( data_file, meta_file, output_file, True )
+
+    upload_collection( data_file, meta_file, has_header, is_visible )
 

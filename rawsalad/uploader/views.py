@@ -160,12 +160,11 @@ def upload_data( request ):
 
     # upload data into db
     visible = coll_data[ 'visible' ]
-    output_file_name = 'sql_' + data_file_name
-    done, result = upload_collection( data_file_name, hier_file_name, output_file_name, True, visible )
+    done, result = upload_collection( data_file_name, hier_file_name, True, visible )
 
     # remove temporary files
     try:
-        uh.remove_files( [hier_file_name, output_file_name] )
+        uh.remove_files( [hier_file_name] )
     except OSError:
         # there were errors in data -> not all files were created
         pass

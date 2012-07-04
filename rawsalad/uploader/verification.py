@@ -43,9 +43,6 @@ def verify_data( data, columns, hierarchy_indexes, start_ind ):
 
         if is_row_hierarchy_empty( row, hierarchy_indexes ):
             errors.append( empty_hierarchy( i ) )
-        #row_hierarchy = get_row_hierarchy( row, hierarchy_indexes )
-        #if row_hierarchy == '':
-        #    errors.append( empty_hierarchy( i ) )
 
     print 'AFTER'
     print len(errors)
@@ -124,21 +121,6 @@ def is_row_hierarchy_empty( row, hierarchy_indexes ):
             return False
 
     return True
-
-def is_hierarchy_repeated( hierarchies, row_hierarchy ):
-    return row_hierarchy in hierarchies
-    
-
-def add_hierarchy( row_nr, hierarchies, row_hierarchy ):
-    def add_part( acc, x ):
-        new_acc = acc + '-' + x
-        if not new_acc in hierarchies:
-            hierarchies[ new_acc ] = row_nr
-
-        return new_acc
-
-    levels = row_hierarchy.split( '-' )
-    reduce( add_part, levels )
 
 
 def bad_len( row_nr, row_len, expected_len ):

@@ -276,7 +276,6 @@ class DB:
 
         tuple_values = map( make_query_tuple, values )
         
-        #self.cursor.executemany( query, tuple_values )
         for t in tuple_values:
             self.cursor.execute( query, t )
         self.connection.commit()
@@ -317,19 +316,12 @@ class DB:
         }
 
         create_query = '''CREATE TABLE %s (
-                id              INT UNIQUE NOT NULL
-                ,parent          INT
+                id              BIGINT UNIQUE NOT NULL
+                ,parent          BIGINT
                 ,type            TEXT
                 ,name            TEXT
                 ,leaf            BOOLEAN
                 ''' % ( tablename, )
-#        create_query = '''CREATE TABLE %s (
-#                id              INT UNIQUE NOT NULL
-#                ,parent          INT REFERENCES %s(id)
-#                ,type            TEXT
-#                ,name            TEXT
-#                ,leaf            BOOLEAN
-#                ''' % ( tablename, tablename )
 
         for col in columns:
             col_descr = ''',%s       %s
@@ -350,7 +342,6 @@ class DB:
         query = u'INSERT INTO %s VALUES(%s)' % (endpoint, q_marks)
 
         con, cursor = get_cursor('db.conf', True)
-        #enc_rows = [map(lambda e: None if not e else unicode(e), row) for row in rows]
         enc_rows = [map(lambda e: unicode(e) if isinstance(e, basestring) else e, row) for row in rows]
         cursor.executemany(query, enc_rows)
         con.commit()
@@ -359,14 +350,13 @@ class DB:
         def change_form( ptree_data ):
             row_id, parents = ptree_data
             parent_str = ','.join( [str(p) for p in parents] )
-            #parent_str = None if parents == [] else ','.join( [str(p) for p in parents] )
             return ( row_id, '{%s}' % parent_str )
 
         query = '''INSERT INTO p_tree VALUES( %s, %s );'''
         formatted_rows = map( change_form, ptree_rows )
         for row in formatted_rows:
             self.cursor.execute( query, row )
-        #self.cursor.executemany( query, formatted_rows )
+
         self.connection.commit()
         print '****'
 
