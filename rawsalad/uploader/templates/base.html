@@ -1,0 +1,40 @@
+<!DOCTYPE HTML>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8">
+    <title>Otwarte dane</title>  	
+    <link rel="stylesheet" type="text/css" href="/site_media/css/reset.css" />	
+    <link rel="stylesheet/less" type="text/css" href="/site_media/css/style.less" />
+    <link rel="stylesheet/less" type="text/css" href="/site_media/css/classes.less" />
+    <link rel="stylesheet/less" type="text/css" href="/site_media/css/table_style.less" />
+    <style>
+      h1 {
+        font-size: 2em;
+        line-height: 1.5em;
+        margin: 0px;
+        padding: 0px;
+     }
+     th {
+       text-align: right;
+       padding-right: 5px;
+     }
+    </style>
+  </head>
+  <body id="wrapper" style="margin-top:30px;">
+   
+    <div id="application" style="padding-top: 5px;">
+      <div class="panel-main" style="padding: 25px;"> 
+      {% block app %}
+      {% endblock %}
+      </div>
+    </div>
+    <script src="/site_media/js/jquery-1.7.1.min.js"></script>
+    <script src="/site_media/js/less-1.1.5.min.js"></script>
+    <script src="/site_media/js/mustache.js"></script>
+    <script src="/site_media/js/translation.js"></script>
+
+    {% block js %}
+    {% endblock %}
+  </body>
+</html>
+

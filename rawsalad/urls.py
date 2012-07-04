@@ -5,6 +5,6 @@ from django.conf import settings
 urlpatterns = patterns('',
     (r'^site_media/(?P<path>.*)$', 'django.views.static.serve', {'document_root': settings.MEDIA_ROOT}),
     (r'^api/', include('rawsalad.papi.urls')),
-    (r'^upload/', include('rawsalad.uploader.urls')),
+    (r'^admin/', include('rawsalad.uploader.urls')),
     (r'^', include('rawsalad.databrowser.urls')),
 )

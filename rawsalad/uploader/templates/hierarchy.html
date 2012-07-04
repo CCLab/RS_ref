@@ -1,15 +1,6 @@
-<!DOCTYPE HTML>
-<html lang="pl">
-<head>
-    <meta charset="UTF-8">
-	<title>Otwarte dane</title>
-  <link rel="stylesheet" type="text/css" href="/site_media/css/reset.css" />
-  <link rel="stylesheet/less" type="text/css" href="/site_media/css/style.less" />
-  <link rel="stylesheet/less" type="text/css" href="/site_media/css/classes.less" />
-  <link rel="stylesheet/less" type="text/css" href="/site_media/css/table_style.less" />
-</head>
-<body>
+{% extends "base.html" %}
 
+{% block app %}
   <table id="hier-panel">
     <tbody>
     </tbody>
@@ -18,16 +9,14 @@
   <button id="del-hier" type="button">Usuń ostatni poziom hierarchii</button>
   <br>
 
-  <form action="/upload/columns/" method="post" id="hier-form">
+  <form action="/admin/columns/" method="post" id="hier-form">
     <input name="hierarchy" type="text" />
   </form>
   <button id="submit" type="button">Dalej</button>
-
-  <script src="/site_media/js/jquery-1.7.1.min.js"></script>
-  <script src="/site_media/js/mustache.js"></script>
-  <script src="/site_media/js/translation.js"></script>
+{% endblock %}
+  
+{% block js %}
   <script src="/site_media/js/upload/hierarchy.js"></script>
-
   <script type="text/javascript" language="javascript">
   // <![CDATA[
       (function () {
@@ -35,9 +24,7 @@
       })();
   // ]]>
   </script>
-
-</body>
-</html>
+{% endblock %}
 
 
 
