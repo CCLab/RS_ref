@@ -1,118 +1,104 @@
-<!DOCTYPE HTML>
-<html lang="pl">
-<head>
-    <meta charset="UTF-8">
-	<title>Otwarte dane</title>
-  <link rel="stylesheet" type="text/css" href="/site_media/css/reset.css" />
-  <link rel="stylesheet/less" type="text/css" href="/site_media/css/style.less" />
-  <link rel="stylesheet/less" type="text/css" href="/site_media/css/classes.less" />
-  <link rel="stylesheet/less" type="text/css" href="/site_media/css/table_style.less" />
-</head>
-<body>
- 
-  <form action="/upload/hierarchy/" id="coll-form" method="post" enctype="multipart/form-data">
-  <h1>Wypełnij dane</h1>
-    <div id="collection-panel">
-      <table id="new_collection">
-        <tbody>
-          <tr>
-            <th>
-              <label for="coll-name">Nazwa:</label>
-            </th>
-            <td>
-              <input type="text" name="name" id="coll-name">
-            </td>
-          </tr>
-          <tr>
-            <th>
-              <label for="coll-label">Pełna nazwa:</label>
-            </th>
-            <td>
-              <input type="text" name="label" id="coll-label">
-            </td>
-          </tr>
-          <tr>
-            <th>
-              <label for="coll-vis">Kolekcja widoczna:</label>
-            </th>
-            <td>
-              <select name="vis" id="coll-vis">
-                <option value="No">Nie</option>
-                <option value="Yes">Tak</option>
-              </select>
-            </td>
-          </tr>
-          <tr>
-            <th>
-              <label for="coll-file">Plik:</label>
-            </th>
-            <td>
-              <input type="file" name="file" id="coll-file">
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+{% extends "base.html" %}
 
-    <hr>
-
-    <h1>Wskaż kolekcję-rodzica</h1>
-    <input id="add-exist" type="radio" name="type" value="old" checked>
-      Dodaj kolekcję-dziecko do istniejącej kolekcji
-    <br>
-    <input id="add-new" type="radio" name="type" value="new">
-      Dodaj nową kolekcję razem z kolekcjami-rodzicami
-    <br>
-
-    <hr>
-    <table id="collections-tree">
+{% block app %}
+<form action="/admin/hierarchy/" id="coll-form" method="post" enctype="multipart/form-data">
+<h1>Wypełnij dane</h1>
+  <div id="collection-panel">
+    <table id="new_collection">
+      <tbody>
+        <tr>
+          <th>
+            <label for="coll-name">Nazwa:</label>
+          </th>
+          <td>
+            <input type="text" name="name" id="coll-name">
+          </td>
+        </tr>
+        <tr>
+          <th>
+            <label for="coll-label">Pełna nazwa:</label>
+          </th>
+          <td>
+            <input type="text" name="label" id="coll-label">
+          </td>
+        </tr>
+        <tr>
+          <th>
+            <label for="coll-vis">Kolekcja widoczna:</label>
+          </th>
+          <td>
+            <select name="vis" id="coll-vis">
+              <option value="No">Nie</option>
+              <option value="Yes">Tak</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <th>
+            <label for="coll-file">Plik:</label>
+          </th>
+          <td>
+            <input type="file" name="file" id="coll-file">
+          </td>
+        </tr>
+      </tbody>
     </table>
-    <hr>
-
-    <div id="parent-panel">
-      <table id="parent-collections">
-        <tbody>
-          <tr>
-            <th>
-              <label for="name-0">Nazwa:</label>
-            </th>
-            <td>
-              <input type="text" name="ancestor-name-0" id="name-0" field="ancestor">
-            </td>
-          </tr>
-          <tr>
-            <th>
-              <label for="desc-0">Opis:</label>
-            </th>
-            <td>
-              <input type="text" name="ancestor-desc-0" id="desc-0" field="ancestor">
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <button id="add-parent" type="button">Dodaj nowego rodzica</button>
-      <button id="del-parent" type="button" disabled>Usuń ostatniego rodzica</button>
-    </div>
-    <input type="submit" value="Dalej">
-  </form>
-
-  <div id="error">
   </div>
 
-  <script src="/site_media/js/jquery-1.7.1.min.js"></script>
-  <script src="/site_media/js/mustache.js"></script>
-  <script src="/site_media/js/translation.js"></script>
-  <script src="/site_media/js/upload/collection.js"></script>
+  <hr>
 
-  <script type="text/javascript" language="javascript">
-  // <![CDATA[
-      (function () {
-        collection.init( {{ collections|safe }} );
-      })();
-  // ]]>
-  </script>
+  <h1>Wskaż kolekcję-rodzica</h1>
+  <input id="add-exist" type="radio" name="type" value="old" checked>
+    Dodaj kolekcję-dziecko do istniejącej kolekcji
+  <br>
+  <input id="add-new" type="radio" name="type" value="new">
+    Dodaj nową kolekcję razem z kolekcjami-rodzicami
+  <br>
 
-</body>
-</html>
+  <hr>
+  <table id="collections-tree">
+  </table>
+  <hr>
 
+  <div id="parent-panel">
+    <table id="parent-collections">
+      <tbody>
+        <tr>
+          <th>
+            <label for="name-0">Nazwa:</label>
+          </th>
+          <td>
+            <input type="text" name="ancestor-name-0" id="name-0" field="ancestor">
+          </td>
+        </tr>
+        <tr>
+          <th>
+            <label for="desc-0">Opis:</label>
+          </th>
+          <td>
+            <input type="text" name="ancestor-desc-0" id="desc-0" field="ancestor">
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <button id="add-parent" type="button">Dodaj nowego rodzica</button>
+    <button id="del-parent" type="button" disabled>Usuń ostatniego rodzica</button>
+  </div>
+  <input type="submit" value="Dalej">
+</form>
+
+<div id="error">
+</div>
+{% endblock %}
+  
+{% block js %}
+<script src="/site_media/js/upload/collection.js"></script>
+<script type="text/javascript" language="javascript">
+// <![CDATA[
+    (function () {
+      collection.init( {{ collections|safe }} );
+    })();
+// ]]>
+</script>
+{% endblock %}
 
