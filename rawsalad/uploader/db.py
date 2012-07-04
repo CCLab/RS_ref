@@ -395,6 +395,14 @@ class DB:
 
         self.cursor.execute( query.encode('utf-8') )
 
+    def remove_ptree_list_range( self, min_id, max_id ):
+        query = '''DELETE FROM p_tree
+                   WHERE id >= %d AND id <= %d
+                ''' % (min_id, max_id)
+
+        self.cursor.execute( query.encode('utf-8') )
+        self.connection.commit()
+
     def get_higher_dbtree( self, id ):
         query = '''SELECT id FROM dbtree
                    WHERE id > %s
@@ -483,10 +491,6 @@ def get_cursor(conf, _unicode=False):
     from ConfigParser import ConfigParser
     import psycopg2 as psql
     import psycopg2.extras as psqlextras
-    #if _unicode:
-    #   import psycopg2.extensions
-    #   psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
-    #   psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
 
     cfg = ConfigParser()
     cfg.read( conf )
