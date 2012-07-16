@@ -396,7 +396,8 @@ var _ui = (function () {
             return {
                 'key': column['key'],
                 'label': column['label'],
-                'type': column['type']
+                'type': column['type'],
+                'format': column['format']
             };
         });
     }
@@ -424,12 +425,70 @@ var _ui = (function () {
         return breadcrumb.join(' > ');
     }
 
-    function format_value( value, type, format ) {
+    function format_value( value, type, format, point, space ) {
         if ( type !== 'string' ) {
-            value = value + '';
+            var prefix;
+            var int_part;
+            var float_part;
+            point = point || '.';
+            format = format || "0.00";
+            if(value < 0) {
+                prefix = '-';
+                value *= -1;
+            }
+            else {
+                prefix = '';
+            }
+            digits  = value.toString().split('.');
+            formats = format.split('.');
+            int_part = _showFormatedInt(digits.shift(), formats.shift(), space); 
+            flt_part = _showFormatedPart(digits.shift(), formats.shift(), point);
+
+            value = prefix + int_part + flt_part;
         }
         return value;
-    }
+        
+        function _showFormatedInt(num, format, space) {
+            var i;
+            var group_by;
+            var min_size = Array.prototype.filter.call(format, isZero).length;
+            space = space || ' ';
 
+            while(min_size > num.length) {
+                num = '0' + num;
+            }
+
+            group_by = format.split(' ').pop().length;
+            num = Array.prototype.reduceRight.call(num, function (acc, e, i, r) {
+                // hack for JS reduceRight indexing
+                var step = num.length - (i + 1);
+
+                if(step % group_by === 0 && step !== 0) {
+                    return e + space + acc;
+                }
+                else {
+                    return e + acc;
+                }
+            });
+
+            return num;
+        }
+          
+        function _showFormatedPart(num, format, point) {
+            var min_size = Array.prototype.filter.call(format, isZero).length;
+            num = num || '';
+
+            while(min_size > num.length) {
+                num += '0';
+            }
+            number = num.slice(0, format.length);
+            return number != ""?point+number:"";
+        }
+          
+        function isZero(element, index, array) {
+              return element === '0';
+        }
+    }
+    
     return that;
 }) ();
