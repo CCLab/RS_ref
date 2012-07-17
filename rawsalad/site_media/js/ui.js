@@ -118,7 +118,7 @@ var _ui = (function () {
         var prepare_total_row = function( total_row, columns ) {
             return columns.map( function ( column ) {
                 return {
-                    'data': format_value( total_row['data'][ column['key'] ], column['type'], column['key'] ),
+                    'data': format_value( total_row['data'][ column['key'] ], column['type'], column['format'] ),
                     'column_type': column['type'],
                     'column_key': column['key']
                 };
@@ -442,7 +442,7 @@ var _ui = (function () {
             digits  = value.toString().split('.');
             formats = format.split('.');
             int_part = _showFormatedInt(digits.shift(), formats.shift(), space); 
-            flt_part = _showFormatedPart(digits.shift(), formats.shift(), point);
+            flt_part = formats != ""? _showFormatedPart(digits.shift(), formats.shift(), point) : "";
 
             value = prefix + int_part + flt_part;
         }
@@ -458,18 +458,20 @@ var _ui = (function () {
                 num = '0' + num;
             }
 
-            group_by = format.split(' ').pop().length;
-            num = Array.prototype.reduceRight.call(num, function (acc, e, i, r) {
-                // hack for JS reduceRight indexing
-                var step = num.length - (i + 1);
+            if( format.search(' ') != -1 ){
+                group_by = format.split(' ').pop().length;
+                num = Array.prototype.reduceRight.call(num, function (acc, e, i, r) {
+                    // hack for JS reduceRight indexing
+                    var step = num.length - (i + 1);
 
-                if(step % group_by === 0 && step !== 0) {
-                    return e + space + acc;
-                }
-                else {
-                    return e + acc;
-                }
-            });
+                    if(step % group_by === 0 && step !== 0) {
+                        return e + space + acc;
+                    }
+                    else {
+                        return e + acc;
+                    }
+                });
+            }
 
             return num;
         }
