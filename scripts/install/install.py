@@ -136,7 +136,7 @@ def create_admin_user( conf_values, step_nr ):
         admin_pass_repeat = getpass('Repeat admin password: ')
 
     hash_pass = hashlib.md5( admin_pass ).hexdigest()
-    query = '''INSERT INTO users VALUES( admin_name, '%s', NULL );COMMIT;''' % (admin_name, hash_pass)
+    query = '''INSERT INTO users VALUES( '%s', '%s', NULL );COMMIT;''' % (admin_name, hash_pass)
     
     cursor.execute( query.encode('utf-8') )
 
@@ -212,7 +212,7 @@ if __name__ == '__main__':
     create_admin_user( user_values, 4 )
     syncdb( 5 )
     translate( 6 )
-    minify_js( 7 )
+    #minify_js( 7 )
     '''
     try:
         #db_info = create_and_init_tables( 1 )
