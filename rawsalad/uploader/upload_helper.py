@@ -243,9 +243,9 @@ def is_string( value ):
         return False
     return True
 
-def create_desc_file( coll_data, hier, cols, fname):
+def create_desc_file( coll_data, hier, cols, user, fname):
     '''Create file describing collection with description of hierarchy, columns,
-        collection's label and name and parent collections.'''
+        collection's label and name, parent collections and uploader's login.'''
     # Fill key and index fields in columns.
     columns = add_key( cols )
     columns = add_columns_indexes( columns, hier )
@@ -254,12 +254,13 @@ def create_desc_file( coll_data, hier, cols, fname):
     parents = id_to_path( coll_data['parents'][0] ) + coll_data['parents'][1:]
 
     merged_desc = {
-        'name': coll_data['name'],
+        'name'       : coll_data['name'],
         'description': None,
-        'label': coll_data['label'],
-        'columns': columns,
-        'hierarchy': hier, 
-        'parents': parents
+        'label'      : coll_data['label'],
+        'columns'    : columns,
+        'hierarchy'  : hier, 
+        'parents'    : parents,
+        'user'       : user
     }
 
     with open( fname, 'wb' ) as f:

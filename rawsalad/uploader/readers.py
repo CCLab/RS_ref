@@ -125,6 +125,7 @@ class Meta:
         self.columns = json_content['columns']
         self.hierarchy = json_content['hierarchy']
         self.parents = json_content['parents']
+        self.user = json_content['user']
 
     def get_node( self ):
         return self.node
@@ -137,6 +138,9 @@ class Meta:
 
     def get_parents( self ):
         return self.parents
+
+    def get_user( self ):
+        return self.user
 
     
 class DataReceiver:

@@ -483,6 +483,60 @@ class DB:
             query = '''DROP TABLE %s''' % name
             self.cursor.execute( query.encode('utf-8') )
 
+    def get_non_admin_users( self ):
+        query = '''SELECT login, collections FROM users'''
+        self.cursor.execute( query.encode('utf-8') )
+        users = self.cursor.fetchall()
+
+        return [user['login'] for user in users if user['collections'] is not None]
+
+    def has_old_collections( self, user, dbtree_id ):
+        query = '''SELECT collections FROM users WHERE login = '%s' ''' % user
+        self.cursor.execute( query.encode('utf-8') )
+
+        collections = self.cursor.fetchone()['collections']
+        old_collections = [ coll_id for coll_id in collections if coll_id > dbtree_id ]
+
+        return old_collections != []
+
+    def remove_old_collections( self, user, dbtree_id ):
+        query = '''SELECT collections FROM users WHERE login = '%s' ''' % user
+        self.cursor.execute( query.encode('utf-8') )
+
+        collections = self.cursor.fetchone()['collections']
+        new_collections = [ coll_id for coll_id in collections if coll_id <= dbtree_id ]
+
+        self.update_collections( user, new_collections )
+
+    def remove_all_old_user_collections( self, dbtree_id ):
+        users = self.get_non_admin_users()
+        for user in users:
+            self.remove_old_collections( user, dbtree_id )
+    
+    def update_collections( self, user, new_collections ):
+        str_ids = [ str(coll_id) for coll_id in new_collections ]
+        coll_str = ','.join( str_ids )
+        update_query = '''UPDATE users SET collections = '{%s}'
+                          WHERE login = '%s' ''' % ( coll_str, user )
+
+        self.cursor.execute( update_query.encode('utf-8') )
+
+    def add_user_collections( self, user, new_dbtree_ids ):
+        query = '''SELECT collections FROM users WHERE login = '%s' ''' % user
+        self.cursor.execute( query.encode('utf-8') )
+
+        collections = self.cursor.fetchone()['collections']
+        new_collections = collections + new_dbtree_ids
+        self.update_collections( user, new_collections )
+
+    def is_admin( self, user ):
+        query = '''SELECT collections FROM users WHERE login = '%s' ''' % user
+        self.cursor.execute( query.encode('utf-8') )
+
+        collections = self.cursor.fetchone()['collections']
+        return collections is None
+
+
 
 def get_cursor(conf, _unicode=False):
     from ConfigParser import ConfigParser

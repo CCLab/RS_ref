@@ -75,7 +75,7 @@ def create_settings_configuration( step_nr ):
     print_header( 'Settings configuration file creation', step_nr )
 
     user_values = {}
-    admins_count = int( raw_input('How many django admins do you want to have? ' ) )
+    admins_count = int( raw_input('How many __django__ admins do you want to have? ' ) )
     admins = []
     admins_str = ''
     for i in range( admins_count ):
@@ -121,19 +121,19 @@ def create_settings_configuration( step_nr ):
     print 'Success'
 
 def create_admin_user( conf_values, step_nr ):
-    print_header('Creating admin user', step_nr )
+    print_header('Creating upload-admin user', step_nr )
 
     cursor = db_cursor( conf_values )
 
-    admin_name = raw_input('Application admin name: ')
+    admin_name = raw_input('Upload-admin name: ')
 
-    admin_pass = getpass('Admin password: ')
-    admin_pass_repeat = getpass('Repeat admin password: ')
+    admin_pass = getpass('Upload-admin password: ')
+    admin_pass_repeat = getpass('Repeat upload-admin password: ')
 
     while admin_pass != admin_pass_repeat:
         print 'Passwords are not the same! Repeat please'
-        admin_pass = getpass('Admin password: ')
-        admin_pass_repeat = getpass('Repeat admin password: ')
+        admin_pass = getpass('Upload-admin password: ')
+        admin_pass_repeat = getpass('Repeat upload-admin password: ')
 
     hash_pass = hashlib.md5( admin_pass ).hexdigest()
     query = '''INSERT INTO users VALUES( '%s', '%s', NULL );COMMIT;''' % (admin_name, hash_pass)

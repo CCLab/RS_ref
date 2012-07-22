@@ -52,16 +52,6 @@ def try_login( request ):
         request.session['logged'] = False
         return redirect( bad_login )
 
-# url: /upload/create_user/
-@csrf_exempt
-def create_user( request ):
-    if request.session.get( 'logged', False ) == False or \
-       request.session.get( 'user', '' ) != 'admin':
-        return redirect( login )
-
-    return render_to_response( 'create.html' )
-
-
 # url: /upload/collection/
 def choose_collection( request ):
     if request.session.get( 'logged', False ) == False:
@@ -151,12 +141,13 @@ def upload_data( request ):
         errors_json = json.dumps( errors )
         return render_to_response( 'results.html', {'info': errors_json} )
 
+    user = request.session['user']
     coll_data = request.session['collection_data']
     data_file_name = request.session['tmp_file']
     hier_file_name = data_file_name.rstrip('.csv') + '.json'
 
     # create meta file describing data
-    uh.create_desc_file( coll_data, hierarchy, columns, hier_file_name )
+    uh.create_desc_file( coll_data, hierarchy, columns, user, hier_file_name )
 
     # upload data into db
     visible = coll_data[ 'visible' ]

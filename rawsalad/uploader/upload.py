@@ -48,7 +48,7 @@ class Uploader:
                   method. Use with CAUTION!
         '''
         # restore db state to a state before a recent data insertion
-        restore = False
+        restore = True
         if restore:
             self.debug_restore()
 
@@ -124,7 +124,7 @@ class Uploader:
             updates db data counter. Updates ptree. Returns new endpoint's name.'''
         print 'Uploading...'
 
-        endpoint = self.update_dbtree( visible )
+        endpoint, new_dbtree_ids = self.update_dbtree( visible )
         print 'Dbtree uploaded'
 
         self.update_hierarchy( endpoint )
@@ -137,6 +137,10 @@ class Uploader:
         last_id = self.upload_data( endpoint, has_header=has_header )
         print 'Data uploaded'
         print 'Columns summed up, ptree uploaded'
+
+        # Add information about uploading collection to the user (if not admin)
+        if not self.db.is_admin( self.meta.get_user() ):
+            self.db.add_user_collections( self.meta.get_user(), new_dbtree_ids )
 
         self.db.set_max_data_id( last_id )
 
@@ -162,9 +166,11 @@ class Uploader:
 
     def update_dbtree( self, visible ):
         '''Insert data of new node and his parents if they are new. Return name
-            of new endpoint. Update depths parameters in parent nodes.'''
+            of new endpoint and list with ids of added dbtree nodes.
+            Update depths parameters for parent nodes.'''
         parent_nodes = self.meta.get_parents()
 
+        new_dbtree_ids = []
         parents_ids = []
         last_parent_id = None
         # Insert new parents into db.
@@ -185,6 +191,7 @@ class Uploader:
                     'visible': visible
                 }
                 self.db.insert_tree_node( parent_node )
+                new_dbtree_ids.append( parent_node['id'] )
 
             last_parent_id = parent_node['id']
             parents_ids.append( last_parent_id )
@@ -211,12 +218,13 @@ class Uploader:
             'visible': visible
         }
         parents_ids.append( node['id'] )
+        new_dbtree_ids.append( node['id'] )
         self.db.insert_tree_node( node )
 
         # Update min_depth and max_depth
         self.update_depths( parents_ids[0] )
 
-        return node['endpoint']
+        return node['endpoint'], new_dbtree_ids
 
     def update_hierarchy( self, endpoint ):
         '''Copy hierarchy, remove not needed fields and upload hierarchy
@@ -452,8 +460,8 @@ class Uploader:
         self.db.set_max_data_id( data_id )
 
     def remove_uploaded( self, endpoint_id, dbtree_id, data_id ):
-        '''Remove uploaded data: dbtree nodes that have higher ids that
-        dbtree_id, endpoints, columns, hierarchy with ids higher that
+        '''Remove uploaded data: dbtree nodes that have higher ids than
+        dbtree_id, endpoints, columns, hierarchy with ids higher than
         endpoint_id, nodes in ptree with id higher than data_id.'''
         act_dbtree_id = self.db.get_max_dbtree_id()
         act_data_id = self.db.get_max_data_id()
@@ -475,6 +483,9 @@ class Uploader:
 
         # Reset counters to match the new order.
         self.set_counters( endpoint_id, dbtree_id, data_id )
+
+        # Remove information about uploaded collections by users
+        self.db.remove_all_old_user_collections( dbtree_id )
 
     def check_dbtree( self ):
         '''Check if new endpoint description and its parents contain needed fields.'''
@@ -725,6 +736,19 @@ class Uploader:
                     print 'Removed table', tname
         else:
             print 'Data tables correct'
+        
+        # Check user uploaded collections
+        users = self.db.get_non_admin_users()
+        for user in users:
+            if self.db.has_old_collections( user, init_dbtree_id ):
+                print 'Found old collections from user %s' % user
+                print 'Do you want to remove them? (Y/N)'
+                dec = raw_input('Your decision: ')
+                if dec.lower() == 'y':
+                    self.db.remove_old_collections( user, init_dbtree_id )
+            else:
+                print 'User %s correct' % user
+
 
     def update_depths( self, subtree_id ):
         '''Recursively update depths in subtree which root has subtree_id,

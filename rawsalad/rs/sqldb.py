@@ -455,19 +455,17 @@ def get_user_uploaded_collections( login ):
     '''Get collections and add information about which of them were
     uploaded by the user.'''
     db_tree = get_db_tree( True )
-    if login == 'admin':
-        for el in db_tree:
-            el['user_uploaded'] = True
-    else:
-        cursor = db_cursor()
-        query = '''SELECT collections FROM users
-                   WHERE login = '%s'
-                ''' % ( login )
-        cursor.execute( query )
-        user_collections_ids = cursor.fetchone()
-        for el in db_tree:
-            el['user_uploaded'] = el['id'] in user_collections_ids['collections']
-                
+    cursor = db_cursor()
+    query = '''SELECT collections FROM users
+               WHERE login = '%s'
+            ''' % ( login )
+    cursor.execute( query )
+    user_collections_ids = cursor.fetchone()
+    is_admin = user_collections_ids['collections'] is None
+
+    for el in db_tree:
+        el['user_uploaded'] = is_admin or el['id'] in user_collections_ids['collections']
+                    
     return db_tree
     
 
