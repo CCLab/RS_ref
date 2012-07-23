@@ -48,7 +48,6 @@ class Uploader:
                   method. Use with CAUTION!
         '''
         # restore db state to a state before a recent data insertion
-        restore = True
         if restore:
             self.debug_restore()
 
