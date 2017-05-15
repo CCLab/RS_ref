@@ -87,6 +87,7 @@ INSERT INTO counters VALUES( 'data', 1000000000 );
 INSERT INTO counters VALUES( 'permalinks', 75000 );
 COMMIT;
 
+REVOKE ALL PRIVILEGES ON TABLE p_tree,counters,hierarchy,columns,dbtree,users,data_50001,permalinks FROM "readonly";
 DROP USER IF EXISTS readonly;
 CREATE USER readonly WITH PASSWORD 'readonly';
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO readonly;

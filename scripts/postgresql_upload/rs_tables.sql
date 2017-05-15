@@ -10,8 +10,8 @@ DROP TABLE dbtree CASCADE;
 CREATE TABLE dbtree (
     id              integer PRIMARY KEY, -- same as UNIQUE NOT NULL
     parent          integer REFERENCES dbtree ( id ), 
-    name            varchar(100),
-    label           varchar(100),
+    name            varchar(1024),
+    label           varchar(1024),
     description     text,
     max_depth       integer,
     min_depth       integer,
@@ -23,7 +23,7 @@ DROP TABLE columns;
 CREATE TABLE columns (
     endpoints       text ARRAY,
     key             TEXT,
-    label           varchar(100),
+    label           varchar(1024),
     format          varchar(25),
     basic           boolean,
     type            varchar(25), -- should be enum/reference to types table

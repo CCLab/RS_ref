@@ -1,2 +1,10 @@
-"Nazwa";"Typ";"Wartość"
-"data";"endpoint";50003
+ID;Rodzic;Poziom;Numer;Koszty;Centrala;Ośrodki Wojewódzkie;Ogółem (tys. zł.);
+A;;a;A;Koszty świadczeń zdrowotnych,  w tym:;422455;57098437;57520892;
+B;;a;B;Koszty programów polityki zdrowotnej realizowanych na zlecenie ;0;0;0;
+C;;a;C;Koszty realizacji zadań zespołów ratownictwa medycznego;0;1730500;1730500;
+D;;a;D;Koszty administracyjne, w tym;180514;466724;647238;
+E;;a;E;Pozostałe koszty ;20440;253554;273994;
+F;;a;F;Koszty finansowe;30819;42922;73741;
+G;;a;G;Koszty poboru i ewidencjonowania składek;0;0;114905;
+H;;a;H;Obowiązkowy odpis na rezerwę ogólną;0;0;580013;
+I;;a;I;KOSZTY OGÓŁEM (A+B+C+D+E+F);654228;59592137;60941283;

@@ -316,8 +316,8 @@ class DB:
         }
 
         create_query = '''CREATE TABLE %s (
-                id               INTEGER UNIQUE NOT NULL
-                ,parent          INTEGER 
+                id              BIGINT UNIQUE NOT NULL
+                ,parent          BIGINT
                 ,type            TEXT
                 ,name            TEXT
                 ,leaf            BOOLEAN

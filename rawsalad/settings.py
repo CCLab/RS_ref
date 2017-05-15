@@ -7,8 +7,8 @@ TEMPLATE_DEBUG = DEBUG
 DBCONF = os.path.join( ROOT_PATH, 'rs', 'rawsdata.conf' )
 
 ADMINS = (
-    ('Bartosz Stalewski', 'bstalewski@centrumcyfrowe.pl'),
-    ('Krzysztof Trzewiczek', 'ktrzewiczek@centrumcyfrowe.pl'),
+    ('alex', 'alex@centrumcyfrowe.pl'),
+    ('', ''),
 )
 MANAGERS = ADMINS
 
@@ -32,11 +32,11 @@ USE_I18N = True
 USE_L10N = True
 
 MEDIA_PREFIX = ''
-MEDIA_ROOT = os.path.join( ROOT_PATH, 'site_media/' )
-MEDIA_URL = 'http://127.0.0.1:8000/site_media/' # for development period
+MEDIA_ROOT = os.path.join( ROOT_PATH, 'site_media' )
+MEDIA_URL = '/site_media/'
 ADMIN_MEDIA_PREFIX = '/admin_media/'
 
-SECRET_KEY = '%f(004sk%!4d*xr$nu6=_5mn_jl6t@2j(jh+wc7#r8o2ttfyev'
+SECRET_KEY = 'kr0PeoeoVZQ_ka62RyHErw=='
 
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.Loader',
@@ -67,3 +67,4 @@ INSTALLED_APPS = (
     'rawsalad.papi',
     'rawsalad.uploader',
 )
+
